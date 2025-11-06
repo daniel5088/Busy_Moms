@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Heart, Users, Shield, Calendar, MessageCircle, Watch, MapPin, Bell } from 'lucide-react';
+import { Heart, Users, Shield, Calendar, MessageCircle, Watch, MapPin, Bell, UserPlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import FamilyMemberCard, { FamilyMember } from './onboarding/FamilyMemberCard';
+import { ALL as ALL_COLORS } from '../lib/colorPalette';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -11,6 +13,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [userType, setUserType] = useState('');
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [preferences, setPreferences] = useState({
     notification_events: true,
     notification_shopping: true,
@@ -58,6 +61,81 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
             </button>
           ))}
+        </div>
+      )
+    },
+    {
+      title: 'Add Family Members',
+      subtitle: 'Optional - You can always add them later in Settings',
+      content: (
+        <div className="space-y-4">
+          <p className="text-gray-600 text-sm">
+            Add your children and family members to personalize your experience. Each family member can have their own color for easy organization.
+          </p>
+
+          {familyMembers.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+              <Users className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+              <p className="text-gray-600 mb-4">No family members added yet</p>
+              <button
+                onClick={() => {
+                  const newMember: FamilyMember = {
+                    id: crypto.randomUUID(),
+                    name: '',
+                    relationship: '',
+                    color: ALL_COLORS[0]
+                  };
+                  setFamilyMembers([newMember]);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add First Family Member
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {familyMembers.map((member) => {
+                const usedColors = familyMembers
+                  .filter(m => m.id !== member.id)
+                  .map(m => m.color);
+
+                return (
+                  <FamilyMemberCard
+                    key={member.id}
+                    member={member}
+                    usedColors={usedColors}
+                    onChange={(updates) => {
+                      setFamilyMembers(prev =>
+                        prev.map(m => m.id === member.id ? { ...m, ...updates } : m)
+                      );
+                    }}
+                    onRemove={() => {
+                      setFamilyMembers(prev => prev.filter(m => m.id !== member.id));
+                    }}
+                  />
+                );
+              })}
+
+              <button
+                onClick={() => {
+                  const usedColors = familyMembers.map(m => m.color);
+                  const availableColor = ALL_COLORS.find(c => !usedColors.includes(c)) || ALL_COLORS[0];
+                  const newMember: FamilyMember = {
+                    id: crypto.randomUUID(),
+                    name: '',
+                    relationship: '',
+                    color: availableColor
+                  };
+                  setFamilyMembers(prev => [...prev, newMember]);
+                }}
+                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-colors inline-flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-5 h-5" />
+                Add Another Family Member
+              </button>
+            </div>
+          )}
         </div>
       )
     },
@@ -212,6 +290,29 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         throw new Error(`Failed to save preferences: ${preferencesError.message}`)
       }
 
+      // Save family members if any were added
+      if (familyMembers.length > 0) {
+        const familyMembersToInsert = familyMembers
+          .filter(m => m.name.trim() !== '' && m.relationship !== '')
+          .map(m => ({
+            user_id: user.id,
+            name: m.name,
+            relationship: m.relationship,
+            age: m.age,
+            color: m.color
+          }));
+
+        if (familyMembersToInsert.length > 0) {
+          const { error: familyMembersError } = await supabase
+            .from('family_members')
+            .insert(familyMembersToInsert);
+
+          if (familyMembersError) {
+            console.error('Error saving family members:', familyMembersError);
+          }
+        }
+      }
+
       console.log('Onboarding completed successfully')
       onComplete()
     } catch (error: any) {
@@ -282,10 +383,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         </button>
         <button
           onClick={nextStep}
-          disabled={(step === 1 && !userType) || saving}
+          disabled={(step === 1 && !userType) || (step === 2 && familyMembers.some(m => !m.name.trim() || !m.relationship)) || saving}
           className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? 'Saving...' : step === steps.length - 1 ? 'Get Started' : 'Next'}
+          {saving ? 'Saving...' : step === steps.length - 1 ? 'Get Started' : step === 2 ? (familyMembers.length === 0 ? 'Skip for Now' : 'Continue') : 'Next'}
         </button>
       </div>
     </div>
