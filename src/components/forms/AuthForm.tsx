@@ -214,12 +214,18 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         </div>
 
         {/* OAuth Diagnostics Link */}
-        <div className="mt-3 text-center">
+        <div className="mt-3 text-center space-y-1">
           <a
             href="?diagnostics=true"
-            className="text-xs text-gray-500 hover:text-gray-700 underline"
+            className="block text-xs text-gray-500 hover:text-gray-700 underline"
           >
             OAuth Configuration Diagnostics
+          </a>
+          <a
+            href="?signout=true"
+            className="block text-xs text-gray-500 hover:text-gray-700 underline"
+          >
+            Clear Session & Sign Out
           </a>
         </div>
       </div>

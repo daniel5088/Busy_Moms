@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Users, Shield, Calendar, MessageCircle, Watch, MapPin, Bell, UserPlus } from 'lucide-react';
+import { Heart, Users, Shield, Calendar, MessageCircle, Watch, MapPin, Bell, UserPlus, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import FamilyMemberCard, { FamilyMember } from './onboarding/FamilyMemberCard';
@@ -10,7 +10,7 @@ interface OnboardingProps {
 }
 
 export function Onboarding({ onComplete }: OnboardingProps) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [step, setStep] = useState(0);
   const [userType, setUserType] = useState('');
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
@@ -24,6 +24,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     background_check_alerts: true
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const steps = [
     {
@@ -276,18 +277,22 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         }
       }
 
-      // Create or update user preferences
-      const { error: preferencesError } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          ...preferences
-        }, {
-          onConflict: 'user_id'
-        })
-      
-      if (preferencesError) {
-        throw new Error(`Failed to save preferences: ${preferencesError.message}`)
+      // Create or update user preferences (optional - don't fail onboarding if this fails)
+      try {
+        const { error: preferencesError } = await supabase
+          .from('user_preferences')
+          .upsert({
+            user_id: user.id,
+            ...preferences
+          }, {
+            onConflict: 'user_id'
+          })
+
+        if (preferencesError) {
+          console.warn('Could not save preferences:', preferencesError.message)
+        }
+      } catch (prefError) {
+        console.warn('Could not save preferences:', prefError)
       }
 
       // Save family members if any were added
@@ -314,10 +319,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       }
 
       console.log('Onboarding completed successfully')
+      setError(null)
       onComplete()
     } catch (error: any) {
       console.error('Error completing onboarding:', error)
-      alert(`Error completing onboarding: ${error.message}`)
+      setError(error.message || 'An unexpected error occurred')
     } finally {
       setSaving(false)
     }
@@ -337,8 +343,60 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     }
   };
 
+  const handleSignOut = async () => {
+    if (confirm('Are you sure you want to sign out? You will need to sign in again.')) {
+      await signOut();
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col p-6">
+      {/* Header with Sign Out */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-lg">⚠</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-900 mb-1">Error Completing Onboarding</h3>
+              <p className="text-sm text-red-700 mb-2">{error}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setError(null)}
+                  className="text-sm text-red-600 hover:text-red-800 underline"
+                >
+                  Dismiss
+                </button>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    completeOnboarding();
+                  }}
+                  className="text-sm text-red-600 hover:text-red-800 underline font-medium"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex justify-between mb-2">

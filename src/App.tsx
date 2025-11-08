@@ -41,9 +41,20 @@ function App() {
   const { toasts, removeToast } = useToast()
   const { pendingAffirmation, dismissNotification } = useAffirmationNotifier()
 
-  // Check if diagnostics mode is enabled
+  // Check URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const showDiagnostics = urlParams.get('diagnostics') === 'true';
+  const forceSignOut = urlParams.get('signout') === 'true';
+
+  // Handle force sign-out if requested
+  useEffect(() => {
+    if (forceSignOut && user) {
+      console.log('🔓 Force sign-out requested');
+      signOut().then(() => {
+        window.location.href = window.location.pathname;
+      });
+    }
+  }, [forceSignOut, user]);
 
   // Show diagnostics page if requested
   if (showDiagnostics) {
