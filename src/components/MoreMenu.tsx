@@ -1,7 +1,6 @@
 import React from 'react';
 import { Settings, HelpCircle, Info, Bell, MessageCircle, Shield, CreditCard, LogOut, Sparkles } from 'lucide-react';
 import { NavigationHeader } from './NavigationHeader';
-// import { MoreMenuSkeleton } from './skeletons/MoreMenuSkeleton';
 import { SubScreen } from '../App';
 
 interface MoreMenuProps {
@@ -12,15 +11,6 @@ interface MoreMenuProps {
 }
 
 export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail }: MoreMenuProps) {
-  // TODO: Uncomment when real data loading is implemented
-  // const [loading, setLoading] = useState(true);
-
-  // Alvaros Skeletons
-  // TODO: Activate this when MoreMenu has real data loading from Supabase
-  // if (loading) {
-  //   return <MoreMenuSkeleton />;
-  // }
-
   const menuSections = [
     {
       title: 'Settings',

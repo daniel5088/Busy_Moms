@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Smartphone, MessageCircle, CreditCard, HelpCircle, LogOut, Database, CheckCircle, XCircle, Loader2, Plus, CreditCard as Edit, Volume2, Calendar, AlertTriangle, Sparkles, RefreshCw, Store, MapPin, Ruler, Moon } from 'lucide-react';
+import { User, Bell, Shield, Smartphone, MessageCircle, CreditCard, HelpCircle, LogOut, Database, CheckCircle, XCircle, Loader2, Plus, CreditCard as Edit, Volume2, Calendar, AlertTriangle, Sparkles, RefreshCw, Store, MapPin, Ruler } from 'lucide-react';
 import { FamilyMemberForm } from './forms/FamilyMemberForm';
 import { ProfileForm } from './forms/ProfileForm';
 import { ConnectionTest } from './ConnectionTest';
@@ -38,7 +38,6 @@ export function Settings() {
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [syncingGoogle, setSyncingGoogle] = useState(false);
   const [measurementPrefs, setMeasurementPrefs] = useState<UserMeasurementPreferences | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState({
     events: true,
     shopping: true,
@@ -215,19 +214,6 @@ export function Settings() {
     }
   };
 
-  // Toggles dark mode by adding/removing the "dark" class on <html>
-  const toggleDarkMode = () => {
-    setDarkMode(prev => {
-      const newValue = !prev;
-      if (newValue) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-      return newValue;
-    });
-  };
-
   const toggleNotification = (key: keyof typeof notifications) => {
     setNotifications(prev => ({
       ...prev,
@@ -265,19 +251,6 @@ export function Settings() {
   };
 
   const settingSections = [
-    {
-      title: 'Appearance',
-      items: [
-        {
-          icon: Moon,
-          title: 'Dark Mode',
-          description: 'Switch between light and dark themes',
-          toggle: true,
-          enabled: darkMode,
-          onClick: toggleDarkMode
-        }
-      ]
-    },
     {
       title: 'Family Profile',
       items: [
@@ -446,18 +419,6 @@ export function Settings() {
     }
   ];
 
-  // Alvaro - Developer-only System section visibility
-  // Only users with @bmaapp.com emails can see System tools
-  const isDeveloper = user?.email?.endsWith('@bmaapp.com') ?? false;
-
-  // Alvaro - Filter out System section for non-developers
-  const visibleSections = settingSections.filter(section => {
-    if (section.title === 'System' && !isDeveloper) {
-      return false;
-    }
-    return true;
-  });
-
   return (
     <div className="h-screen overflow-y-auto pb-20 sm:pb-24">
       {/* Header */}
@@ -515,7 +476,7 @@ export function Settings() {
 
         {/* Settings Sections */}
         <div className="space-y-6">
-          {visibleSections.map((section, sectionIndex) => (
+          {settingSections.map((section, sectionIndex) => (
             <div key={sectionIndex}>
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{section.title}</h2>
               <div className="space-y-2">

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Users, FolderOpen, UserPlus, ShoppingBag, CheckSquare, Calendar } from 'lucide-react';
 import { NavigationHeader } from './NavigationHeader';
-// import { FamilyHubSkeleton } from './skeletons/FamilyHubSkeleton';
 import { SubScreen, Screen } from '../App';
 
 interface FamilyHubProps {
@@ -10,15 +9,6 @@ interface FamilyHubProps {
 }
 
 export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyHubProps) {
-  // TODO: Uncomment when real data loading is implemented
-  // const [loading, setLoading] = useState(true);
-
-  // Alvaros Skeletons
-  // TODO: Activate this when FamilyHub has real data loading from Supabase
-  // if (loading) {
-  //   return <FamilyHubSkeleton />;
-  // }
-
   const familyFeatures = [
     {
       id: 'family-folders' as SubScreen,
