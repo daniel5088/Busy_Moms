@@ -24,6 +24,7 @@ import {
 
 import { EventForm } from './forms/EventForm';
 import { ConflictResolutionModal } from './ConflictResolutionModal';
+import { CalendarSkeleton } from './skeletons/CalendarSkeleton';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import type { Event as DbEvent } from '../lib/supabase';
@@ -334,6 +335,11 @@ export function Calendar() {
   const isCurrentMonth = (day: Date) => day.getMonth() === currentDate.getMonth();
 
   // --- UI --------------------------------------------------------------------
+  // Alvaros Skeletons
+  if (loading) {
+    return <CalendarSkeleton />;
+  }
+
   return (
     <>
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 pb-24">
