@@ -1,20 +1,13 @@
-// src/lib/supabase.ts
-/**
- * Supabase client singleton.
- * Soft-fails if env vars are missing (no throw at import time) so the app can still render.
- *
- * On Bolt Cloud, set these under Project → Settings → Environment Variables (build-time):
- *   VITE_SUPABASE_URL
- *   VITE_SUPABASE_ANON_KEY
- *
- * Locally, create a .env NEXT TO vite.config.ts:
- *   VITE_SUPABASE_URL=...
- *   VITE_SUPABASE_ANON_KEY=...
- */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+
+console.log('[supabase] Environment check:', {
+  hasUrl: !!url,
+  hasKey: !!anonKey,
+  url: url ? `${url.substring(0, 30)}...` : 'NOT SET'
+})
 
 const hasEnv = !!url && !!anonKey
 
@@ -30,12 +23,10 @@ export const supabase: SupabaseClient | null = hasEnv
   : null
 
 if (!hasEnv) {
-  // Don’t hard-crash the app during early migrations/misconfig; log once instead.
-  // You can surface a nicer in-app message or fallback UI as needed.
   console.warn(
     `[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.
 Add them to Bolt → Project → Settings → Environment Variables, then rebuild.
-Local dev: put them in .env next to vite.config.ts.`
+Local dev: put them in .env next to vite.config.ts and restart the dev server.`
   )
 }
 

@@ -32,6 +32,12 @@ export function ConfigurationError({ error }: ConfigurationErrorProps) {
           <pre className="text-sm text-red-800 whitespace-pre-wrap font-mono">
             {error.message}
           </pre>
+          <div className="mt-4 pt-4 border-t border-red-300">
+            <p className="text-sm font-semibold text-red-900 mb-2">Common Fix:</p>
+            <p className="text-sm text-red-800">
+              If you see this error in local development, restart your dev server to pick up the .env file changes.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-6">
