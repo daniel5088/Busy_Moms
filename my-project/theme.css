@@ -1,0 +1,17 @@
+/* === Alvaro's Dark Mode Enhancement: Core Palette === */
+
+:root {
+  --color-bg: #fafafa;
+  --color-text: #1f2937;
+  --color-surface: #f5f5f5;
+  --color-primary: #e11d48;
+  --color-muted: #6b7280;
+}
+
+.dark {
+  --color-bg: #0f1419;
+  --color-text: #e5e7eb;
+  --color-surface: #1a1f2e;
+  --color-primary: #fb7185;
+  --color-muted: #9ca3af;
+}
