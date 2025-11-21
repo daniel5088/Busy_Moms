@@ -2,6 +2,7 @@ import React from 'react';
 import { Calendar, ShoppingBag, MessageCircle, Clock, Heart, Gift, Users, LogOut, Smartphone, User, Sparkles } from 'lucide-react';
 import { WhatsAppIntegration } from './WhatsAppIntegration';
 import { DailyAffirmations } from './DailyAffirmations';
+import { DashboardSkeleton } from './skeletons/DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
 import { supabase, Profile, Event, ShoppingItem, Reminder, Affirmation } from '../lib/supabase';
 import { affirmationService } from '../services/affirmationService';
@@ -175,12 +176,66 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
     }
   };
 
+  // Alvaros onlykeyboard - Softer quick action colors for better background integration
   const quickActions = [
-    { icon: Calendar, title: 'View Calendar', desc: 'See all your events', color: 'from-rose-400 to-pink-400', action: () => onNavigate('calendar') },
-    { icon: ShoppingBag, title: 'Shopping List', desc: `${tasks.length} item${tasks.length === 1 ? '' : 's'} needed`, color: 'from-amber-400 to-orange-400', action: () => onNavigateToSubScreen('shopping') },
-    { icon: Users, title: 'Family Hub', desc: 'Organize by family member', color: 'from-violet-400 to-purple-400', action: () => onNavigate('family') },
-    { icon: MessageCircle, title: 'AI Assistant', desc: 'Get help with anything', color: 'from-fuchsia-400 to-pink-400', action: () => onVoiceChatOpen?.() }
+    {
+      icon: Calendar,
+      title: 'View Calendar',
+      desc: 'See all your events',
+      bgColor: 'bg-rose-50',
+      borderColor: 'border-rose-200',
+      iconBgColor: 'bg-rose-100',
+      iconColor: 'text-rose-600',
+      textColor: 'text-gray-900',
+      descColor: 'text-gray-600',
+      hoverBg: 'hover:bg-rose-100',
+      action: () => onNavigate('calendar')
+    },
+    {
+      icon: ShoppingBag,
+      title: 'Shopping List',
+      desc: `${tasks.length} item${tasks.length === 1 ? '' : 's'} needed`,
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+      iconBgColor: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+      textColor: 'text-gray-900',
+      descColor: 'text-gray-600',
+      hoverBg: 'hover:bg-amber-100',
+      action: () => onNavigateToSubScreen('shopping')
+    },
+    {
+      icon: Users,
+      title: 'Family Hub',
+      desc: 'Organize by family member',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      iconBgColor: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      textColor: 'text-gray-900',
+      descColor: 'text-gray-600',
+      hoverBg: 'hover:bg-blue-100',
+      action: () => onNavigate('family')
+    },
+    {
+      icon: MessageCircle,
+      title: 'AI Assistant',
+      desc: 'Get help with anything',
+      bgColor: 'bg-pink-50',
+      borderColor: 'border-pink-200',
+      iconBgColor: 'bg-pink-100',
+      iconColor: 'text-pink-600',
+      textColor: 'text-gray-900',
+      descColor: 'text-gray-600',
+      hoverBg: 'hover:bg-pink-100',
+      action: () => onVoiceChatOpen?.()
+    }
   ];
+
+  // Alvaros Skeletons
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="pb-20">
@@ -281,26 +336,30 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
         )}
 
         {/* Quick Actions */}
+        {/* Alvaros onlykeyboard - Redesigned with soft backgrounds, subtle borders, and refined interactions */}
         <div>
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {quickActions.map((action, index) => (
-              <div
+              <button
                 key={index}
                 onClick={() => {
                   if (action.action) {
                     action.action();
                   }
                 }}
-                className="p-3 sm:p-4 rounded-xl bg-gradient-to-br shadow-sm hover:shadow-md transition-all cursor-pointer"
-                style={{ background: `linear-gradient(135deg, var(--tw-gradient-stops))` }}
+                className={`p-3 sm:p-4 rounded-xl ${action.bgColor} border ${action.borderColor} shadow-sm text-left
+                  transition-all duration-200 ease-in-out
+                  ${action.hoverBg} hover:shadow-md hover:border-opacity-80
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2`}
+                aria-label={`${action.title}: ${action.desc}`}
               >
-                <div className={`bg-gradient-to-br ${action.color} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}>
-                  <action.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}>
+                  <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">{action.title}</h3>
-                <p className="text-xs sm:text-sm text-gray-600">{action.desc}</p>
-              </div>
+                <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base`}>{action.title}</h3>
+                <p className={`text-xs sm:text-sm ${action.descColor}`}>{action.desc}</p>
+              </button>
             ))}
           </div>
         </div>
