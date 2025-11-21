@@ -1,6 +1,17 @@
+/* Alvaro's Dark Mode - Import theme tokens for light and dark mode */
+@import 'theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Alvaros onlykeyboard - Keyboard-only focus styling for navigation tabs */
+@layer utilities {
+  /* Focus ring that only appears with keyboard navigation, not mouse clicks */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+}
 
 /* Mobile-specific utilities */
 @layer utilities {
