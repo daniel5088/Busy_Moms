@@ -243,7 +243,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
       <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 text-white p-4 pb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Good Morning, {profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}!</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Good Morning Awesome, {profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}!</h1>
           </div>
           <div className="flex items-center space-x-3">
             <button
