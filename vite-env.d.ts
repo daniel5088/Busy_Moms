@@ -1,6 +1,5 @@
 /// <reference types="vite/client" />
 // test coment git
-//bolt test
 // Speech Recognition API types
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
