@@ -24,7 +24,7 @@ import {
 
 import { EventForm } from './forms/EventForm';
 import { ConflictResolutionModal } from './ConflictResolutionModal';
-import { CalendarSkeleton } from './skeletons/CalendarSkeleton';
+import { CalendarSkeleton } from './src/components/CalendarSkeleton';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import type { Event as DbEvent } from '../lib/supabase';
