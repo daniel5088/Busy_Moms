@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import { AlertTriangle, Calendar } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { getOAuthConfig } from "../lib/auth-config";
 
-interface ConnectGoogleCalendarButtonProps {
-  onConnected?: () => void;
-}
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
 
-export function ConnectGoogleCalendarButton({ onConnected }: ConnectGoogleCalendarButtonProps = {}) {
+export function ConnectGoogleCalendarButton({ onConnected } = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,18 +13,15 @@ export function ConnectGoogleCalendarButton({ onConnected }: ConnectGoogleCalend
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: getOAuthConfig()
-      });
+      const returnTo = window.location.origin;
 
-      if (error) {
-        throw error;
-      }
+      const url =
+        `${supabaseUrl}/functions/v1/google-auth-start?return_to=${encodeURIComponent(returnTo)}`;
 
-      console.log('🚀 Google OAuth redirect initiated');
+      console.log("🔗 Redirecting to OAuth:", url);
+      window.location.href = url;
     } catch (e: any) {
-      console.error('❌ Google auth start error:', e);
+      console.error("❌ Google auth start error:", e);
       setError(e?.message ?? String(e));
       setLoading(false);
     }
