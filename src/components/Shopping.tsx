@@ -6,7 +6,6 @@ import { useAuth } from '../hooks/useAuth';
 import { RecipeBrowser } from './RecipeBrowser';
 import { RecipeDetailModal } from './RecipeDetailModal';
 import { SendToProviderModal } from './SendToProviderModal';
-import { GiftFinderModal } from './GiftFinderModal';
 import { instacartShoppingService } from '../services/instacartShoppingService';
 import { InstacartButton } from './InstacartButton';
 
@@ -24,7 +23,6 @@ export function Shopping() {
   const [sendProvider, setSendProvider] = useState<ProviderName>(null);
   const [sendingToProvider, setSendingToProvider] = useState(false);
   const [preferredRetailer, setPreferredRetailer] = useState<UserPreferredRetailer | null>(null);
-  const [showGiftFinderModal, setShowGiftFinderModal] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -508,10 +506,7 @@ export function Shopping() {
 
             <div className="text-center py-8">
               <p className="text-sm sm:text-base text-gray-600 mb-4">No upcoming events requiring gifts</p>
-              <button
-                onClick={() => setShowGiftFinderModal(true)}
-                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all text-sm sm:text-base"
-              >
+              <button className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all text-sm sm:text-base">
                 Browse Gift Ideas
               </button>
             </div>
@@ -584,11 +579,6 @@ export function Shopping() {
           userId={user.id}
         />
       )}
-
-      <GiftFinderModal
-        isOpen={showGiftFinderModal}
-        onClose={() => setShowGiftFinderModal(false)}
-      />
     </div>
   );
 }

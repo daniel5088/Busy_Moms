@@ -50,14 +50,8 @@ export interface FamilyMember {
   id: UUID
   user_id: UUID
   name: string
-  age?: number | null
-  gender?: 'Boy' | 'Girl' | 'Other' | null
   relationship?: string | null
   avatar_url?: string | null
-  allergies?: string[] | null
-  medical_notes?: string | null
-  school?: string | null
-  grade?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -388,58 +382,4 @@ export interface MeasurementOverride {
   reason?: string | null
   created_at?: string
   updated_at?: string
-}
-
-export type GiftCategory = 'toys' | 'books' | 'clothing' | 'electronics' | 'sports' | 'arts_crafts' | 'educational' | 'games' | 'experiences' | 'gift_cards'
-export type GiftGender = 'Boy' | 'Girl' | 'Unisex'
-export type GiftSeason = 'spring' | 'summer' | 'fall' | 'winter' | 'holiday'
-
-export interface GiftMatrixItem {
-  id: UUID
-  gift_name: string
-  description: string
-  category: GiftCategory
-  min_age: number
-  max_age: number
-  gender: GiftGender
-  min_price: number
-  max_price: number
-  typical_price: number
-  rating?: number | null
-  popularity_score: number
-  image_url?: string | null
-  affiliate_url: string
-  retailer: string
-  tags?: string[] | null
-  seasonal: boolean
-  season?: GiftSeason | null
-  active: boolean
-  click_count: number
-  last_clicked_at?: string | null
-  created_at?: string
-  updated_at?: string
-}
-
-export interface UserGiftSearch {
-  id: UUID
-  user_id: UUID
-  recipient_name: string
-  recipient_age: number
-  recipient_gender: 'Boy' | 'Girl' | 'Other'
-  budget_min: number
-  budget_max: number
-  event_id?: UUID | null
-  family_member_id?: UUID | null
-  matching_gift_ids?: UUID[] | null
-  result_count: number
-  created_at?: string
-}
-
-export interface GiftSearchCriteria {
-  age: number
-  gender: 'Boy' | 'Girl' | 'Other'
-  budgetMin: number
-  budgetMax: number
-  category?: GiftCategory
-  tags?: string[]
 }
