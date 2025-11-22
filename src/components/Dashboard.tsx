@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, ShoppingBag, MessageCircle, Clock, Heart, Gift, Users, LogOut, Smartphone, User, Sparkles } from 'lucide-react';
 import { WhatsAppIntegration } from './WhatsAppIntegration';
 import { DailyAffirmations } from './DailyAffirmations';
-import { DashboardSkeleton } from './src/DashboardSkeleton';
+import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
 import { supabase, Profile, Event, ShoppingItem, Reminder, Affirmation } from '../lib/supabase';
 import { affirmationService } from '../services/affirmationService';
