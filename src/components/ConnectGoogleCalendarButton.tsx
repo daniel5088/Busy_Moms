@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { AlertTriangle, Calendar } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
-
 export function ConnectGoogleCalendarButton({ onConnected } = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -15,13 +13,40 @@ export function ConnectGoogleCalendarButton({ onConnected } = {}) {
     try {
       const returnTo = window.location.origin;
 
-      const url =
-        `${supabaseUrl}/functions/v1/google-auth-start?return_to=${encodeURIComponent(returnTo)}`;
+      // Use Supabase built-in Google OAuth
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${returnTo}/auth/callback`, // adjust to your callback route
+          // you can also add scopes here if needed:
+          // scopes: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events",
+        },
+      });
 
-      console.log("🔗 Redirecting to OAuth:", url);
-      window.location.href = url;
+      if (error) {
+        console.error("❌ Google OAuth start error:", error);
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      // Supabase will redirect the browser to Google automatically.
+      // No need to manually set window.location.href here.
+      console.log("🔗 Google OAuth redirect started:", data);
+
+      // If you *don’t* get redirected (e.g., in some dev setups),
+      // you could optionally call onConnected here, but usually
+      // the flow will leave the page.
+      if (onConnected) {
+        // This will typically run only after the full sign-in flow if you call from somewhere else.
+        try {
+          await onConnected();
+        } catch (e) {
+          console.error("onConnected callback error:", e);
+        }
+      }
     } catch (e: any) {
-      console.error("❌ Google auth start error:", e);
+      console.error("❌ Unexpected Google auth error:", e);
       setError(e?.message ?? String(e));
       setLoading(false);
     }
