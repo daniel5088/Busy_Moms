@@ -1,109 +1,164 @@
+
 import React, { useEffect, useRef, useState } from "react";
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+type PlaceSelection = {
+  name: string;
+  placeId: string;
+};
 
 interface Props {
   value: string;
+  onChange: (value: string) => void;
   apiKey: string;
-  onChange: (v: string) => void;
-  onSelect: (place: any) => void;
+  onSelect?: (place: PlaceSelection) => void;
 }
 
-export function LocationAutocomplete({ value, apiKey, onChange, onSelect }: Props) {
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+export function LocationAutocomplete({
+  value,
+  onChange,
+  apiKey,
+  onSelect,
+}: Props) {
+  const [loaded, setLoaded] = useState(false);
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const serviceRef = useRef<any | null>(null);
+  const debounceRef = useRef<number | null>(null);
 
-  // Load Google script once
+  
   useEffect(() => {
-    if ((window as any).google) return;
+    if (typeof window === "undefined") return;
+
+    if (window.google?.maps) {
+      setLoaded(true);
+      return;
+    }
+
+    if (document.getElementById("google-maps-js")) return;
 
     const script = document.createElement("script");
+    script.id = "google-maps-js";
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
-    document.body.appendChild(script);
+    script.defer = true;
+    script.onload = () => setLoaded(true);
+    script.onerror = () => {
+      console.error("Failed to load Google Maps script");
+    };
+
+    document.head.appendChild(script);
   }, [apiKey]);
 
-  // Fetch predictions
-  async function fetchPredictions(input: string) {
-    if (!(window as any).google || !input) {
-      setSuggestions([]);
+ 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) {
+        setPredictions([]);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+ 
+  useEffect(() => {
+    if (!loaded || !window.google) return;
+
+    if (!serviceRef.current) {
+      serviceRef.current = new window.google.maps.places.AutocompleteService();
+    }
+
+    if (!value || value.trim().length < 2) {
+      setPredictions([]);
       return;
     }
 
-    setLoading(true);
+   
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+    }
 
-    const service = new (window as any).google.maps.places.AutocompleteService();
+    debounceRef.current = window.setTimeout(() => {
+      serviceRef.current.getPlacePredictions(
+        { input: value },
+        (results: any[] | null, status: string) => {
+          if (status !== "OK" || !results) {
+            setPredictions([]);
+            return;
+          }
 
-    service.getPlacePredictions(
-      { input },
-      (predictions: any[], status: any) => {
-        setLoading(false);
-        if (status === "OK" && predictions) {
-          setSuggestions(predictions);
-          setOpen(true);
-        } else {
-          setSuggestions([]);
+          
+          const unique = Array.from(
+            new Map(results.map((p) => [p.place_id, p])).values()
+          );
+          setPredictions(unique);
         }
-      }
+      );
+    }, 200);
+  }, [value, loaded]);
+
+  const handleSelect = (p: any) => {
+    const name = p.description || "";
+
+    // 1) set final value
+    onChange(name);
+
+    // 2) close dropdown
+    setPredictions([]);
+
+    // 3) notify parent if needed
+    if (onSelect) {
+      onSelect({
+        name,
+        placeId: p.place_id,
+      });
+    }
+  };
+
+  if (!loaded) {
+    return (
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Loading location..."
+        disabled
+        className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg text-sm sm:text-base bg-gray-50"
+      />
     );
   }
-
-  // Trigger API search
-  useEffect(() => {
-    if (value.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    fetchPredictions(value);
-  }, [value]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (!containerRef.current?.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   return (
     <div ref={containerRef} className="relative w-full">
       <input
         value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setOpen(true); // Keep dropdown open while typing
-        }}
-        placeholder="Search location..."
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search for a location"
+        autoComplete="off"
+        className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
       />
 
-      {open && suggestions.length > 0 && (
-        <div className="absolute z-50 bg-white border w-full rounded-lg mt-1 shadow-lg max-h-60 overflow-auto">
-          {suggestions.map((place) => (
-            <div
-              key={place.place_id}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-              onClick={() => {
-                // Set the selected value
-                onChange(place.description);
-
-                // Notify parent
-                onSelect(place);
-
-                // CLOSE DROPDOWN immediately
-                setOpen(false);
-
-                // Clear suggestions
-                setSuggestions([]);
+      {predictions.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
+          {predictions.map((p) => (
+            <li
+              key={p.place_id}
+              className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
+              
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(p);
               }}
             >
-              {place.description}
-            </div>
+              {p.description}
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
