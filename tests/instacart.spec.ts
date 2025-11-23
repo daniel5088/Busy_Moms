@@ -1,4 +1,4 @@
-
+// tests/instacart.spec.ts
 import {
   describe,
   it,
@@ -6,11 +6,11 @@ import {
   vi,
   beforeEach,
   afterEach,
-  type Mock
+  type Mock,
 } from 'vitest';
 
 // ---- Mock Supabase so sendToInstacart sees an authenticated user ----
-vi.mock('../src/lib/supabase.ts', () => ({
+vi.mock('../src/lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: vi.fn().mockResolvedValue({
@@ -61,12 +61,15 @@ describe('Instacart Shopping Service', () => {
       retailerId: 'costco',
     });
 
+    // 1) It called fetch once
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const [url, options] = fetchMock.mock.calls[0];
 
+    // 2) Hits the expected endpoint
     expect(String(url)).toContain('/instacart');
 
+    // 3) Correct payload shape
     const body = JSON.parse(options.body);
     expect(body.items).toEqual([
       { name: 'Milk', quantity: 2, unit: 'liter' },
@@ -74,6 +77,7 @@ describe('Instacart Shopping Service', () => {
     ]);
     expect(body.retailerId).toBe('costco');
 
+    // 4) Returns the URL from the response
     expect(result.url).toBe('https://instacart.com/fake-link');
   });
 
@@ -98,14 +102,18 @@ describe('Instacart Shopping Service', () => {
   it('retries on 5xx/429 (if using networkClient)', async () => {
     const fetchMock = global.fetch as unknown as Mock;
 
+    // first two calls fail with 500, third succeeds
     fetchMock
       .mockResolvedValueOnce(new Response('server error', { status: 500 }))
       .mockResolvedValueOnce(new Response('server error', { status: 500 }))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ url: 'https://insAtacart.com/retry-link' }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ url: 'https://instacart.com/retry-link' }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       );
 
     const result = await instacartShoppingService.createCartLink({
