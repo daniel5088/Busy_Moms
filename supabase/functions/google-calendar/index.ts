@@ -25,19 +25,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-function jsonResponse(data: any, status = 200) {
+function jsonResponse(data: any, status = 200, correlationId?: string) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json",
       ...corsHeaders,
+      ...(correlationId ? { "x-correlation-id": correlationId } : {}),
     },
   });
 }
 
 async function refreshGoogleToken(refreshToken: string, clientId: string, clientSecret: string) {
   console.log("🔄 Refreshing Google access token...");
-  
+
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: {
@@ -64,7 +65,7 @@ async function refreshGoogleToken(refreshToken: string, clientId: string, client
 
 async function getValidAccessToken(serviceSupabase: any, userId: string, googleClientId: string, googleClientSecret: string) {
   console.log("🔍 Getting valid access token for user:", userId);
-  
+
   const { data: tokenData, error } = await serviceSupabase
     .from('google_tokens')
     .select('*')
@@ -85,10 +86,10 @@ async function getValidAccessToken(serviceSupabase: any, userId: string, googleC
 
   const now = new Date();
   const expiry = new Date(tokenData.expiry_ts);
-  
+
   if (now >= expiry) {
     console.log("⏰ Token expired, refreshing...");
-    
+
     if (!tokenData.refresh_token) {
       console.error("❌ No refresh token available");
       throw new Error('Google Calendar connection expired. Please reconnect your Google Calendar.');
@@ -102,7 +103,7 @@ async function getValidAccessToken(serviceSupabase: any, userId: string, googleC
       );
 
       const newExpiry = new Date(Date.now() + (refreshResponse.expires_in * 1000));
-      
+
       const { error: updateError } = await serviceSupabase
         .from('google_tokens')
         .update({
@@ -131,9 +132,9 @@ async function getValidAccessToken(serviceSupabase: any, userId: string, googleC
 
 async function makeGoogleCalendarRequest(accessToken: string, endpoint: string, options: RequestInit = {}) {
   const url = `https://www.googleapis.com/calendar/v3${endpoint}`;
-  
+
   console.log(`📡 Making Google Calendar API request: ${options.method || 'GET'} ${endpoint}`);
-  
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -169,18 +170,25 @@ async function getAuthenticatedUser(req: Request, supabase: any) {
 }
 
 Deno.serve(async (req: Request) => {
+  // 🔹 Get or generate correlation ID for this request
+  const incomingId = req.headers.get('x-correlation-id');
+  const correlationId = incomingId ?? crypto.randomUUID();
+
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        "x-correlation-id": correlationId,
+      },
     });
   }
 
   try {
-    console.log(`🚀 Google Calendar API - ${req.method} ${req.url}`);
+    console.log(`🚀 Google Calendar API - ${req.method} ${req.url}`, { correlationId });
 
     if (req.method !== "POST") {
-      return jsonResponse({ error: "Method not allowed" }, 405);
+      return jsonResponse({ error: "Method not allowed" }, 405, correlationId);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -190,33 +198,43 @@ Deno.serve(async (req: Request) => {
     const googleClientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
     if (!supabaseUrl || !serviceRoleKey) {
-      console.error('❌ Missing Supabase environment variables');
-      return jsonResponse({ 
+      console.error('❌ Missing Supabase environment variables', { correlationId });
+      return jsonResponse({
         error: "Server configuration error",
         details: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
-      }, 500);
+      }, 500, correlationId);
     }
 
     if (!googleClientId || !googleClientSecret) {
-      console.error('❌ Missing Google OAuth credentials');
-      return jsonResponse({ 
+      console.error('❌ Missing Google OAuth credentials', { correlationId });
+      return jsonResponse({
         error: "Google Calendar not configured",
         details: "Missing GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables. Please configure these in your Supabase project settings."
-      }, 500);
+      }, 500, correlationId);
     }
 
     let body: any = {};
     try {
       body = await req.json();
     } catch (error) {
-      console.error("❌ Invalid JSON in request body:", error);
-      return jsonResponse({ error: "Invalid JSON in request body" }, 400);
+      console.error("❌ Invalid JSON in request body:", error, { correlationId });
+      return jsonResponse({ error: "Invalid JSON in request body" }, 400, correlationId);
     }
 
     const { action } = body;
 
     if (!action) {
-      return jsonResponse({ error: "Missing action parameter" }, 400);
+      return jsonResponse({ error: "Missing action parameter" }, 400, correlationId);
+    }
+
+    // 🔹 Simple ping action for Diagnostics (no auth needed)
+    if (action === 'ping') {
+      console.log('📶 Google Calendar ping received', { correlationId });
+      return jsonResponse(
+        { ok: true, source: 'google-calendar' },
+        200,
+        correlationId,
+      );
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -235,13 +253,13 @@ Deno.serve(async (req: Request) => {
     try {
       const user = await getAuthenticatedUser(req, supabase);
       userId = user.id;
-      console.log('✅ Authenticated user:', userId);
+      console.log('✅ Authenticated user:', userId, { correlationId });
     } catch (error) {
       if (action === 'isConnected' || action === 'disconnect') {
         return jsonResponse({
           error: 'Unauthorized',
           message: 'Authentication required'
-        }, 401);
+        }, 401, correlationId);
       }
       throw error;
     }
@@ -259,15 +277,15 @@ Deno.serve(async (req: Request) => {
           .maybeSingle();
 
         const isConnected = !error && !!tokenData?.access_token;
-        console.log(`🔍 Connection check for user ${userId}: ${isConnected}`);
+        console.log(`🔍 Connection check for user ${userId}: ${isConnected}`, { correlationId });
 
         return jsonResponse({
           connected: isConnected,
           expiry_ts: tokenData?.expiry_ts ?? null
-        });
-      } catch (error) {
-        console.error("❌ Connection check failed:", error);
-        return jsonResponse({ connected: false, error: error.message }, 500);
+        }, 200, correlationId);
+      } catch (error: any) {
+        console.error("❌ Connection check failed:", error, { correlationId });
+        return jsonResponse({ connected: false, error: error.message }, 500, correlationId);
       }
     }
 
@@ -279,54 +297,54 @@ Deno.serve(async (req: Request) => {
           .eq("user_id", userId);
 
         if (error) {
-          console.error("❌ Failed to disconnect Google Calendar:", error);
+          console.error("❌ Failed to disconnect Google Calendar:", error, { correlationId });
           return jsonResponse({
             success: false,
             error: "Failed to disconnect Google Calendar",
             details: error.message
-          }, 500);
+          }, 500, correlationId);
         }
 
-        console.log(`✅ Google Calendar disconnected for user: ${userId}`);
+        console.log(`✅ Google Calendar disconnected for user: ${userId}`, { correlationId });
         return jsonResponse({
           success: true,
           message: "Google Calendar disconnected successfully"
-        });
-      } catch (error) {
-        console.error("❌ Disconnect action failed:", error);
+        }, 200, correlationId);
+      } catch (error: any) {
+        console.error("❌ Disconnect action failed:", error, { correlationId });
         return jsonResponse({
           success: false,
           error: "Failed to disconnect Google Calendar",
           details: error instanceof Error ? error.message : "Unknown error"
-        }, 500);
+        }, 500, correlationId);
       }
     }
 
     let accessToken: string;
     try {
       accessToken = await getValidAccessToken(serviceSupabase, userId, googleClientId, googleClientSecret);
-    } catch (error) {
-      console.error('❌ Failed to get Google access token:', error);
-      return jsonResponse({ 
+    } catch (error: any) {
+      console.error('❌ Failed to get Google access token:', error, { correlationId });
+      return jsonResponse({
         error: "Google Calendar authentication failed",
         details: error instanceof Error ? error.message : "Unknown authentication error",
         action: "reconnect_required"
-      }, 401);
+      }, 401, correlationId);
     }
 
-    console.log(`📅 Processing Google Calendar action: ${action} for user: ${userId}`);
+    console.log(`📅 Processing Google Calendar action: ${action} for user: ${userId}`, { correlationId });
 
     switch (action) {
       case "listUpcoming": {
         const maxResults = Math.min(Math.max(1, parseInt(body.maxResults) || 10), 100);
         const timeMin = new Date().toISOString();
-        
+
         const events = await makeGoogleCalendarRequest(
           accessToken,
           `/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`
         );
-        
-        return jsonResponse(events);
+
+        return jsonResponse(events, 200, correlationId);
       }
 
       case "getEvents": {
@@ -335,17 +353,17 @@ Deno.serve(async (req: Request) => {
         const validatedMaxResults = Math.min(Math.max(1, parseInt(maxResults) || 250), 250);
 
         if (timeMin && isNaN(Date.parse(timeMin))) {
-          return jsonResponse({ error: "Invalid timeMin format" }, 400);
+          return jsonResponse({ error: "Invalid timeMin format" }, 400, correlationId);
         }
         if (timeMax && isNaN(Date.parse(timeMax))) {
-          return jsonResponse({ error: "Invalid timeMax format" }, 400);
+          return jsonResponse({ error: "Invalid timeMax format" }, 400, correlationId);
         }
         if (q && typeof q !== 'string') {
-          return jsonResponse({ error: "Invalid search query format" }, 400);
+          return jsonResponse({ error: "Invalid search query format" }, 400, correlationId);
         }
 
         let endpoint = `/calendars/primary/events?singleEvents=true&orderBy=startTime&maxResults=${validatedMaxResults}`;
-        
+
         if (timeMin) {
           endpoint += `&timeMin=${encodeURIComponent(timeMin)}`;
         }
@@ -355,22 +373,22 @@ Deno.serve(async (req: Request) => {
         if (q) {
           endpoint += `&q=${encodeURIComponent(q)}`;
         }
-        
+
         const events = await makeGoogleCalendarRequest(accessToken, endpoint);
-        return jsonResponse(events);
+        return jsonResponse(events, 200, correlationId);
       }
 
       case "insertEvent": {
         const { event } = body;
 
         if (!event || typeof event !== 'object') {
-          return jsonResponse({ error: "Missing or invalid event data" }, 400);
+          return jsonResponse({ error: "Missing or invalid event data" }, 400, correlationId);
         }
 
         if (!event.summary || typeof event.summary !== 'string') {
-          return jsonResponse({ error: "Event must have a valid summary" }, 400);
+          return jsonResponse({ error: "Event must have a valid summary" }, 400, correlationId);
         }
-        
+
         const createdEvent = await makeGoogleCalendarRequest(
           accessToken,
           '/calendars/primary/events',
@@ -379,20 +397,20 @@ Deno.serve(async (req: Request) => {
             body: JSON.stringify(event),
           }
         );
-        
-        return jsonResponse(createdEvent);
+
+        return jsonResponse(createdEvent, 200, correlationId);
       }
 
       case "updateEvent": {
         const { eventId, event } = body;
 
         if (!eventId || typeof eventId !== 'string') {
-          return jsonResponse({ error: "Missing or invalid eventId" }, 400);
+          return jsonResponse({ error: "Missing or invalid eventId" }, 400, correlationId);
         }
         if (!event || typeof event !== 'object') {
-          return jsonResponse({ error: "Missing or invalid event data" }, 400);
+          return jsonResponse({ error: "Missing or invalid event data" }, 400, correlationId);
         }
-        
+
         const updatedEvent = await makeGoogleCalendarRequest(
           accessToken,
           `/calendars/primary/events/${eventId}`,
@@ -401,15 +419,15 @@ Deno.serve(async (req: Request) => {
             body: JSON.stringify(event),
           }
         );
-        
-        return jsonResponse(updatedEvent);
+
+        return jsonResponse(updatedEvent, 200, correlationId);
       }
 
       case "deleteEvent": {
         const { eventId } = body;
 
         if (!eventId || typeof eventId !== 'string') {
-          return jsonResponse({ error: "Missing or invalid eventId" }, 400);
+          return jsonResponse({ error: "Missing or invalid eventId" }, 400, correlationId);
         }
 
         await makeGoogleCalendarRequest(
@@ -418,19 +436,19 @@ Deno.serve(async (req: Request) => {
           { method: 'DELETE' }
         );
 
-        return jsonResponse({ success: true, message: "Event deleted successfully" });
+        return jsonResponse({ success: true, message: "Event deleted successfully" }, 200, correlationId);
       }
 
       default:
-        return jsonResponse({ error: `Unknown action: ${action}` }, 400);
+        return jsonResponse({ error: `Unknown action: ${action}` }, 400, correlationId);
     }
 
   } catch (error) {
-    console.error('❌ Google Calendar function error:', error);
-    
+    console.error('❌ Google Calendar function error:', error, { correlationId });
+
     return jsonResponse({
       error: "Internal server error",
       message: "An unexpected error occurred"
-    }, 500);
+    }, 500, correlationId);
   }
 });
