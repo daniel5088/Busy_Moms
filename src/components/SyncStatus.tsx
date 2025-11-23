@@ -1,17 +1,74 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle, Calendar } from 'lucide-react';
-import { useCalendarSync } from '../hooks/useCalendarSync';
+import { calendarSyncService } from '../services/calendarSync';
+import { syncOrchestrator } from '../services/syncOrchestrator';
+import { supabase } from '../lib/supabase';
 
 export function SyncStatus() {
-  const {
-    isSyncing,
-    lastSyncResult,
-    lastSyncTime,
-    nextSyncTime,
-    syncEnabled,
-    pendingConflicts,
-    performSync,
-  } = useCalendarSync();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncResult, setLastSyncResult] = useState<any>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [nextSyncTime, setNextSyncTime] = useState<Date | null>(null);
+  const [syncEnabled, setSyncEnabled] = useState(true);
+  const [pendingConflicts, setPendingConflicts] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    init();
+  }, []);
+
+  const init = async () => {
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session?.user) return;
+
+    const uid = session.user.id;
+    setUserId(uid);
+
+    const prefs = await calendarSyncService.getUserSyncPreferences(uid);
+    if (prefs) {
+      setSyncEnabled(prefs.sync_enabled);
+      if (prefs.last_sync_at) {
+        setLastSyncTime(new Date(prefs.last_sync_at));
+      }
+      if (prefs.sync_frequency_minutes) {
+        const next = new Date();
+        next.setMinutes(next.getMinutes() + prefs.sync_frequency_minutes);
+        setNextSyncTime(next);
+      }
+    }
+
+    const conflicts = await calendarSyncService.getPendingConflicts(uid);
+    setPendingConflicts(conflicts);
+  };
+
+  const performSync = async () => {
+    if (!userId || isSyncing) return;
+
+    setIsSyncing(true);
+    setLastSyncResult(null);
+
+    try {
+      const result = await syncOrchestrator.performFullSync(userId);
+      setLastSyncResult(result);
+
+      if (result.success) {
+        const prefs = await calendarSyncService.getUserSyncPreferences(userId);
+        if (prefs?.last_sync_at) {
+          setLastSyncTime(new Date(prefs.last_sync_at));
+        }
+        const conflicts = await calendarSyncService.getPendingConflicts(userId);
+        setPendingConflicts(conflicts);
+      }
+    } catch (error: any) {
+      console.error('❌ Sync failed:', error);
+      setLastSyncResult({
+        success: false,
+        errors: [error.message || 'Unknown error'],
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const formatTime = (date: Date | null) => {
     if (!date) return 'Never';
@@ -69,9 +126,7 @@ export function SyncStatus() {
             <Clock className="w-4 h-4" />
             <span>Last sync:</span>
           </div>
-          <span className="font-medium text-gray-900">
-            {formatTime(lastSyncTime)}
-          </span>
+          <span className="font-medium text-gray-900">{formatTime(lastSyncTime)}</span>
         </div>
 
         {/* Next Sync */}
@@ -81,19 +136,19 @@ export function SyncStatus() {
               <Clock className="w-4 h-4" />
               <span>Next sync:</span>
             </div>
-            <span className="font-medium text-gray-900">
-              {formatNextSync(nextSyncTime)}
-            </span>
+            <span className="font-medium text-gray-900">{formatNextSync(nextSyncTime)}</span>
           </div>
         )}
 
         {/* Sync Result */}
         {lastSyncResult && (
-          <div className={`flex items-start space-x-2 text-sm p-2 rounded-lg ${
-            lastSyncResult.success
-              ? 'bg-green-50 text-green-800'
-              : 'bg-red-50 text-red-800'
-          }`}>
+          <div
+            className={`flex items-start space-x-2 text-sm p-2 rounded-lg ${
+              lastSyncResult.success
+                ? 'bg-green-50 text-green-800'
+                : 'bg-red-50 text-red-800'
+            }`}
+          >
             {lastSyncResult.success ? (
               <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             ) : (
@@ -113,7 +168,7 @@ export function SyncStatus() {
               ) : (
                 <div>
                   <p className="font-medium">Sync failed</p>
-                  {lastSyncResult.errors.length > 0 && (
+                  {lastSyncResult.errors?.length > 0 && (
                     <p className="text-xs mt-1">{lastSyncResult.errors[0]}</p>
                   )}
                 </div>
@@ -128,11 +183,11 @@ export function SyncStatus() {
             <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-medium">
-                {pendingConflicts.length} conflict{pendingConflicts.length !== 1 ? 's' : ''} need{pendingConflicts.length === 1 ? 's' : ''} resolution
+                {pendingConflicts.length} conflict
+                {pendingConflicts.length !== 1 ? 's' : ''} need
+                {pendingConflicts.length === 1 ? 's' : ''} resolution
               </p>
-              <p className="text-xs mt-1">
-                Events were modified in both calendars
-              </p>
+              <p className="text-xs mt-1">Events were modified in both calendars</p>
             </div>
           </div>
         )}
