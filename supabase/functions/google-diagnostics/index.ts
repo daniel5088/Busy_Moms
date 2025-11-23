@@ -7,31 +7,45 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2.55.0';
 
+// Editor helper for Deno runtime types
+declare const Deno: any;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-function jsonResponse(data: any, status = 200) {
+function jsonResponse(data: any, status = 200, correlationId?: string) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
       "Content-Type": "application/json",
       ...corsHeaders,
+      ...(correlationId ? { 'x-correlation-id': correlationId } : {}),
     },
   });
 }
 
+function getCorrelationId(req: Request) {
+  return req.headers.get('x-correlation-id') || req.headers.get('X-Correlation-ID') || crypto.randomUUID();
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
+    const correlationId = getCorrelationId(req);
     return new Response(null, {
       status: 200,
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        'x-correlation-id': correlationId,
+      },
     });
   }
 
-  const diagnostics = {
+    const correlationId = getCorrelationId(req);
+
+    const diagnostics = {
     timestamp: new Date().toISOString(),
     checks: [] as any[],
     overall_status: "unknown" as "pass" | "fail" | "warning" | "unknown",
@@ -226,7 +240,7 @@ Deno.serve(async (req: Request) => {
       };
     }
 
-    return jsonResponse(diagnostics, hasFailures ? 500 : 200);
+    return jsonResponse(diagnostics, hasFailures ? 500 : 200, correlationId);
 
   } catch (error) {
     console.error('❌ Diagnostics error:', error);
@@ -237,6 +251,6 @@ Deno.serve(async (req: Request) => {
       error: "Diagnostic check failed",
       message: error instanceof Error ? error.message : "Unknown error",
       details: "Check Edge Function logs for more information"
-    }, 500);
+    }, 500, getCorrelationId(req));
   }
 });
