@@ -2,7 +2,126 @@ import { supabase } from '../lib/supabase';
 import type { Event } from '../lib/supabase';
 import { googleCalendarService, GoogleCalendarEvent } from './googleCalendar';
 
-// Types for sync system
+function toUtcISOString(input: string | Date): string {
+  const d = typeof input === 'string' ? new Date(input) : input;
+  // Convert local wall time to UTC by subtracting the local offset at that instant
+  const ms = d.getTime();
+  const offsetMs = d.getTimezoneOffset() * 60000;
+  return new Date(ms - offsetMs).toISOString();
+}
+
+
+function buildUtcRangeFromLocal(event_date: string, start_time: string | null, end_time: string | null) {
+  if (start_time) {
+    const startLocal = new Date(`${event_date}T${start_time}`);
+    const startUtc = toUtcISOString(startLocal);
+    let endUtc: string;
+    if (end_time) {
+      const endLocal = new Date(`${event_date}T${end_time}`);
+      endUtc = toUtcISOString(endLocal);
+    } else {
+      // Fallback: one-hour slot if end not given
+      const endLocal = new Date(`${event_date}T${start_time}`);
+      endLocal.setHours(endLocal.getHours() + 1);
+      endUtc = toUtcISOString(endLocal);
+    }
+    return { startUtc, endUtc, allDay: false };
+  } else {
+  
+    const start = new Date(`${event_date}T00:00:00`);
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    return { startUtc: toUtcISOString(start), endUtc: toUtcISOString(end), allDay: true };
+  }
+}
+
+
+function normalizeGoogleDateRange(ge: GoogleCalendarEvent) {
+
+  if (ge.start?.date) {
+    const start = new Date(`${ge.start.date}T00:00:00`);
+    const endDate = ge.end?.date ?? ge.start.date; // Google returns exclusive end date for all-day
+    const end = new Date(`${endDate}T00:00:00`);
+    return { startUtc: toUtcISOString(start), endUtc: toUtcISOString(end), allDay: true };
+  }
+
+  const startRaw = ge.start?.dateTime ?? '';
+  const endRaw = ge.end?.dateTime ?? startRaw;
+  const startUtc = new Date(startRaw).toISOString(); // already absolute
+  const endUtc = new Date(endRaw).toISOString();
+  return { startUtc, endUtc, allDay: false };
+}
+
+
+function deterministicStringify(obj: Record<string, any>): string {
+  const keys = Object.keys(obj).sort();
+  return `{${keys.map(k => `"${k}":${JSON.stringify(obj[k])}`).join(',')}}`;
+}
+
+
+function xxhash64(str: string): string {
+  let h1 = 0x9e3779b185ebca87n, h2 = 0xc2b2ae3d27d4eb4fn;
+  for (let i = 0; i < str.length; i++) {
+    const c = BigInt(str.charCodeAt(i));
+    h1 ^= c; h1 = (h1 * 0x100000001b3n) & ((1n<<64n)-1n);
+    h2 ^= (c<<13n); h2 = (h2 * 0x100000001b3n) & ((1n<<64n)-1n);
+  }
+  const x = (h1 ^ (h2<<1n)) & ((1n<<64n)-1n);
+  return x.toString(16).padStart(16, '0');
+}
+
+
+type NormalizedLocal = {
+  title: string;
+  notes: string;
+  startUtc: string;
+  endUtc: string;
+  location: string;
+  participants: string[];
+  type: string;
+};
+
+type NormalizedGoogle = {
+  title: string;
+  notes: string;
+  startUtc: string;
+  endUtc: string;
+  location: string;
+  attendees: string[];
+};
+
+
+function normalizeLocalEvent(e: Event): NormalizedLocal {
+  const { startUtc, endUtc } = buildUtcRangeFromLocal(e.event_date, e.start_time, e.end_time);
+  return {
+    title: (e.title ?? '').trim(),
+    notes: (e.description ?? '') || '',
+    startUtc,
+    endUtc,
+    location: (e.location ?? '') || '',
+    participants: Array.isArray(e.participants) ? e.participants.map(String).sort() : [],
+    type: (e.event_type ?? '') || 'other',
+  };
+}
+
+
+function normalizeGoogleEvent(g: GoogleCalendarEvent): NormalizedGoogle {
+  const { startUtc, endUtc } = normalizeGoogleDateRange(g);
+  return {
+    title: (g.summary ?? '').trim(),
+    notes: (g.description ?? '') || '',
+    startUtc,
+    endUtc,
+    location: (g.location ?? '') || '',
+    attendees: Array.isArray(g.attendees)
+      ? g.attendees
+          .map(a => (a.email || a.displayName || '').trim())
+          .filter(Boolean)
+          .sort()
+      : [],
+  };
+}
+
+
 export interface SyncMapping {
   id: string;
   user_id: string;
