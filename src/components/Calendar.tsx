@@ -57,6 +57,21 @@ const formatTimeRange = (startTime?: string | null, endTime?: string | null) => 
   return start;
 };
 
+// 🌍 New helpers for redirect buttons -----------------------------------------
+const openInGoogleMaps = (location: string) => {
+  if (!location) return;
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    location
+  )}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
+};
+
+const openInAppleMaps = (location: string) => {
+  if (!location) return;
+  const url = `https://maps.apple.com/?q=${encodeURIComponent(location)}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
+};
+
 // --- Component ---------------------------------------------------------------
 export function Calendar() {
   const supabase = useSupabaseClient();
@@ -674,9 +689,27 @@ export function Calendar() {
                       )}
 
                       {selectedEvent.location && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4" />
-                          <span>{selectedEvent.location}</span>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <MapPin className="w-4 h-4" />
+                            <span>{selectedEvent.location}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openInGoogleMaps(selectedEvent.location!)}
+                              className="px-3 py-1.5 text-xs sm:text-sm rounded-full bg-rose-500 text-white hover:bg-rose-600 transition-colors"
+                            >
+                              Open in Google Maps
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openInAppleMaps(selectedEvent.location!)}
+                              className="px-3 py-1.5 text-xs sm:text-sm rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                              Open in Apple Maps
+                            </button>
+                          </div>
                         </div>
                       )}
 
