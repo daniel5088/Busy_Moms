@@ -38,16 +38,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+Deno;
+declare const Deno: any;
+
+function getCorrelationId(req: Request) {
+  return req.headers.get('x-correlation-id') || req.headers.get('X-Correlation-ID') || crypto.randomUUID();
+}
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
+    const correlationId = getCorrelationId(req);
     return new Response(null, {
       status: 200,
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        'x-correlation-id': correlationId,
+      },
     });
   }
 
   try {
-    console.log(`🚀 OpenAI token request - ${req.method} ${req.url}`);
+    const correlationId = getCorrelationId(req);
+    console.log(`🚀 OpenAI token request - ${req.method} ${req.url}`, { correlationId });
 
     if (req.method !== "POST") {
       return new Response(
@@ -57,6 +68,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -71,6 +83,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -92,7 +105,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      console.error('❌ Authentication failed:', userError?.message);
+      console.error('❌ Authentication failed:', userError?.message, { correlationId });
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         {
@@ -100,6 +113,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -121,7 +135,7 @@ Deno.serve(async (req: Request) => {
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
-      console.error('❌ OpenAI API key not configured');
+      console.error('❌ OpenAI API key not configured', { correlationId });
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
@@ -132,6 +146,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -144,6 +159,7 @@ Deno.serve(async (req: Request) => {
       headers: {
         'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
+        'x-correlation-id': correlationId,
       },
       body: JSON.stringify({
         model: 'gpt-4o-realtime-preview',
@@ -177,6 +193,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -193,7 +210,7 @@ Deno.serve(async (req: Request) => {
       userId
     };
 
-    console.log(`✅ Generated OpenAI Realtime token for user ${userId}`);
+    console.log(`✅ Generated OpenAI Realtime token for user ${userId}`, { correlationId });
 
     return new Response(
       JSON.stringify(response),
@@ -202,6 +219,7 @@ Deno.serve(async (req: Request) => {
         headers: {
           "Content-Type": "application/json",
           ...corsHeaders,
+          'x-correlation-id': correlationId,
         },
       }
     );
