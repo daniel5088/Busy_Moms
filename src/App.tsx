@@ -24,6 +24,7 @@ import { ToastContainer } from './components/errors/ErrorToast'
 import { useToast } from './hooks/useErrorHandler'
 import { useAffirmationNotifier } from './hooks/useAffirmationNotifier'
 import { captureAndStoreGoogleTokens } from './services/googleTokenStorage'
+import { Diagnostics } from "./pages/Diagnostics";
 
 export type Screen = 'dashboard' | 'calendar' | 'family' | 'more'
 export type SubScreen = 'shopping' | 'tasks' | 'contacts' | 'family-folders' | 'settings'
@@ -45,6 +46,7 @@ function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const showDiagnostics = urlParams.get('diagnostics') === 'true';
   const forceSignOut = urlParams.get('signout') === 'true';
+  const showEdgeDiagnostics = urlParams.get('edgeDiagnostics') === 'true';
 
   // Handle force sign-out if requested
   useEffect(() => {
@@ -55,6 +57,11 @@ function App() {
       });
     }
   }, [forceSignOut, user]);
+
+  // Show edge diagnostics page if requested
+  if (showEdgeDiagnostics) {
+    return <Diagnostics />;
+  }
 
   // Show diagnostics page if requested
   if (showDiagnostics) {
