@@ -39,22 +39,59 @@ interface GetNearbyRetailersResponse {
 }
 
 Deno.serve(async (req: Request) => {
+  // 🔹 1) Get or generate correlation ID for this request
+  const incomingId = req.headers.get("x-correlation-id");
+  const correlationId = incomingId ?? crypto.randomUUID();
+
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        "x-correlation-id": correlationId,
+      },
     });
   }
 
   try {
     const instacartApiKey = Deno.env.get("INSTACART_API_KEY");
     if (!instacartApiKey) {
+      console.error(
+        JSON.stringify({
+          level: "error",
+          msg: "INSTACART_API_KEY missing",
+          correlationId,
+        }),
+      );
       throw new Error("INSTACART_API_KEY environment variable is not set");
     }
 
     const { action, ...payload } = await req.json();
 
     const instacartBaseUrl = "https://connect.dev.instacart.tools";
+
+    // 🔹 Optional ping action for diagnostics
+    if (action === "ping") {
+      console.log(
+        JSON.stringify({
+          level: "info",
+          msg: "instacart-shopping-list ping",
+          correlationId,
+        }),
+      );
+      return new Response(
+        JSON.stringify({ ok: true, source: "instacart-shopping-list" }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "x-correlation-id": correlationId,
+          },
+        },
+      );
+    }
 
     switch (action) {
       case "create_shopping_list": {
@@ -65,8 +102,12 @@ Deno.serve(async (req: Request) => {
             JSON.stringify({ error: "At least one item is required" }),
             {
               status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+                "x-correlation-id": correlationId,
+              },
+            },
           );
         }
 
@@ -76,10 +117,12 @@ Deno.serve(async (req: Request) => {
           };
 
           if (item.quantity && item.unit) {
-            formattedItem.measurements = [{
-              quantity: item.quantity,
-              unit: item.unit,
-            }];
+            formattedItem.measurements = [
+              {
+                quantity: item.quantity,
+                unit: item.unit,
+              },
+            ];
           }
 
           if (item.category) {
@@ -98,18 +141,28 @@ Deno.serve(async (req: Request) => {
           instacartPayload.retailer_key = listRequest.retailer_key;
         }
 
-        console.log("Calling Instacart API:", `${instacartBaseUrl}/idp/v1/products/products_link`);
-        console.log("Payload:", JSON.stringify(instacartPayload, null, 2));
+        console.log(
+          JSON.stringify({
+            level: "info",
+            msg: "Calling Instacart create_shopping_list",
+            correlationId,
+            endpoint: `${instacartBaseUrl}/idp/v1/products/products_link`,
+            payload: instacartPayload,
+          }),
+        );
 
-        const response = await fetch(`${instacartBaseUrl}/idp/v1/products/products_link`, {
-          method: "POST",
-          headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${instacartApiKey}`,
+        const response = await fetch(
+          `${instacartBaseUrl}/idp/v1/products/products_link`,
+          {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${instacartApiKey}`,
+            },
+            body: JSON.stringify(instacartPayload),
           },
-          body: JSON.stringify(instacartPayload),
-        });
+        );
 
         const contentType = response.headers.get("content-type");
         let responseData: any;
@@ -117,9 +170,16 @@ Deno.serve(async (req: Request) => {
 
         try {
           responseText = await response.text();
-          console.log("Raw response:", responseText);
-          console.log("Response status:", response.status);
-          console.log("Content-Type:", contentType);
+          console.log(
+            JSON.stringify({
+              level: "info",
+              msg: "Instacart create_shopping_list raw response",
+              correlationId,
+              status: response.status,
+              contentType,
+              responseText,
+            }),
+          );
 
           if (contentType?.includes("application/json") && responseText) {
             responseData = JSON.parse(responseText);
@@ -127,12 +187,28 @@ Deno.serve(async (req: Request) => {
             responseData = { raw: responseText };
           }
         } catch (parseError) {
-          console.error("Failed to parse response:", parseError);
+          console.error(
+            JSON.stringify({
+              level: "error",
+              msg: "Failed to parse Instacart response",
+              correlationId,
+              error: String(parseError),
+            }),
+          );
           responseData = { raw: responseText || "Empty response" };
         }
 
         if (!response.ok) {
-          console.error("Instacart API error:", responseData);
+          console.error(
+            JSON.stringify({
+              level: "error",
+              msg: "Instacart API error (create_shopping_list)",
+              correlationId,
+              status: response.status,
+              endpoint: `${instacartBaseUrl}/idp/v1/products/products_link`,
+              details: responseData,
+            }),
+          );
           return new Response(
             JSON.stringify({
               error: "Failed to create Instacart shopping list",
@@ -142,20 +218,32 @@ Deno.serve(async (req: Request) => {
             }),
             {
               status: response.status,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+                "x-correlation-id": correlationId,
+              },
+            },
           );
         }
 
-        console.log("Success! Response data:", responseData);
-
-        return new Response(
-          JSON.stringify(responseData),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+        console.log(
+          JSON.stringify({
+            level: "info",
+            msg: "Instacart shopping list created",
+            correlationId,
+            responseData,
+          }),
         );
+
+        return new Response(JSON.stringify(responseData as InstacartShoppingListResponse), {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "x-correlation-id": correlationId,
+          },
+        });
       }
 
       case "get_nearby_retailers": {
@@ -163,21 +251,31 @@ Deno.serve(async (req: Request) => {
 
         if (!retailerRequest.postal_code || !retailerRequest.country_code) {
           return new Response(
-            JSON.stringify({ error: "postal_code and country_code are required" }),
+            JSON.stringify({
+              error: "postal_code and country_code are required",
+            }),
             {
               status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+                "x-correlation-id": correlationId,
+              },
+            },
           );
         }
 
-        if (!['US', 'CA'].includes(retailerRequest.country_code.toUpperCase())) {
+        if (!["US", "CA"].includes(retailerRequest.country_code.toUpperCase())) {
           return new Response(
             JSON.stringify({ error: "country_code must be 'US' or 'CA'" }),
             {
               status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+                "x-correlation-id": correlationId,
+              },
+            },
           );
         }
 
@@ -187,13 +285,20 @@ Deno.serve(async (req: Request) => {
         });
 
         const apiUrl = `${instacartBaseUrl}/idp/v1/retailers?${params.toString()}`;
-        console.log("Calling Instacart API:", apiUrl);
+        console.log(
+          JSON.stringify({
+            level: "info",
+            msg: "Calling Instacart get_nearby_retailers",
+            correlationId,
+            apiUrl,
+          }),
+        );
 
         const response = await fetch(apiUrl, {
           method: "GET",
           headers: {
-            "Accept": "application/json",
-            "Authorization": `Bearer ${instacartApiKey}`,
+            Accept: "application/json",
+            Authorization: `Bearer ${instacartApiKey}`,
           },
         });
 
@@ -203,9 +308,16 @@ Deno.serve(async (req: Request) => {
 
         try {
           responseText = await response.text();
-          console.log("Raw response:", responseText);
-          console.log("Response status:", response.status);
-          console.log("Content-Type:", contentType);
+          console.log(
+            JSON.stringify({
+              level: "info",
+              msg: "Instacart get_nearby_retailers raw response",
+              correlationId,
+              status: response.status,
+              contentType,
+              responseText,
+            }),
+          );
 
           if (contentType?.includes("application/json") && responseText) {
             responseData = JSON.parse(responseText);
@@ -213,12 +325,28 @@ Deno.serve(async (req: Request) => {
             responseData = { raw: responseText };
           }
         } catch (parseError) {
-          console.error("Failed to parse response:", parseError);
+          console.error(
+            JSON.stringify({
+              level: "error",
+              msg: "Failed to parse Instacart retailers response",
+              correlationId,
+              error: String(parseError),
+            }),
+          );
           responseData = { raw: responseText || "Empty response" };
         }
 
         if (!response.ok) {
-          console.error("Instacart API error:", responseData);
+          console.error(
+            JSON.stringify({
+              level: "error",
+              msg: "Instacart API error (get_nearby_retailers)",
+              correlationId,
+              status: response.status,
+              endpoint: apiUrl,
+              details: responseData,
+            }),
+          );
           return new Response(
             JSON.stringify({
               error: "Failed to get nearby retailers",
@@ -228,41 +356,72 @@ Deno.serve(async (req: Request) => {
             }),
             {
               status: response.status,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+                "x-correlation-id": correlationId,
+              },
+            },
           );
         }
 
-        console.log("Success! Response data:", responseData);
-
-        return new Response(
-          JSON.stringify(responseData),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+        console.log(
+          JSON.stringify({
+            level: "info",
+            msg: "Instacart retailers fetched",
+            correlationId,
+            responseData,
+          }),
         );
+
+        return new Response(JSON.stringify(responseData as GetNearbyRetailersResponse), {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "x-correlation-id": correlationId,
+          },
+        });
       }
 
       default:
         return new Response(
-          JSON.stringify({ error: "Invalid action. Supported actions: create_shopping_list, get_nearby_retailers" }),
+          JSON.stringify({
+            error:
+              "Invalid action. Supported actions: create_shopping_list, get_nearby_retailers, ping",
+          }),
           {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+              "x-correlation-id": correlationId,
+            },
+          },
         );
     }
   } catch (error) {
-    console.error("Edge function error:", error);
+    console.error(
+      JSON.stringify({
+        level: "error",
+        msg: "Edge function error",
+        correlationId,
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "An unexpected error occurred",
+        error:
+          error instanceof Error ? error.message : "An unexpected error occurred",
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "x-correlation-id": correlationId,
+        },
+      },
     );
   }
 });
