@@ -12,13 +12,13 @@ export function useGoogleMaps(apiKey: string) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Already loaded?
+  
     if (window.google?.maps) {
       setLoaded(true);
       return;
     }
 
-    // Already loading?
+    
     if (document.getElementById("google-maps-script")) {
       return;
     }
