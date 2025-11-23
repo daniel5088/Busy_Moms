@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 
 declare global {
@@ -28,10 +27,11 @@ export function LocationAutocomplete({
   const [loaded, setLoaded] = useState(false);
   const [predictions, setPredictions] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null); // 👈 NEW
   const serviceRef = useRef<any | null>(null);
   const debounceRef = useRef<number | null>(null);
 
-  
+  // Load Google Maps JS
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -55,7 +55,7 @@ export function LocationAutocomplete({
     document.head.appendChild(script);
   }, [apiKey]);
 
- 
+  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (!containerRef.current?.contains(e.target as Node)) {
@@ -66,7 +66,7 @@ export function LocationAutocomplete({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
- 
+  // Fetch predictions when value changes
   useEffect(() => {
     if (!loaded || !window.google) return;
 
@@ -79,7 +79,6 @@ export function LocationAutocomplete({
       return;
     }
 
-   
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
     }
@@ -93,7 +92,7 @@ export function LocationAutocomplete({
             return;
           }
 
-          
+          // De-duplicate by place_id
           const unique = Array.from(
             new Map(results.map((p) => [p.place_id, p])).values()
           );
@@ -112,7 +111,12 @@ export function LocationAutocomplete({
     // 2) close dropdown
     setPredictions([]);
 
-    // 3) notify parent if needed
+    // 3) blur input to stop immediate re-opening of suggestions 👇
+    requestAnimationFrame(() => {
+      inputRef.current?.blur();
+    });
+
+    // 4) notify parent if needed
     if (onSelect) {
       onSelect({
         name,
@@ -136,6 +140,7 @@ export function LocationAutocomplete({
   return (
     <div ref={containerRef} className="relative w-full">
       <input
+        ref={inputRef} // 👈 NEW
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search for a location"
@@ -149,9 +154,8 @@ export function LocationAutocomplete({
             <li
               key={p.place_id}
               className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
-              
               onMouseDown={(e) => {
-                e.preventDefault();
+                e.preventDefault(); // so blur happens after we handle click
                 handleSelect(p);
               }}
             >
