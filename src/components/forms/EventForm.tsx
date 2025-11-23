@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, Calendar, Clock, MapPin, Users } from 'lucide-react'
 import { supabase, Event } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { LocationAutocomplete } from '../LocationAutocomplete'
 
 interface EventFormProps {
   defaultDate?: string
@@ -26,8 +27,11 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
     rsvp_status: 'pending' as const
   })
 
+  // public Google Maps key (set as VITE_GOOGLE_MAPS_API_KEY in env)
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
+
   // Update form data when defaultDate or event changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (event) {
       setFormData({
         title: event.title || '',
@@ -107,163 +111,181 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                Event Title *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                placeholder="Enter event title"
-              />
-            </div>
+      <div>
+        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+          Event Title *
+        </label>
+        <input
+          type="text"
+          required
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          placeholder="Enter event title"
+        />
+      </div>
 
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                rows={2}
-                placeholder="Event description"
-              />
-            </div>
+      <div>
+        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+          Description
+        </label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          rows={2}
+          placeholder="Event description"
+        />
+      </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                  Date *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={formData.event_date}
-                  onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-                  className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                />
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Event Type
-                </label>
-                <select
-                  value={formData.event_type}
-                  onChange={(e) => setFormData({ ...formData, event_type: e.target.value as any })}
-                  className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                >
-                  <option value="sports">Sports</option>
-                  <option value="party">Party</option>
-                  <option value="meeting">Meeting</option>
-                  <option value="medical">Medical</option>
-                  <option value="school">School</option>
-                  <option value="family">Family</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+            Date *
+          </label>
+          <input
+            type="date"
+            required
+            value={formData.event_date}
+            onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
+            className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          />
+        </div>
+        <div>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+            Event Type
+          </label>
+          <select
+            value={formData.event_type}
+            onChange={(e) => setFormData({ ...formData, event_type: e.target.value as any })}
+            className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          >
+            <option value="sports">Sports</option>
+            <option value="party">Party</option>
+            <option value="meeting">Meeting</option>
+            <option value="medical">Medical</option>
+            <option value="school">School</option>
+            <option value="family">Family</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                  Start Time
-                </label>
-                <input
-                  type="time"
-                  value={formData.start_time}
-                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                  className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                />
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                  End Time
-                </label>
-                <input
-                  type="time"
-                  value={formData.end_time}
-                  onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                  className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                />
-              </div>
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+            <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+            Start Time
+          </label>
+          <input
+            type="time"
+            value={formData.start_time}
+            onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+            className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          />
+        </div>
+        <div>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+            <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+            End Time
+          </label>
+          <input
+            type="time"
+            value={formData.end_time}
+            onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+            className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          />
+        </div>
+      </div>
 
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Location
-              </label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                placeholder="Event location"
-              />
-            </div>
+      {/* Location with Google Places autocomplete (with fallback) */}
+      <div>
+        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+          Location
+        </label>
 
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                <Users className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Participants
-              </label>
-              <input
-                type="text"
-                value={formData.participants}
-                onChange={(e) => setFormData({ ...formData, participants: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                placeholder="Emma, Tom (comma separated)"
-              />
-            </div>
+        {GOOGLE_MAPS_API_KEY ? (
+          <>
+            <LocationAutocomplete
+              value={formData.location}
+              onChange={(value: string) =>
+                setFormData(prev => ({ ...prev, location: value }))
+              }
+              apiKey={GOOGLE_MAPS_API_KEY}
+              onSelect={(place: any) => {
+                const name = place.name || place.description || ''
+                setFormData(prev => ({ ...prev, location: name || prev.location }))
+              }}
+            />
+          </>
+        ) : (
+          <input
+            type="text"
+            value={formData.location}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+            placeholder="Event location"
+          />
+        )}
+      </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.rsvp_required}
-                  onChange={(e) => setFormData({ ...formData, rsvp_required: e.target.checked })}
-                  className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700">RSVP Required</span>
-              </label>
+      <div>
+        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+          <Users className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+          Participants
+        </label>
+        <input
+          type="text"
+          value={formData.participants}
+          onChange={(e) => setFormData({ ...formData, participants: e.target.value })}
+          className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          placeholder="Emma, Tom (comma separated)"
+        />
+      </div>
 
-              {formData.rsvp_required && (
-                <select
-                  value={formData.rsvp_status}
-                  onChange={(e) => setFormData({ ...formData, rsvp_status: e.target.value as any })}
-                  className="px-2 py-1 sm:px-3 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                  <option value="maybe">Maybe</option>
-                </select>
-              )}
-            </div>
+      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={formData.rsvp_required}
+            onChange={(e) => setFormData({ ...formData, rsvp_required: e.target.checked })}
+            className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+          />
+          <span className="ml-2 text-xs sm:text-sm text-gray-700">RSVP Required</span>
+        </label>
 
-            <div className="flex space-x-2 sm:space-x-3 pt-3 sm:pt-4">
-              <button
-                type="button"
-                onClick={onCancel}
-                className="flex-1 px-3 py-2 sm:px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 px-3 py-2 sm:px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 text-sm sm:text-base"
-              >
-                {loading ? 'Saving...' : event ? 'Update Event' : 'Create Event'}
-              </button>
-            </div>
+        {formData.rsvp_required && (
+          <select
+            value={formData.rsvp_status}
+            onChange={(e) => setFormData({ ...formData, rsvp_status: e.target.value as any })}
+            className="px-2 py-1 sm:px-3 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          >
+            <option value="pending">Pending</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+            <option value="maybe">Maybe</option>
+          </select>
+        )}
+      </div>
+
+      <div className="flex space-x-2 sm:space-x-3 pt-3 sm:pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 px-3 py-2 sm:px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 px-3 py-2 sm:px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 text-sm sm:text-base"
+        >
+          {loading ? 'Saving...' : event ? 'Update Event' : 'Create Event'}
+        </button>
+      </div>
     </form>
   )
 }
