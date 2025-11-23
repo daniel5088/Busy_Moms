@@ -1,122 +1,109 @@
-// src/components/LocationAutocomplete.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { useGoogleMaps } from "../hooks/useGoogleMaps";
-
-declare global {
-  interface Window {
-    google: any;
-  }
-}
-
-type PlaceSelection = {
-  name: string;
-  placeId: string;
-  lat?: number;
-  lng?: number;
-};
 
 interface Props {
   value: string;
-  onChange: (value: string) => void;
   apiKey: string;
-  onSelect?: (place: PlaceSelection) => void;
+  onChange: (v: string) => void;
+  onSelect: (place: any) => void;
 }
 
-export function LocationAutocomplete({
-  value,
-  onChange,
-  apiKey,
-  onSelect,
-}: Props) {
-  const [predictions, setPredictions] = useState<any[]>([]);
-  const loaded = useGoogleMaps(apiKey);
-  const serviceRef = useRef<any | null>(null);
+export function LocationAutocomplete({ value, apiKey, onChange, onSelect }: Props) {
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Load Google script once
   useEffect(() => {
-    if (!loaded || !window.google) return;
+    if ((window as any).google) return;
 
-    if (!serviceRef.current) {
-      serviceRef.current = new window.google.maps.places.AutocompleteService();
-    }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    document.body.appendChild(script);
+  }, [apiKey]);
 
-    if (!value) {
-      setPredictions([]);
+  // Fetch predictions
+  async function fetchPredictions(input: string) {
+    if (!(window as any).google || !input) {
+      setSuggestions([]);
       return;
     }
 
-    serviceRef.current.getPlacePredictions(
-      { input: value },
-      (res: any[] | null) => {
-        setPredictions(res || []);
-      }
-    );
-  }, [value, loaded]);
+    setLoading(true);
 
-  const handleSelect = (p: any) => {
-    const name = p.description || "";
-    onChange(name);
-    setPredictions([]);
+    const service = new (window as any).google.maps.places.AutocompleteService();
 
-    if (!onSelect || !window.google) return;
-
-    const placesService = new window.google.maps.places.PlacesService(
-      document.createElement("div")
-    );
-
-    placesService.getDetails(
-      { placeId: p.place_id, fields: ["geometry.location", "name"] },
-      (details: any, status: string) => {
-        if (status !== "OK" || !details?.geometry?.location) {
-          onSelect({
-            name,
-            placeId: p.place_id,
-          });
-          return;
+    service.getPlacePredictions(
+      { input },
+      (predictions: any[], status: any) => {
+        setLoading(false);
+        if (status === "OK" && predictions) {
+          setSuggestions(predictions);
+          setOpen(true);
+        } else {
+          setSuggestions([]);
         }
-
-        onSelect({
-          name: details.name || name,
-          placeId: p.place_id,
-          lat: details.geometry.location.lat(),
-          lng: details.geometry.location.lng(),
-        });
       }
-    );
-  };
-
-  if (!loaded) {
-    return (
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Loading location..."
-        disabled
-        className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg text-sm sm:text-base"
-      />
     );
   }
 
+  // Trigger API search
+  useEffect(() => {
+    if (value.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    fetchPredictions(value);
+  }, [value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative w-full">
       <input
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Search for a location"
-        autoComplete="off"
-        className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true); // Keep dropdown open while typing
+        }}
+        placeholder="Search location..."
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
       />
-      {predictions.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
-          {predictions.map((p) => (
-            <li
-              key={p.place_id}
-              className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
-              onClick={() => handleSelect(p)}
+
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-50 bg-white border w-full rounded-lg mt-1 shadow-lg max-h-60 overflow-auto">
+          {suggestions.map((place) => (
+            <div
+              key={place.place_id}
+              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                // Set the selected value
+                onChange(place.description);
+
+                // Notify parent
+                onSelect(place);
+
+                // CLOSE DROPDOWN immediately
+                setOpen(false);
+
+                // Clear suggestions
+                setSuggestions([]);
+              }}
             >
-              {p.description}
-            </li>
+              {place.description}
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
