@@ -142,6 +142,11 @@ export class NetworkClient {
     });
   }
 
+  // ✅ NEW: generic http wrapper inside the class
+  async http<T>(url: string, options: RequestOptions = {}): Promise<T> {
+    return this.request<T>(url, options);
+  }
+
   private async request<T>(url: string, options: RequestOptions = {}): Promise<T> {
     const maxRetries = options.retries ?? RETRY_CONFIG.MAX_RETRIES;
     const retryDelay = options.retryDelay ?? RETRY_CONFIG.INITIAL_DELAY;
@@ -187,4 +192,17 @@ export class NetworkClient {
 }
 
 export const networkClient = new NetworkClient();
+
+
+export function http<T = unknown>(
+  url: string,
+  init: RequestOptions = {},
+  retries = 2
+): Promise<T> {
+  return networkClient.http<T>(url, {
+    ...init,
+    retries: init.retries ?? retries,
+  });
+}
+
 export default networkClient;
