@@ -57,7 +57,13 @@ const formatTimeRange = (startTime?: string | null, endTime?: string | null) => 
   return start;
 };
 
-// 🌍 New helpers for redirect buttons -----------------------------------------
+const isMappableLocation = (loc?: string | null) => {
+  if (!loc) return false;
+  const trimmed = loc.trim();
+
+  return trimmed.includes(',') || /[0-9]/.test(trimmed);
+};
+
 const openInGoogleMaps = (location: string) => {
   if (!location) return;
   const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -687,30 +693,47 @@ export function Calendar() {
                           <span>{formatTimeRange(selectedEvent.start_time, selectedEvent.end_time)}</span>
                         </div>
                       )}
-
+                      
                       {selectedEvent.location && (
-                        <div className="space-y-2">
+                        <>
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <MapPin className="w-4 h-4" />
                             <span>{selectedEvent.location}</span>
                           </div>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openInGoogleMaps(selectedEvent.location!)}
-                              className="px-3 py-1.5 text-xs sm:text-sm rounded-full bg-rose-500 text-white hover:bg-rose-600 transition-colors"
-                            >
-                              Open in Google Maps
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openInAppleMaps(selectedEvent.location!)}
-                              className="px-3 py-1.5 text-xs sm:text-sm rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                              Open in Apple Maps
-                            </button>
-                          </div>
-                        </div>
+                      
+                          {isMappableLocation(selectedEvent.location) && (
+                            <div className="flex items-center gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  window.open(
+                                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                      selectedEvent.location as string
+                                    )}`,
+                                    '_blank'
+                                  )
+                                }
+                                className="px-3 py-1 text-xs bg-rose-500 text-white rounded-full hover:bg-rose-600 transition-colors"
+                              >
+                                Open in Google Maps
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  window.open(
+                                    `https://maps.apple.com/?q=${encodeURIComponent(
+                                      selectedEvent.location as string
+                                    )}`,
+                                    '_blank'
+                                  )
+                                }
+                                className="px-3 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
+                              >
+                                Open in Apple Maps
+                              </button>
+                            </div>
+                          )}
+                        </>
                       )}
 
                       {selectedEvent.participants && selectedEvent.participants.length > 0 && (
