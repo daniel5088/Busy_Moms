@@ -342,523 +342,527 @@ export function Calendar() {
   
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 pb-24">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
-            <p className="text-gray-600 mt-1">
-              {selectedDate?.toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </p>
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 pb-24">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
+              <p className="text-gray-600 mt-1">
+                {selectedDate?.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </p>
+            </div>
+            {isGoogleConnected && (
+              <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                <span className="text-sm font-medium text-green-700">Google Connected</span>
+              </div>
+            )}
           </div>
-          {isGoogleConnected && (
-            <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              <span className="text-sm font-medium text-green-700">Google Connected</span>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* Calendar Grid - Left Side */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100">
+                {/* Month Navigation */}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">{monthLabel}</h2>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={goToday}
+                      className="px-4 py-2 text-sm font-medium bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
+                    >
+                      Today
+                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={goPrevMonth}
+                        className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-gray-600" />
+                      </button>
+                      <button
+                        onClick={goNextMonth}
+                        className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Weekday Headers */}
+                <div className="grid grid-cols-7 gap-2 mb-3">
+                  {WEEKDAYS_SHORT.map((day, idx) => (
+                    <div key={idx} className="text-center py-2">
+                      <span
+                        className={`text-sm font-semibold ${
+                          idx === 0 || idx === 6 ? 'text-rose-600' : 'text-gray-600'
+                        }`}
+                      >
+                        {day}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Calendar Days */}
+                <div className="grid grid-cols-7 gap-2">
+                  {calendarGrid.map((day, i) => {
+                    const count = dayEventsCount(day);
+                    const inCurrentMonth = isCurrentMonth(day);
+                    const isSelected = selectedDate && isSameDay(day, selectedDate);
+                    const isToday = isSameDay(day, new Date());
+
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => onDayClick(day)}
+                        onDoubleClick={() => onDayDoubleClick(day)}
+                        className={`
+                          relative aspect-square rounded-xl p-2 transition-all
+                          flex flex-col items-center justify-center
+                          ${isSelected
+                            ? 'bg-rose-500 text-white shadow-lg scale-105'
+                            : isToday
+                            ? 'bg-rose-50 text-rose-600 font-bold border-2 border-rose-500'
+                            : inCurrentMonth
+                            ? 'text-gray-900 hover:bg-gray-100'
+                            : 'text-gray-300'
+                          }
+                        `}
+                      >
+                        <span className="text-sm">{day.getDate()}</span>
+                        {count > 0 && (
+                          <div className="flex gap-0.5 mt-1">
+                            {Array.from({ length: Math.min(count, 3) }).map((_, idx) => (
+                              <div
+                                key={idx}
+                                className={`w-1 h-1 rounded-full ${
+                                  isSelected ? 'bg-white' : 'bg-rose-500'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Add Event Button */}
+                <button
+                  onClick={() => setShowEventForm(true)}
+                  className="w-full mt-6 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Add Event</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Events List - Right Side */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  {selectedDate && isSameDay(selectedDate, new Date()) ? 'Today' : 'Selected Day'}
+                </h3>
+
+                <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto">
+                  {itemsForSelectedDate.events.length === 0 && itemsForSelectedDate.reminders.length === 0 && (itemsForSelectedDate.googleEvents?.length || 0) === 0 ? (
+                    <div className="text-center py-12">
+                      <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500">No events for this day</p>
+                      <button
+                        onClick={() => setShowEventForm(true)}
+                        className="mt-4 px-4 py-2 bg-rose-500 text-white rounded-xl text-sm font-medium hover:bg-rose-600 transition-colors"
+                      >
+                        Add Event
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Events */}
+                      {itemsForSelectedDate.events.map((ev, i) => (
+                        <div
+                          key={`event-${ev.id}-${i}`}
+                          onClick={() => {
+                            setSelectedEvent(ev);
+                            setShowEventDetails(true);
+                          }}
+                          className="group bg-gradient-to-br from-orange-50 to-pink-50 border border-orange-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">{ev.title}</h3>
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
+                              {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
+                            </span>
+                          </div>
+                          {ev.location && (
+                            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
+                              <MapPin className="w-3 h-3" />
+                              <span>{ev.location}</span>
+                            </div>
+                          )}
+                          {ev.description && (
+                            <p className="text-sm text-gray-600 line-clamp-2">{ev.description}</p>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Google Calendar Events */}
+                      {(itemsForSelectedDate.googleEvents || []).map((ev, i) => (
+                        <div
+                          key={`google-event-${ev.id}-${i}`}
+                          className="group bg-gradient-to-br from-cyan-50 to-teal-50 border-2 border-cyan-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center space-x-2 flex-1">
+                              <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">{ev.summary || 'Untitled Event'}</h3>
+                              <div className="flex items-center space-x-1 px-2 py-0.5 bg-white rounded-full border border-cyan-300">
+                                <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor">
+                                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                </svg>
+                                <span className="text-xs font-medium text-cyan-600">Google</span>
+                              </div>
+                            </div>
+                            <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full font-medium ml-2">
+                              {ev.start?.dateTime
+                                ? new Date(ev.start.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+                                : 'All day'
+                              }
+                            </span>
+                          </div>
+                          {ev.location && (
+                            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
+                              <MapPin className="w-3 h-3" />
+                              <span>{ev.location}</span>
+                            </div>
+                          )}
+                          {ev.description && (
+                            <p className="text-sm text-gray-600 line-clamp-2">{ev.description}</p>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Reminders */}
+                      {itemsForSelectedDate.reminders.map((reminder, i) => (
+                        <div
+                          key={`reminder-${reminder.id}-${i}`}
+                          onClick={() => {
+                            setSelectedReminder(reminder);
+                            setShowEventDetails(true);
+                          }}
+                          className="group bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Bell className="w-4 h-4 text-amber-600" />
+                              <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">{reminder.title}</h3>
+                            </div>
+                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
+                              {reminder.reminder_time ? formatTimeRange(reminder.reminder_time, null) : 'All day'}
+                            </span>
+                          </div>
+                          {reminder.description && (
+                            <p className="text-sm text-gray-600 line-clamp-2">{reminder.description}</p>
+                          )}
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Conflicts Alert Banner */}
+          {pendingConflicts.length > 0 && (
+            <div className="mt-6">
+              <button
+                onClick={() => setShowConflicts(true)}
+                className="w-full px-6 py-4 bg-orange-50 border-2 border-orange-200 rounded-2xl hover:bg-orange-100 transition-colors flex items-center justify-center space-x-3"
+              >
+                <Bell className="w-5 h-5 text-orange-600" />
+                <span className="text-orange-700 font-semibold">
+                  Resolve {pendingConflicts.length} Sync Conflict{pendingConflicts.length !== 1 ? 's' : ''}
+                </span>
+              </button>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Calendar Grid - Left Side */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100">
-              {/* Month Navigation */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">{monthLabel}</h2>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={goToday}
-                    className="px-4 py-2 text-sm font-medium bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
-                  >
-                    Today
-                  </button>
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={goPrevMonth}
-                      className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <button
-                      onClick={goNextMonth}
-                      className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5 text-gray-600" />
-                    </button>
-                  </div>
-                </div>
+        {/* Event form modal */}
+        {showEventForm && (
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-xl">Create Event</h4>
+                <button
+                  onClick={() => setShowEventForm(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-
-              {/* Weekday Headers */}
-              <div className="grid grid-cols-7 gap-2 mb-3">
-                {WEEKDAYS_SHORT.map((day, idx) => (
-                  <div key={day} className="text-center py-2">
-                    <span className={`text-sm font-semibold ${idx === 0 || idx === 6 ? 'text-rose-600' : 'text-gray-600'}`}>
-                      {day}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Calendar Days */}
-              <div className="grid grid-cols-7 gap-2">
-                {calendarGrid.map((day, i) => {
-                  const count = dayEventsCount(day);
-                  const inCurrentMonth = isCurrentMonth(day);
-                  const isSelected = selectedDate && isSameDay(day, selectedDate);
-                  const isToday = isSameDay(day, new Date());
-
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => onDayClick(day)}
-                      onDoubleClick={() => onDayDoubleClick(day)}
-                      className={`
-                        relative aspect-square rounded-xl p-2 transition-all
-                        flex flex-col items-center justify-center
-                        ${isSelected
-                          ? 'bg-rose-500 text-white shadow-lg scale-105'
-                          : isToday
-                          ? 'bg-rose-50 text-rose-600 font-bold border-2 border-rose-500'
-                          : inCurrentMonth
-                          ? 'text-gray-900 hover:bg-gray-100'
-                          : 'text-gray-300'
-                        }
-                      `}
-                    >
-                      <span className="text-sm">{day.getDate()}</span>
-                      {count > 0 && (
-                        <div className="flex gap-0.5 mt-1">
-                          {Array.from({ length: Math.min(count, 3) }).map((_, idx) => (
-                            <div
-                              key={idx}
-                              className={`w-1 h-1 rounded-full ${
-                                isSelected ? 'bg-white' : 'bg-rose-500'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Add Event Button */}
-              <button
-                onClick={() => setShowEventForm(true)}
-                className="w-full mt-6 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2"
-              >
-                <Plus className="w-5 h-5" />
-                <span>Add Event</span>
-              </button>
+              <EventForm
+                defaultDate={selectedDate ? toLocalISODate(selectedDate) : undefined}
+                event={selectedEvent ?? undefined}
+                onCancel={() => setShowEventForm(false)}
+                onSaved={handleEventSaved}
+              />
             </div>
           </div>
+        )}
 
-          {/* Events List - Right Side */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
-                {selectedDate && isSameDay(selectedDate, new Date()) ? 'Today' : 'Selected Day'}
-              </h3>
+        {/* Event/Reminder Details Modal */}
+        {showEventDetails && (selectedEvent || selectedReminder) && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {selectedEvent ? 'Event Details' : 'Reminder Details'}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowEventDetails(false);
+                      setSelectedEvent(null);
+                      setSelectedReminder(null);
+                    }}
+                    className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
 
-              <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto">
-                {itemsForSelectedDate.events.length === 0 && itemsForSelectedDate.reminders.length === 0 && (itemsForSelectedDate.googleEvents?.length || 0) === 0 ? (
-                  <div className="text-center py-12">
-                    <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">No events for this day</p>
-                    <button
-                      onClick={() => setShowEventForm(true)}
-                      className="mt-4 px-4 py-2 bg-rose-500 text-white rounded-xl text-sm font-medium hover:bg-rose-600 transition-colors"
-                    >
-                      Add Event
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {/* Events */}
-                    {itemsForSelectedDate.events.map((ev, i) => (
-                      <div
-                        key={`event-${ev.id}-${i}`}
-                        onClick={() => {
-                          setSelectedEvent(ev);
-                          setShowEventDetails(true);
-                        }}
-                        className="group bg-gradient-to-br from-orange-50 to-pink-50 border border-orange-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">{ev.title}</h3>
-                          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
-                            {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
-                          </span>
-                        </div>
-                        {ev.location && (
-                          <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
-                            <MapPin className="w-3 h-3" />
-                            <span>{ev.location}</span>
-                          </div>
-                        )}
-                        {ev.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2">{ev.description}</p>
-                        )}
+                {selectedEvent && (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedEvent.title}</h3>
+                      <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-rose-100 text-rose-700">
+                        {selectedEvent.event_type}
                       </div>
-                    ))}
+                    </div>
 
-                    {/* Google Calendar Events */}
-                    {(itemsForSelectedDate.googleEvents || []).map((ev, i) => (
-                      <div
-                        key={`google-event-${ev.id}-${i}`}
-                        className="group bg-gradient-to-br from-cyan-50 to-teal-50 border-2 border-cyan-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <CalendarIcon className="w-4 h-4" />
+                        <span>{new Date(selectedEvent.event_date).toLocaleDateString()}</span>
+                      </div>
+
+                      {(selectedEvent.start_time || selectedEvent.end_time) && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <Clock className="w-4 h-4" />
+                          <span>{formatTimeRange(selectedEvent.start_time, selectedEvent.end_time)}</span>
+                        </div>
+                      )}
+
+                      {selectedEvent.location && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <MapPin className="w-4 h-4" />
+                          <span>{selectedEvent.location}</span>
+                        </div>
+                      )}
+
+                      {selectedEvent.participants && selectedEvent.participants.length > 0 && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <Users className="w-4 h-4" />
+                          <span>{selectedEvent.participants.join(', ')}</span>
+                        </div>
+                      )}
+
+                      {selectedEvent.description && (
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-700">{selectedEvent.description}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex space-x-3 pt-4">
+                      <button
+                        onClick={() => {
+                          setShowEventDetails(false);
+                          setShowEventForm(true);
+                        }}
+                        className="flex-1 px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
                       >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center space-x-2 flex-1">
-                            <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">{ev.summary || 'Untitled Event'}</h3>
-                            <div className="flex items-center space-x-1 px-2 py-0.5 bg-white rounded-full border border-cyan-300">
-                              <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor">
-                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                              </svg>
-                              <span className="text-xs font-medium text-cyan-600">Google</span>
-                            </div>
-                          </div>
-                          <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full font-medium ml-2">
-                            {ev.start?.dateTime
-                              ? new Date(ev.start.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-                              : 'All day'
+                        Edit Event
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (confirm('Are you sure you want to delete this event?')) {
+                            try {
+                              const { error } = await supabase
+                                .from('events')
+                                .delete()
+                                .eq('id', selectedEvent.id);
+                            
+                              if (!error) {
+                                setShowEventDetails(false);
+                                setSelectedEvent(null);
+                                loadEvents(); // Refresh events list
+                              } else {
+                                alert('Error deleting event. Please try again.');
+                              }
+                            } catch (error) {
+                              console.error('Error deleting event:', error);
+                              alert('Error deleting event. Please try again.');
                             }
-                          </span>
-                        </div>
-                        {ev.location && (
-                          <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
-                            <MapPin className="w-3 h-3" />
-                            <span>{ev.location}</span>
-                          </div>
-                        )}
-                        {ev.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2">{ev.description}</p>
-                        )}
-                      </div>
-                    ))}
-
-                    {/* Reminders */}
-                    {itemsForSelectedDate.reminders.map((reminder, i) => (
-                      <div
-                        key={`reminder-${reminder.id}-${i}`}
-                        onClick={() => {
-                          setSelectedReminder(reminder);
-                          setShowEventDetails(true);
+                          }
                         }}
-                        className="group bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                       >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <Bell className="w-4 h-4 text-amber-600" />
-                            <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">{reminder.title}</h3>
-                          </div>
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
-                            {reminder.reminder_time ? formatTimeRange(reminder.reminder_time, null) : 'All day'}
-                          </span>
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowEventDetails(false);
+                          setSelectedEvent(null);
+                        }}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {selectedReminder && (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedReminder.title}</h3>
+                      <div className="flex items-center space-x-2">
+                        <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedReminder.priority === 'high' ? 'bg-red-100 text-red-700' :
+                          selectedReminder.priority === 'low' ? 'bg-green-100 text-green-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {selectedReminder.priority || 'medium'} priority
                         </div>
-                        {reminder.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2">{reminder.description}</p>
-                        )}
+                        <div className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                          Reminder
+                        </div>
                       </div>
-                    ))}
-                  </>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <CalendarIcon className="w-4 h-4" />
+                        <span>{new Date(selectedReminder.reminder_date).toLocaleDateString()}</span>
+                      </div>
+
+                      {selectedReminder.reminder_time && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <Clock className="w-4 h-4" />
+                          <span>{formatTimeRange(selectedReminder.reminder_time, null)}</span>
+                        </div>
+                      )}
+
+                      {selectedReminder.description && (
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-700">{selectedReminder.description}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex space-x-3 pt-4">
+                      <button
+                        onClick={async () => {
+                          try {
+                            const { error } = await supabase
+                              .from('reminders')
+                              .update({ completed: true })
+                              .eq('id', selectedReminder.id);
+                          
+                            if (!error) {
+                              setShowEventDetails(false);
+                              setSelectedReminder(null);
+                              loadEvents(); // Refresh to remove completed reminder
+                            }
+                          } catch (error) {
+                            console.error('Error completing reminder:', error);
+                          }
+                        }}
+                        className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                      >
+                        Mark Complete
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (confirm('Are you sure you want to delete this reminder?')) {
+                            try {
+                              const { error } = await supabase
+                                .from('reminders')
+                                .delete()
+                                .eq('id', selectedReminder.id);
+                            
+                              if (!error) {
+                                setShowEventDetails(false);
+                                setSelectedReminder(null);
+                                loadEvents(); // Refresh reminders list
+                              } else {
+                                alert('Error deleting reminder. Please try again.');
+                              }
+                            } catch (error) {
+                              console.error('Error deleting reminder:', error);
+                              alert('Error deleting reminder. Please try again.');
+                            }
+                          }
+                        }}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowEventDetails(false);
+                          setSelectedReminder(null);
+                        }}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Conflicts Alert Banner */}
-        {pendingConflicts.length > 0 && (
-          <div className="mt-6">
-            <button
-              onClick={() => setShowConflicts(true)}
-              className="w-full px-6 py-4 bg-orange-50 border-2 border-orange-200 rounded-2xl hover:bg-orange-100 transition-colors flex items-center justify-center space-x-3"
-            >
-              <Bell className="w-5 h-5 text-orange-600" />
-              <span className="text-orange-700 font-semibold">
-                Resolve {pendingConflicts.length} Sync Conflict{pendingConflicts.length !== 1 ? 's' : ''}
-              </span>
-            </button>
-          </div>
         )}
+
+        {/* Conflict Resolution Modal */}
+        {showConflicts && pendingConflicts.length > 0 && (
+          <ConflictResolutionModal
+            conflicts={pendingConflicts}
+            onResolve={async (conflictId, resolution) => {
+              const success = await resolveConflict(conflictId, resolution);
+              if (success) {
+                await loadEvents();
+                await loadPendingConflicts();
+              }
+              return success;
+            }}
+            onClose={() => setShowConflicts(false)}
+          />
+        )}
+
       </div>
-
-      {/* Event form modal */}
-      {showEventForm && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-semibold text-xl">Create Event</h4>
-              <button
-                onClick={() => setShowEventForm(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <EventForm
-              defaultDate={selectedDate ? toLocalISODate(selectedDate) : undefined}
-              event={selectedEvent ?? undefined}
-              onCancel={() => setShowEventForm(false)}
-              onSaved={handleEventSaved}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Event/Reminder Details Modal */}
-      {showEventDetails && (selectedEvent || selectedReminder) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {selectedEvent ? 'Event Details' : 'Reminder Details'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowEventDetails(false);
-                    setSelectedEvent(null);
-                    setSelectedReminder(null);
-                  }}
-                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  <X className="w-4 h-4 text-gray-600" />
-                </button>
-              </div>
-
-              {selectedEvent && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedEvent.title}</h3>
-                    <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-rose-100 text-rose-700">
-                      {selectedEvent.event_type}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <CalendarIcon className="w-4 h-4" />
-                      <span>{new Date(selectedEvent.event_date).toLocaleDateString()}</span>
-                    </div>
-
-                    {(selectedEvent.start_time || selectedEvent.end_time) && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatTimeRange(selectedEvent.start_time, selectedEvent.end_time)}</span>
-                      </div>
-                    )}
-
-                    {selectedEvent.location && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <MapPin className="w-4 h-4" />
-                        <span>{selectedEvent.location}</span>
-                      </div>
-                    )}
-
-                    {selectedEvent.participants && selectedEvent.participants.length > 0 && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Users className="w-4 h-4" />
-                        <span>{selectedEvent.participants.join(', ')}</span>
-                      </div>
-                    )}
-
-                    {selectedEvent.description && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-700">{selectedEvent.description}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex space-x-3 pt-4">
-                    <button
-                      onClick={() => {
-                        setShowEventDetails(false);
-                        setShowEventForm(true);
-                      }}
-                      className="flex-1 px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
-                    >
-                      Edit Event
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (confirm('Are you sure you want to delete this event?')) {
-                          try {
-                            const { error } = await supabase
-                              .from('events')
-                              .delete()
-                              .eq('id', selectedEvent.id);
-                            
-                            if (!error) {
-                              setShowEventDetails(false);
-                              setSelectedEvent(null);
-                              loadEvents(); // Refresh events list
-                            } else {
-                              alert('Error deleting event. Please try again.');
-                            }
-                          } catch (error) {
-                            console.error('Error deleting event:', error);
-                            alert('Error deleting event. Please try again.');
-                          }
-                        }
-                      }}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowEventDetails(false);
-                        setSelectedEvent(null);
-                      }}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {selectedReminder && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedReminder.title}</h3>
-                    <div className="flex items-center space-x-2">
-                      <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        selectedReminder.priority === 'high' ? 'bg-red-100 text-red-700' :
-                        selectedReminder.priority === 'low' ? 'bg-green-100 text-green-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {selectedReminder.priority || 'medium'} priority
-                      </div>
-                      <div className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                        Reminder
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <CalendarIcon className="w-4 h-4" />
-                      <span>{new Date(selectedReminder.reminder_date).toLocaleDateString()}</span>
-                    </div>
-
-                    {selectedReminder.reminder_time && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatTimeRange(selectedReminder.reminder_time, null)}</span>
-                      </div>
-                    )}
-
-                    {selectedReminder.description && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-700">{selectedReminder.description}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex space-x-3 pt-4">
-                    <button
-                      onClick={async () => {
-                        try {
-                          const { error } = await supabase
-                            .from('reminders')
-                            .update({ completed: true })
-                            .eq('id', selectedReminder.id);
-                          
-                          if (!error) {
-                            setShowEventDetails(false);
-                            setSelectedReminder(null);
-                            loadEvents(); // Refresh to remove completed reminder
-                          }
-                        } catch (error) {
-                          console.error('Error completing reminder:', error);
-                        }
-                      }}
-                      className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                      Mark Complete
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (confirm('Are you sure you want to delete this reminder?')) {
-                          try {
-                            const { error } = await supabase
-                              .from('reminders')
-                              .delete()
-                              .eq('id', selectedReminder.id);
-                            
-                            if (!error) {
-                              setShowEventDetails(false);
-                              setSelectedReminder(null);
-                              loadEvents(); // Refresh reminders list
-                            } else {
-                              alert('Error deleting reminder. Please try again.');
-                            }
-                          } catch (error) {
-                            console.error('Error deleting reminder:', error);
-                            alert('Error deleting reminder. Please try again.');
-                          }
-                        }
-                      }}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowEventDetails(false);
-                        setSelectedReminder(null);
-                      }}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Conflict Resolution Modal */}
-      {showConflicts && pendingConflicts.length > 0 && (
-        <ConflictResolutionModal
-          conflicts={pendingConflicts}
-          onResolve={async (conflictId, resolution) => {
-            const success = await resolveConflict(conflictId, resolution);
-            if (success) {
-              await loadEvents();
-              await loadPendingConflicts();
-            }
-            return success;
-          }}
-          onClose={() => setShowConflicts(false)}
-        />
-      )}
-
-    </div>
     </>
   );
 }
