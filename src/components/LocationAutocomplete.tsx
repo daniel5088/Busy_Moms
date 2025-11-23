@@ -1,3 +1,4 @@
+// src/components/LocationAutocomplete.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { useGoogleMaps } from "../hooks/useGoogleMaps";
 
@@ -21,7 +22,12 @@ interface Props {
   onSelect?: (place: PlaceSelection) => void;
 }
 
-export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Props) {
+export function LocationAutocomplete({
+  value,
+  onChange,
+  apiKey,
+  onSelect,
+}: Props) {
   const [predictions, setPredictions] = useState<any[]>([]);
   const loaded = useGoogleMaps(apiKey);
   const serviceRef = useRef<any | null>(null);
@@ -38,9 +44,12 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
       return;
     }
 
-    serviceRef.current.getPlacePredictions({ input: value }, (res: any[] | null) => {
-      setPredictions(res || []);
-    });
+    serviceRef.current.getPlacePredictions(
+      { input: value },
+      (res: any[] | null) => {
+        setPredictions(res || []);
+      }
+    );
   }, [value, loaded]);
 
   const handleSelect = (p: any) => {
