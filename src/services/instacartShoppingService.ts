@@ -11,6 +11,7 @@ import type {
   Retailer
 } from '../lib/supabase'
 import { InstacartUnitMapper } from '../utils/instacartUnitMapper'
+import { getPreferredRetailer } from './userSettings' // ✅ NEW
 
 export class InstacartShoppingService {
   private edgeFunctionUrl: string
@@ -29,14 +30,24 @@ export class InstacartShoppingService {
 
     const formattedItems = this.formatItemsForInstacart(items)
 
+    // ✅ Determine which retailer to use:
+    // 1) explicit override from caller
+    // 2) fallback to saved user preference (user_settings.preferred_retailer)
+    let effectiveRetailerKey: string | null | undefined = retailerKey
+
+    const userId = items[0]?.user_id
+    if (!effectiveRetailerKey && userId) {
+      effectiveRetailerKey = await getPreferredRetailer(userId)
+    }
+
     const requestBody: any = {
       action: 'create_shopping_list',
       items: formattedItems,
       title: 'My Shopping List',
     }
 
-    if (retailerKey) {
-      requestBody.retailer_key = retailerKey
+    if (effectiveRetailerKey) {
+      requestBody.retailer_key = effectiveRetailerKey
     }
 
     const response = await fetch(this.edgeFunctionUrl, {
@@ -78,20 +89,66 @@ export class InstacartShoppingService {
     }
 
     let retailerName: string | undefined
-    if (retailerKey) {
-      const retailers = await this.getPreferredRetailers(items[0]?.user_id)
-      const matchingRetailer = retailers.find(r => r.retailer_key === retailerKey)
+    if (effectiveRetailerKey && userId) {
+      const retailers = await this.getPreferredRetailers(userId)
+      const matchingRetailer = retailers.find(r => r.retailer_key === effectiveRetailerKey)
       retailerName = matchingRetailer?.retailer_name
     }
 
     await this.updateItemsProviderStatus(
       items,
       data,
-      retailerKey,
+      effectiveRetailerKey ?? undefined,
       retailerName
     )
 
     return data as InstacartShoppingListResponse
+  }
+
+  // Backwards-compatible helper used by some tests and older callers
+  // Calls the edge function directly so tests can mock global.fetch. Adds retry logic for 5xx/429 and
+  // ensures thrown errors include 'instacart' so callers/tests can identify origin.
+  async createCartLink({ items, retailerId }: { items: Array<{ name: string; quantity: number; unit: string }>; retailerId?: string }) {
+    const requestBody: any = {
+      action: 'create_shopping_list',
+      items,
+      title: 'My Shopping List',
+    }
+
+    if (retailerId) {
+      requestBody.retailerId = retailerId
+      requestBody.retailer_key = retailerId
+    }
+
+    const maxAttempts = 3
+    let lastError: any = null
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const response = await fetch(this.edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
+
+      if (response.ok) {
+        const data = await response.json().catch(() => ({}))
+        return { url: data.url || data.products_link_url }
+      }
+
+      const text = await response.text().catch(() => '')
+      lastError = text || `Instacart edge function error: ${response.status}`
+
+      // Retry on server errors or rate limits
+      if ((response.status >= 500 && response.status < 600) || response.status === 429) {
+        if (attempt < maxAttempts) continue
+      }
+
+      throw new Error(`instacart: ${lastError}`)
+    }
+
+    throw new Error(`instacart: ${lastError || 'unknown error'}`)
   }
 
   async sendAllToInstacart(userId: string, retailerKey?: string): Promise<InstacartShoppingListResponse> {
