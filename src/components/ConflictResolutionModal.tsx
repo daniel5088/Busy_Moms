@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
-import { X, AlertTriangle, Calendar, Clock, MapPin, Users, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { X, AlertTriangle, Calendar, Clock, MapPin, Users, ChevronRight, GitMerge } from 'lucide-react';
 import type { SyncConflict } from '../services/calendarSync';
 
 interface ConflictResolutionModalProps {
   conflicts: SyncConflict[];
-  onResolve: (conflictId: string, resolution: 'keep_local' | 'keep_google' | 'merge') => Promise<boolean>;
+  onResolve: (
+    conflictId: string,
+    resolution: 'keep_local' | 'keep_google' | 'merge',
+    // optional merged fields payload if resolution === 'merge'
+    merged?: { title?: string; description?: string }
+  ) => Promise<boolean>;
   onClose: () => void;
 }
 
@@ -12,23 +17,43 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
   const [selectedConflictIndex, setSelectedConflictIndex] = useState(0);
   const [resolving, setResolving] = useState(false);
 
-  if (conflicts.length === 0) {
-    return null;
-  }
+  // New: merge fields
+  const [mergeTitle, setMergeTitle] = useState('');
+  const [mergeDescription, setMergeDescription] = useState('');
+
+  if (!conflicts || conflicts.length === 0) return null;
 
   const currentConflict = conflicts[selectedConflictIndex];
-  const localData = currentConflict.local_event_data;
-  const googleData = currentConflict.google_event_data;
+  const localData = currentConflict?.local_event_data ?? {};
+  const googleData = currentConflict?.google_event_data ?? {};
 
-  const handleResolve = async (resolution: 'keep_local' | 'keep_google' | 'merge') => {
+  // Pre-fill merge editors from current conflict
+  useMemo(() => {
+    const initialTitle = (localData?.title || googleData?.summary || 'Untitled').toString();
+    const initialDesc = (localData?.description || googleData?.description || '').toString();
+    setMergeTitle(initialTitle);
+    setMergeDescription(initialDesc);
+  }, [selectedConflictIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleResolve = async (
+    resolution: 'keep_local' | 'keep_google' | 'merge'
+  ) => {
     setResolving(true);
     try {
-      const success = await onResolve(currentConflict.id, resolution);
+      const merged =
+        resolution === 'merge'
+          ? {
+              title: mergeTitle?.trim() || undefined,
+              description: mergeDescription?.trim() || undefined,
+            }
+          : undefined;
+
+      const success = await onResolve(currentConflict.id, resolution, merged);
 
       if (success) {
         // Move to next conflict or close if this was the last one
         if (selectedConflictIndex < conflicts.length - 1) {
-          setSelectedConflictIndex(selectedConflictIndex + 1);
+          setSelectedConflictIndex((i) => i + 1);
         } else {
           onClose();
         }
@@ -43,20 +68,20 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return 'Not set';
     try {
-      return new Date(dateStr).toLocaleDateString();
+      // Handles either date or datetime strings
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString();
     } catch {
       return dateStr;
     }
   };
 
-  const formatTime = (timeStr: string | null | undefined) => {
-    if (!timeStr) return 'Not set';
-    return timeStr;
-  };
+  const formatTime = (timeStr: string | null | undefined) => (timeStr ? timeStr : 'Not set');
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-2">
@@ -74,6 +99,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
             <button
               onClick={onClose}
               className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+              aria-label="Close"
             >
               <X className="w-4 h-4 text-gray-600" />
             </button>
@@ -81,8 +107,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
 
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4">
             <p className="text-sm text-orange-800">
-              This event was modified in both your local calendar and Google Calendar.
-              Choose which version to keep or merge them manually.
+              This event was modified in both your local calendar and Google Calendar. Choose which version to keep or merge fields.
             </p>
           </div>
         </div>
@@ -98,9 +123,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Local Calendar</h3>
-                  <p className="text-xs text-gray-500">
-                    Modified: {formatDate(currentConflict.local_modified_at)}
-                  </p>
+                  <p className="text-xs text-gray-500">Modified: {formatDate(currentConflict.local_modified_at)}</p>
                 </div>
               </div>
 
@@ -110,10 +133,12 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                   <p className="text-sm font-medium text-gray-900">{localData.title || 'Untitled'}</p>
                 </div>
 
-                {localData.description && (
+                {localData.description !== undefined && (
                   <div>
                     <label className="text-xs font-medium text-gray-600">Description</label>
-                    <p className="text-sm text-gray-700">{localData.description}</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {localData.description || '—'}
+                    </p>
                   </div>
                 )}
 
@@ -148,7 +173,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                   </div>
                 )}
 
-                {localData.participants && localData.participants.length > 0 && (
+                {Array.isArray(localData.participants) && localData.participants.length > 0 && (
                   <div>
                     <label className="text-xs font-medium text-gray-600">Participants</label>
                     <div className="flex items-center space-x-2 text-sm text-gray-700">
@@ -168,9 +193,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Google Calendar</h3>
-                  <p className="text-xs text-gray-500">
-                    Modified: {formatDate(currentConflict.google_modified_at)}
-                  </p>
+                  <p className="text-xs text-gray-500">Modified: {formatDate(currentConflict.google_modified_at)}</p>
                 </div>
               </div>
 
@@ -180,10 +203,12 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                   <p className="text-sm font-medium text-gray-900">{googleData.summary || 'Untitled'}</p>
                 </div>
 
-                {googleData.description && (
+                {googleData.description !== undefined && (
                   <div>
                     <label className="text-xs font-medium text-gray-600">Description</label>
-                    <p className="text-sm text-gray-700">{googleData.description}</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {googleData.description || '—'}
+                    </p>
                   </div>
                 )}
 
@@ -194,8 +219,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                     <span>
                       {googleData.start?.date
                         ? formatDate(googleData.start.date)
-                        : formatDate(googleData.start?.dateTime)
-                      }
+                        : formatDate(googleData.start?.dateTime)}
                     </span>
                   </div>
                 </div>
@@ -208,8 +232,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                       <span>
                         {new Date(googleData.start.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                         {googleData.end?.dateTime &&
-                          ` - ${new Date(googleData.end.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-                        }
+                          ` - ${new Date(googleData.end.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
                       </span>
                     </div>
                   </div>
@@ -225,13 +248,16 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                   </div>
                 )}
 
-                {googleData.attendees && googleData.attendees.length > 0 && (
+                {Array.isArray(googleData.attendees) && googleData.attendees.length > 0 && (
                   <div>
                     <label className="text-xs font-medium text-gray-600">Attendees</label>
                     <div className="flex items-center space-x-2 text-sm text-gray-700">
                       <Users className="w-3 h-3" />
                       <span>
-                        {googleData.attendees.map(a => a.email || a.displayName).filter(Boolean).join(', ')}
+                        {googleData.attendees
+                          .map((a: any) => a.email || a.displayName)
+                          .filter(Boolean)
+                          .join(', ')}
                       </span>
                     </div>
                   </div>
@@ -239,11 +265,37 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
               </div>
             </div>
           </div>
+
+          {/* Merge editor */}
+          <div className="mt-6 border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <GitMerge className="w-4 h-4 text-purple-600" />
+              <div className="text-sm font-medium text-gray-800">Merge fields (optional)</div>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              <label className="text-sm">
+                <span className="block text-gray-600 mb-1">Title</span>
+                <input
+                  className="w-full rounded border px-3 py-2 text-sm"
+                  value={mergeTitle}
+                  onChange={(e) => setMergeTitle(e.target.value)}
+                />
+              </label>
+              <label className="text-sm">
+                <span className="block text-gray-600 mb-1">Description</span>
+                <textarea
+                  className="w-full rounded border px-3 py-2 text-sm min-h-[88px]"
+                  value={mergeDescription}
+                  onChange={(e) => setMergeDescription(e.target.value)}
+                />
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 bg-gray-50">
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={() => handleResolve('keep_local')}
               disabled={resolving}
@@ -260,9 +312,18 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
               Keep Google Version
             </button>
 
+            <button
+              onClick={() => handleResolve('merge')}
+              disabled={resolving}
+              className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+            >
+              <GitMerge className="w-4 h-4" />
+              Merge
+            </button>
+
             {selectedConflictIndex < conflicts.length - 1 && (
               <button
-                onClick={() => setSelectedConflictIndex(selectedConflictIndex + 1)}
+                onClick={() => setSelectedConflictIndex((i) => i + 1)}
                 disabled={resolving}
                 className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 flex items-center space-x-2"
               >
@@ -273,9 +334,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
           </div>
 
           {resolving && (
-            <p className="text-center text-sm text-gray-500 mt-3">
-              Resolving conflict...
-            </p>
+            <p className="text-center text-sm text-gray-500 mt-3">Resolving conflict...</p>
           )}
         </div>
       </div>
