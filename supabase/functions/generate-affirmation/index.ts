@@ -9,7 +9,7 @@
   2. Security
     - Requires JWT authentication
     - Users can only generate affirmations for themselves
-    - OpenAI API key stored securely in environment
+    - OpenAI API key stored securely in environment (server-side only)
 
   3. Request Format
     - POST with optional date parameter
@@ -22,6 +22,9 @@
 */
 
 import { createClient } from 'npm:@supabase/supabase-js@2.55.0';
+
+// Type-checking helper for editors that don't provide the Deno runtime types
+declare const Deno: any;
 
 interface AffirmationRequest {
   date?: string;
@@ -44,16 +47,80 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+function getCorrelationId(req: Request) {
+  return req.headers.get('x-correlation-id') || req.headers.get('X-Correlation-ID') || crypto.randomUUID();
+}
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Small HTTP client with exponential backoff on 5xx / 429.
+ * This keeps retries uniform across any future provider calls.
+ */
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  retries = 2,
+  baseDelayMs = 300
+): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, init);
+
+      // Retry on rate limiting or transient server errors
+      if (res.status === 429 || (res.status >= 500 && res.status <= 599)) {
+        if (attempt < retries) {
+          const delay = baseDelayMs * Math.pow(2, attempt);
+          const jitter = Math.random() * 100;
+          console.warn(
+            `⚠️ fetchWithRetry: transient error ${res.status}, retrying in ${Math.round(
+              delay + jitter
+            )}ms (attempt ${attempt + 1}/${retries})`
+          );
+          await sleep(delay + jitter);
+          continue;
+        }
+      }
+
+      return res;
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) {
+        const delay = baseDelayMs * Math.pow(2, attempt);
+        const jitter = Math.random() * 100;
+        console.warn(
+          `⚠️ fetchWithRetry: network error, retrying in ${Math.round(
+            delay + jitter
+          )}ms (attempt ${attempt + 1}/${retries})`,
+          err
+        );
+        await sleep(delay + jitter);
+        continue;
+      }
+    }
+  }
+
+  throw lastError ?? new Error('fetchWithRetry: unknown error');
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
+    const correlationId = getCorrelationId(req);
     return new Response(null, {
       status: 200,
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        'x-correlation-id': correlationId,
+      },
     });
   }
 
   try {
-    console.log(`🚀 Affirmation generation request - ${req.method} ${req.url}`);
+    const correlationId = getCorrelationId(req);
+    console.log(`🚀 Affirmation generation request - ${req.method} ${req.url}`, { correlationId });
 
     if (req.method !== "POST") {
       return new Response(
@@ -63,6 +130,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -77,6 +145,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -105,6 +174,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -123,6 +193,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -167,6 +238,7 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
@@ -190,7 +262,7 @@ Deno.serve(async (req: Request) => {
     const today = new Date().toISOString().split('T')[0];
     const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    const queries = [];
+    const queries: Promise<{ key: string; data: any }> [] = [];
 
     if (includeCalendar) {
       queries.push(
@@ -295,45 +367,54 @@ Deno.serve(async (req: Request) => {
           headers: {
             "Content-Type": "application/json",
             ...corsHeaders,
+            'x-correlation-id': correlationId,
           },
         }
       );
     }
 
     console.log('🤖 Generating affirmation with OpenAI...');
+
     const prompt = buildAffirmationPrompt(contextData);
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a compassionate AI assistant that generates personalized daily affirmations for busy parents. Create positive, uplifting affirmations that acknowledge their challenges and celebrate their strengths.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 150,
-        temperature: 0.8,
-      }),
-    });
+    const openaiResponse = await fetchWithRetry(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+          'x-correlation-id': correlationId,
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a compassionate AI assistant that generates personalized daily affirmations for busy parents. Create positive, uplifting affirmations that acknowledge their challenges and celebrate their strengths.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          max_tokens: 150,
+          temperature: 0.8,
+        }),
+      }
+    );
 
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text();
-      console.error('❌ OpenAI API error:', errorText);
+      console.error('❌ OpenAI API error:', errorText, { correlationId });
       throw new Error('Failed to generate affirmation with OpenAI');
     }
 
     const openaiData = await openaiResponse.json();
-    const affirmationText = openaiData.choices[0]?.message?.content?.trim() || generateFallbackAffirmation(contextData);
+    const affirmationText =
+      openaiData.choices?.[0]?.message?.content?.trim() ||
+      generateFallbackAffirmation(contextData);
 
     console.log('✅ Generated affirmation:', affirmationText.substring(0, 50) + '...');
 
@@ -380,6 +461,7 @@ Deno.serve(async (req: Request) => {
         headers: {
           "Content-Type": "application/json",
           ...corsHeaders,
+          'x-correlation-id': correlationId,
         },
       }
     );
