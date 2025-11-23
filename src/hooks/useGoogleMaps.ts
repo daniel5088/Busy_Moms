@@ -12,14 +12,16 @@ export function useGoogleMaps(apiKey: string) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-
+    // Already loaded?
     if (window.google?.maps) {
       setLoaded(true);
       return;
     }
 
-
-    if (document.getElementById("google-maps-script")) return;
+    // Already loading?
+    if (document.getElementById("google-maps-script")) {
+      return;
+    }
 
     const script = document.createElement("script");
     script.id = "google-maps-script";
@@ -27,7 +29,6 @@ export function useGoogleMaps(apiKey: string) {
     script.async = true;
     script.defer = true;
     script.onload = () => setLoaded(true);
-
     document.head.appendChild(script);
   }, [apiKey]);
 
