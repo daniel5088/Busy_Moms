@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, DollarSign, User, Calendar, Users } from 'lucide-react';
-import { FamilyMember, Event, GiftCategory } from '../lib/supabase';
+import { Search, X, DollarSign, User, Calendar, Users, Heart } from 'lucide-react';
+import { FamilyMember, Event, GiftCategory, AffiliateMatrixLookup, AffiliateSearchCriteria } from '../lib/supabase';
 
 interface GiftFinderFormProps {
   familyMembers: FamilyMember[];
   events: Event[];
   categories?: GiftCategory[];
-  onSearch: (formData: GiftFinderFormData) => void;
+  affiliateLookup?: AffiliateMatrixLookup | null;
+  onSearch: (formData: GiftFinderFormData, affiliateCriteria?: AffiliateSearchCriteria) => void;
   onClose: () => void;
   loading?: boolean;
 }
@@ -20,12 +21,18 @@ export interface GiftFinderFormData {
   event_id?: string;
   family_member_id?: string;
   category?: GiftCategory;
+  // Affiliate matrix fields
+  relationship_key?: string;
+  age_group_key?: string;
+  gender_key?: string;
+  budget_key?: string;
 }
 
 export function GiftFinderForm({
   familyMembers,
   events,
   categories,
+  affiliateLookup,
   onSearch,
   onClose,
   loading = false
@@ -38,7 +45,11 @@ export function GiftFinderForm({
     budget_max: 50,
     event_id: undefined,
     family_member_id: undefined,
-    category: undefined
+    category: undefined,
+    relationship_key: undefined,
+    age_group_key: undefined,
+    gender_key: undefined,
+    budget_key: undefined
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof GiftFinderFormData, string>>>({});
@@ -102,7 +113,18 @@ export function GiftFinderForm({
     e.preventDefault();
 
     if (validate()) {
-      onSearch(formData);
+      // Build affiliate search criteria
+      const affiliateCriteria: AffiliateSearchCriteria | undefined =
+        formData.relationship_key || formData.age_group_key || formData.gender_key || formData.budget_key
+          ? {
+              relationship_key: formData.relationship_key,
+              age_group_key: formData.age_group_key,
+              gender_key: formData.gender_key,
+              budget_key: formData.budget_key
+            }
+          : undefined;
+
+      onSearch(formData, affiliateCriteria);
     }
   };
 
@@ -115,7 +137,11 @@ export function GiftFinderForm({
       budget_max: 50,
       event_id: undefined,
       family_member_id: undefined,
-      category: undefined
+      category: undefined,
+      relationship_key: undefined,
+      age_group_key: undefined,
+      gender_key: undefined,
+      budget_key: undefined
     });
     setErrors({});
   };
@@ -159,6 +185,101 @@ export function GiftFinderForm({
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {/* Affiliate Matrix Filters - Curated Gift Discovery */}
+      {affiliateLookup && (
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-4 space-y-4 border border-pink-200">
+          <h3 className="text-sm font-semibold text-pink-900 flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            Browse Curated Gift Ideas
+          </h3>
+          <p className="text-xs text-gray-600">
+            Select options to discover hand-picked affiliate gift suggestions
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Relationship Dropdown */}
+            <div>
+              <label htmlFor="relationship" className="block text-sm font-medium text-gray-700 mb-1">
+                Relationship
+              </label>
+              <select
+                id="relationship"
+                value={formData.relationship_key || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, relationship_key: e.target.value || undefined }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+              >
+                <option value="">Select relationship...</option>
+                {affiliateLookup.relationships.map(rel => (
+                  <option key={rel.key} value={rel.key}>
+                    {rel.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Age Group Dropdown */}
+            <div>
+              <label htmlFor="age_group" className="block text-sm font-medium text-gray-700 mb-1">
+                Age Group
+              </label>
+              <select
+                id="age_group"
+                value={formData.age_group_key || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, age_group_key: e.target.value || undefined }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+              >
+                <option value="">Select age group...</option>
+                {affiliateLookup.ageGroups.map(age => (
+                  <option key={age.key} value={age.key}>
+                    {age.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Gender Dropdown */}
+            <div>
+              <label htmlFor="affiliate_gender" className="block text-sm font-medium text-gray-700 mb-1">
+                Gender
+              </label>
+              <select
+                id="affiliate_gender"
+                value={formData.gender_key || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, gender_key: e.target.value || undefined }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+              >
+                <option value="">Select gender...</option>
+                {affiliateLookup.genders.map(gender => (
+                  <option key={gender.key} value={gender.key}>
+                    {gender.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Budget Dropdown */}
+            <div>
+              <label htmlFor="affiliate_budget" className="block text-sm font-medium text-gray-700 mb-1">
+                Budget Range
+              </label>
+              <select
+                id="affiliate_budget"
+                value={formData.budget_key || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, budget_key: e.target.value || undefined }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+              >
+                <option value="">Select budget...</option>
+                {affiliateLookup.budgets.map(budget => (
+                  <option key={budget.key} value={budget.key}>
+                    {budget.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       )}
 

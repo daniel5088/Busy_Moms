@@ -443,3 +443,33 @@ export interface GiftSearchCriteria {
   category?: GiftCategory
   tags?: string[]
 }
+
+// ---- Affiliate Matrix Types -------------------------------------------
+
+export interface AffiliateMatrixItem {
+  Sheet_id: number
+  relationship_key?: string | null
+  relationship_label?: string | null
+  age_group_key?: string | null
+  age_group_label?: string | null
+  gender_key?: string | null
+  gender_label?: string | null
+  budget_key?: string | null
+  budget_label?: string | null
+  search_phrase?: string | null
+  affiliate_url?: string | null
+}
+
+export interface AffiliateMatrixLookup {
+  relationships: Array<{ key: string; label: string }>
+  ageGroups: Array<{ key: string; label: string }>
+  genders: Array<{ key: string; label: string }>
+  budgets: Array<{ key: string; label: string }>
+}
+
+export interface AffiliateSearchCriteria {
+  relationship_key?: string
+  age_group_key?: string
+  gender_key?: string
+  budget_key?: string
+}

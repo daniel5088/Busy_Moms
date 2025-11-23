@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { GiftFinderForm, GiftFinderFormData } from './GiftFinderForm';
 import { GiftResultsDisplay } from './GiftResultsDisplay';
+import { AffiliateResults } from './AffiliateResults';
 import { useGiftMatrix } from '../hooks/useGiftMatrix';
-import { FamilyMember, Event, GiftMatrixItem, supabase } from '../lib/supabase';
+import { useAffiliateMatrix } from '../hooks/useAffiliateMatrix';
+import { FamilyMember, Event, GiftMatrixItem, AffiliateSearchCriteria, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 
 interface GiftFinderModalProps {
@@ -25,6 +27,15 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
     handleAffiliateClick,
     saveSearch
   } = useGiftMatrix();
+
+  const {
+    lookupValues,
+    affiliateResults,
+    loading: affiliateLoading,
+    error: affiliateError,
+    searchAffiliateLinks,
+    clearResults: clearAffiliateResults
+  } = useAffiliateMatrix();
 
   const [step, setStep] = useState<Step>('form');
   const [searchCriteria, setSearchCriteria] = useState<GiftFinderFormData | null>(null);
@@ -69,10 +80,11 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
     }
   };
 
-  const handleSearch = async (formData: GiftFinderFormData) => {
+  const handleSearch = async (formData: GiftFinderFormData, affiliateCriteria?: AffiliateSearchCriteria) => {
     setSearchCriteria(formData);
 
-    const results = await searchGifts({
+    // Search both gift_matrix and affiliate_matrix
+    const giftPromise = searchGifts({
       age: formData.recipient_age,
       gender: formData.recipient_gender,
       budgetMin: formData.budget_min,
@@ -81,7 +93,17 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
       tags: []
     });
 
-    if (results.length > 0) {
+    // Search affiliate matrix if criteria provided
+    if (affiliateCriteria) {
+      await searchAffiliateLinks(affiliateCriteria);
+    } else {
+      clearAffiliateResults();
+    }
+
+    const giftResults = await giftPromise;
+
+    // Show results if we have either gift matrix or affiliate results
+    if (giftResults.length > 0 || affiliateResults.length > 0) {
       setStep('results');
     }
   };
@@ -129,6 +151,7 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
     setStep('form');
     setSearchCriteria(null);
     setSaveMessage(null);
+    clearAffiliateResults();
     onClose();
   };
 
@@ -203,15 +226,40 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
                 familyMembers={familyMembers}
                 events={events}
                 categories={categories}
+                affiliateLookup={lookupValues}
                 onSearch={handleSearch}
                 onClose={handleClose}
-                loading={loading}
+                loading={loading || affiliateLoading}
               />
             </div>
           )}
 
           {step === 'results' && searchCriteria && (
-            <div className="p-6">
+            <div className="p-6 space-y-8">
+              {/* Affiliate Results Section */}
+              {affiliateResults.length > 0 && (
+                <AffiliateResults
+                  results={affiliateResults}
+                  onLinkClick={(url, item) => {
+                    console.log('Affiliate link clicked:', url, item);
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                />
+              )}
+
+              {/* Separator */}
+              {affiliateResults.length > 0 && gifts.length > 0 && (
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-3 bg-white text-gray-500 font-medium">or explore individual gifts</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Gift Matrix Results Section */}
               <GiftResultsDisplay
                 gifts={gifts}
                 searchCriteria={searchCriteria}
