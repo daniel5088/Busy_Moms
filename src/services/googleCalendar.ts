@@ -1,6 +1,7 @@
 // Google Calendar service for managing calendar integration
 import { supabase } from '../lib/supabase';
 import { getActiveSession } from '../lib/sessionHelper';
+import type { Event } from '../lib/supabase';
 
 export interface GoogleCalendarEvent {
   id?: string;
@@ -33,6 +34,44 @@ export interface CalendarListOptions {
   timeMax?: string;
   maxResults?: number;
   q?: string;
+}
+
+/** Maps local Event → Google-ish payload (kept in sync with calendarSyncService.localEventToGoogle) */
+export function mapLocalToGoogle(local: Event): Partial<GoogleCalendarEvent> {
+  const out: Partial<GoogleCalendarEvent> = {
+    summary: local.title,
+    description: local.description || undefined,
+    location: local.location || undefined,
+    start: {},
+    end: {},
+    attendees: Array.isArray(local.participants)
+      ? local.participants.map(p => ({
+          email: p.includes('@') ? p : undefined,
+          displayName: !p.includes('@') ? p : undefined,
+        }))
+      : undefined,
+  };
+
+  if (local.start_time) {
+    out.start = {
+      dateTime: `${local.event_date}T${local.start_time}`,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+    out.end = local.end_time
+      ? {
+          dateTime: `${local.event_date}T${local.end_time}`,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }
+      : out.start; // server can set default duration if needed
+  } else {
+    // All-day
+    out.start = { date: local.event_date };
+    const nextDay = new Date(local.event_date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    out.end = { date: nextDay.toISOString().split('T')[0] };
+  }
+
+  return out;
 }
 
 class GoogleCalendarService {
@@ -390,14 +429,38 @@ class GoogleCalendarService {
   async updateEvent(eventId: string, event: Partial<GoogleCalendarEvent>): Promise<GoogleCalendarEvent> {
     try {
       const updatedEvent = await this.makeApiCall('updateEvent', { eventId, event });
-      return updatedEvent;
+    return updatedEvent;
     } catch (error) {
       console.error('❌ Failed to update event:', error);
       throw error;
     }
   }
 
-  async deleteEvent(eventId: string): Promise<void> {
+  /**
+   * Upsert helper used by the orchestrator when restoring remote from local.
+   * Decides to insert or update based on whether the payload has an id.
+   */
+  async upsertEvent(userId: string, localEvent: Event): Promise<GoogleCalendarEvent> {
+    // Build Google payload on the client to keep the Edge Function simple
+    const payload = mapLocalToGoogle(localEvent);
+    const hasId = Boolean((payload as any).id);
+
+    const result = await this.makeApiCall(
+      hasId ? 'updateEvent' : 'insertEvent',
+      hasId
+        ? { eventId: (payload as any).id, event: payload }
+        : { event: payload }
+    );
+
+    // Edge Function returns the event directly in current implementation
+    return result as GoogleCalendarEvent;
+  }
+
+  // Overloads so callers can use deleteEvent(eventId) or deleteEvent(userId, eventId)
+  async deleteEvent(eventId: string): Promise<void>;
+  async deleteEvent(userId: string, eventId: string): Promise<void>;
+  async deleteEvent(a: string, b?: string): Promise<void> {
+    const eventId = b ?? a; // if two args, second is eventId; if one arg, it's the eventId
     try {
       await this.makeApiCall('deleteEvent', { eventId });
     } catch (error) {
