@@ -201,6 +201,130 @@ class AffiliateMatrixService {
   }
 
   /**
+   * Match recipient age to appropriate age group key
+   * Example: age 6 matches "4-6" or "6-12" age group
+   */
+  async matchAgeToAgeGroup(age: number): Promise<string | null> {
+    const lookup = await this.getLookupValues();
+
+    // Find the first age group that contains the given age
+    for (const ageGroup of lookup.ageGroups) {
+      const match = ageGroup.label.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (match) {
+        const min = parseInt(match[1], 10);
+        const max = parseInt(match[2], 10);
+        if (age >= min && age <= max) {
+          return ageGroup.key;
+        }
+      }
+
+      // Handle "X+" pattern (e.g., "18+")
+      const plusMatch = ageGroup.label.match(/^(\d+)\+$/);
+      if (plusMatch) {
+        const min = parseInt(plusMatch[1], 10);
+        if (age >= min) {
+          return ageGroup.key;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Match recipient gender to appropriate gender key
+   * Maps 'Boy', 'Girl', 'Other' to affiliate matrix gender keys
+   */
+  async matchGenderToGenderKey(gender: 'Boy' | 'Girl' | 'Other'): Promise<string | null> {
+    const lookup = await this.getLookupValues();
+
+    // Find matching gender in affiliate matrix
+    const genderMap: Record<string, string[]> = {
+      'Boy': ['boy', 'boys', 'male', 'him', 'he'],
+      'Girl': ['girl', 'girls', 'female', 'her', 'she'],
+      'Other': ['unisex', 'other', 'any', 'anyone', 'neutral']
+    };
+
+    const searchTerms = genderMap[gender] || [];
+
+    for (const genderOption of lookup.genders) {
+      const normalizedLabel = genderOption.label.toLowerCase();
+      for (const term of searchTerms) {
+        if (normalizedLabel.includes(term)) {
+          return genderOption.key;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Match budget range to appropriate budget key
+   * Example: budget $30 matches "$25-$50" budget range
+   */
+  async matchBudgetToBudgetKey(minBudget: number, maxBudget: number): Promise<string | null> {
+    const lookup = await this.getLookupValues();
+    const avgBudget = (minBudget + maxBudget) / 2;
+
+    // Find the best matching budget range
+    for (const budget of lookup.budgets) {
+      // Handle "Under X" pattern
+      const underMatch = budget.label.match(/under\s*\$?(\d+)/i);
+      if (underMatch) {
+        const max = parseInt(underMatch[1], 10);
+        if (avgBudget <= max) {
+          return budget.key;
+        }
+      }
+
+      // Handle "X+" pattern
+      const plusMatch = budget.label.match(/\$?(\d+)\+/);
+      if (plusMatch) {
+        const min = parseInt(plusMatch[1], 10);
+        if (avgBudget >= min) {
+          return budget.key;
+        }
+      }
+
+      // Handle "X-Y" pattern
+      const rangeMatch = budget.label.match(/\$?(\d+)\s*-\s*\$?(\d+)/);
+      if (rangeMatch) {
+        const min = parseInt(rangeMatch[1], 10);
+        const max = parseInt(rangeMatch[2], 10);
+        if (avgBudget >= min && avgBudget <= max) {
+          return budget.key;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Build affiliate search criteria from recipient information
+   * Automatically matches recipient age, gender, and budget to affiliate matrix keys
+   */
+  async buildCriteriaFromRecipient(recipient: {
+    age: number;
+    gender: 'Boy' | 'Girl' | 'Other';
+    budgetMin: number;
+    budgetMax: number;
+  }): Promise<AffiliateSearchCriteria> {
+    const [ageGroupKey, genderKey, budgetKey] = await Promise.all([
+      this.matchAgeToAgeGroup(recipient.age),
+      this.matchGenderToGenderKey(recipient.gender),
+      this.matchBudgetToBudgetKey(recipient.budgetMin, recipient.budgetMax)
+    ]);
+
+    return {
+      age_group_key: ageGroupKey || undefined,
+      gender_key: genderKey || undefined,
+      budget_key: budgetKey || undefined
+    };
+  }
+
+  /**
    * Clear the lookup cache (useful for testing or manual refresh)
    */
   clearCache(): void {

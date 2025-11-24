@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, DollarSign, User, Calendar, Users, Heart } from 'lucide-react';
 import { FamilyMember, Event, GiftCategory, AffiliateMatrixLookup, AffiliateSearchCriteria } from '../lib/supabase';
+import { affiliateMatrixService } from '../services/affiliateMatrixService';
 
 interface GiftFinderFormProps {
   familyMembers: FamilyMember[];
@@ -196,13 +197,45 @@ export function GiftFinderForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validate()) {
-      // Build affiliate search criteria
-      const affiliateCriteria: AffiliateSearchCriteria | undefined =
-        formData.relationship_key || formData.age_group_key || formData.gender_key || formData.budget_key
+      let affiliateCriteria: AffiliateSearchCriteria | undefined;
+
+      // If recipient information is provided (family member selected),
+      // automatically match to affiliate matrix keys
+      if (formData.family_member_id) {
+        try {
+          const matchedCriteria = await affiliateMatrixService.buildCriteriaFromRecipient({
+            age: formData.recipient_age,
+            gender: formData.recipient_gender,
+            budgetMin: formData.budget_min,
+            budgetMax: formData.budget_max
+          });
+
+          // Merge with any manually selected criteria from curated section
+          affiliateCriteria = {
+            relationship_key: formData.relationship_key,
+            age_group_key: formData.age_group_key || matchedCriteria.age_group_key,
+            gender_key: formData.gender_key || matchedCriteria.gender_key,
+            budget_key: formData.budget_key || matchedCriteria.budget_key
+          };
+        } catch (error) {
+          console.error('Error matching recipient to affiliate criteria:', error);
+          // Fall back to manually selected criteria only
+          affiliateCriteria = formData.relationship_key || formData.age_group_key || formData.gender_key || formData.budget_key
+            ? {
+                relationship_key: formData.relationship_key,
+                age_group_key: formData.age_group_key,
+                gender_key: formData.gender_key,
+                budget_key: formData.budget_key
+              }
+            : undefined;
+        }
+      } else {
+        // No recipient info - use only manually selected curated criteria
+        affiliateCriteria = formData.relationship_key || formData.age_group_key || formData.gender_key || formData.budget_key
           ? {
               relationship_key: formData.relationship_key,
               age_group_key: formData.age_group_key,
@@ -210,6 +243,7 @@ export function GiftFinderForm({
               budget_key: formData.budget_key
             }
           : undefined;
+      }
 
       onSearch(formData, affiliateCriteria);
     }
