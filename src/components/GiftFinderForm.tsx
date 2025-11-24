@@ -173,12 +173,15 @@ export function GiftFinderForm({
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof GiftFinderFormData, string>> = {};
 
-    if (!formData.recipient_name.trim()) {
-      newErrors.recipient_name = 'Recipient name is required';
-    }
+    // Only validate recipient info if family member is selected
+    if (formData.family_member_id) {
+      if (!formData.recipient_name.trim()) {
+        newErrors.recipient_name = 'Recipient name is required';
+      }
 
-    if (formData.recipient_age < 0 || formData.recipient_age > 25) {
-      newErrors.recipient_age = 'Age must be between 0 and 25';
+      if (formData.recipient_age < 0 || formData.recipient_age > 25) {
+        newErrors.recipient_age = 'Age must be between 0 and 25';
+      }
     }
 
     if (formData.budget_min < 0) {
@@ -377,99 +380,101 @@ export function GiftFinderForm({
         </div>
       )}
 
-      {/* Recipient Information */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <User className="w-5 h-5" />
-          Recipient Information
-        </h3>
+      {/* Recipient Information - Only shown when family member is selected */}
+      {formData.family_member_id && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Recipient Information
+          </h3>
 
-        {/* Name */}
-        <div>
-          <label htmlFor="recipient_name" className="block text-sm font-medium text-gray-700 mb-1">
-            Recipient Name *
-          </label>
-          <input
-            type="text"
-            id="recipient_name"
-            value={formData.recipient_name}
-            onChange={(e) => setFormData(prev => ({ ...prev, recipient_name: e.target.value }))}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-              errors.recipient_name ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="Who is this gift for?"
-          />
-          {errors.recipient_name && (
-            <p className="mt-1 text-sm text-red-600">{errors.recipient_name}</p>
-          )}
-        </div>
-
-        {/* Age */}
-        <div>
-          <label htmlFor="recipient_age" className="block text-sm font-medium text-gray-700 mb-1">
-            Age *
-          </label>
-          <input
-            type="number"
-            id="recipient_age"
-            min="0"
-            max="25"
-            value={formData.recipient_age}
-            onChange={(e) => setFormData(prev => ({ ...prev, recipient_age: parseInt(e.target.value) || 0 }))}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-              errors.recipient_age ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.recipient_age && (
-            <p className="mt-1 text-sm text-red-600">{errors.recipient_age}</p>
-          )}
-        </div>
-
-        {/* Gender */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Gender
-          </label>
-          <div className="flex gap-4">
-            {(['Boy', 'Girl', 'Other'] as const).map(gender => (
-              <label key={gender} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="gender"
-                  value={gender}
-                  checked={formData.recipient_gender === gender}
-                  onChange={(e) => setFormData(prev => ({ ...prev, recipient_gender: e.target.value as 'Boy' | 'Girl' | 'Other' }))}
-                  className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                />
-                <span className="text-sm text-gray-700">{gender === 'Other' ? 'Unisex' : gender}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Event Link */}
-        {upcomingEvents.length > 0 && (
+          {/* Name */}
           <div>
-            <label htmlFor="event_id" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Link to Event (Optional)
+            <label htmlFor="recipient_name" className="block text-sm font-medium text-gray-700 mb-1">
+              Recipient Name *
             </label>
-            <select
-              id="event_id"
-              value={formData.event_id || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, event_id: e.target.value || undefined }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            >
-              <option value="">No event</option>
-              {upcomingEvents.map(event => (
-                <option key={event.id} value={event.id}>
-                  {event.title} - {new Date(event.event_date).toLocaleDateString()}
-                </option>
-              ))}
-            </select>
+            <input
+              type="text"
+              id="recipient_name"
+              value={formData.recipient_name}
+              onChange={(e) => setFormData(prev => ({ ...prev, recipient_name: e.target.value }))}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                errors.recipient_name ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Who is this gift for?"
+            />
+            {errors.recipient_name && (
+              <p className="mt-1 text-sm text-red-600">{errors.recipient_name}</p>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* Age */}
+          <div>
+            <label htmlFor="recipient_age" className="block text-sm font-medium text-gray-700 mb-1">
+              Age *
+            </label>
+            <input
+              type="number"
+              id="recipient_age"
+              min="0"
+              max="25"
+              value={formData.recipient_age}
+              onChange={(e) => setFormData(prev => ({ ...prev, recipient_age: parseInt(e.target.value) || 0 }))}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                errors.recipient_age ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.recipient_age && (
+              <p className="mt-1 text-sm text-red-600">{errors.recipient_age}</p>
+            )}
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gender
+            </label>
+            <div className="flex gap-4">
+              {(['Boy', 'Girl', 'Other'] as const).map(gender => (
+                <label key={gender} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value={gender}
+                    checked={formData.recipient_gender === gender}
+                    onChange={(e) => setFormData(prev => ({ ...prev, recipient_gender: e.target.value as 'Boy' | 'Girl' | 'Other' }))}
+                    className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">{gender === 'Other' ? 'Unisex' : gender}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Event Link */}
+          {upcomingEvents.length > 0 && (
+            <div>
+              <label htmlFor="event_id" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Link to Event (Optional)
+              </label>
+              <select
+                id="event_id"
+                value={formData.event_id || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, event_id: e.target.value || undefined }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">No event</option>
+                {upcomingEvents.map(event => (
+                  <option key={event.id} value={event.id}>
+                    {event.title} - {new Date(event.event_date).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Budget Section */}
       <div className="space-y-4">
