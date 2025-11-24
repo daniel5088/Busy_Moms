@@ -16,6 +16,7 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     name: '',
+    relationship: 'Child',
     age: '',
     gender: 'Other',
     allergies: '',
@@ -29,6 +30,7 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
     if (editMember) {
       setFormData({
         name: editMember.name || '',
+        relationship: editMember.relationship || 'Child',
         age: editMember.age?.toString() || '',
         gender: editMember.gender || 'Other',
         allergies: editMember.allergies?.join(', ') || '',
@@ -40,6 +42,7 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
       // Reset form for new member
       setFormData({
         name: '',
+        relationship: 'Child',
         age: '',
         gender: 'Other',
         allergies: '',
@@ -97,6 +100,7 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
       // Reset form
       setFormData({
         name: '',
+        relationship: 'Child',
         age: '',
         gender: 'Other',
         allergies: '',
@@ -148,8 +152,26 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                placeholder="Child's name"
+                placeholder="Family member's name"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                Relationship *
+              </label>
+              <select
+                required
+                value={formData.relationship}
+                onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
+                className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+              >
+                <option value="Child">Child</option>
+                <option value="Spouse">Spouse</option>
+                <option value="Parent">Parent</option>
+                <option value="Grandparent">Grandparent</option>
+                <option value="Extended Family">Extended Family</option>
+              </select>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
