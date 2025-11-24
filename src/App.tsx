@@ -25,6 +25,7 @@ import { useToast } from './hooks/useErrorHandler'
 import { useAffirmationNotifier } from './hooks/useAffirmationNotifier'
 import { captureAndStoreGoogleTokens } from './services/googleTokenStorage'
 import { Diagnostics } from "./pages/Diagnostics";
+import { useDarkMode } from './hooks/useDarkMode'
 
 export type Screen = 'dashboard' | 'calendar' | 'family' | 'more'
 export type SubScreen = 'shopping' | 'tasks' | 'contacts' | 'family-folders' | 'settings'
@@ -41,6 +42,7 @@ function App() {
   const [showAffirmations, setShowAffirmations] = useState(false)
   const { toasts, removeToast } = useToast()
   const { pendingAffirmation, dismissNotification } = useAffirmationNotifier()
+  const { darkMode, toggleDarkMode } = useDarkMode()
 
   // Check URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -200,10 +202,10 @@ function App() {
   // Show loading only when we're checking auth or onboarding for authenticated users
   if (loading || (user && checkingOnboarding)) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600 dark:text-blue-400" />
+          <p className="text-gray-600 dark:text-gray-300">
             {loading ? 'Loading...' : checkingOnboarding ? 'Checking your profile...' : 'Loading...'}
           </p>
         </div>
@@ -234,7 +236,7 @@ function App() {
   // Show main app if user is authenticated and has completed onboarding
   return (
     <ErrorBoundary componentName="App">
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <ImprovedNavigation
           currentScreen={currentScreen}
           onScreenChange={(screen) => {
@@ -269,7 +271,7 @@ function App() {
               )}
               {currentSubScreen === 'settings' && (
                 <FeatureErrorBoundary featureName="Settings">
-                  <Settings />
+                  <Settings darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
                 </FeatureErrorBoundary>
               )}
             </>

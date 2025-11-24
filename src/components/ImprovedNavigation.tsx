@@ -21,7 +21,7 @@ export function ImprovedNavigation({ currentScreen, onScreenChange, onVoiceChatO
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-pb shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50 safe-area-pb shadow-lg">
       <div className="flex items-center justify-around py-2 px-2 relative max-w-md mx-auto">
         {navItems.map((item) => (
           <button
@@ -29,8 +29,8 @@ export function ImprovedNavigation({ currentScreen, onScreenChange, onVoiceChatO
             onClick={() => onScreenChange(item.id)}
             className={`flex flex-col items-center justify-center space-y-0.5 py-2 px-3 rounded-xl transition-all min-w-[44px] min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 ${
               currentScreen === item.id
-                ? 'text-rose-600 bg-rose-50'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
             aria-label={item.label}
             aria-current={currentScreen === item.id ? 'page' : undefined}

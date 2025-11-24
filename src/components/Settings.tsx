@@ -18,7 +18,12 @@ import { useCalendarSync } from '../hooks/useCalendarSync';
 import { measurementPreferencesService } from '../services/measurementPreferencesService';
 import type { UserMeasurementPreferences } from '../lib/supabase';
 
-export function Settings() {
+interface SettingsProps {
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+}
+
+export function Settings({ darkMode, toggleDarkMode }: SettingsProps) {
   const { user, signOut } = useAuth();
   const { performSync } = useCalendarSync();
   const [showFamilyForm, setShowFamilyForm] = useState(false);
@@ -38,13 +43,6 @@ export function Settings() {
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [syncingGoogle, setSyncingGoogle] = useState(false);
   const [measurementPrefs, setMeasurementPrefs] = useState<UserMeasurementPreferences | null>(null);
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      return savedMode === 'true';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
   const [notifications, setNotifications] = useState({
     events: true,
     shopping: true,
@@ -147,15 +145,6 @@ export function Settings() {
     }
   };
 
-  // Initialize dark mode on mount
-  React.useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
   // Load data on component mount and when user changes
   React.useEffect(() => {
     let mounted = true;
@@ -230,19 +219,6 @@ export function Settings() {
     }
   };
 
-  // Toggles dark mode by adding/removing the "dark" class on <html>
-  const toggleDarkMode = () => {
-    setDarkMode(prev => {
-      const newValue = !prev;
-      if (newValue) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-      localStorage.setItem('darkMode', String(newValue));
-      return newValue;
-    });
-  };
 
   const toggleNotification = (key: keyof typeof notifications) => {
     setNotifications(prev => ({
@@ -508,10 +484,10 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
         {/* AI Personality Setting */}
-        <div className="mb-4 sm:mb-6 bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 rounded-xl p-3 sm:p-4">
-          <h3 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">AI Assistant Personality</h3>
+        <div className="mb-4 sm:mb-6 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 border border-rose-200 dark:border-gray-600 rounded-xl p-3 sm:p-4">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-sm sm:text-base">AI Assistant Personality</h3>
           <div className="grid grid-cols-3 gap-1 sm:gap-2">
             {['Friendly', 'Professional', 'Humorous'].map((personality) => (
               <button
@@ -519,7 +495,7 @@ export function Settings() {
                 className={`py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   personality === (currentProfile?.ai_personality || 'Friendly')
                     ? 'bg-rose-500 text-white'
-                    : 'bg-white text-gray-600 hover:bg-rose-100'
+                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-rose-100 dark:hover:bg-gray-600'
                 }`}
                 onClick={() => setShowProfileForm(true)}
               >
@@ -533,18 +509,18 @@ export function Settings() {
         <div className="space-y-6">
           {visibleSections.map((section, sectionIndex) => (
             <div key={sectionIndex}>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{section.title}</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">{section.title}</h2>
               <div className="space-y-2">
                 {section.items.map((item, itemIndex) => (
-                  <div key={itemIndex} className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all">
+                  <div key={itemIndex} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 sm:space-x-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 rounded-full flex items-center justify-center">
-                          <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" />
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+                          <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600 dark:text-rose-300" />
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900 text-sm sm:text-base">{item.title}</h3>
-                          <p className="text-xs sm:text-sm text-gray-600">{item.description}</p>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">{item.title}</h3>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
                         </div>
                       </div>
                       
@@ -578,7 +554,7 @@ export function Settings() {
                               item.onClick();
                             }
                           }}
-                          className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs sm:text-sm hover:bg-gray-200 transition-colors"
+                          className="px-2 sm:px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                         >
                           {item.action}
                         </button>
@@ -602,22 +578,22 @@ export function Settings() {
 
         {/* Google Calendar Detailed Section */}
         <div className="mt-6" data-google-calendar-section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Google Calendar Sync</h2>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Google Calendar Sync</h2>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Google Calendar</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Calendar</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {isGoogleConnected ? 'Connected and syncing' : 'Connect to sync your events'}
                   </p>
                 </div>
               </div>
               {isGoogleConnected && (
-                <div className="flex items-center space-x-1 text-green-600">
+                <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
                   <CheckCircle className="w-4 h-4" />
                   <span className="text-sm">Connected</span>
                 </div>
@@ -637,7 +613,7 @@ export function Settings() {
 
                 <button
                   onClick={() => setShowSyncSettings(true)}
-                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
                 >
                   Sync Settings
                 </button>
@@ -658,7 +634,7 @@ export function Settings() {
                       }
                     }
                   }}
-                  className="w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                  className="w-full px-4 py-2 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-lg hover:bg-red-100 dark:hover:bg-red-800 transition-colors text-sm font-medium"
                 >
                   Disconnect Google Calendar
                 </button>
@@ -676,7 +652,7 @@ export function Settings() {
         {/* Family Members List */}
         <div className="mt-4 sm:mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Family Members</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Family Members</h2>
             <button
               onClick={() => setShowFamilyForm(true)}
               className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
@@ -688,12 +664,12 @@ export function Settings() {
           {loadingMembers ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-rose-500" />
-              <span className="ml-2 text-sm sm:text-base text-gray-600">Loading family members...</span>
+              <span className="ml-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">Loading family members...</span>
             </div>
           ) : familyMembers.length > 0 ? (
             <div className="space-y-3">
               {familyMembers.map((member) => (
-                <div key={member.id} className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all">
+                <div key={member.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 sm:space-x-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
@@ -703,7 +679,7 @@ export function Settings() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 sm:space-x-3 mb-1 flex-wrap">
-                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{member.name}</h3>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">{member.name}</h3>
                           {member.relationship && (
                             <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm font-medium">
                               {member.relationship}
@@ -721,7 +697,7 @@ export function Settings() {
                           )}
                         </div>
                         
-                        <div className="text-xs sm:text-sm text-gray-600 space-y-1">
+                        <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 space-y-1">
                           {member.school && (
                             <p>
                               <span className="font-medium">School:</span> {member.school}
@@ -729,12 +705,12 @@ export function Settings() {
                             </p>
                           )}
                           {member.allergies && member.allergies.length > 0 && (
-                            <p className="text-red-600">
+                            <p className="text-red-600 dark:text-red-400">
                               <span className="font-medium">Allergies:</span> {member.allergies.join(', ')}
                             </p>
                           )}
                           {member.medical_notes && (
-                            <p className="text-blue-600">
+                            <p className="text-blue-600 dark:text-blue-400">
                               <span className="font-medium">Medical:</span> {member.medical_notes}
                             </p>
                           )}
@@ -748,14 +724,14 @@ export function Settings() {
                           setEditingMember(member);
                           setShowFamilyForm(true);
                         }}
-                        className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-blue-100 text-blue-600 rounded-lg text-xs sm:text-sm hover:bg-blue-200 transition-colors"
+                        className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-lg text-xs sm:text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
                       >
                         <Edit className="w-2 h-2 sm:w-3 sm:h-3" />
                         <span>Edit</span>
                       </button>
                       <button
                         onClick={() => deleteFamilyMember(member.id)}
-                        className="px-2 sm:px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs sm:text-sm hover:bg-red-200 transition-colors"
+                        className="px-2 sm:px-3 py-1 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-lg text-xs sm:text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                       >
                         Delete
                       </button>
@@ -765,10 +741,10 @@ export function Settings() {
               ))}
             </div>
           ) : (
-            <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-              <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No family members yet</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-4">Add your children and family members to get started</p>
+            <div className="bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
+              <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No family members yet</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">Add your children and family members to get started</p>
               <button
                 onClick={() => setShowFamilyForm(true)}
                 className="px-4 sm:px-6 py-2 sm:py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors text-sm sm:text-base"
@@ -781,12 +757,12 @@ export function Settings() {
 
         {/* Background Check History */}
         <div className="mt-4 sm:mt-6">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Background Check History</h2>
-          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Background Check History</h2>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="font-medium text-gray-900 text-sm sm:text-base">Maria Rodriguez</h3>
-                <p className="text-xs sm:text-sm text-gray-600">Completed March 10, 2025</p>
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">Maria Rodriguez</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Completed March 10, 2025</p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
@@ -794,7 +770,7 @@ export function Settings() {
                 </div>
               </div>
             </div>
-            <button className="text-rose-600 text-xs sm:text-sm hover:underline">
+            <button className="text-rose-600 dark:text-rose-400 text-xs sm:text-sm hover:underline">
               View Full Report
             </button>
           </div>
@@ -803,7 +779,7 @@ export function Settings() {
         {/* Sign Out */}
         <button 
           onClick={handleSignOut}
-          className="w-full mt-6 sm:mt-8 py-2 sm:py-3 bg-red-50 text-red-600 rounded-xl font-medium hover:bg-red-100 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+          className="w-full mt-6 sm:mt-8 py-2 sm:py-3 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-xl font-medium hover:bg-red-100 dark:hover:bg-red-800 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
         >
           <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
           <span>Sign Out</span>
@@ -840,12 +816,12 @@ export function Settings() {
       />
 
       {showErrorDashboard && (
-        <div className="fixed inset-0 z-50 bg-white">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold">Error Dashboard</h2>
+        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Error Dashboard</h2>
             <button
               onClick={() => setShowErrorDashboard(false)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
               Close
             </button>
@@ -872,12 +848,12 @@ export function Settings() {
 
       {showRetailerSearch && user && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Manage Retailers</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Manage Retailers</h2>
               <button
                 onClick={() => setShowRetailerSearch(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <XCircle className="w-6 h-6" />
               </button>
@@ -891,12 +867,12 @@ export function Settings() {
 
       {showAddressManager && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Manage Addresses</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Manage Addresses</h2>
               <button
                 onClick={() => setShowAddressManager(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <XCircle className="w-6 h-6" />
               </button>

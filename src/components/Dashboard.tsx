@@ -238,7 +238,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
   }
 
   return (
-    <div className="pb-20">
+    <div className="pb-20 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Header */}
       <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 text-white p-4 pb-6">
         <div className="flex items-center justify-between mb-4">
@@ -374,7 +374,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
           ) : todayEvents.length > 0 ? (
             <div className="space-y-3">
               {todayEvents.map((event) => (
-                <div key={event.id} className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onNavigate('calendar')}>
+                <div key={event.id} className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onNavigate('calendar')}>
                   <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" />
