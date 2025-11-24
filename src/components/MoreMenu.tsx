@@ -76,14 +76,14 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         {userName && (
-          <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 text-white rounded-2xl p-6 mb-6">
+          <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-gray-700 text-white rounded-2xl p-6 mb-6">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <span className="text-2xl font-bold">{userName.charAt(0).toUpperCase()}</span>
               </div>
               <div>
                 <h2 className="text-xl font-bold">{userName}</h2>
-                <p className="text-rose-100">{userEmail}</p>
+                <p className="text-rose-100 dark:text-gray-300">{userEmail}</p>
               </div>
             </div>
           </div>
