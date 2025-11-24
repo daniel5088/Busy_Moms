@@ -50,6 +50,7 @@ export function GiftFinderForm({
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof GiftFinderFormData, string>>>({});
+  const [selectedMemberRelationship, setSelectedMemberRelationship] = useState<string | undefined>(undefined);
 
   // Mapping functions to convert affiliate matrix selections to form values
   const mapAgeGroupToAge = (ageGroupLabel: string): number => {
@@ -144,6 +145,7 @@ export function GiftFinderForm({
         recipient_age: 8,
         recipient_gender: 'Other'
       }));
+      setSelectedMemberRelationship(undefined);
       return;
     }
 
@@ -156,6 +158,7 @@ export function GiftFinderForm({
         recipient_age: member.age || 8,
         recipient_gender: member.gender || 'Other'
       }));
+      setSelectedMemberRelationship(member.relationship);
     }
   };
 
@@ -207,7 +210,8 @@ export function GiftFinderForm({
             age: formData.recipient_age,
             gender: formData.recipient_gender,
             budgetMin: formData.budget_min,
-            budgetMax: formData.budget_max
+            budgetMax: formData.budget_max,
+            relationship: selectedMemberRelationship
           });
 
           // Merge with any manually selected criteria from curated section
@@ -260,6 +264,7 @@ export function GiftFinderForm({
       budget_key: undefined
     });
     setErrors({});
+    setSelectedMemberRelationship(undefined);
   };
 
   const upcomingEvents = events.filter(e => {

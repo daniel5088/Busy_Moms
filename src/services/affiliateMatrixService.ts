@@ -357,12 +357,14 @@ class AffiliateMatrixService {
   /**
    * Build affiliate search criteria from recipient information
    * Automatically matches recipient age, gender, and budget to affiliate matrix keys
+   * If relationship is "Spouse", filters to "for him" or "for her" based on gender
    */
   async buildCriteriaFromRecipient(recipient: {
     age: number;
     gender: 'Boy' | 'Girl' | 'Other';
     budgetMin: number;
     budgetMax: number;
+    relationship?: string;
   }): Promise<AffiliateSearchCriteria> {
     const [ageGroupKey, genderKey, budgetKey] = await Promise.all([
       this.matchAgeToAgeGroup(recipient.age),
@@ -370,9 +372,32 @@ class AffiliateMatrixService {
       this.matchBudgetToBudgetKey(recipient.budgetMin, recipient.budgetMax)
     ]);
 
+    // If relationship is "Spouse", override gender to match "for him" or "for her"
+    let finalGenderKey = genderKey;
+    if (recipient.relationship?.toLowerCase() === 'spouse') {
+      const lookup = await this.getLookupValues();
+
+      // Map Boy/Girl to "for him"/"for her"
+      if (recipient.gender === 'Boy') {
+        // Find "for him" gender key
+        const forHim = lookup.genders.find(g =>
+          g.label.toLowerCase().includes('for him') ||
+          g.label.toLowerCase() === 'him'
+        );
+        finalGenderKey = forHim?.key || genderKey;
+      } else if (recipient.gender === 'Girl') {
+        // Find "for her" gender key
+        const forHer = lookup.genders.find(g =>
+          g.label.toLowerCase().includes('for her') ||
+          g.label.toLowerCase() === 'her'
+        );
+        finalGenderKey = forHer?.key || genderKey;
+      }
+    }
+
     return {
       age_group_key: ageGroupKey || undefined,
-      gender_key: genderKey || undefined,
+      gender_key: finalGenderKey || undefined,
       budget_key: budgetKey || undefined
     };
   }
