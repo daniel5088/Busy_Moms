@@ -510,79 +510,39 @@ export function GiftFinderForm({
         </div>
       )}
 
-      {/* Budget Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <DollarSign className="w-5 h-5" />
-          Budget
-        </h3>
+      {/* Budget Section - Only shown when family member is selected */}
+      {formData.family_member_id && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <DollarSign className="w-5 h-5" />
+            Budget
+          </h3>
 
-        {/* Budget Presets */}
-        <div className="flex flex-wrap gap-2">
-          {[
-            { label: 'Under $10', min: 0, max: 10 },
-            { label: '$10-25', min: 10, max: 25 },
-            { label: '$25-50', min: 25, max: 50 },
-            { label: '$50-100', min: 50, max: 100 },
-            { label: '$100+', min: 100, max: 500 }
-          ].map(preset => (
-            <button
-              key={preset.label}
-              type="button"
-              onClick={() => handleBudgetPreset(preset.min, preset.max)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                formData.budget_min === preset.min && formData.budget_max === preset.max
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Custom Budget */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="budget_min" className="block text-sm font-medium text-gray-700 mb-1">
-              Minimum $
-            </label>
-            <input
-              type="number"
-              id="budget_min"
-              min="0"
-              step="5"
-              value={formData.budget_min}
-              onChange={(e) => setFormData(prev => ({ ...prev, budget_min: parseFloat(e.target.value) || 0 }))}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                errors.budget_min ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.budget_min && (
-              <p className="mt-1 text-sm text-red-600">{errors.budget_min}</p>
-            )}
-          </div>
-          <div>
-            <label htmlFor="budget_max" className="block text-sm font-medium text-gray-700 mb-1">
-              Maximum $
-            </label>
-            <input
-              type="number"
-              id="budget_max"
-              min="0"
-              step="5"
-              value={formData.budget_max}
-              onChange={(e) => setFormData(prev => ({ ...prev, budget_max: parseFloat(e.target.value) || 0 }))}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                errors.budget_max ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.budget_max && (
-              <p className="mt-1 text-sm text-red-600">{errors.budget_max}</p>
-            )}
+          {/* Budget Presets */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'Under $10', min: 0, max: 10 },
+              { label: '$10-25', min: 10, max: 25 },
+              { label: '$25-50', min: 25, max: 50 },
+              { label: '$50-100', min: 50, max: 100 },
+              { label: '$100+', min: 100, max: 500 }
+            ].map(preset => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => handleBudgetPreset(preset.min, preset.max)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  formData.budget_min === preset.min && formData.budget_max === preset.max
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 pt-4 border-t border-gray-200">
