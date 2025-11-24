@@ -176,8 +176,8 @@ export function GiftFinderForm({
         newErrors.recipient_name = 'Recipient name is required';
       }
 
-      if (formData.recipient_age < 0 || formData.recipient_age > 25) {
-        newErrors.recipient_age = 'Age must be between 0 and 25';
+      if (formData.recipient_age < 0) {
+        newErrors.recipient_age = 'Age must be 0 or greater';
       }
     }
 
@@ -446,7 +446,6 @@ export function GiftFinderForm({
               type="number"
               id="recipient_age"
               min="0"
-              max="25"
               value={formData.recipient_age}
               onChange={(e) => setFormData(prev => ({ ...prev, recipient_age: parseInt(e.target.value) || 0 }))}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
