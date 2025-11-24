@@ -51,7 +51,7 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-24">
       <NavigationHeader
         title="Family"
         subtitle="Manage your family's activities and organization"
@@ -63,25 +63,25 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
             <button
               key={feature.id}
               onClick={() => onNavigateToSubScreen(feature.id)}
-              className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all text-left group"
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all text-left group"
             >
               <div className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                 <feature.icon className="w-7 h-7 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-              <p className="text-sm text-gray-600">{feature.description}</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{feature.title}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
             </button>
           ))}
         </div>
 
-        <div className="mt-8 bg-white rounded-2xl p-6 border border-gray-200">
+        <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-rose-600" />
+            <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-rose-600 dark:text-rose-300" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Family Calendar</h3>
-              <p className="text-sm text-gray-600">View all family events in one place</p>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Family Calendar</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">View all family events in one place</p>
             </div>
           </div>
           <button

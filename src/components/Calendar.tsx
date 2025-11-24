@@ -363,13 +363,13 @@ export function Calendar() {
   
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 pb-24">
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-24">
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Calendar</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
                 {selectedDate?.toLocaleDateString('en-US', {
                   weekday: 'long',
                   month: 'long',
@@ -379,7 +379,7 @@ export function Calendar() {
               </p>
             </div>
             {isGoogleConnected && (
-              <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
+              <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-full">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -387,7 +387,7 @@ export function Calendar() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                <span className="text-sm font-medium text-green-700">Google Connected</span>
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">Google Connected</span>
               </div>
             )}
           </div>
@@ -396,14 +396,14 @@ export function Calendar() {
 
             {/* Calendar Grid - Left Side */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100">
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
                 {/* Month Navigation */}
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">{monthLabel}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{monthLabel}</h2>
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={goToday}
-                      className="px-4 py-2 text-sm font-medium bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
+                      className="px-4 py-2 text-sm font-medium bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-800 transition-colors"
                     >
                       Today
                     </button>
@@ -418,7 +418,7 @@ export function Calendar() {
                         onClick={goNextMonth}
                         className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
                       >
-                        <ChevronRight className="w-5 h-5 text-gray-600" />
+                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                       </button>
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export function Calendar() {
                     <div key={idx} className="text-center py-2">
                       <span
                         className={`text-sm font-semibold ${
-                          idx === 0 || idx === 6 ? 'text-rose-600' : 'text-gray-600'
+                          idx === 0 || idx === 6 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-600 dark:text-gray-400'
                         }`}
                       >
                         {day}
@@ -458,10 +458,10 @@ export function Calendar() {
                           ${isSelected
                             ? 'bg-rose-500 text-white shadow-lg scale-105'
                             : isToday
-                            ? 'bg-rose-50 text-rose-600 font-bold border-2 border-rose-500'
+                            ? 'bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 font-bold border-2 border-rose-500 dark:border-rose-400'
                             : inCurrentMonth
-                            ? 'text-gray-900 hover:bg-gray-100'
-                            : 'text-gray-300'
+                            ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            : 'text-gray-300 dark:text-gray-600'
                           }
                         `}
                       >
@@ -496,16 +496,16 @@ export function Calendar() {
 
             {/* Events List - Right Side */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                   {selectedDate && isSameDay(selectedDate, new Date()) ? 'Today' : 'Selected Day'}
                 </h3>
 
                 <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto">
                   {itemsForSelectedDate.events.length === 0 && itemsForSelectedDate.reminders.length === 0 && (itemsForSelectedDate.googleEvents?.length || 0) === 0 ? (
                     <div className="text-center py-12">
-                      <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">No events for this day</p>
+                      <CalendarIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                      <p className="text-gray-500 dark:text-gray-400">No events for this day</p>
                       <button
                         onClick={() => setShowEventForm(true)}
                         className="mt-4 px-4 py-2 bg-rose-500 text-white rounded-xl text-sm font-medium hover:bg-rose-600 transition-colors"
@@ -523,22 +523,22 @@ export function Calendar() {
                             setSelectedEvent(ev);
                             setShowEventDetails(true);
                           }}
-                          className="group bg-gradient-to-br from-orange-50 to-pink-50 border border-orange-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                          className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
                         >
                           <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">{ev.title}</h3>
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{ev.title}</h3>
                             <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
                               {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
                             </span>
                           </div>
                           {ev.location && (
-                            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
+                            <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 mb-2">
                               <MapPin className="w-3 h-3" />
                               <span>{ev.location}</span>
                             </div>
                           )}
                           {ev.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{ev.description}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{ev.description}</p>
                           )}
                         </div>
                       ))}
@@ -570,13 +570,13 @@ export function Calendar() {
                             </span>
                           </div>
                           {ev.location && (
-                            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
+                            <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 mb-2">
                               <MapPin className="w-3 h-3" />
                               <span>{ev.location}</span>
                             </div>
                           )}
                           {ev.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{ev.description}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{ev.description}</p>
                           )}
                         </div>
                       ))}
@@ -601,7 +601,7 @@ export function Calendar() {
                             </span>
                           </div>
                           {reminder.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{reminder.description}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{reminder.description}</p>
                           )}
                         </div>
                       ))}
@@ -631,12 +631,12 @@ export function Calendar() {
         {/* Event form modal */}
         {showEventForm && (
           <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-xl">Create Event</h4>
+                <h4 className="font-semibold text-xl text-gray-900 dark:text-gray-100">Create Event</h4>
                 <button
                   onClick={() => setShowEventForm(false)}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -654,10 +654,10 @@ export function Calendar() {
         {/* Event/Reminder Details Modal */}
         {showEventDetails && (selectedEvent || selectedReminder) && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                     {selectedEvent ? 'Event Details' : 'Reminder Details'}
                   </h2>
                   <button
@@ -666,7 +666,7 @@ export function Calendar() {
                       setSelectedEvent(null);
                       setSelectedReminder(null);
                     }}
-                    className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                    className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
                     <X className="w-4 h-4 text-gray-600" />
                   </button>

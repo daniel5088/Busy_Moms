@@ -68,7 +68,7 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-24">
       <NavigationHeader
         title="More"
         subtitle="Additional features and settings"
@@ -92,10 +92,10 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
         <div className="space-y-6">
           {menuSections.map((section, sectionIndex) => (
             <div key={sectionIndex}>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-2">
                 {section.title}
               </h3>
-              <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                 {section.items.map((item, itemIndex) => (
                   <button
                     key={itemIndex}
@@ -106,14 +106,14 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
                         onNavigateToSubScreen(item.id);
                       }
                     }}
-                    className="w-full px-4 py-4 hover:bg-gray-50 transition-colors text-left flex items-center space-x-4 group"
+                    className="w-full px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left flex items-center space-x-4 group"
                   >
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-rose-100 transition-colors">
-                      <item.icon className="w-5 h-5 text-gray-600 group-hover:text-rose-600 transition-colors" />
+                    <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center group-hover:bg-rose-100 dark:group-hover:bg-rose-900 transition-colors">
+                      <item.icon className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{item.title}</h4>
-                      <p className="text-sm text-gray-600">{item.description}</p>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
                     </div>
                   </button>
                 ))}
@@ -124,7 +124,7 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
 
         <button
           onClick={onSignOut}
-          className="w-full mt-8 px-6 py-4 bg-red-50 text-red-600 rounded-2xl font-semibold hover:bg-red-100 transition-colors flex items-center justify-center space-x-2 border border-red-200"
+          className="w-full mt-8 px-6 py-4 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-2xl font-semibold hover:bg-red-100 dark:hover:bg-red-800 transition-colors flex items-center justify-center space-x-2 border border-red-200 dark:border-red-700"
         >
           <LogOut className="w-5 h-5" />
           <span>Sign Out</span>

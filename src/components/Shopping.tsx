@@ -218,13 +218,13 @@ export function Shopping() {
   ];
 
   return (
-    <div className="h-screen overflow-y-auto pb-20 sm:pb-24">
+    <div className="h-screen overflow-y-auto pb-20 sm:pb-24 bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white p-4 sm:p-6 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Shopping</h1>
-            <p className="text-sm sm:text-base text-gray-600">Smart lists and suggestions</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Shopping</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Smart lists and suggestions</p>
           </div>
           <button className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
             <Plus 
@@ -235,7 +235,7 @@ export function Shopping() {
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-0.5 sm:space-x-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex space-x-0.5 sm:space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {[
             { id: 'list', label: 'Shopping List', icon: ShoppingCart },
             { id: 'recipes', label: 'Recipes', icon: ChefHat },
@@ -247,8 +247,8 @@ export function Shopping() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-white text-green-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-white dark:bg-gray-900 text-green-600 dark:text-green-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
               <tab.icon className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -264,7 +264,7 @@ export function Shopping() {
         {activeTab === 'list' && (
           <div className="space-y-4">
             {/* Provider Filter Tabs */}
-            <div className="bg-white border border-gray-200 rounded-xl p-2">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-2">
               <div className="flex flex-wrap gap-2">
                 {[
                   { id: 'all' as const, label: 'All', count: getProviderStats().all },
@@ -278,7 +278,7 @@ export function Shopping() {
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       providerFilter === filter.id
                         ? 'bg-green-500 text-white shadow-sm'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     <Filter className="w-4 h-4" />
@@ -301,7 +301,7 @@ export function Shopping() {
                 {selectedItems.size > 0 && (
                   <button
                     onClick={clearSelection}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
                     Clear Selection ({selectedItems.size})
                   </button>
@@ -309,7 +309,7 @@ export function Shopping() {
                 {selectedItems.size === 0 && getFilteredItems().length > 0 && (
                   <button
                     onClick={selectAllItems}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
                     Select All
                   </button>
@@ -336,7 +336,7 @@ export function Shopping() {
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-500"></div>
-                <span className="ml-2 text-sm sm:text-base text-gray-600">Loading shopping list...</span>
+                <span className="ml-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">Loading shopping list...</span>
               </div>
             ) : (
               <div className="space-y-3">
