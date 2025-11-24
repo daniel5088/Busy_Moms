@@ -54,6 +54,90 @@ export function GiftFinderForm({
 
   const [errors, setErrors] = useState<Partial<Record<keyof GiftFinderFormData, string>>>({});
 
+  // Mapping functions to convert affiliate matrix selections to form values
+  const mapAgeGroupToAge = (ageGroupLabel: string): number => {
+    // Extract numbers from age group labels like "0-5", "6-12", "13-18", "18+"
+    const match = ageGroupLabel.match(/^(\d+)(?:-(\d+))?/);
+    if (match) {
+      const min = parseInt(match[1], 10);
+      const max = match[2] ? parseInt(match[2], 10) : min;
+      // Return the middle point of the range
+      return Math.floor((min + max) / 2);
+    }
+    // For text-only labels like "Adult", return a default
+    return 20;
+  };
+
+  const mapGenderKeyToGender = (genderLabel: string): 'Boy' | 'Girl' | 'Other' => {
+    const normalized = genderLabel.toLowerCase();
+    if (normalized.includes('boy') || normalized.includes('male')) return 'Boy';
+    if (normalized.includes('girl') || normalized.includes('female')) return 'Girl';
+    return 'Other';
+  };
+
+  const mapBudgetKeyToRange = (budgetLabel: string): { min: number; max: number } => {
+    // Remove dollar signs and extract numbers
+    const cleanedLabel = budgetLabel.replace(/\$/g, '');
+
+    // Check for "Under X" pattern
+    const underMatch = cleanedLabel.match(/under\s*(\d+)/i);
+    if (underMatch) {
+      return { min: 0, max: parseInt(underMatch[1], 10) };
+    }
+
+    // Check for "X+" pattern
+    const plusMatch = cleanedLabel.match(/(\d+)\+/);
+    if (plusMatch) {
+      const min = parseInt(plusMatch[1], 10);
+      return { min, max: Math.max(min + 300, 500) };
+    }
+
+    // Check for "X-Y" pattern
+    const rangeMatch = cleanedLabel.match(/(\d+)\s*-\s*(\d+)/);
+    if (rangeMatch) {
+      return {
+        min: parseInt(rangeMatch[1], 10),
+        max: parseInt(rangeMatch[2], 10)
+      };
+    }
+
+    // Fallback to default budget
+    return { min: 10, max: 50 };
+  };
+
+  // Auto-populate recipient age when age group is selected
+  useEffect(() => {
+    if (formData.age_group_key && affiliateLookup) {
+      const selectedAgeGroup = affiliateLookup.ageGroups.find(ag => ag.key === formData.age_group_key);
+      if (selectedAgeGroup) {
+        const age = mapAgeGroupToAge(selectedAgeGroup.label);
+        setFormData(prev => ({ ...prev, recipient_age: age }));
+      }
+    }
+  }, [formData.age_group_key, affiliateLookup]);
+
+  // Auto-populate recipient gender when gender is selected
+  useEffect(() => {
+    if (formData.gender_key && affiliateLookup) {
+      const selectedGender = affiliateLookup.genders.find(g => g.key === formData.gender_key);
+      if (selectedGender) {
+        const gender = mapGenderKeyToGender(selectedGender.label);
+        setFormData(prev => ({ ...prev, recipient_gender: gender }));
+      }
+    }
+  }, [formData.gender_key, affiliateLookup]);
+
+  // Auto-populate budget when budget range is selected
+  useEffect(() => {
+    if (formData.budget_key && affiliateLookup) {
+      const selectedBudget = affiliateLookup.budgets.find(b => b.key === formData.budget_key);
+      if (selectedBudget) {
+        const { min, max } = mapBudgetKeyToRange(selectedBudget.label);
+        setFormData(prev => ({ ...prev, budget_min: min, budget_max: max }));
+      }
+    }
+  }, [formData.budget_key, affiliateLookup]);
+
   const handleFamilyMemberSelect = (memberId: string) => {
     if (!memberId) {
       setFormData(prev => ({
