@@ -230,6 +230,7 @@ export function FamilyFolders() {
                       <div className="text-left">
                         <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{data.member.name}</h3>
                         <div className="flex items-center space-x-3 text-sm text-gray-600">
+                          {data.member.relationship && <span className="font-medium text-purple-600">{data.member.relationship}</span>}
                           {data.member.age && <span>Age {data.member.age}</span>}
                           {data.member.gender && <span>{data.member.gender}</span>}
                           {data.member.school && <span>{data.member.school}</span>}

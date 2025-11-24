@@ -688,6 +688,11 @@ export function Settings() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 sm:space-x-3 mb-1 flex-wrap">
                           <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{member.name}</h3>
+                          {member.relationship && (
+                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm font-medium">
+                              {member.relationship}
+                            </span>
+                          )}
                           {member.age && (
                             <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-rose-100 text-rose-700 rounded-full text-xs sm:text-sm font-medium">
                               Age {member.age}
