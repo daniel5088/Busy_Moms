@@ -38,7 +38,13 @@ export function Settings() {
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [syncingGoogle, setSyncingGoogle] = useState(false);
   const [measurementPrefs, setMeasurementPrefs] = useState<UserMeasurementPreferences | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode !== null) {
+      return savedMode === 'true';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [notifications, setNotifications] = useState({
     events: true,
     shopping: true,
@@ -141,6 +147,15 @@ export function Settings() {
     }
   };
 
+  // Initialize dark mode on mount
+  React.useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   // Load data on component mount and when user changes
   React.useEffect(() => {
     let mounted = true;
@@ -224,6 +239,7 @@ export function Settings() {
       } else {
         document.documentElement.classList.remove('dark');
       }
+      localStorage.setItem('darkMode', String(newValue));
       return newValue;
     });
   };
