@@ -182,7 +182,6 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
                 <input
                   type="number"
                   min="0"
-                  max="25"
                   value={formData.age}
                   onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                   className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
