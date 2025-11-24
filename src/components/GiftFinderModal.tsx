@@ -70,12 +70,10 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
 
     // Search affiliate matrix if criteria provided
     if (affiliateCriteria) {
-      await searchAffiliateLinks(affiliateCriteria);
+      const results = await searchAffiliateLinks(affiliateCriteria);
 
-      // Show results if we have affiliate results
-      if (affiliateResults.length > 0) {
-        setStep('results');
-      }
+      // Always show results step (even if no results found)
+      setStep('results');
     } else {
       clearAffiliateResults();
     }

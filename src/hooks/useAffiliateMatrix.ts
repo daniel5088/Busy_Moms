@@ -7,7 +7,7 @@ interface UseAffiliateMatrixReturn {
   affiliateResults: AffiliateMatrixItem[];
   loading: boolean;
   error: string | null;
-  searchAffiliateLinks: (criteria: AffiliateSearchCriteria) => Promise<void>;
+  searchAffiliateLinks: (criteria: AffiliateSearchCriteria) => Promise<AffiliateMatrixItem[]>;
   clearResults: () => void;
 }
 
@@ -53,17 +53,19 @@ export function useAffiliateMatrix(): UseAffiliateMatrixReturn {
   }, []);
 
   // Search for affiliate links based on criteria
-  const searchAffiliateLinks = useCallback(async (criteria: AffiliateSearchCriteria) => {
+  const searchAffiliateLinks = useCallback(async (criteria: AffiliateSearchCriteria): Promise<AffiliateMatrixItem[]> => {
     try {
       setLoading(true);
       setError(null);
 
       const results = await affiliateMatrixService.searchAffiliateLinks(criteria);
       setAffiliateResults(results);
+      return results;
     } catch (err) {
       console.error('[useAffiliateMatrix] Error searching affiliate links:', err);
       setError(err instanceof Error ? err.message : 'Failed to search for gifts');
       setAffiliateResults([]);
+      return [];
     } finally {
       setLoading(false);
     }
