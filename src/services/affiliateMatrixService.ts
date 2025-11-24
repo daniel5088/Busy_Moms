@@ -357,7 +357,7 @@ class AffiliateMatrixService {
   /**
    * Build affiliate search criteria from recipient information
    * Automatically matches recipient age, gender, and budget to affiliate matrix keys
-   * If relationship is "Spouse", filters to "for him" or "for her" based on gender
+   * If relationship is "Spouse", filters to "for him" or "for her" relationship based on gender
    */
   async buildCriteriaFromRecipient(recipient: {
     age: number;
@@ -372,32 +372,33 @@ class AffiliateMatrixService {
       this.matchBudgetToBudgetKey(recipient.budgetMin, recipient.budgetMax)
     ]);
 
-    // If relationship is "Spouse", override gender to match "for him" or "for her"
-    let finalGenderKey = genderKey;
+    // If relationship is "Spouse", use "for_him" or "for_her" as relationship_key
+    let relationshipKey: string | undefined = undefined;
     if (recipient.relationship?.toLowerCase() === 'spouse') {
       const lookup = await this.getLookupValues();
 
-      // Map Boy/Girl to "for him"/"for her"
+      // Map Boy/Girl to "for_him"/"for_her" as relationship keys
       if (recipient.gender === 'Boy') {
-        // Find "for him" gender key
-        const forHim = lookup.genders.find(g =>
-          g.label.toLowerCase().includes('for him') ||
-          g.label.toLowerCase() === 'him'
+        // Find "for him" relationship key
+        const forHim = lookup.relationships.find(r =>
+          r.label.toLowerCase().includes('for him') ||
+          r.key === 'for_him'
         );
-        finalGenderKey = forHim?.key || genderKey;
+        relationshipKey = forHim?.key;
       } else if (recipient.gender === 'Girl') {
-        // Find "for her" gender key
-        const forHer = lookup.genders.find(g =>
-          g.label.toLowerCase().includes('for her') ||
-          g.label.toLowerCase() === 'her'
+        // Find "for her" relationship key
+        const forHer = lookup.relationships.find(r =>
+          r.label.toLowerCase().includes('for her') ||
+          r.key === 'for_her'
         );
-        finalGenderKey = forHer?.key || genderKey;
+        relationshipKey = forHer?.key;
       }
     }
 
     return {
+      relationship_key: relationshipKey || undefined,
       age_group_key: ageGroupKey || undefined,
-      gender_key: finalGenderKey || undefined,
+      gender_key: genderKey || undefined,
       budget_key: budgetKey || undefined
     };
   }

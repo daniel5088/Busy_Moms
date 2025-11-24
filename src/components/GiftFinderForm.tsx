@@ -215,8 +215,9 @@ export function GiftFinderForm({
           });
 
           // Merge with any manually selected criteria from curated section
+          // Use matched relationship if it exists (e.g., for spouse), otherwise use manual selection
           affiliateCriteria = {
-            relationship_key: formData.relationship_key,
+            relationship_key: matchedCriteria.relationship_key || formData.relationship_key,
             age_group_key: formData.age_group_key || matchedCriteria.age_group_key,
             gender_key: formData.gender_key || matchedCriteria.gender_key,
             budget_key: formData.budget_key || matchedCriteria.budget_key
