@@ -7,6 +7,59 @@ class AffiliateMatrixService {
   private readonly CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
   /**
+   * Extract numerical value from budget label for sorting
+   * Examples: "$0-$25" -> 0, "$25-$50" -> 25, "$200+" -> 200
+   */
+  private extractBudgetValue(label: string): number {
+    // Remove dollar signs and extract first number
+    const match = label.replace(/\$/g, '').match(/\d+/);
+    if (match) {
+      return parseInt(match[0], 10);
+    }
+    // Fallback: return large number if can't parse (sorts to end)
+    return Infinity;
+  }
+
+  /**
+   * Extract numerical value from age group label for sorting
+   * Examples: "0-5" -> 0, "6-12" -> 6, "18+" -> 18, "Adult" -> null
+   */
+  private extractAgeValue(label: string): number | null {
+    // Check if label starts with a number
+    const match = label.match(/^(\d+)/);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+    // Return null for text-only labels (will sort alphabetically)
+    return null;
+  }
+
+  /**
+   * Smart sort for age groups - numerical if possible, alphabetical as fallback
+   */
+  private sortAgeGroups(a: { key: string; label: string }, b: { key: string; label: string }): number {
+    const aValue = this.extractAgeValue(a.label);
+    const bValue = this.extractAgeValue(b.label);
+
+    // Both have numerical values - sort numerically
+    if (aValue !== null && bValue !== null) {
+      return aValue - bValue;
+    }
+
+    // One or both are text - sort alphabetically
+    return a.label.localeCompare(b.label);
+  }
+
+  /**
+   * Sort budget ranges by numerical value (low to high)
+   */
+  private sortBudgetRanges(a: { key: string; label: string }, b: { key: string; label: string }): number {
+    const aValue = this.extractBudgetValue(a.label);
+    const bValue = this.extractBudgetValue(b.label);
+    return aValue - bValue;
+  }
+
+  /**
    * Fetch all unique dropdown values from affiliate_matrix
    * Caches results for performance
    */
@@ -80,9 +133,9 @@ class AffiliateMatrixService {
 
     this.lookupCache = {
       relationships: Array.from(relationshipMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
-      ageGroups: Array.from(ageGroupMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
+      ageGroups: Array.from(ageGroupMap.values()).sort((a, b) => this.sortAgeGroups(a, b)),
       genders: Array.from(genderMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
-      budgets: Array.from(budgetMap.values()).sort((a, b) => a.label.localeCompare(b.label))
+      budgets: Array.from(budgetMap.values()).sort((a, b) => this.sortBudgetRanges(a, b))
     };
 
     console.log('[affiliateMatrixService] Extracted unique values:', {
