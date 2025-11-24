@@ -203,25 +203,52 @@ class AffiliateMatrixService {
   /**
    * Match recipient age to appropriate age group key
    * Example: age 6 matches "4-6" or "6-12" age group
+   * Handles formats like "0 - 12 months", "1 - 3 years old", "61+ years old"
    */
   async matchAgeToAgeGroup(age: number): Promise<string | null> {
     const lookup = await this.getLookupValues();
 
     // Find the first age group that contains the given age
     for (const ageGroup of lookup.ageGroups) {
-      const match = ageGroup.label.match(/^(\d+)\s*-\s*(\d+)$/);
-      if (match) {
-        const min = parseInt(match[1], 10);
-        const max = parseInt(match[2], 10);
+      // Handle "X - Y years old" pattern
+      const yearsMatch = ageGroup.label.match(/^(\d+)\s*-\s*(\d+)\s*years/i);
+      if (yearsMatch) {
+        const min = parseInt(yearsMatch[1], 10);
+        const max = parseInt(yearsMatch[2], 10);
         if (age >= min && age <= max) {
           return ageGroup.key;
         }
       }
 
-      // Handle "X+" pattern (e.g., "18+")
-      const plusMatch = ageGroup.label.match(/^(\d+)\+$/);
-      if (plusMatch) {
-        const min = parseInt(plusMatch[1], 10);
+      // Handle "0 - 12 months" pattern (treat as age 0)
+      const monthsMatch = ageGroup.label.match(/^(\d+)\s*-\s*(\d+)\s*months/i);
+      if (monthsMatch && age === 0) {
+        return ageGroup.key;
+      }
+
+      // Handle simple "X-Y" pattern without units
+      const simpleMatch = ageGroup.label.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (simpleMatch) {
+        const min = parseInt(simpleMatch[1], 10);
+        const max = parseInt(simpleMatch[2], 10);
+        if (age >= min && age <= max) {
+          return ageGroup.key;
+        }
+      }
+
+      // Handle "X+ years old" pattern
+      const plusYearsMatch = ageGroup.label.match(/^(\d+)\+\s*years/i);
+      if (plusYearsMatch) {
+        const min = parseInt(plusYearsMatch[1], 10);
+        if (age >= min) {
+          return ageGroup.key;
+        }
+      }
+
+      // Handle simple "X+" pattern
+      const simplePlusMatch = ageGroup.label.match(/^(\d+)\+$/);
+      if (simplePlusMatch) {
+        const min = parseInt(simplePlusMatch[1], 10);
         if (age >= min) {
           return ageGroup.key;
         }
@@ -238,11 +265,27 @@ class AffiliateMatrixService {
   async matchGenderToGenderKey(gender: 'Boy' | 'Girl' | 'Other'): Promise<string | null> {
     const lookup = await this.getLookupValues();
 
-    // Find matching gender in affiliate matrix
+    // Direct mapping for common cases
+    const directMap: Record<string, string> = {
+      'Boy': 'male',
+      'Girl': 'female',
+      'Other': 'other'
+    };
+
+    // Try direct mapping first
+    if (directMap[gender]) {
+      const directKey = directMap[gender];
+      const found = lookup.genders.find(g => g.key === directKey);
+      if (found) {
+        return found.key;
+      }
+    }
+
+    // Fallback: search by label
     const genderMap: Record<string, string[]> = {
       'Boy': ['boy', 'boys', 'male', 'him', 'he'],
       'Girl': ['girl', 'girls', 'female', 'her', 'she'],
-      'Other': ['unisex', 'other', 'any', 'anyone', 'neutral']
+      'Other': ['unisex', 'other', 'any', 'anyone', 'neutral', 'non-binary']
     };
 
     const searchTerms = genderMap[gender] || [];
@@ -261,7 +304,8 @@ class AffiliateMatrixService {
 
   /**
    * Match budget range to appropriate budget key
-   * Example: budget $30 matches "$25-$50" budget range
+   * Example: budget $30 matches "$25 and under" budget range
+   * Handles formats like "$10 and under", "$25 and under", "$101+"
    */
   async matchBudgetToBudgetKey(minBudget: number, maxBudget: number): Promise<string | null> {
     const lookup = await this.getLookupValues();
@@ -269,7 +313,16 @@ class AffiliateMatrixService {
 
     // Find the best matching budget range
     for (const budget of lookup.budgets) {
-      // Handle "Under X" pattern
+      // Handle "$X and under" pattern
+      const andUnderMatch = budget.label.match(/\$?(\d+)\s+and\s+under/i);
+      if (andUnderMatch) {
+        const max = parseInt(andUnderMatch[1], 10);
+        if (avgBudget <= max) {
+          return budget.key;
+        }
+      }
+
+      // Handle "Under $X" pattern
       const underMatch = budget.label.match(/under\s*\$?(\d+)/i);
       if (underMatch) {
         const max = parseInt(underMatch[1], 10);
@@ -278,7 +331,7 @@ class AffiliateMatrixService {
         }
       }
 
-      // Handle "X+" pattern
+      // Handle "$X+" pattern
       const plusMatch = budget.label.match(/\$?(\d+)\+/);
       if (plusMatch) {
         const min = parseInt(plusMatch[1], 10);
@@ -287,7 +340,7 @@ class AffiliateMatrixService {
         }
       }
 
-      // Handle "X-Y" pattern
+      // Handle "$X-$Y" or "X-Y" pattern
       const rangeMatch = budget.label.match(/\$?(\d+)\s*-\s*\$?(\d+)/);
       if (rangeMatch) {
         const min = parseInt(rangeMatch[1], 10);
