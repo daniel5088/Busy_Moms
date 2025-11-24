@@ -81,23 +81,23 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl sm:rounded-2xl w-full max-w-sm sm:max-w-md">
+      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl w-full max-w-sm sm:max-w-md">
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
               {editItem ? 'Edit Item' : 'Add Shopping Item'}
             </h2>
             <button
               onClick={onClose}
-              className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
-              <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
+              <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
                 <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Item Name *
               </label>
@@ -106,19 +106,19 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                 required
                 value={formData.item}
                 onChange={(e) => setFormData({ ...formData, item: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
+                className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
                 placeholder="e.g., Milk, Bananas, Diapers"
               />
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
                 Category
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
+                className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
               >
                 <option value="dairy">Dairy</option>
                 <option value="produce">Produce</option>
@@ -147,13 +147,13 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
             />
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
                 Notes
               </label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
+                className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
                 rows={2}
                 placeholder="Brand preference, size, etc."
               />
@@ -170,8 +170,8 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                   onClick={() => setFormData({ ...formData, provider_name: null })}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     formData.provider_name === null
-                      ? 'bg-gray-100 border-gray-400 text-gray-900'
-                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-gray-100 dark:bg-gray-700 border-gray-400 dark:border-gray-500 text-gray-900 dark:text-gray-100'
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   No Preference
@@ -181,8 +181,8 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                   onClick={() => setFormData({ ...formData, provider_name: 'instacart' })}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     formData.provider_name === 'instacart'
-                      ? 'bg-green-100 border-green-400 text-green-900'
-                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600 text-green-900 dark:text-green-100'
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   Instacart
@@ -192,8 +192,8 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                   onClick={() => setFormData({ ...formData, provider_name: 'amazon' })}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     formData.provider_name === 'amazon'
-                      ? 'bg-orange-100 border-orange-400 text-orange-900'
-                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-orange-100 dark:bg-orange-900 border-orange-400 dark:border-orange-600 text-orange-900 dark:text-orange-100'
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   Amazon
@@ -203,14 +203,14 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                   onClick={() => setFormData({ ...formData, provider_name: 'manual' })}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     formData.provider_name === 'manual'
-                      ? 'bg-gray-100 border-gray-400 text-gray-900'
-                      : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                      ? 'bg-gray-100 dark:bg-gray-700 border-gray-400 dark:border-gray-500 text-gray-900 dark:text-gray-100'
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                   }`}
                 >
                   Manual
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 Choose your preferred shopping method for this item
               </p>
             </div>
@@ -223,7 +223,7 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                   onChange={(e) => setFormData({ ...formData, urgent: e.target.checked })}
                   className="w-3 h-3 sm:w-4 sm:h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
                 />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700">Mark as urgent</span>
+                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">Mark as urgent</span>
               </label>
             </div>
 
@@ -231,7 +231,7 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-3 py-2 sm:px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                className="flex-1 px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm sm:text-base"
               >
                 Cancel
               </button>

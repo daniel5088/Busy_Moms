@@ -86,7 +86,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 p-6 text-white relative">
           <button
             onClick={onClose}
@@ -129,7 +129,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-gray-800">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
@@ -138,7 +138,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
             <div>
               {todayAffirmation ? (
                 <div className="space-y-4">
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-6 relative">
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 dark:bg-opacity-20 border-2 border-purple-200 dark:border-purple-700 rounded-2xl p-6 relative">
                     <div className="absolute top-4 right-4">
                       <button
                         onClick={() => handleToggleFavorite(todayAffirmation)}
@@ -164,7 +164,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
                       </span>
                     </div>
 
-                    <p className="text-lg text-gray-800 leading-relaxed mb-4 pr-16">
+                    <p className="text-lg text-gray-800 dark:text-gray-200 leading-relaxed mb-4 pr-16">
                       {todayAffirmation.affirmation_text}
                     </p>
 
@@ -219,19 +219,19 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
                   </div>
                   {generating ? (
                     <>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         Generating Your Affirmation
                       </h3>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 dark:text-gray-400">
                         Creating personalized encouragement based on your schedule...
                       </p>
                     </>
                   ) : (
                     <>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         Preparing Your Affirmation
                       </h3>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 dark:text-gray-400">
                         Your daily affirmation will appear automatically
                       </p>
                     </>
@@ -245,7 +245,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
                 affirmations.map((affirmation) => (
                   <div
                     key={affirmation.id}
-                    className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all relative"
+                    className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:shadow-md transition-all relative"
                   >
                     <div className="absolute top-4 right-4">
                       <button
