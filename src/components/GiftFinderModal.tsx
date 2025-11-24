@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { GiftFinderForm, GiftFinderFormData } from './GiftFinderForm';
-import { GiftResultsDisplay } from './GiftResultsDisplay';
 import { AffiliateResults } from './AffiliateResults';
-import { useGiftMatrix } from '../hooks/useGiftMatrix';
 import { useAffiliateMatrix } from '../hooks/useAffiliateMatrix';
-import { FamilyMember, Event, GiftMatrixItem, AffiliateSearchCriteria, supabase } from '../lib/supabase';
+import { FamilyMember, Event, AffiliateSearchCriteria, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 
 interface GiftFinderModalProps {
@@ -17,16 +15,6 @@ type Step = 'form' | 'results';
 
 export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
   const { user } = useAuth();
-  const {
-    gifts,
-    categories,
-    loading,
-    error,
-    searchGifts,
-    loadCategories,
-    handleAffiliateClick,
-    saveSearch
-  } = useGiftMatrix();
 
   const {
     lookupValues,
@@ -41,13 +29,10 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
   const [searchCriteria, setSearchCriteria] = useState<GiftFinderFormData | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [clickingGiftId, setClickingGiftId] = useState<string | null>(null);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       loadData();
-      loadCategories();
     }
   }, [isOpen]);
 
@@ -83,28 +68,16 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
   const handleSearch = async (formData: GiftFinderFormData, affiliateCriteria?: AffiliateSearchCriteria) => {
     setSearchCriteria(formData);
 
-    // Search both gift_matrix and affiliate_matrix
-    const giftPromise = searchGifts({
-      age: formData.recipient_age,
-      gender: formData.recipient_gender,
-      budgetMin: formData.budget_min,
-      budgetMax: formData.budget_max,
-      category: formData.category,
-      tags: []
-    });
-
     // Search affiliate matrix if criteria provided
     if (affiliateCriteria) {
       await searchAffiliateLinks(affiliateCriteria);
+
+      // Show results if we have affiliate results
+      if (affiliateResults.length > 0) {
+        setStep('results');
+      }
     } else {
       clearAffiliateResults();
-    }
-
-    const giftResults = await giftPromise;
-
-    // Show results if we have either gift matrix or affiliate results
-    if (giftResults.length > 0 || affiliateResults.length > 0) {
-      setStep('results');
     }
   };
 
@@ -112,45 +85,10 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
     setStep('form');
   };
 
-  const handleSaveSearch = async () => {
-    if (!user?.id || !searchCriteria) return;
-
-    try {
-      await saveSearch(user.id, {
-        recipient_name: searchCriteria.recipient_name,
-        recipient_age: searchCriteria.recipient_age,
-        recipient_gender: searchCriteria.recipient_gender,
-        budget_min: searchCriteria.budget_min,
-        budget_max: searchCriteria.budget_max,
-        event_id: searchCriteria.event_id,
-        family_member_id: searchCriteria.family_member_id,
-        matching_gift_ids: gifts.map(g => g.id)
-      });
-
-      setSaveMessage('Search saved successfully!');
-      setTimeout(() => setSaveMessage(null), 3000);
-    } catch (err) {
-      setSaveMessage('Failed to save search');
-      setTimeout(() => setSaveMessage(null), 3000);
-    }
-  };
-
-  const handleGiftClick = async (gift: GiftMatrixItem) => {
-    setClickingGiftId(gift.id);
-    try {
-      await handleAffiliateClick(gift);
-    } catch (err) {
-      console.error('Error handling gift click:', err);
-    } finally {
-      setClickingGiftId(null);
-    }
-  };
-
   const handleClose = () => {
     // Reset state when closing
     setStep('form');
     setSearchCriteria(null);
-    setSaveMessage(null);
     clearAffiliateResults();
     onClose();
   };
@@ -202,22 +140,6 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
           </button>
         </div>
 
-        {/* Save Message */}
-        {saveMessage && (
-          <div className={`px-6 py-3 text-center font-medium ${
-            saveMessage.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-          }`}>
-            {saveMessage}
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="px-6 py-3 bg-red-50 text-red-700 text-center font-medium">
-            {error}
-          </div>
-        )}
-
         {/* Affiliate Error Message */}
         {affiliateError && (
           <div className="px-6 py-3 bg-orange-50 text-orange-700 text-center text-sm">
@@ -232,11 +154,10 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
               <GiftFinderForm
                 familyMembers={familyMembers}
                 events={events}
-                categories={categories}
                 affiliateLookup={lookupValues}
                 onSearch={handleSearch}
                 onClose={handleClose}
-                loading={loading || affiliateLoading}
+                loading={affiliateLoading}
               />
             </div>
           )}
@@ -244,7 +165,7 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
           {step === 'results' && searchCriteria && (
             <div className="p-6 space-y-8">
               {/* Affiliate Results Section */}
-              {affiliateResults.length > 0 && (
+              {affiliateResults.length > 0 ? (
                 <AffiliateResults
                   results={affiliateResults}
                   onLinkClick={(url, item) => {
@@ -252,30 +173,17 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
                     window.open(url, '_blank', 'noopener,noreferrer');
                   }}
                 />
-              )}
-
-              {/* Separator */}
-              {affiliateResults.length > 0 && gifts.length > 0 && (
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-white text-gray-500 font-medium">or explore individual gifts</span>
-                  </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No gift suggestions found. Try adjusting your search criteria.</p>
+                  <button
+                    onClick={handleBackToForm}
+                    className="mt-4 px-4 py-2 text-pink-600 hover:text-pink-700 font-medium"
+                  >
+                    Back to Search
+                  </button>
                 </div>
               )}
-
-              {/* Gift Matrix Results Section */}
-              <GiftResultsDisplay
-                gifts={gifts}
-                searchCriteria={searchCriteria}
-                onBackToForm={handleBackToForm}
-                onSaveSearch={handleSaveSearch}
-                onGiftClick={handleGiftClick}
-                loading={loading}
-                clickingGiftId={clickingGiftId}
-              />
             </div>
           )}
         </div>

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, DollarSign, User, Calendar, Users, Heart } from 'lucide-react';
-import { FamilyMember, Event, GiftCategory, AffiliateMatrixLookup, AffiliateSearchCriteria } from '../lib/supabase';
+import { FamilyMember, Event, AffiliateMatrixLookup, AffiliateSearchCriteria } from '../lib/supabase';
 import { affiliateMatrixService } from '../services/affiliateMatrixService';
 
 interface GiftFinderFormProps {
   familyMembers: FamilyMember[];
   events: Event[];
-  categories?: GiftCategory[];
   affiliateLookup?: AffiliateMatrixLookup | null;
   onSearch: (formData: GiftFinderFormData, affiliateCriteria?: AffiliateSearchCriteria) => void;
   onClose: () => void;
@@ -21,7 +20,6 @@ export interface GiftFinderFormData {
   budget_max: number;
   event_id?: string;
   family_member_id?: string;
-  category?: GiftCategory;
   // Affiliate matrix fields
   relationship_key?: string;
   age_group_key?: string;
@@ -32,7 +30,6 @@ export interface GiftFinderFormData {
 export function GiftFinderForm({
   familyMembers,
   events,
-  categories,
   affiliateLookup,
   onSearch,
   onClose,
@@ -46,7 +43,6 @@ export function GiftFinderForm({
     budget_max: 50,
     event_id: undefined,
     family_member_id: undefined,
-    category: undefined,
     relationship_key: undefined,
     age_group_key: undefined,
     gender_key: undefined,
@@ -258,7 +254,6 @@ export function GiftFinderForm({
       budget_max: 50,
       event_id: undefined,
       family_member_id: undefined,
-      category: undefined,
       relationship_key: undefined,
       age_group_key: undefined,
       gender_key: undefined,
@@ -583,28 +578,6 @@ export function GiftFinderForm({
           </div>
         </div>
       </div>
-
-      {/* Category Filter */}
-      {categories && categories.length > 0 && (
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-            Category (Optional)
-          </label>
-          <select
-            id="category"
-            value={formData.category || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as GiftCategory || undefined }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="">All Categories</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* Actions */}
       <div className="flex gap-3 pt-4 border-t border-gray-200">
