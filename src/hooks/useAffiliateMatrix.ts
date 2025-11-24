@@ -23,11 +23,13 @@ export function useAffiliateMatrix(): UseAffiliateMatrixReturn {
 
     const loadLookupValues = async () => {
       try {
+        console.log('[useAffiliateMatrix] Starting to load lookup values...');
         setLoading(true);
         setError(null);
         const values = await affiliateMatrixService.getLookupValues();
 
         if (mounted) {
+          console.log('[useAffiliateMatrix] Successfully loaded lookup values:', values);
           setLookupValues(values);
         }
       } catch (err) {
@@ -37,6 +39,7 @@ export function useAffiliateMatrix(): UseAffiliateMatrixReturn {
         }
       } finally {
         if (mounted) {
+          console.log('[useAffiliateMatrix] Finished loading (loading=false)');
           setLoading(false);
         }
       }

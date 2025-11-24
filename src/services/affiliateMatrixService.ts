@@ -13,23 +13,36 @@ class AffiliateMatrixService {
   async getLookupValues(): Promise<AffiliateMatrixLookup> {
     // Return cached data if still valid
     if (this.lookupCache && this.cacheTimestamp && Date.now() - this.cacheTimestamp < this.CACHE_DURATION) {
+      console.log('[affiliateMatrixService] Returning cached lookup values');
       return this.lookupCache;
     }
 
+    console.log('[affiliateMatrixService] Fetching lookup values from database...');
     const supabase = requireSupabase();
 
-    // Fetch all data to extract unique values
+    // Fetch all data to extract unique values (no restrictive filters)
     const { data, error } = await supabase
       .from('affiliate_matrix')
-      .select('relationship_key, relationship_label, age_group_key, age_group_label, gender_key, gender_label, budget_key, budget_label')
-      .not('relationship_key', 'is', null)
-      .not('age_group_key', 'is', null)
-      .not('gender_key', 'is', null)
-      .not('budget_key', 'is', null);
+      .select('relationship_key, relationship_label, age_group_key, age_group_label, gender_key, gender_label, budget_key, budget_label');
 
     if (error) {
       console.error('[affiliateMatrixService] Error fetching lookup values:', error);
       throw new Error('Failed to load gift finder options');
+    }
+
+    console.log(`[affiliateMatrixService] Fetched ${data?.length || 0} rows from affiliate_matrix`);
+
+    if (!data || data.length === 0) {
+      console.warn('[affiliateMatrixService] No data returned from affiliate_matrix table');
+      // Return empty lookup values
+      this.lookupCache = {
+        relationships: [],
+        ageGroups: [],
+        genders: [],
+        budgets: []
+      };
+      this.cacheTimestamp = Date.now();
+      return this.lookupCache;
     }
 
     // Extract unique values
@@ -38,7 +51,7 @@ class AffiliateMatrixService {
     const genderMap = new Map<string, { key: string; label: string }>();
     const budgetMap = new Map<string, { key: string; label: string }>();
 
-    data?.forEach((row: AffiliateMatrixItem) => {
+    data.forEach((row: AffiliateMatrixItem) => {
       if (row.relationship_key && row.relationship_label) {
         relationshipMap.set(row.relationship_key, {
           key: row.relationship_key,
@@ -71,6 +84,13 @@ class AffiliateMatrixService {
       genders: Array.from(genderMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
       budgets: Array.from(budgetMap.values()).sort((a, b) => a.label.localeCompare(b.label))
     };
+
+    console.log('[affiliateMatrixService] Extracted unique values:', {
+      relationships: this.lookupCache.relationships.length,
+      ageGroups: this.lookupCache.ageGroups.length,
+      genders: this.lookupCache.genders.length,
+      budgets: this.lookupCache.budgets.length
+    });
 
     this.cacheTimestamp = Date.now();
 

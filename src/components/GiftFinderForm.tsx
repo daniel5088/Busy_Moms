@@ -199,6 +199,16 @@ export function GiftFinderForm({
             Select options to discover hand-picked affiliate gift suggestions
           </p>
 
+          {/* Show message if no options available */}
+          {affiliateLookup.relationships.length === 0 &&
+           affiliateLookup.ageGroups.length === 0 &&
+           affiliateLookup.genders.length === 0 &&
+           affiliateLookup.budgets.length === 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+              No curated gift options are currently available. Please check back later or use the recipient information below.
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Relationship Dropdown */}
             <div>

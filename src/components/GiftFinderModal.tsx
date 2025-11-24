@@ -218,6 +218,13 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
           </div>
         )}
 
+        {/* Affiliate Error Message */}
+        {affiliateError && (
+          <div className="px-6 py-3 bg-orange-50 text-orange-700 text-center text-sm">
+            <strong>Curated Gifts:</strong> {affiliateError}
+          </div>
+        )}
+
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {step === 'form' && (
