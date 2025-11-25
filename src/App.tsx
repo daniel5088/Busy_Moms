@@ -25,10 +25,11 @@ import { useToast } from './hooks/useErrorHandler'
 import { useAffirmationNotifier } from './hooks/useAffirmationNotifier'
 import { captureAndStoreGoogleTokens } from './services/googleTokenStorage'
 import { Diagnostics } from "./pages/Diagnostics";
+import { QuickLinks } from './pages/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks page
 import { useDarkMode } from './hooks/useDarkMode'
 
 export type Screen = 'dashboard' | 'calendar' | 'family' | 'more'
-export type SubScreen = 'shopping' | 'tasks' | 'contacts' | 'family-folders' | 'settings'
+export type SubScreen = 'shopping' | 'tasks' | 'contacts' | 'family-folders' | 'settings' | 'quick-links' // Alvaro-quicklinks: Add quick-links to SubScreen type
 
 function App() {
   const session = useSessionContext()
@@ -272,6 +273,12 @@ function App() {
               {currentSubScreen === 'settings' && (
                 <FeatureErrorBoundary featureName="Settings">
                   <Settings darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+                </FeatureErrorBoundary>
+              )}
+              {/* Alvaro-quicklinks: Add Quick Links subscreen routing */}
+              {currentSubScreen === 'quick-links' && (
+                <FeatureErrorBoundary featureName="Quick Links">
+                  <QuickLinks />
                 </FeatureErrorBoundary>
               )}
             </>
