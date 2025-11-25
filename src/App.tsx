@@ -25,7 +25,7 @@ import { useToast } from './hooks/useErrorHandler'
 import { useAffirmationNotifier } from './hooks/useAffirmationNotifier'
 import { captureAndStoreGoogleTokens } from './services/googleTokenStorage'
 import { Diagnostics } from "./pages/Diagnostics";
-import { QuickLinks } from './pages/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks page
+import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks component
 import { useDarkMode } from './hooks/useDarkMode'
 
 export type Screen = 'dashboard' | 'calendar' | 'family' | 'more'
