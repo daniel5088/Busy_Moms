@@ -1,4 +1,4 @@
-// Alvaro-quicklinks: New page component for Quick Links feature
+// Alvaro-quicklinks: New page component for Quick Links feature 
 import React, { useState } from 'react';
 import { Link, ExternalLink, Trash2 } from 'lucide-react';
 
