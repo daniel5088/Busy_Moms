@@ -248,13 +248,20 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      {/* Alvaro-landmarks: Dialog element with proper ARIA attributes for modal */}
+      <div
+        role="dialog"
+        aria-labelledby="google-calendar-test-title"
+        aria-modal="true"
+        className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+      >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
               <Calendar className="w-8 h-8 text-blue-500" />
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Google Calendar API Test</h2>
+                {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
+                <h2 id="google-calendar-test-title" className="text-xl font-bold text-gray-900">Google Calendar API Test</h2>
                 <p className="text-gray-600">Test Google Calendar integration and API connectivity</p>
               </div>
             </div>

@@ -238,13 +238,20 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Alvaro-landmarks: Dialog element with proper ARIA attributes for modal */}
+      <div
+        role="dialog"
+        aria-labelledby="connection-test-title"
+        aria-modal="true"
+        className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
               <Database className="w-8 h-8 text-blue-500" />
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Supabase Connection Test</h2>
+                {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
+                <h2 id="connection-test-title" className="text-xl font-bold text-gray-900">Supabase Connection Test</h2>
                 <p className="text-gray-600">Verify database connectivity and permissions</p>
               </div>
             </div>

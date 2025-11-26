@@ -86,7 +86,13 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      {/* Alvaro-landmarks: Dialog element with proper ARIA attributes for modal */}
+      <div
+        role="dialog"
+        aria-labelledby="daily-affirmations-title"
+        aria-modal="true"
+        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
         <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 p-6 text-white relative">
           <button
             onClick={onClose}
@@ -100,7 +106,8 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Daily Affirmations</h2>
+              {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
+              <h2 id="daily-affirmations-title" className="text-2xl font-bold">Daily Affirmations</h2>
               <p className="text-purple-100 text-sm">Your personalized encouragement</p>
             </div>
           </div>

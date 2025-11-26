@@ -56,14 +56,21 @@ export function SyncSettings({ isOpen, onClose }: SyncSettingsProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md">
+      {/* Alvaro-landmarks: Dialog element with proper ARIA attributes for modal */}
+      <div
+        role="dialog"
+        aria-labelledby="sync-settings-title"
+        aria-modal="true"
+        className="bg-white rounded-2xl w-full max-w-md"
+      >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                 <Settings className="w-5 h-5 text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Sync Settings</h2>
+              {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
+              <h2 id="sync-settings-title" className="text-xl font-bold text-gray-900">Sync Settings</h2>
             </div>
             <button
               onClick={onClose}

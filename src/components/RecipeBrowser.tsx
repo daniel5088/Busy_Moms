@@ -179,6 +179,8 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
 
   return (
     <div className="space-y-6">
+      {/* Alvaro-landmarks: Section heading for embedded recipe browser component */}
+      <h2 className="sr-only">Browse Recipes</h2>
       <div className="flex items-center justify-between">
         <div className="flex space-x-2">
           <button

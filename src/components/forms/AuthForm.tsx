@@ -79,18 +79,22 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md p-4 sm:p-8">
-        <div className="text-center mb-8">
+        {/* Alvaro-landmarks: Header section for auth form */}
+        <header className="text-center mb-8">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
+          {/* Alvaro-landmarks: Primary h1 heading for auth form */}
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
             {isSignUp ? 'Join Busy Moms' : 'Welcome Back'}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
             {isSignUp ? 'Create your account to get started' : 'Sign in to your account'}
           </p>
-        </div>
+        </header>
 
+        {/* Alvaro-landmarks: Main form content */}
+        <main>
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {isSignUp && (
             <div>
@@ -228,6 +232,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
             Clear Session & Sign Out
           </a>
         </div>
+        </main>
       </div>
     </div>
   )

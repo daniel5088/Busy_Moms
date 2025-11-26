@@ -192,9 +192,16 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded }: Recip
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      {/* Alvaro-landmarks: Dialog element with proper ARIA attributes for modal */}
+      <div
+        role="dialog"
+        aria-labelledby="recipe-detail-title"
+        aria-modal="true"
+        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      >
         <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">{recipe.title}</h2>
+          {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
+          <h2 id="recipe-detail-title" className="text-2xl font-bold text-gray-900">{recipe.title}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"

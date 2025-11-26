@@ -88,8 +88,14 @@ export const Diagnostics: React.FC = () => {
 
   return (
     <div className="p-4 space-y-8">
-      <h1 className="text-2xl font-bold">Diagnostics</h1>
+      {/* Alvaro-landmarks: Header section for Diagnostics page */}
+      <header>
+        {/* Alvaro-landmarks: Primary h1 heading for Diagnostics page */}
+        <h1 className="text-2xl font-bold">Diagnostics</h1>
+      </header>
 
+      {/* Alvaro-landmarks: Main content area wrapper */}
+      <main className="space-y-8">
       <section>
         <h2 className="text-xl font-semibold mb-2">Environment</h2>
         <div className="bg-gray-50 rounded-lg p-3 border">
@@ -193,6 +199,7 @@ export const Diagnostics: React.FC = () => {
           </div>
         )}
       </section>
+      </main>
     </div>
   );
 };

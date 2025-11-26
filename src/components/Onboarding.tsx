@@ -352,8 +352,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   return (
     <div className="h-screen flex flex-col p-6">
-      {/* Header with Sign Out */}
-      <div className="flex justify-end mb-4">
+      {/* Alvaro-landmarks: Header with Sign Out button */}
+      <header className="flex justify-end mb-4">
         <button
           onClick={handleSignOut}
           className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -361,7 +361,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <LogOut className="w-4 h-4" />
           Sign Out
         </button>
-      </div>
+      </header>
 
       {/* Error Message */}
       {error && (
@@ -397,6 +397,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         </div>
       )}
 
+      {/* Alvaro-landmarks: Main onboarding content area */}
+      <main className="flex-1 flex flex-col">
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex justify-between mb-2">
@@ -413,6 +415,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       {/* Content */}
       <div className="flex-1 flex flex-col">
         <div className="mb-8">
+          {/* Alvaro-landmarks: Primary h1 heading for onboarding step */}
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {steps[step].title}
           </h1>
@@ -447,6 +450,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {saving ? 'Saving...' : step === steps.length - 1 ? 'Get Started' : step === 2 ? (familyMembers.length === 0 ? 'Skip for Now' : 'Continue') : 'Next'}
         </button>
       </div>
+      </main>
     </div>
   );
 }

@@ -122,6 +122,7 @@ export function AddressManager() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
+          {/* Alvaro-landmarks: Section heading for embedded component */}
           <h3 className="text-lg font-semibold text-gray-900">Your Addresses</h3>
           <p className="text-sm text-gray-600 mt-1">
             Manage your saved locations for faster checkout and location services

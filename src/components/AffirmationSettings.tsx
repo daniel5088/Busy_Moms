@@ -59,7 +59,13 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      {/* Alvaro-landmarks: Dialog element with proper ARIA attributes for modal */}
+      <div
+        role="dialog"
+        aria-labelledby="affirmation-settings-title"
+        aria-modal="true"
+        className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white relative">
           <button
             onClick={onClose}
@@ -73,7 +79,8 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
               <Bell className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Affirmation Settings</h2>
+              {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
+              <h2 id="affirmation-settings-title" className="text-2xl font-bold">Affirmation Settings</h2>
               <p className="text-purple-100 text-sm">Customize your daily encouragement</p>
             </div>
           </div>
