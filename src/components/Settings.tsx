@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Smartphone, MessageCircle, CreditCard, HelpCircle, LogOut, Database, CheckCircle, XCircle, Loader2, Plus, CreditCard as Edit, Volume2, Calendar, AlertTriangle, Sparkles, RefreshCw, Store, MapPin, Ruler, Moon } from 'lucide-react';
+import { User, Bell, Shield, Smartphone, MessageCircle, CreditCard, HelpCircle, LogOut, Database, CheckCircle, XCircle, Loader2, Plus, CreditCard as Edit, Volume2, Calendar, AlertTriangle, Sparkles, RefreshCw, Store, MapPin, Ruler, Moon, LayoutDashboard } from 'lucide-react';
 import { FamilyMemberForm } from './forms/FamilyMemberForm';
 import { ProfileForm } from './forms/ProfileForm';
 import { ConnectionTest } from './ConnectionTest';
@@ -18,12 +18,14 @@ import { useCalendarSync } from '../hooks/useCalendarSync';
 import { measurementPreferencesService } from '../services/measurementPreferencesService';
 import type { UserMeasurementPreferences } from '../lib/supabase';
 
+//Alvaro-dashboardv2: Added onNavigateToDashboardV2 prop for experimental dashboard navigation
 interface SettingsProps {
   darkMode: boolean;
   toggleDarkMode: () => void;
+  onNavigateToDashboardV2?: () => void;
 }
 
-export function Settings({ darkMode, toggleDarkMode }: SettingsProps) {
+export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2 }: SettingsProps) {
   const { user, signOut } = useAuth();
   const { performSync } = useCalendarSync();
   const [showFamilyForm, setShowFamilyForm] = useState(false);
@@ -267,6 +269,19 @@ export function Settings({ darkMode, toggleDarkMode }: SettingsProps) {
           toggle: true,
           enabled: darkMode,
           onClick: toggleDarkMode
+        }
+      ]
+    },
+    //Alvaro-dashboardv2: Add Features section for experimental Dashboard V2
+    {
+      title: 'Features',
+      items: [
+        {
+          icon: LayoutDashboard,
+          title: 'Dashboard V2 (Experimental)',
+          description: 'Try the new dashboard layout with improved organization',
+          action: 'Try It',
+          onClick: onNavigateToDashboardV2
         }
       ]
     },
