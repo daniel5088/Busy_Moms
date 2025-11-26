@@ -360,54 +360,6 @@ export function DashboardV2Experimental({ onNavigate, onNavigateToSubScreen, onV
       </div>
 
       <div className="p-4 space-y-4 sm:p-6 sm:space-y-6">
-        {/* Affirmation Card - Reused from original Dashboard */}
-        {/* //Alvaro-dashboardv2: Moved affirmation to top of content area */}
-        {todayAffirmation && (
-          <div
-            onClick={() => setShowAffirmations(true)}
-            className="bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-rose-500 p-6 rounded-2xl shadow-lg cursor-pointer hover:shadow-xl transition-all relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
-
-            <div className="relative z-10">
-              <div className="flex items-center space-x-2 mb-3">
-                <Sparkles className="w-5 h-5 text-white" />
-                <span className="text-white font-semibold text-sm">Today's Affirmation</span>
-              </div>
-
-              <p className="text-white text-lg leading-relaxed mb-4">
-                {todayAffirmation.affirmation_text}
-              </p>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAffirmations(true);
-                }}
-                className="text-white text-sm font-medium hover:underline flex items-center space-x-1"
-              >
-                <span>View all affirmations</span>
-                <span>→</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!todayAffirmation && (
-          <div className="bg-gradient-to-br from-rose-100 to-pink-100 dark:from-gray-800 dark:to-gray-700 border-2 border-rose-300 dark:border-rose-700 p-6 rounded-2xl">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-rose-200 dark:bg-rose-900 rounded-full flex items-center justify-center animate-pulse">
-                <Sparkles className="w-5 h-5 text-rose-600 dark:text-rose-300" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Generating Your Daily Affirmation</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Creating personalized encouragement based on your schedule...</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Schedule Row - Today and This Week side by side */}
         {/* //Alvaro-dashboardv2: New two-column schedule layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -592,6 +544,54 @@ export function DashboardV2Experimental({ onNavigate, onNavigateToSubScreen, onV
             </div>
           </div>
         </div>
+
+        {/* Affirmation Card - Reused from original Dashboard */}
+        {/* //Alvaro-dashboardv2: Moved affirmation to bottom, shown only after overlay is closed */}
+        {!showAffirmationOverlay && todayAffirmation && (
+          <div
+            onClick={() => setShowAffirmations(true)}
+            className="bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-rose-500 p-6 rounded-2xl shadow-lg cursor-pointer hover:shadow-xl transition-all relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-center space-x-2 mb-3">
+                <Sparkles className="w-5 h-5 text-white" />
+                <span className="text-white font-semibold text-sm">Today's Affirmation</span>
+              </div>
+
+              <p className="text-white text-lg leading-relaxed mb-4">
+                {todayAffirmation.affirmation_text}
+              </p>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAffirmations(true);
+                }}
+                className="text-white text-sm font-medium hover:underline flex items-center space-x-1"
+              >
+                <span>View all affirmations</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!showAffirmationOverlay && !todayAffirmation && (
+          <div className="bg-gradient-to-br from-rose-100 to-pink-100 dark:from-gray-800 dark:to-gray-700 border-2 border-rose-300 dark:border-rose-700 p-6 rounded-2xl">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-rose-200 dark:bg-rose-900 rounded-full flex items-center justify-center animate-pulse">
+                <Sparkles className="w-5 h-5 text-rose-600 dark:text-rose-300" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Generating Your Daily Affirmation</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Creating personalized encouragement based on your schedule...</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <WhatsAppIntegration
