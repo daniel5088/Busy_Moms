@@ -16,6 +16,13 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
   // Mock affirmation text - static content for prototype
   const mockAffirmation = "You are capable of amazing things today. Trust yourself and embrace every moment with confidence.";
 
+  //Alvaro-dashboardv3: Mock stats data for prototype demonstration
+  const mockStats = {
+    events: 0,
+    shoppingItems: 4,
+    reminders: 0
+  };
+
   //Alvaro-dashboardv3: 3x2 Quick Actions grid with 4 real + 2 placeholder actions
   const quickActions = [
     // Row 1 - 3 real actions
@@ -155,6 +162,33 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <Heart className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
+            </div>
+          </div>
+
+          {/* Alvaro-dashboardv3: Daily summary stats chips (copied from Dashboard V2) */}
+          <div className="bg-white bg-opacity-10 dark:bg-gray-900 dark:bg-opacity-50 rounded-xl p-3">
+            <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
+              <button
+                onClick={() => onNavigate('calendar')}
+                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+              >
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>{mockStats.events} events</span>
+              </button>
+              <button
+                onClick={() => onNavigateToSubScreen('shopping')}
+                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+              >
+                <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>{mockStats.shoppingItems} shopping list</span>
+              </button>
+              <button
+                onClick={() => onNavigateToSubScreen('tasks')}
+                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+              >
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>{mockStats.reminders} reminders</span>
+              </button>
             </div>
           </div>
         </div>
