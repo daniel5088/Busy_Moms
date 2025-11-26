@@ -1,6 +1,7 @@
-// Alvaro-quicklinks: New page component for Quick Links feature 
-import React, { useState } from 'react';
+// Alvaro-quicklinks: New page component for Quick Links feature
+import React, { useEffect, useState } from 'react';
 import { Link, ExternalLink, Trash2 } from 'lucide-react';
+import { supabase } from '../lib/supabase'; // 👈 adjust path if file is in a different folder
 
 interface QuickLink {
   id: string;
@@ -13,41 +14,88 @@ export function QuickLinks() {
   const [links, setLinks] = useState<QuickLink[]>([]);
   const [labelInput, setLabelInput] = useState('');
   const [urlInput, setUrlInput] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Alvaro-quicklinks: Load existing links for the logged-in user
+  useEffect(() => {
+    const loadLinks = async () => {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from('quick_links')
+        .select('id, label, url')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error loading quick links:', error);
+      } else if (data) {
+        setLinks(data);
+      }
+
+      setLoading(false);
+    };
+
+    loadLinks();
+  }, []);
 
   // Alvaro-quicklinks: Form submission handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const trimmedLabel = labelInput.trim();
     const trimmedUrl = urlInput.trim();
 
-    // Alvaro-quicklinks: Validation - ignore if either field is empty
+    // Validation - ignore if either field is empty
     if (!trimmedLabel || !trimmedUrl) {
       return;
     }
 
-    // Alvaro-quicklinks: URL normalization - prepend https:// if no protocol
+    // URL normalization - prepend https:// if no protocol
     let normalizedUrl = trimmedUrl;
-    if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+    if (
+      !normalizedUrl.startsWith('http://') &&
+      !normalizedUrl.startsWith('https://')
+    ) {
       normalizedUrl = `https://${normalizedUrl}`;
     }
 
-    // Alvaro-quicklinks: Create new link and add to state
-    const newLink: QuickLink = {
-      id: Date.now().toString(),
-      label: trimmedLabel,
-      url: normalizedUrl,
-    };
+    // Insert into Supabase (user_id is filled by default auth.uid() from your RLS)
+    const { data, error } = await supabase
+      .from('quick_links')
+      .insert({
+        label: trimmedLabel,
+        url: normalizedUrl,
+      })
+      .select('id, label, url')
+      .single();
 
-    setLinks((prev) => [...prev, newLink]);
+    if (error) {
+      console.error('Error adding quick link:', error);
+      return;
+    }
 
-    // Alvaro-quicklinks: Clear inputs after successful add
+    if (data) {
+      // Add new link to state
+      setLinks((prev) => [...prev, data]);
+    }
+
+    // Clear inputs after successful add
     setLabelInput('');
     setUrlInput('');
   };
 
   // Alvaro-quicklinks: Delete link handler
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase
+      .from('quick_links')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting quick link:', error);
+      return;
+    }
+
     setLinks((prev) => prev.filter((link) => link.id !== id));
   };
 
@@ -61,11 +109,13 @@ export function QuickLinks() {
 
   return (
     <div className="h-screen overflow-y-auto pb-20 sm:pb-24 bg-gray-50 dark:bg-gray-900">
-      {/* Alvaro-quicklinks: Header section */}
+      {/* Header section */}
       <header className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Quick Links</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Quick Links
+            </h1>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Save important websites for one-tap access
             </p>
@@ -77,12 +127,18 @@ export function QuickLinks() {
       </header>
 
       <main className="p-4 sm:p-6 space-y-6">
-        {/* Alvaro-quicklinks: List section - moved to top */}
+        {/* List section */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Saved Links</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Saved Links
+          </h2>
 
-          {/* Alvaro-quicklinks: Empty state */}
-          {links.length === 0 ? (
+          {loading ? (
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm text-gray-600 dark:text-gray-400">
+              Loading your links…
+            </div>
+          ) : links.length === 0 ? (
+            // Empty state
             <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
               <Link className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
               <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
@@ -93,7 +149,7 @@ export function QuickLinks() {
               </p>
             </div>
           ) : (
-            // Alvaro-quicklinks: Links list
+            // Links list
             <div className="space-y-3">
               {links.map((link) => (
                 <div
@@ -133,12 +189,17 @@ export function QuickLinks() {
           )}
         </div>
 
-        {/* Alvaro-quicklinks: Form section - moved to bottom */}
+        {/* Form section */}
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 sm:p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Add New Link</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Add New Link
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="label"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Name / description
               </label>
               <input
@@ -152,7 +213,10 @@ export function QuickLinks() {
             </div>
 
             <div>
-              <label htmlFor="url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="url"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Website URL
               </label>
               <input
