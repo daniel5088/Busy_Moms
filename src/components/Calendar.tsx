@@ -537,9 +537,6 @@ export function Calendar() {
                               <span>{ev.location}</span>
                             </div>
                           )}
-                          {ev.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{ev.description}</p>
-                          )}
                         </div>
                       ))}
 
@@ -575,9 +572,6 @@ export function Calendar() {
                               <span>{ev.location}</span>
                             </div>
                           )}
-                          {ev.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{ev.description}</p>
-                          )}
                         </div>
                       ))}
 
@@ -600,9 +594,6 @@ export function Calendar() {
                               {reminder.reminder_time ? formatTimeRange(reminder.reminder_time, null) : 'All day'}
                             </span>
                           </div>
-                          {reminder.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{reminder.description}</p>
-                          )}
                         </div>
                       ))}
                     </>

@@ -386,9 +386,6 @@ export function DashboardV2Experimental({ onNavigate, onNavigateToSubScreen, onV
                         {event.location && (
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{event.location}</p>
                         )}
-                        {event.description && (
-                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{event.description}</p>
-                        )}
                       </div>
                     </div>
                   </div>
