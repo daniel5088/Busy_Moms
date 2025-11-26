@@ -71,7 +71,7 @@ function App() {
     return <OAuthDiagnostics />;
   }
 
-  // Handle OAuth callback and errors
+  // Handle OAuth callback and errors 
   useEffect(() => {
     const handleOAuthCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
