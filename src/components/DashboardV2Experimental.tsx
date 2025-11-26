@@ -1,6 +1,7 @@
 //Alvaro-dashboardv2: Experimental Dashboard V2 Layout
 import React from 'react';
-import { Calendar, ShoppingBag, MessageCircle, Clock, Heart, Users, LogOut, Sparkles } from 'lucide-react';
+//Alvaro-dashboardv2: Added X icon for close button in affirmation overlay
+import { Calendar, ShoppingBag, MessageCircle, Clock, Heart, Users, LogOut, Sparkles, X } from 'lucide-react';
 import { WhatsAppIntegration } from './WhatsAppIntegration';
 import { DailyAffirmations } from './DailyAffirmations';
 import { DashboardSkeleton } from './DashboardSkeleton';
@@ -31,6 +32,8 @@ export function DashboardV2Experimental({ onNavigate, onNavigateToSubScreen, onV
   const [reminders, setReminders] = React.useState<Reminder[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
+  //Alvaro-dashboardv2: State to control full-screen affirmation overlay on page load
+  const [showAffirmationOverlay, setShowAffirmationOverlay] = React.useState(true);
 
   // Load user profile
   React.useEffect(() => {
@@ -154,6 +157,17 @@ export function DashboardV2Experimental({ onNavigate, onNavigateToSubScreen, onV
     }
   }, [user]);
 
+  //Alvaro-dashboardv2: Keyboard escape handler for affirmation overlay accessibility
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showAffirmationOverlay) {
+        setShowAffirmationOverlay(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [showAffirmationOverlay]);
+
   const loadTodayAffirmation = async () => {
     try {
       let affirmation = await affirmationService.getTodaysAffirmation();
@@ -240,9 +254,65 @@ export function DashboardV2Experimental({ onNavigate, onNavigateToSubScreen, onV
   const thisWeekEvents = events.filter(event => event.event_date !== new Date().toISOString().split('T')[0]);
 
   return (
-    <div className="pb-20 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Greeting Header - Reused from original Dashboard */}
-      <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 text-white p-4 pb-6 dark:border-b dark:border-gray-700">
+    <>
+      {/* Alvaro-dashboardv2: Full-screen affirmation overlay shown on page load */}
+      {showAffirmationOverlay && todayAffirmation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="affirmation-overlay-title"
+        >
+          {/* Background overlay - click to close */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowAffirmationOverlay(false)}
+          />
+
+          {/* Affirmation Card */}
+          <div className="relative bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-rose-500 p-8 sm:p-12 rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden animate-in fade-in zoom-in duration-300">
+            {/* Decorative circles */}
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16"></div>
+
+            {/* Close button */}
+            <button
+              onClick={() => setShowAffirmationOverlay(false)}
+              className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+              aria-label="Close affirmation"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="flex items-center space-x-3 mb-6">
+                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                <span
+                  id="affirmation-overlay-title"
+                  className="text-white font-semibold text-base sm:text-lg"
+                >
+                  Today's Affirmation
+                </span>
+              </div>
+
+              <p className="text-white text-xl sm:text-2xl md:text-3xl leading-relaxed font-light text-center my-8">
+                {todayAffirmation.affirmation_text}
+              </p>
+
+              <div className="text-center mt-6">
+                <p className="text-white/80 text-sm sm:text-base">
+                  Take a moment to embrace this message
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="pb-20 bg-gray-50 dark:bg-gray-900 min-h-screen">
+        {/* Greeting Header - Reused from original Dashboard */}
+        <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 text-white p-4 pb-6 dark:border-b dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold">Good Morning Awesome, {profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}!</h1>
@@ -678,6 +748,7 @@ export function DashboardV2Experimental({ onNavigate, onNavigateToSubScreen, onV
           loadTodayAffirmation();
         }}
       />
-    </div>
+      </div>
+    </>
   );
 }
