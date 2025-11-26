@@ -6,6 +6,8 @@ import { Onboarding } from './components/Onboarding'
 import { Dashboard } from './components/Dashboard'
 //Alvaro-dashboardv2: Import experimental Dashboard V2
 import { DashboardV2Experimental } from './components/DashboardV2Experimental'
+//Alvaro-dashboardv3: Import experimental Dashboard V3
+import { DashboardV3Experimental } from './components/DashboardV3Experimental'
 import { ImprovedNavigation } from './components/ImprovedNavigation'
 import { FamilyHub } from './components/FamilyHub'
 import { MoreMenu } from './components/MoreMenu'
@@ -31,7 +33,8 @@ import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Impo
 import { useDarkMode } from './hooks/useDarkMode'
 
 //Alvaro-dashboardv2: Add 'dashboard-v2' to Screen type
-export type Screen = 'dashboard' | 'dashboard-v2' | 'calendar' | 'family' | 'more'
+//Alvaro-dashboardv3: Add 'dashboard-v3' to Screen type
+export type Screen = 'dashboard' | 'dashboard-v2' | 'dashboard-v3' | 'calendar' | 'family' | 'more'
 export type SubScreen = 'shopping' | 'tasks' | 'contacts' | 'family-folders' | 'settings' | 'quick-links' // Alvaro-quicklinks: Add quick-links to SubScreen type
 
 function App() {
@@ -283,6 +286,10 @@ function App() {
                       setCurrentSubScreen(null);
                       setCurrentScreen('dashboard-v2');
                     }}
+                    onNavigateToDashboardV3={() => {
+                      setCurrentSubScreen(null);
+                      setCurrentScreen('dashboard-v3');
+                    }}
                   />
                 </FeatureErrorBoundary>
               )}
@@ -308,6 +315,16 @@ function App() {
               {currentScreen === 'dashboard-v2' && (
                 <FeatureErrorBoundary featureName="Dashboard V2">
                   <DashboardV2Experimental
+                    onNavigate={setCurrentScreen}
+                    onNavigateToSubScreen={setCurrentSubScreen}
+                    onVoiceChatOpen={() => setShowVoiceChat(true)}
+                  />
+                </FeatureErrorBoundary>
+              )}
+              {/* Alvaro-dashboardv3: Add Dashboard V3 Experimental routing */}
+              {currentScreen === 'dashboard-v3' && (
+                <FeatureErrorBoundary featureName="Dashboard V3">
+                  <DashboardV3Experimental
                     onNavigate={setCurrentScreen}
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onVoiceChatOpen={() => setShowVoiceChat(true)}

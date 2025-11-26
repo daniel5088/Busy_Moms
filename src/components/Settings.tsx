@@ -19,13 +19,15 @@ import { measurementPreferencesService } from '../services/measurementPreference
 import type { UserMeasurementPreferences } from '../lib/supabase';
 
 //Alvaro-dashboardv2: Added onNavigateToDashboardV2 prop for experimental dashboard navigation
+//Alvaro-dashboardv3: Added onNavigateToDashboardV3 prop for experimental dashboard navigation
 interface SettingsProps {
   darkMode: boolean;
   toggleDarkMode: () => void;
   onNavigateToDashboardV2?: () => void;
+  onNavigateToDashboardV3?: () => void;
 }
 
-export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2 }: SettingsProps) {
+export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, onNavigateToDashboardV3 }: SettingsProps) {
   const { user, signOut } = useAuth();
   const { performSync } = useCalendarSync();
   const [showFamilyForm, setShowFamilyForm] = useState(false);
@@ -273,6 +275,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2 }: 
       ]
     },
     //Alvaro-dashboardv2: Add Features section for experimental Dashboard V2
+    //Alvaro-dashboardv3: Add Dashboard V3 to Features section
     {
       title: 'Features',
       items: [
@@ -282,6 +285,13 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2 }: 
           description: 'Try the new dashboard layout with improved organization',
           action: 'Try It',
           onClick: onNavigateToDashboardV2
+        },
+        {
+          icon: LayoutDashboard,
+          title: 'Dashboard V3 (Minimal Prototype)',
+          description: 'Assistant-first layout with quick actions grid and popup affirmation',
+          action: 'Try It',
+          onClick: onNavigateToDashboardV3
         }
       ]
     },
