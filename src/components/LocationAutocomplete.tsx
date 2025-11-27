@@ -29,7 +29,7 @@ export function LocationAutocomplete({
   const serviceRef = useRef<any | null>(null);
   const debounceRef = useRef<number | null>(null);
 
-  // Load Google Maps JS once
+  
 useEffect(() => {
   if (typeof window === "undefined") return;
 
