@@ -28,7 +28,8 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
   })
 
   // public Google Maps key (set as VITE_GOOGLE_MAPS_API_KEY in env)
-  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
+  const GOOGLE_MAPS_API_KEY =
+    (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) || undefined
 
   // Update form data when defaultDate or event changes
   useEffect(() => {
@@ -212,6 +213,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         {GOOGLE_MAPS_API_KEY ? (
           <LocationAutocomplete
             value={formData.location}
+            apiKey={GOOGLE_MAPS_API_KEY}
             onChange={(value: string) =>
               setFormData(prev => ({ ...prev, location: value }))
             }
