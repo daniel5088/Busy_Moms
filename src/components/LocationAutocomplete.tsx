@@ -14,6 +14,7 @@ type PlaceSelection = {
 interface Props {
   value: string;
   onChange: (value: string) => void;
+  apiKey?: string;                    // ✅ key comes in as a prop
   onSelect?: (place: PlaceSelection) => void;
 }
 
@@ -29,32 +30,38 @@ export function LocationAutocomplete({
   const serviceRef = useRef<any | null>(null);
   const debounceRef = useRef<number | null>(null);
 
-  
-useEffect(() => {
-  if (typeof window === "undefined") return;
+  // Load Google Maps script ONCE, using the apiKey prop
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
-  const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      console.warn(
+        "[LocationAutocomplete] No Google Maps API key provided. Autocomplete disabled."
+      );
+      return;
+    }
 
-  if (window.google?.maps) {
-    setLoaded(true);
-    return;
-  }
+    if (window.google?.maps) {
+      setLoaded(true);
+      return;
+    }
 
-  if (document.getElementById("google-maps-js")) return;
+    if (document.getElementById("google-maps-js")) return;
 
-  const script = document.createElement("script");
-  script.id = "google-maps-js";
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places`;
-  script.async = true;
-  script.defer = true;
-  script.onload = () => setLoaded(true);
-  script.onerror = () => {
-    console.error("Failed to load Google Maps script");
-  };
+    const script = document.createElement("script");
+    script.id = "google-maps-js";
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      setLoaded(true);
+    };
+    script.onerror = () => {
+      console.error("Failed to load Google Maps script");
+    };
 
-  document.head.appendChild(script);
-}, []);
-
+    document.head.appendChild(script);
+  }, [apiKey]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -105,13 +112,9 @@ useEffect(() => {
   const handleSelect = (p: any) => {
     const name = p.description || "";
 
-    // 1) set final value
     onChange(name);
-
-    // 2) close dropdown
     setPredictions([]);
 
-    // 3) notify parent if needed
     if (onSelect) {
       onSelect({
         name,
@@ -122,7 +125,6 @@ useEffect(() => {
 
   // Manual add handler
   const handleAddManually = () => {
-    // Just keep current value and close the dropdown
     setPredictions([]);
     if (onSelect) {
       onSelect({
@@ -132,14 +134,14 @@ useEffect(() => {
     }
   };
 
-  if (!loaded) {
+  // If script hasn’t loaded (or key missing), fall back to plain input
+  if (!loaded || !apiKey) {
     return (
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Loading location..."
-        disabled
-        className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg text-sm sm:text-base bg-gray-50"
+        placeholder="Event location"
+        className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
       />
     );
   }
@@ -153,12 +155,11 @@ useEffect(() => {
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search for a location"
         autoComplete="off"
-        className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+        className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
       />
 
       {showDropdown && (
         <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
-          {/* Add manually – only when dropdown is open */}
           {value.trim().length > 0 && (
             <li
               className="px-3 py-2 text-purple-700 font-medium hover:bg-purple-50 cursor-pointer border-b border-gray-100"
