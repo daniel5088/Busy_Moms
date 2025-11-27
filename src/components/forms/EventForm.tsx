@@ -28,8 +28,8 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
   })
 
   // public Google Maps key (set as VITE_GOOGLE_MAPS_API_KEY in env)
-  const GOOGLE_MAPS_API_KEY =
-    (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) || undefined
+  const GOOGLE_MAPS_API_KEY = import.meta.env
+    .VITE_GOOGLE_MAPS_API_KEY as string | undefined
 
   // Update form data when defaultDate or event changes
   useEffect(() => {
@@ -203,34 +203,24 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         </div>
       </div>
 
-      {/* Location with Google Places autocomplete (with fallback) */}
+      {/* Location with Google Places autocomplete (with fallback handled inside the component) */}
       <div>
         <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
           <MapPin className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
           Location
         </label>
 
-        {GOOGLE_MAPS_API_KEY ? (
-          <LocationAutocomplete
-            value={formData.location}
-            apiKey={GOOGLE_MAPS_API_KEY}
-            onChange={(value: string) =>
-              setFormData(prev => ({ ...prev, location: value }))
-            }
-            onSelect={(place: any) => {
-              const name = place.name || place.description || ''
-              setFormData(prev => ({ ...prev, location: name || prev.location }))
-            }}
-          />
-        ) : (
-          <input
-            type="text"
-            value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-            placeholder="Event location"
-          />
-        )}
+        <LocationAutocomplete
+          value={formData.location}
+          onChange={(value: string) =>
+            setFormData(prev => ({ ...prev, location: value }))
+          }
+          apiKey={GOOGLE_MAPS_API_KEY}
+          onSelect={(place: any) => {
+            const name = place.name || place.description || ''
+            setFormData(prev => ({ ...prev, location: name || prev.location }))
+          }}
+        />
       </div>
 
       <div>
