@@ -31,28 +31,31 @@ export function LocationAutocomplete({
   const debounceRef = useRef<number | null>(null);
 
   // Load Google Maps JS once
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+useEffect(() => {
+  if (typeof window === "undefined") return;
 
-    if (window.google?.maps) {
-      setLoaded(true);
-      return;
-    }
+  const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-    if (document.getElementById("google-maps-js")) return;
+  if (window.google?.maps) {
+    setLoaded(true);
+    return;
+  }
 
-    const script = document.createElement("script");
-    script.id = "google-maps-js";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setLoaded(true);
-    script.onerror = () => {
-      console.error("Failed to load Google Maps script");
-    };
+  if (document.getElementById("google-maps-js")) return;
 
-    document.head.appendChild(script);
-  }, [apiKey]);
+  const script = document.createElement("script");
+  script.id = "google-maps-js";
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places`;
+  script.async = true;
+  script.defer = true;
+  script.onload = () => setLoaded(true);
+  script.onerror = () => {
+    console.error("Failed to load Google Maps script");
+  };
+
+  document.head.appendChild(script);
+}, []);
+
 
   // Close dropdown when clicking outside
   useEffect(() => {
