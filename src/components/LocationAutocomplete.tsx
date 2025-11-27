@@ -14,7 +14,6 @@ type PlaceSelection = {
 interface Props {
   value: string;
   onChange: (value: string) => void;
-  apiKey: string;
   onSelect?: (place: PlaceSelection) => void;
 }
 
