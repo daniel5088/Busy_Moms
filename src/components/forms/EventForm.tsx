@@ -78,7 +78,10 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         start_time: formData.start_time || null,
         end_time: formData.end_time || null,
         user_id: user.id,
-        participants: formData.participants.split(',').map(p => p.trim()).filter(p => p),
+        participants: formData.participants
+          .split(',')
+          .map(p => p.trim())
+          .filter(p => p),
         source: 'manual' as const
       }
 
@@ -212,7 +215,6 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
             onChange={(value: string) =>
               setFormData(prev => ({ ...prev, location: value }))
             }
-            apiKey={GOOGLE_MAPS_API_KEY}
             onSelect={(place: any) => {
               const name = place.name || place.description || ''
               setFormData(prev => ({ ...prev, location: name || prev.location }))
@@ -251,7 +253,9 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
             onChange={(e) => setFormData({ ...formData, rsvp_required: e.target.checked })}
             className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
           />
-          <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">RSVP Required</span>
+          <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+            RSVP Required
+          </span>
         </label>
 
         {formData.rsvp_required && (
