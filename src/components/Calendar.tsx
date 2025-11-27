@@ -521,7 +521,7 @@ export function Calendar() {
                           key={`event-${ev.id}-${i}`}
                           onClick={() => {
                             setSelectedEvent(ev);
-                            setShowEventDetails(true);
+                            setShowEventDetails(false);
                           }}
                           className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
                         >
