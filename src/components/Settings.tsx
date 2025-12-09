@@ -20,14 +20,16 @@ import type { UserMeasurementPreferences } from '../lib/supabase';
 
 //Alvaro-dashboardv2: Added onNavigateToDashboardV2 prop for experimental dashboard navigation
 //Alvaro-dashboardv3: Added onNavigateToDashboardV3 prop for experimental dashboard navigation
+//Alvaros - V4: Added onNavigateToDashboardV4 prop for experimental dashboard navigation
 interface SettingsProps {
   darkMode: boolean;
   toggleDarkMode: () => void;
   onNavigateToDashboardV2?: () => void;
   onNavigateToDashboardV3?: () => void;
+  onNavigateToDashboardV4?: () => void;
 }
 
-export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, onNavigateToDashboardV3 }: SettingsProps) {
+export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, onNavigateToDashboardV3, onNavigateToDashboardV4 }: SettingsProps) {
   const { user, signOut } = useAuth();
   const { performSync } = useCalendarSync();
   const [showFamilyForm, setShowFamilyForm] = useState(false);
@@ -276,6 +278,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
     },
     //Alvaro-dashboardv2: Add Features section for experimental Dashboard V2
     //Alvaro-dashboardv3: Add Dashboard V3 to Features section
+    //Alvaros - V4: Add Dashboard V4 to Features section
     {
       title: 'Features',
       items: [
@@ -292,6 +295,13 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           description: 'Assistant-first layout with quick actions grid and popup affirmation',
           action: 'Try It',
           onClick: onNavigateToDashboardV3
+        },
+        {
+          icon: LayoutDashboard,
+          title: 'Dashboard V4 (Experimental)',
+          description: 'Full-screen affirmation with side-by-side schedules and 6-action grid',
+          action: 'Open',
+          onClick: onNavigateToDashboardV4
         }
       ]
     },

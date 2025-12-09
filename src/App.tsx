@@ -8,6 +8,8 @@ import { Dashboard } from './components/Dashboard'
 import { DashboardV2Experimental } from './components/DashboardV2Experimental'
 //Alvaro-dashboardv3: Import experimental Dashboard V3
 import { DashboardV3Experimental } from './components/DashboardV3Experimental'
+//Alvaros - V4: Import experimental Dashboard V4
+import { DashboardV4Experimental } from './components/DashboardV4Experimental'
 import { ImprovedNavigation } from './components/ImprovedNavigation'
 import { FamilyHub } from './components/FamilyHub'
 import { MoreMenu } from './components/MoreMenu'
@@ -34,7 +36,8 @@ import { useDarkMode } from './hooks/useDarkMode'
 
 //Alvaro-dashboardv2: Add 'dashboard-v2' to Screen type
 //Alvaro-dashboardv3: Add 'dashboard-v3' to Screen type
-export type Screen = 'dashboard' | 'dashboard-v2' | 'dashboard-v3' | 'calendar' | 'family' | 'more'
+//Alvaros - V4: Add 'dashboard-v4' to Screen type
+export type Screen = 'dashboard' | 'dashboard-v2' | 'dashboard-v3' | 'dashboard-v4' | 'calendar' | 'family' | 'more'
 export type SubScreen = 'shopping' | 'tasks' | 'contacts' | 'family-folders' | 'settings' | 'quick-links' // Alvaro-quicklinks: Add quick-links to SubScreen type
 
 function App() {
@@ -279,6 +282,7 @@ function App() {
               {currentSubScreen === 'settings' && (
                 <FeatureErrorBoundary featureName="Settings">
                   {/* Alvaro-dashboardv2: Pass navigation handler to Settings */}
+                  {/* Alvaros - V4: Pass navigation handler for Dashboard V4 */}
                   <Settings
                     darkMode={darkMode}
                     toggleDarkMode={toggleDarkMode}
@@ -289,6 +293,10 @@ function App() {
                     onNavigateToDashboardV3={() => {
                       setCurrentSubScreen(null);
                       setCurrentScreen('dashboard-v3');
+                    }}
+                    onNavigateToDashboardV4={() => {
+                      setCurrentSubScreen(null);
+                      setCurrentScreen('dashboard-v4');
                     }}
                   />
                 </FeatureErrorBoundary>
@@ -325,6 +333,16 @@ function App() {
               {currentScreen === 'dashboard-v3' && (
                 <FeatureErrorBoundary featureName="Dashboard V3">
                   <DashboardV3Experimental
+                    onNavigate={setCurrentScreen}
+                    onNavigateToSubScreen={setCurrentSubScreen}
+                    onVoiceChatOpen={() => setShowVoiceChat(true)}
+                  />
+                </FeatureErrorBoundary>
+              )}
+              {/* Alvaros - V4: Add Dashboard V4 Experimental routing */}
+              {currentScreen === 'dashboard-v4' && (
+                <FeatureErrorBoundary featureName="Dashboard V4">
+                  <DashboardV4Experimental
                     onNavigate={setCurrentScreen}
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onVoiceChatOpen={() => setShowVoiceChat(true)}
