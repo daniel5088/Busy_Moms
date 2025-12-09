@@ -11,7 +11,7 @@ import type {
   Retailer
 } from '../lib/supabase'
 import { InstacartUnitMapper } from '../utils/instacartUnitMapper'
-import { getPreferredRetailer } from './userSettings' // ✅ NEW
+// Note: getPreferredRetailer is from legacy user_settings table - no longer used
 
 export class InstacartShoppingService {
   private edgeFunctionUrl: string
@@ -32,12 +32,13 @@ export class InstacartShoppingService {
 
     // ✅ Determine which retailer to use:
     // 1) explicit override from caller
-    // 2) fallback to saved user preference (user_settings.preferred_retailer)
+    // 2) fallback to primary retailer from user_preferred_retailers table
     let effectiveRetailerKey: string | null | undefined = retailerKey
 
     const userId = items[0]?.user_id
     if (!effectiveRetailerKey && userId) {
-      effectiveRetailerKey = await getPreferredRetailer(userId)
+      const primaryRetailer = await this.getPrimaryRetailer(userId)
+      effectiveRetailerKey = primaryRetailer?.retailer_key
     }
 
     const requestBody: any = {
