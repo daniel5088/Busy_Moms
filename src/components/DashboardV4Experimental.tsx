@@ -399,7 +399,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                               <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
                             </div>
                             <div className="flex-1 min-w-0 space-y-0.5"> {/* //Alvaros - V4 */}
-                              <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400">
+                              <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">
                                 {formatEventTimeRange(event.start_time, event.end_time)}
                               </p>
                               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm"> {/* //Alvaros - V4 */}
@@ -453,7 +453,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                               <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
                             </div>
                             <div className="flex-1 min-w-0 space-y-0.5"> {/* //Alvaros - V4 */}
-                              <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400">
+                              <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">
                                 {new Date(event.event_date).toLocaleDateString('en-US', {
                                   weekday: 'short',
                                   month: 'short',
