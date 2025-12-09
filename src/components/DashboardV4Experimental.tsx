@@ -369,7 +369,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
         <div className="p-4 space-y-4 sm:p-6 sm:space-y-6">
           {/* Side-by-side Schedule Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {/* Today's Schedule */}
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Today's Schedule</h2>
@@ -463,7 +463,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
           {/* Quick Actions - 3x2 Grid */}
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {quickActions.map((action, index) => (
                 <button
                   key={index}
