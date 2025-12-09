@@ -99,8 +99,8 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
           .filter(event => event.event_date === today)
           .sort((a, b) => {
             if (!a.start_time && !b.start_time) return 0;
-            if (!a.start_time) return -1;
-            if (!b.start_time) return 1;
+            if (!a.start_time) return 1;
+            if (!b.start_time) return -1;
             return a.start_time.localeCompare(b.start_time);
           });
 
@@ -385,7 +385,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                           className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
                         >
-                          <div className="flex items-start space-x-1.5"> {/* //Alvaros - V4 */}
+                          <div className="flex items-center space-x-1.5"> {/* //Alvaros - V4 */}
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0"> {/* //Alvaros - V4 */}
                               <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
                             </div>
@@ -439,7 +439,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                           className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
                         >
-                          <div className="flex items-start space-x-1.5"> {/* //Alvaros - V4 */}
+                          <div className="flex items-center space-x-1.5"> {/* //Alvaros - V4 */}
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0"> {/* //Alvaros - V4 */}
                               <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
                             </div>
