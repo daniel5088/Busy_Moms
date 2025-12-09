@@ -389,17 +389,15 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0"> {/* //Alvaros - V4 */}
                               <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
                             </div>
-                            <div className="flex-1 min-w-0"> {/* //Alvaros - V4 */}
-                              <div className="flex items-center mb-1">
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm min-w-0 flex-1"> {/* //Alvaros - V4 */}
-                                  {event.title}
-                                </h3>
-                                <span className="text-xs sm:text-sm text-rose-600 font-medium text-right whitespace-nowrap pl-2">
-                                  {formatEventTime(event.start_time)}
-                                </span>
-                              </div>
+                            <div className="flex-1 min-w-0 space-y-0.5"> {/* //Alvaros - V4 */}
+                              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                                {formatEventTime(event.start_time)}
+                              </p>
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm"> {/* //Alvaros - V4 */}
+                                {event.title}
+                              </h3>
                               {event.location && (
-                                <p className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-400"> {/* //Alvaros - V4 */}
+                                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"> {/* //Alvaros - V4 */}
                                   {event.location}
                                 </p>
                               )}
@@ -445,26 +443,20 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0"> {/* //Alvaros - V4 */}
                               <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
                             </div>
-                            <div className="flex-1 min-w-0"> {/* //Alvaros - V4 */}
-                              <div className="flex items-center mb-1">
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm min-w-0 flex-1"> {/* //Alvaros - V4 */}
-                                  {event.title}
-                                </h3>
-                                <span className="text-xs sm:text-sm text-rose-600 font-medium text-right whitespace-nowrap pl-2">
-                                  {new Date(event.event_date).toLocaleDateString('en-US', {
-                                    weekday: 'short',
-                                    month: 'short',
-                                    day: 'numeric',
-                                  })}
-                                </span>
-                              </div>
-                              {event.start_time && (
-                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                                  {formatEventTime(event.start_time)}
-                                </p>
-                              )}
+                            <div className="flex-1 min-w-0 space-y-0.5"> {/* //Alvaros - V4 */}
+                              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                                {new Date(event.event_date).toLocaleDateString('en-US', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                                {event.start_time && ` at ${formatEventTime(event.start_time)}`}
+                              </p>
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm"> {/* //Alvaros - V4 */}
+                                {event.title}
+                              </h3>
                               {event.location && (
-                                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1"> {/* //Alvaros - V4 */}
+                                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"> {/* //Alvaros - V4 */}
                                   {event.location}
                                 </p>
                               )}
