@@ -73,6 +73,15 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
     }
   };
 
+  // Helper function to format time range for display
+  const formatEventTimeRange = (startTime: string | null | undefined, endTime: string | null | undefined): string => {
+    if (!startTime) return 'All day';
+    if (startTime && endTime) {
+      return `${formatEventTime(startTime)} – ${formatEventTime(endTime)}`;
+    }
+    return formatEventTime(startTime);
+  };
+
   // Load events, tasks, and reminders
   const loadDashboardData = async () => {
     if (!user?.id) return;
@@ -391,7 +400,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                             </div>
                             <div className="flex-1 min-w-0 space-y-0.5"> {/* //Alvaros - V4 */}
                               <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
-                                {formatEventTime(event.start_time)}
+                                {formatEventTimeRange(event.start_time, event.end_time)}
                               </p>
                               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm"> {/* //Alvaros - V4 */}
                                 {event.title}
@@ -450,7 +459,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                                   month: 'short',
                                   day: 'numeric',
                                 })}
-                                {event.start_time && ` at ${formatEventTime(event.start_time)}`}
+                                {event.start_time && ` at ${formatEventTimeRange(event.start_time, event.end_time)}`}
                               </p>
                               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm"> {/* //Alvaros - V4 */}
                                 {event.title}
