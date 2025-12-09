@@ -376,22 +376,22 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 Today&apos;s Schedule
               </h2>
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-80 flex flex-col">
-                <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4"> {/* //Alvaros - V4 */}
                   {todayEvents.length > 0 ? (
                     <div className="space-y-3">
                       {todayEvents.map((event) => (
                         <div
                           key={event.id}
-                          className="p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
+                          className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
                         >
-                          <div className="flex items-start space-x-3">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="flex items-start space-x-2"> {/* //Alvaros - V4 */}
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0"> {/* //Alvaros - V4 */}
                               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600 dark:text-rose-300" />
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-1">
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm truncate"> {/* //Alvaros - V4 */}
                                   {event.title}
                                 </h3>
                                 <span className="text-xs sm:text-sm text-rose-600 font-medium">
@@ -399,7 +399,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                                 </span>
                               </div>
                               {event.location && (
-                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                <p className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-400 truncate"> {/* //Alvaros - V4 */}
                                   {event.location}
                                 </p>
                               )}
@@ -432,22 +432,22 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 This Week&apos;s Schedule
               </h2>
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-80 flex flex-col">
-                <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4"> {/* //Alvaros - V4 */}
                   {thisWeekEvents.length > 0 ? (
                     <div className="space-y-3">
                       {thisWeekEvents.map((event) => (
                         <div
                           key={event.id}
-                          className="p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
+                          className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
                         >
-                          <div className="flex items-start space-x-3">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="flex items-start space-x-2"> {/* //Alvaros - V4 */}
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0"> {/* //Alvaros - V4 */}
                               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600 dark:text-rose-300" />
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-1">
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm truncate"> {/* //Alvaros - V4 */}
                                   {event.title}
                                 </h3>
                                 <span className="text-xs sm:text-sm text-rose-600 font-medium">
@@ -464,7 +464,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                                 </p>
                               )}
                               {event.location && (
-                                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 truncate"> {/* //Alvaros - V4 */}
                                   {event.location}
                                 </p>
                               )}
