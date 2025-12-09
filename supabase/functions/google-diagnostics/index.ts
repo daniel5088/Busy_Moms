@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Check 1: Environment Variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const googleClientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
