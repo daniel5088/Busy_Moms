@@ -25,7 +25,8 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
   const [reminders, setReminders] = React.useState<Reminder[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
-  const [showAffirmation, setShowAffirmation] = React.useState(true);
+  const [showAffirmation, setShowAffirmation] = React.useState(false);
+  const [isAffirmationIconSpinning, setIsAffirmationIconSpinning] = React.useState(false);
 
   // Load user profile
   React.useEffect(() => {
@@ -197,6 +198,14 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
     }
   };
 
+  const handleOpenAffirmation = () => {
+    setShowAffirmation(true);
+    setIsAffirmationIconSpinning(true);
+    setTimeout(() => {
+      setIsAffirmationIconSpinning(false);
+    }, 450);
+  };
+
   // Quick Actions - 3x2 grid with specific actions
   const quickActions = [
     {
@@ -339,11 +348,12 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={handleSignOut}
-                className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-colors"
-                title="Sign Out"
+                onClick={handleOpenAffirmation}
+                className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
+                title="Open daily affirmation"
+                aria-label="Open daily affirmation"
               >
-                <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform${isAffirmationIconSpinning ? ' animate-spin' : ''}`} />
               </button>
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <Heart className="w-4 h-4 sm:w-6 sm:h-6" />
