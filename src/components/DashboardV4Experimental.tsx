@@ -405,7 +405,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 onClick={handleOpenAffirmation}
                 className={`w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95 ${
                   isAffirmationButtonGlowing
-                    ? 'ring-2 ring-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.8)]'
+                    ? 'ring-2 ring-white shadow-[0_0_12px_rgba(255,255,255,0.9)]'
                     : ''
                 }`}
                 title="Open daily affirmation"
