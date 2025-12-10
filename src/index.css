@@ -90,3 +90,19 @@
     }
   }
 }
+
+/* Affirmation text curtain reveal animation */
+@keyframes affirmation-text-reveal {
+  0% {
+    clip-path: inset(0 50% 0 50%);
+    opacity: 0;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+.affirmation-text-reveal {
+  animation: affirmation-text-reveal 500ms ease-out forwards;
+}

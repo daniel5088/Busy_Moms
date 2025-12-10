@@ -358,10 +358,6 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
           <div className={`relative w-full max-w-3xl overflow-hidden transition-all duration-200 ease-out ${
             affirmationStage === 'closing' ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
           }`}>
-            {/* Decorative circles */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16"></div>
-
             {/* Content */}
             <div className="relative z-10 text-center">
               <div className="flex items-center justify-center space-x-2 mb-6">
@@ -374,7 +370,9 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 </span>
               </div>
 
-              <p className="text-white text-xl sm:text-2xl md:text-3xl leading-relaxed font-light my-8 px-4">
+              <p className={`text-white text-xl sm:text-2xl md:text-3xl leading-relaxed font-light my-8 px-4 ${
+                affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
+              }`}>
                 {todayAffirmation.affirmation_text}
               </p>
 
