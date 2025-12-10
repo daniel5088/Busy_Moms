@@ -8,6 +8,8 @@ import { affirmationService } from '../services/affirmationService';
 
 import { SubScreen } from '../App';
 
+type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content';
+
 interface DashboardProps {
   onNavigate: (screen: 'calendar' | 'family' | 'more') => void;
   onNavigateToSubScreen: (screen: SubScreen) => void;
@@ -25,8 +27,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
   const [reminders, setReminders] = React.useState<Reminder[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
-  const [showAffirmation, setShowAffirmation] = React.useState(false);
-  const [isAffirmationIconSpinning, setIsAffirmationIconSpinning] = React.useState(false);
+  const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
 
   // Load user profile
   React.useEffect(() => {
@@ -167,13 +168,13 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
   // Keyboard escape handler for affirmation overlay
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showAffirmation) {
-        setShowAffirmation(false);
+      if (e.key === 'Escape' && affirmationStage !== 'hidden') {
+        setAffirmationStage('hidden');
       }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [showAffirmation]);
+  }, [affirmationStage]);
 
   const loadTodayAffirmation = async () => {
     try {
@@ -199,11 +200,17 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
   };
 
   const handleOpenAffirmation = () => {
-    setShowAffirmation(true);
-    setIsAffirmationIconSpinning(true);
+    if (affirmationStage !== 'hidden') return;
+
+    setAffirmationStage('burst');
+
     setTimeout(() => {
-      setIsAffirmationIconSpinning(false);
+      setAffirmationStage('logo');
     }, 450);
+
+    setTimeout(() => {
+      setAffirmationStage('content');
+    }, 900);
   };
 
   // Quick Actions - 3x2 grid with specific actions
@@ -294,10 +301,32 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
   return (
     <>
-      {/* Full-screen affirmation overlay */}
-      {showAffirmation && todayAffirmation && (
+      {/* Burst Stage - Growing and fading icon */}
+      {affirmationStage === 'burst' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center animate-ping opacity-75">
+                <Sparkles className="w-16 h-16 text-rose-400" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logo Stage - Spinning icon */}
+      {affirmationStage === 'logo' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          <div className="animate-spin">
+            <Sparkles className="w-24 h-24 sm:w-32 sm:h-32 text-white" />
+          </div>
+        </div>
+      )}
+
+      {/* Content Stage - Full affirmation card */}
+      {affirmationStage === 'content' && todayAffirmation && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-in fade-in duration-300"
           role="dialog"
           aria-modal="true"
           aria-labelledby="affirmation-overlay-title"
@@ -326,7 +355,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
               <div className="mt-8">
                 <button
-                  onClick={() => setShowAffirmation(false)}
+                  onClick={() => setAffirmationStage('hidden')}
                   className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-sm font-medium transition-colors flex items-center space-x-2 mx-auto focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
                   aria-label="Close affirmation"
                 >
@@ -353,7 +382,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 title="Open daily affirmation"
                 aria-label="Open daily affirmation"
               >
-                <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform${isAffirmationIconSpinning ? ' animate-spin' : ''}`} />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <Heart className="w-4 h-4 sm:w-6 sm:h-6" />
