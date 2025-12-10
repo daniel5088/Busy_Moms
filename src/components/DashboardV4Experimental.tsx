@@ -8,7 +8,7 @@ import { affirmationService } from '../services/affirmationService';
 
 import { SubScreen } from '../App';
 
-type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content';
+type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing';
 
 interface DashboardProps {
   onNavigate: (screen: 'calendar' | 'family' | 'more') => void;
@@ -28,6 +28,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
   const [loading, setLoading] = React.useState(false);
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
+  const [isAffirmationButtonGlowing, setIsAffirmationButtonGlowing] = React.useState(false);
 
   // Load user profile
   React.useEffect(() => {
@@ -168,8 +169,8 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
   // Keyboard escape handler for affirmation overlay
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && affirmationStage !== 'hidden') {
-        setAffirmationStage('hidden');
+      if (e.key === 'Escape' && affirmationStage === 'content') {
+        handleCloseAffirmation();
       }
     };
     window.addEventListener('keydown', handleEscape);
@@ -212,6 +213,28 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       setAffirmationStage('content');
     }, 900);
   };
+
+  const handleCloseAffirmation = () => {
+    if (affirmationStage === 'content') {
+      setAffirmationStage('closing');
+    }
+  };
+
+  // Handle closing animation timing
+  React.useEffect(() => {
+    if (affirmationStage === 'closing') {
+      const timer = setTimeout(() => {
+        setAffirmationStage('hidden');
+        setIsAffirmationButtonGlowing(true);
+
+        setTimeout(() => {
+          setIsAffirmationButtonGlowing(false);
+        }, 600);
+      }, 450);
+
+      return () => clearTimeout(timer);
+    }
+  }, [affirmationStage]);
 
   // Quick Actions - 3x2 grid with specific actions
   const quickActions = [
@@ -355,7 +378,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
               <div className="mt-8">
                 <button
-                  onClick={() => setAffirmationStage('hidden')}
+                  onClick={handleCloseAffirmation}
                   className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-sm font-medium transition-colors flex items-center space-x-2 mx-auto focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
                   aria-label="Close affirmation"
                 >
@@ -364,6 +387,15 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Closing Stage - Converging back to button */}
+      {affirmationStage === 'closing' && (
+        <div className="fixed inset-0 z-50 flex items-start justify-end pt-16 pr-6 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-out fade-out duration-450">
+          <div className="w-64 h-64 bg-white/30 rounded-full flex items-center justify-center animate-out zoom-out duration-450">
+            <Sparkles className="w-24 h-24 text-white" />
           </div>
         </div>
       )}
@@ -378,7 +410,11 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleOpenAffirmation}
-                className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
+                className={`w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95 ${
+                  isAffirmationButtonGlowing
+                    ? 'ring-2 ring-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.8)]'
+                    : ''
+                }`}
                 title="Open daily affirmation"
                 aria-label="Open daily affirmation"
               >
