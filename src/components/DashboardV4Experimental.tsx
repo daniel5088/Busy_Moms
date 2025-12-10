@@ -347,7 +347,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       )}
 
       {/* Content Stage - Full affirmation card */}
-      {affirmationStage === 'content' && todayAffirmation && (
+      {(affirmationStage === 'content' || affirmationStage === 'closing') && todayAffirmation && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-in fade-in duration-300"
           role="dialog"
@@ -355,7 +355,9 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
           aria-labelledby="affirmation-overlay-title"
         >
           {/* Affirmation Card */}
-          <div className="relative w-full max-w-3xl overflow-hidden">
+          <div className={`relative w-full max-w-3xl overflow-hidden transition-all duration-200 ease-out ${
+            affirmationStage === 'closing' ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+          }`}>
             {/* Decorative circles */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16"></div>
@@ -387,15 +389,6 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Closing Stage - Converging back to button */}
-      {affirmationStage === 'closing' && (
-        <div className="fixed inset-0 z-50 flex items-start justify-end pt-16 pr-6 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-out fade-out duration-450">
-          <div className="w-64 h-64 bg-white/30 rounded-full flex items-center justify-center animate-out zoom-out duration-450">
-            <Sparkles className="w-24 h-24 text-white" />
           </div>
         </div>
       )}
