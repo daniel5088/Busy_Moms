@@ -42,6 +42,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
     setSaving(true);
     try {
       await affirmationService.updateSettings(settings);
+      //Alvaros - Dailyaffirmations: TODO: Replace alerts with app-wide toast notifications for consistency
       alert('Settings saved successfully!');
       onClose();
     } catch (error) {
@@ -128,11 +129,15 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                 </p>
               </div>
 
-              {/*Alvaros - Dailyaffirmations: Updated colors to match theme*/}
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
+              {/*Alvaros - Dailyaffirmations: Changed to "Delivery schedule" with helper text, dims when disabled*/}
+              <div
+                className={`bg-white border border-gray-200 rounded-xl p-4 ${
+                  !settings.enabled ? 'opacity-50 pointer-events-none' : ''
+                }`}
+              >
                 <div className="flex items-center space-x-2 mb-4">
                   <Clock className="w-5 h-5 text-rose-600" />
-                  <h3 className="font-semibold text-gray-900">Frequency</h3>
+                  <h3 className="font-semibold text-gray-900">Delivery schedule</h3>
                 </div>
 
                 <div className="space-y-3">
@@ -156,10 +161,17 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                     <span className="text-gray-700">Twice daily</span>
                   </label>
                 </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Choose how many times per day you want to receive affirmations.
+                </p>
               </div>
 
-              {/*Alvaros - Dailyaffirmations: Clarified that times are in user's timezone*/}
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
+              {/*Alvaros - Dailyaffirmations: Clarified that times are in user's timezone, dims when disabled*/}
+              <div
+                className={`bg-white border border-gray-200 rounded-xl p-4 ${
+                  !settings.enabled ? 'opacity-50 pointer-events-none' : ''
+                }`}
+              >
                 <div className="flex items-center space-x-2 mb-2">
                   <Clock className="w-5 h-5 text-rose-600" />
                   <h3 className="font-semibold text-gray-900">Delivery Times</h3>
@@ -195,8 +207,12 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                 </div>
               </div>
 
-              {/*Alvaros - Dailyaffirmations: Clarified what data sources control and updated colors*/}
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
+              {/*Alvaros - Dailyaffirmations: Clarified what data sources control and updated colors, dims when disabled*/}
+              <div
+                className={`bg-white border border-gray-200 rounded-xl p-4 ${
+                  !settings.enabled ? 'opacity-50 pointer-events-none' : ''
+                }`}
+              >
                 <div className="flex items-center space-x-2 mb-4">
                   <CheckSquare className="w-5 h-5 text-rose-600" />
                   <h3 className="font-semibold text-gray-900">Personalization Sources</h3>
@@ -221,7 +237,8 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
 
                   <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <CheckSquare className="w-5 h-5 text-blue-600" />
+                      {/*Alvaros - Dailyaffirmations: Changed Tasks icon to rose-600 for consistency*/}
+                      <CheckSquare className="w-5 h-5 text-rose-600" />
                       <span className="text-gray-700">Tasks</span>
                     </div>
                     <input
