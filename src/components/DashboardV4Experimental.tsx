@@ -370,19 +370,19 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 </span>
               </div>
 
-              <p className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-light my-8 px-4 mb-10 ${
+              <p className={`text-white/95 text-lg md:text-xl leading-loose tracking-wide font-light my-8 px-4 mb-16 ${
                 affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
               }`}>
                 {todayAffirmation.affirmation_text}
               </p>
 
-              <div className="mt-8 flex flex-col items-center space-y-3">
+              <div className="mt-16 flex flex-col items-center space-y-3">
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-rose-400"
-                  aria-label="Adjust affirmation settings"
+                  aria-label="Affirmation settings"
                 >
-                  Adjust affirmation settings
+                  Affirmation settings
                 </button>
 
                 <button
