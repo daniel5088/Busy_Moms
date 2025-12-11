@@ -88,7 +88,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
               {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
               {/*Alvaros - Dailyaffirmations: Clarified that these are notification delivery settings*/}
               <h2 id="affirmation-settings-title" className="text-2xl font-bold">Daily Affirmations</h2>
-              <p className="text-rose-100 text-sm">Configure notification delivery and content</p>
+              <p className="text-rose-100 text-sm">Control when daily affirmations are delivered and how they’re personalized</p>
             </div>
           </div>
         </div>
@@ -106,7 +106,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <Bell className="w-5 h-5 text-rose-600" />
-                    <h3 className="font-semibold text-gray-900">Enable Notifications</h3>
+                    <h3 className="font-semibold text-gray-900">Enable Daily Affirmations</h3>
                   </div>
                   <button
                     onClick={() => updateSetting('enabled', !settings.enabled)}
@@ -123,8 +123,8 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                 </div>
                 <p className="text-sm text-gray-600">
                   {settings.enabled
-                    ? 'Daily affirmation notifications are enabled'
-                    : 'Daily affirmation notifications are disabled'}
+                    ? 'Daily affirmations will be delivered at your scheduled times'
+                    : 'Daily affirmations are turned off. You won’t receive any notifications'}
                 </p>
               </div>
 
@@ -164,7 +164,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                   <Clock className="w-5 h-5 text-rose-600" />
                   <h3 className="font-semibold text-gray-900">Delivery Times</h3>
                 </div>
-                <p className="text-xs text-gray-500 mb-4">Times are based on your device's timezone</p>
+                <p className="text-xs text-gray-500 mb-4">Times are based on your timezone{settings.timezone ? `: ${settings.timezone}` : ''}.</p>
 
                 <div className="space-y-4">
                   <div>
