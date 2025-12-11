@@ -3,6 +3,7 @@ import type { User, Session } from '@supabase/supabase-js'
 import { useSessionContext, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { getOAuthConfig } from '../lib/auth-config'
 import { captureAndStoreGoogleTokens } from '../services/googleTokenStorage'
+import { isSupabaseConfigured } from '../lib/supabase'
 
 export function useAuth() {
   const session = useSessionContext()
@@ -86,34 +87,44 @@ export function useAuth() {
   }, [session, supabase, isInitialized])
 
   const handleUserProfile = async (user: User) => {
-    // If your RLS requires auth, ensure your policies allow SELECT/INSERT for auth.uid()=id
-    const { data: existing, error: checkError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    // Ignore "no rows" code (PGRST116)
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error('Profile check error:', checkError)
+    // Skip profile operations if Supabase is not fully configured
+    if (!isSupabaseConfigured) {
+      console.warn('[useAuth] Skipping profile operations - Supabase not fully configured')
       return
     }
 
-    if (!existing) {
-      const profileData = {
-        id: user.id,
-        email: user.email ?? '',
-        full_name:
-          (user.user_metadata?.full_name ??
-           user.user_metadata?.name ??
-           user.email?.split('@')[0]) || 'User',
-        user_type: 'Mom' as const,
-        onboarding_completed: false,
-        ai_personality: 'Friendly' as const,
+    try {
+      // If your RLS requires auth, ensure your policies allow SELECT/INSERT for auth.uid()=id
+      const { data: existing, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      // Ignore "no rows" code (PGRST116)
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Profile check error:', checkError)
+        return
       }
 
-      const { error: createError } = await supabase.from('profiles').insert([profileData])
-      if (createError) console.error('Profile create error:', createError)
+      if (!existing) {
+        const profileData = {
+          id: user.id,
+          email: user.email ?? '',
+          full_name:
+            (user.user_metadata?.full_name ??
+             user.user_metadata?.name ??
+             user.email?.split('@')[0]) || 'User',
+          user_type: 'Mom' as const,
+          onboarding_completed: false,
+          ai_personality: 'Friendly' as const,
+        }
+
+        const { error: createError } = await supabase.from('profiles').insert([profileData])
+        if (createError) console.error('Profile create error:', createError)
+      }
+    } catch (error) {
+      console.error('Profile handling error (database may be unavailable):', error)
     }
   }
 

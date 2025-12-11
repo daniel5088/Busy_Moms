@@ -5,28 +5,26 @@ import App from './App.tsx';
 import './index.css';
 
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { supabase } from './lib/supabase';
-import { ConfigurationError } from './components/ConfigurationError';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 
 console.log('[main] Starting application initialization');
-console.log('[main] Supabase client status:', supabase ? 'INITIALIZED' : 'NOT INITIALIZED');
+console.log('[main] Supabase client status:', 'INITIALIZED');
+console.log('[main] Supabase fully configured:', isSupabaseConfigured ? 'YES' : 'NO (OAuth may still work)');
 console.log('[main] Environment variables:', {
   url: import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET',
   key: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'
 });
 
-if (!supabase) {
-  console.error('[main] CRITICAL: Supabase client not initialized. Check .env file and restart dev server.');
+if (!isSupabaseConfigured) {
+  console.warn('[main] Supabase not fully configured. Database features may be unavailable, but OAuth can still work.');
 }
 
+// Always render the app - even without full Supabase configuration
+// This allows Google OAuth to work without local database setup
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {supabase ? (
-      <SessionContextProvider supabaseClient={supabase}>
-        <App />
-      </SessionContextProvider>
-    ) : (
-      <ConfigurationError error={new Error('VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are not configured.')} />
-    )}
+    <SessionContextProvider supabaseClient={supabase}>
+      <App />
+    </SessionContextProvider>
   </StrictMode>
 );

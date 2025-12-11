@@ -11,7 +11,9 @@ console.log('[supabase] Environment check:', {
 
 const hasEnv = !!url && !!anonKey
 
-export const supabase: SupabaseClient | null = hasEnv
+// Always create a Supabase client, even with placeholder values
+// This allows Google OAuth to work without database configuration
+export const supabase: SupabaseClient = hasEnv
   ? createClient(url!, anonKey!, {
       auth: {
         persistSession: true,
@@ -20,24 +22,39 @@ export const supabase: SupabaseClient | null = hasEnv
       },
       db: { schema: 'public' },
     })
-  : null
+  : createClient(
+      url || 'https://placeholder.supabase.co',
+      anonKey || 'placeholder-anon-key',
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+        db: { schema: 'public' },
+      }
+    )
 
 if (!hasEnv) {
   console.warn(
     `[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.
 Add them to Bolt → Project → Settings → Environment Variables, then rebuild.
-Local dev: put them in .env next to vite.config.ts and restart the dev server.`
+Local dev: put them in .env next to vite.config.ts and restart the dev server.
+Note: OAuth features may work, but database features will be unavailable.`
   )
 }
 
+// Track whether Supabase is fully configured
+export const isSupabaseConfigured = hasEnv
+
 /**
- * Call this in code paths that MUST have a client (e.g., data loaders).
- * It throws with a clear message if env vars weren’t injected at build time.
+ * Call this in code paths that MUST have a fully configured client (e.g., data loaders).
+ * It throws with a clear message if env vars weren't properly set.
  */
 export function requireSupabase(): SupabaseClient {
-  if (!supabase) {
+  if (!isSupabaseConfigured) {
     throw new Error(
-      '[supabase] Not initialized. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set at build time.'
+      '[supabase] Not fully configured. Database operations require VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
     )
   }
   return supabase
