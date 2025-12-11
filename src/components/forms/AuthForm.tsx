@@ -189,7 +189,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg">
           <p className="text-xs sm:text-sm text-blue-800 mb-2">Demo Account:</p>
           <div className="text-xs text-blue-600 mb-2 sm:mb-3">
-            <p>Email: demo@busymoms.app</p>
+            <p>Email: !demo@busymoms.app</p>
             <p>Password: demo123456</p>
           </div>
           <button
