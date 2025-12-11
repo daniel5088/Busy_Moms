@@ -8,15 +8,15 @@ import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 
 console.log('[main] Starting application initialization');
-console.log('[main] Supabase client status:', 'INITIALIZED');
-console.log('[main] Supabase fully configured:', isSupabaseConfigured ? 'YES' : 'NO (OAuth may still work)');
-console.log('[main] Environment variables:', {
-  url: import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET',
-  key: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'
-});
 
-if (!isSupabaseConfigured) {
-  console.warn('[main] Supabase not fully configured. Database features may be unavailable, but OAuth can still work.');
+if (isSupabaseConfigured) {
+  console.log('[main] ✓ Supabase fully configured and ready');
+} else {
+  console.warn('[main] ⚠ Supabase not fully configured. Database features may be unavailable.');
+  console.log('[main] Environment variables:', {
+    url: import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET',
+    key: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'
+  });
 }
 
 // Always render the app - even without full Supabase configuration

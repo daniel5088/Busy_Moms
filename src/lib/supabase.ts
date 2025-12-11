@@ -3,13 +3,17 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-console.log('[supabase] Environment check:', {
-  hasUrl: !!url,
-  hasKey: !!anonKey,
-  url: url ? `${url.substring(0, 30)}...` : 'NOT SET'
-})
-
 const hasEnv = !!url && !!anonKey
+
+if (hasEnv) {
+  console.log('[supabase] ✓ Environment variables loaded successfully')
+} else {
+  console.log('[supabase] ✗ Environment check:', {
+    hasUrl: !!url,
+    hasKey: !!anonKey,
+    url: url ? `${url.substring(0, 30)}...` : 'NOT SET'
+  })
+}
 
 // Always create a Supabase client, even with placeholder values
 // This allows Google OAuth to work without database configuration
