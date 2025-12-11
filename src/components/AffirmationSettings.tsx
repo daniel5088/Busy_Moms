@@ -4,7 +4,7 @@
 //This modal is accessible from both Settings → Notifications → Daily Affirmations and More → Daily Affirmations
 
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Bell, Calendar as CalendarIcon, ShoppingBag, Users, CheckSquare, Loader2, Save } from 'lucide-react';
+import { X, Clock, Bell, Calendar as CalendarIcon, ShoppingBag, Users, CheckSquare, Loader2, Save, Sparkles } from 'lucide-react';
 import { affirmationService } from '../services/affirmationService';
 import { AffirmationSettings as AffirmationSettingsType } from '../lib/supabase';
 
@@ -106,7 +106,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <Bell className="w-5 h-5 text-rose-600" />
+                    <Sparkles className="w-5 h-5 text-rose-600" />
                     <h3 className="font-semibold text-gray-900">Enable Daily Affirmations</h3>
                   </div>
                   <button
@@ -125,7 +125,23 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                 <p className="text-sm text-gray-600">
                   {settings.enabled
                     ? 'Daily affirmations will be delivered at your scheduled times'
-                    : 'Daily affirmations are turned off. You won’t receive any notifications'}
+                    : "Daily affirmations are turned off. You won't receive any notifications"}
+                </p>
+              </div>
+
+              {/* Phone notifications coming soon card */}
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 opacity-50">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <Bell className="w-5 h-5 text-rose-600" />
+                    <h3 className="font-semibold text-gray-900">Phone notifications (coming soon)</h3>
+                  </div>
+                  <div className="w-12 h-6 rounded-full relative bg-gray-300 pointer-events-none cursor-not-allowed">
+                    <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 shadow"></div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  You'll soon be able to control whether Daily Affirmations are sent as push notifications to your phone.
                 </p>
               </div>
 
