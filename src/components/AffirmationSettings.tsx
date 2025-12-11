@@ -1,3 +1,8 @@
+//Alvaros - Dailyaffirmations: This is the unified Daily Affirmations notification settings modal
+//This modal controls WHEN affirmations are delivered (notification scheduling) and WHAT data sources
+//are used to generate them. This is separate from the DailyAffirmations component which shows history.
+//This modal is accessible from both Settings → Notifications → Daily Affirmations and More → Daily Affirmations
+
 import React, { useState, useEffect } from 'react';
 import { X, Clock, Bell, Calendar as CalendarIcon, ShoppingBag, Users, CheckSquare, Loader2, Save } from 'lucide-react';
 import { affirmationService } from '../services/affirmationService';
@@ -66,7 +71,8 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
         aria-modal="true"
         className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
       >
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white relative">
+        {/*Alvaros - Dailyaffirmations: Updated gradient to match app's rose/pink/orange theme*/}
+        <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 p-6 text-white relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors"
@@ -80,29 +86,32 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
             </div>
             <div>
               {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
-              <h2 id="affirmation-settings-title" className="text-2xl font-bold">Affirmation Settings</h2>
-              <p className="text-purple-100 text-sm">Customize your daily encouragement</p>
+              {/*Alvaros - Dailyaffirmations: Clarified that these are notification delivery settings*/}
+              <h2 id="affirmation-settings-title" className="text-2xl font-bold">Daily Affirmations</h2>
+              <p className="text-rose-100 text-sm">Configure notification delivery and content</p>
             </div>
           </div>
         </div>
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+            {/*Alvaros - Dailyaffirmations: Updated spinner color to match theme*/}
+            <Loader2 className="w-8 h-8 animate-spin text-rose-500" />
           </div>
         ) : settings ? (
           <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-6">
+              {/*Alvaros - Dailyaffirmations: Clarified that this controls notification delivery*/}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <Bell className="w-5 h-5 text-purple-600" />
-                    <h3 className="font-semibold text-gray-900">Enable Affirmations</h3>
+                    <Bell className="w-5 h-5 text-rose-600" />
+                    <h3 className="font-semibold text-gray-900">Enable Notifications</h3>
                   </div>
                   <button
                     onClick={() => updateSetting('enabled', !settings.enabled)}
                     className={`w-12 h-6 rounded-full relative transition-all ${
-                      settings.enabled ? 'bg-purple-500' : 'bg-gray-300'
+                      settings.enabled ? 'bg-rose-500' : 'bg-gray-300'
                     }`}
                   >
                     <div
@@ -114,14 +123,15 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                 </div>
                 <p className="text-sm text-gray-600">
                   {settings.enabled
-                    ? 'You will receive daily affirmations'
-                    : 'Affirmations are currently disabled'}
+                    ? 'Daily affirmation notifications are enabled'
+                    : 'Daily affirmation notifications are disabled'}
                 </p>
               </div>
 
+              {/*Alvaros - Dailyaffirmations: Updated colors to match theme*/}
               <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center space-x-2 mb-4">
-                  <Clock className="w-5 h-5 text-purple-600" />
+                  <Clock className="w-5 h-5 text-rose-600" />
                   <h3 className="font-semibold text-gray-900">Frequency</h3>
                 </div>
 
@@ -131,7 +141,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                       type="radio"
                       checked={settings.frequency === 'once_daily'}
                       onChange={() => updateSetting('frequency', 'once_daily')}
-                      className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                      className="w-4 h-4 text-rose-600 focus:ring-rose-500"
                     />
                     <span className="text-gray-700">Once daily</span>
                   </label>
@@ -141,18 +151,20 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                       type="radio"
                       checked={settings.frequency === 'twice_daily'}
                       onChange={() => updateSetting('frequency', 'twice_daily')}
-                      className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                      className="w-4 h-4 text-rose-600 focus:ring-rose-500"
                     />
                     <span className="text-gray-700">Twice daily</span>
                   </label>
                 </div>
               </div>
 
+              {/*Alvaros - Dailyaffirmations: Clarified that times are in user's timezone*/}
               <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Clock className="w-5 h-5 text-purple-600" />
-                  <h3 className="font-semibold text-gray-900">Timing</h3>
+                <div className="flex items-center space-x-2 mb-2">
+                  <Clock className="w-5 h-5 text-rose-600" />
+                  <h3 className="font-semibold text-gray-900">Delivery Times</h3>
                 </div>
+                <p className="text-xs text-gray-500 mb-4">Times are based on your device's timezone</p>
 
                 <div className="space-y-4">
                   <div>
@@ -163,7 +175,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                       type="time"
                       value={settings.preferred_time?.slice(0, 5) || '08:00'}
                       onChange={(e) => updateSetting('preferred_time', `${e.target.value}:00`)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     />
                   </div>
 
@@ -176,33 +188,34 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                         type="time"
                         value={settings.secondary_time?.slice(0, 5) || '20:00'}
                         onChange={(e) => updateSetting('secondary_time', `${e.target.value}:00`)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                       />
                     </div>
                   )}
                 </div>
               </div>
 
+              {/*Alvaros - Dailyaffirmations: Clarified what data sources control and updated colors*/}
               <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center space-x-2 mb-4">
-                  <CheckSquare className="w-5 h-5 text-purple-600" />
-                  <h3 className="font-semibold text-gray-900">Data Sources</h3>
+                  <CheckSquare className="w-5 h-5 text-rose-600" />
+                  <h3 className="font-semibold text-gray-900">Personalization Sources</h3>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  Select which information to include when generating your affirmations
+                  Choose which data to use for generating personalized affirmations
                 </p>
 
                 <div className="space-y-3">
                   <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <CalendarIcon className="w-5 h-5 text-purple-600" />
+                      <CalendarIcon className="w-5 h-5 text-rose-600" />
                       <span className="text-gray-700">Calendar Events</span>
                     </div>
                     <input
                       type="checkbox"
                       checked={settings.include_calendar ?? true}
                       onChange={(e) => updateSetting('include_calendar', e.target.checked)}
-                      className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                      className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500"
                     />
                   </label>
 
@@ -215,7 +228,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                       type="checkbox"
                       checked={settings.include_tasks ?? true}
                       onChange={(e) => updateSetting('include_tasks', e.target.checked)}
-                      className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                      className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500"
                     />
                   </label>
 
@@ -228,7 +241,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                       type="checkbox"
                       checked={settings.include_family ?? true}
                       onChange={(e) => updateSetting('include_family', e.target.checked)}
-                      className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                      className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500"
                     />
                   </label>
 
@@ -241,7 +254,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                       type="checkbox"
                       checked={settings.include_shopping ?? true}
                       onChange={(e) => updateSetting('include_shopping', e.target.checked)}
-                      className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                      className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500"
                     />
                   </label>
                 </div>
@@ -262,10 +275,11 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
             >
               Cancel
             </button>
+            {/*Alvaros - Dailyaffirmations: Updated button gradient to match theme*/}
             <button
               onClick={handleSave}
               disabled={saving || !settings}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {saving ? (
                 <>

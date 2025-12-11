@@ -6,7 +6,7 @@ import { ConnectionTest } from './ConnectionTest';
 import { AuthTest } from './AuthTest';
 import { GoogleCalendarTest } from './GoogleCalendarTest';
 import { ErrorDashboard } from './errors/ErrorDashboard';
-import { AffirmationSettings } from './AffirmationSettings';
+//Alvaros - Dailyaffirmations: Remove AffirmationSettings import (now managed at App level)
 import { ConnectGoogleCalendarButton } from './ConnectGoogleCalendarButton';
 import { SyncSettings } from './SyncSettings';
 import { RetailerSearch } from './RetailerSearch';
@@ -34,7 +34,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
   const { performSync } = useCalendarSync();
   const [showFamilyForm, setShowFamilyForm] = useState(false);
   const [showProfileForm, setShowProfileForm] = useState(false);
-  const [showAffirmationSettings, setShowAffirmationSettings] = useState(false);
+  //Alvaros - Dailyaffirmations: Removed showAffirmationSettings state (now managed at App level)
   const [showSyncSettings, setShowSyncSettings] = useState(false);
   const [showRetailerSearch, setShowRetailerSearch] = useState(false);
   const [showAddressManager, setShowAddressManager] = useState(false);
@@ -436,7 +436,8 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           title: 'Daily Affirmations',
           description: 'Personalized encouragement every day',
           action: 'Configure',
-          onClick: () => setShowAffirmationSettings(true)
+          //Alvaros - Dailyaffirmations: Dispatch event to open unified settings modal at App level
+          onClick: () => window.dispatchEvent(new CustomEvent('open-affirmations'))
         },
         {
           icon: Bell,
@@ -871,10 +872,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
         onProfileUpdated={handleProfileUpdated}
       />
 
-      <AffirmationSettings
-        isOpen={showAffirmationSettings}
-        onClose={() => setShowAffirmationSettings(false)}
-      />
+      {/*Alvaros - Dailyaffirmations: Removed AffirmationSettings modal (now rendered at App level)*/}
 
       <SyncSettings
         isOpen={showSyncSettings}

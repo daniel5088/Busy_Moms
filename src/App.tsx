@@ -23,6 +23,8 @@ import { FamilyFolders } from './components/FamilyFolders'
 import { OAuthDiagnostics } from './components/OAuthDiagnostics'
 import { AffirmationNotification } from './components/AffirmationNotification'
 import { DailyAffirmations } from './components/DailyAffirmations'
+//Alvaros - Dailyaffirmations: Import AffirmationSettings for unified settings modal
+import { AffirmationSettings } from './components/AffirmationSettings'
 import { Loader2 } from 'lucide-react'
 import { ErrorBoundary, FeatureErrorBoundary } from './components/errors/ErrorBoundary'
 import { ToastContainer } from './components/errors/ErrorToast'
@@ -49,6 +51,8 @@ function App() {
   const [checkingOnboarding, setCheckingOnboarding] = useState(false)
   const [showVoiceChat, setShowVoiceChat] = useState(false)
   const [showAffirmations, setShowAffirmations] = useState(false)
+  //Alvaros - Dailyaffirmations: State for unified affirmation settings modal
+  const [showAffirmationSettings, setShowAffirmationSettings] = useState(false)
   const { toasts, removeToast } = useToast()
   const { pendingAffirmation, dismissNotification } = useAffirmationNotifier()
   const { darkMode, toggleDarkMode } = useDarkMode()
@@ -207,6 +211,19 @@ function App() {
       mounted = false
     }
   }, [user])
+
+  //Alvaros - Dailyaffirmations: Listen for 'open-affirmations' event from Settings and MoreMenu
+  useEffect(() => {
+    const handleOpenAffirmations = () => {
+      setShowAffirmationSettings(true)
+    }
+
+    window.addEventListener('open-affirmations', handleOpenAffirmations)
+
+    return () => {
+      window.removeEventListener('open-affirmations', handleOpenAffirmations)
+    }
+  }, [])
 
   // Show loading only when we're checking auth or onboarding for authenticated users
   if (loading || (user && checkingOnboarding)) {
@@ -393,6 +410,12 @@ function App() {
           isOpen={showAffirmations}
           onClose={() => setShowAffirmations(false)}
           onOpenVoiceChat={() => setShowVoiceChat(true)}
+        />
+
+        {/*Alvaros - Dailyaffirmations: Unified settings modal accessible from both Settings and More menu*/}
+        <AffirmationSettings
+          isOpen={showAffirmationSettings}
+          onClose={() => setShowAffirmationSettings(false)}
         />
 
         <ToastContainer toasts={toasts} onRemove={removeToast} />
