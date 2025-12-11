@@ -359,24 +359,28 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
             affirmationStage === 'closing' ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
           }`}>
             {/* Content */}
-            <div className="relative z-10 text-center flex flex-col justify-center min-h-[80vh] pb-32">
-              <div className="flex items-center justify-center space-x-2 mb-6">
-                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                <span
-                  id="affirmation-overlay-title"
-                  className="text-white font-semibold text-base sm:text-lg"
-                >
-                  Today's Affirmation
-                </span>
+            <div className="relative z-10 flex flex-col justify-between h-screen">
+              {/* Top Section - Centered Text Block */}
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
+                <div className="flex items-center justify-center space-x-2 mb-6">
+                  <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                  <span
+                    id="affirmation-overlay-title"
+                    className="text-white font-semibold text-base sm:text-lg"
+                  >
+                    Today's Affirmation
+                  </span>
+                </div>
+
+                <p className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-semibold italic my-8 px-4 ${
+                  affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
+                }`}>
+                  {todayAffirmation.affirmation_text}
+                </p>
               </div>
 
-              <p className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-semibold italic my-8 px-4 ${
-                affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
-              }`}>
-                {todayAffirmation.affirmation_text}
-              </p>
-
-              <div className="mt-32 flex flex-col items-center space-y-3">
+              {/* Bottom Section - Button Area */}
+              <div className="pb-12 flex flex-col items-center space-y-3">
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-rose-400"
