@@ -32,7 +32,6 @@ import { captureAndStoreGoogleTokens } from './services/googleTokenStorage'
 import { Diagnostics } from "./pages/Diagnostics";
 import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks component
 import { useDarkMode } from './hooks/useDarkMode'
-import { EnvCheck } from './components/EnvCheck'
 
 //Alvaro-dashboardv2: Add 'dashboard-v2' to Screen type
 //Alvaro-dashboardv3: Add 'dashboard-v3' to Screen type
@@ -397,7 +396,6 @@ function App() {
         />
 
         <ToastContainer toasts={toasts} onRemove={removeToast} />
-        <EnvCheck />
       </div>
     </ErrorBoundary>
   )
