@@ -359,7 +359,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
             affirmationStage === 'closing' ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
           }`}>
             {/* Content */}
-            <div className="relative z-10 text-center">
+            <div className="relative z-10 text-center pb-20">
               <div className="flex items-center justify-center space-x-2 mb-6">
                 <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                 <span
@@ -370,19 +370,27 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 </span>
               </div>
 
-              <p className={`text-white text-xl sm:text-2xl md:text-3xl leading-relaxed font-light my-8 px-4 ${
+              <p className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-light my-8 px-4 mb-10 ${
                 affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
               }`}>
                 {todayAffirmation.affirmation_text}
               </p>
 
-              <div className="mt-8">
+              <div className="mt-8 flex flex-col items-center space-y-3">
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-rose-400"
+                  aria-label="Adjust affirmation settings"
+                >
+                  Adjust affirmation settings
+                </button>
+
                 <button
                   onClick={handleCloseAffirmation}
-                  className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-sm font-medium transition-colors flex items-center space-x-2 mx-auto focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+                  className="px-8 py-4 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
                   aria-label="Close affirmation"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                   <span>Close</span>
                 </button>
               </div>
