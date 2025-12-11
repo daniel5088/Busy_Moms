@@ -1,4 +1,4 @@
-import { requireSupabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import type { AffiliateMatrixItem, AffiliateMatrixLookup, AffiliateSearchCriteria } from '../lib/supabase';
 
 class AffiliateMatrixService {
@@ -71,7 +71,6 @@ class AffiliateMatrixService {
     }
 
     console.log('[affiliateMatrixService] Fetching lookup values from database...');
-    const supabase = requireSupabase();
 
     // Fetch all data to extract unique values (no restrictive filters)
     const { data, error } = await supabase
@@ -155,8 +154,6 @@ class AffiliateMatrixService {
    * Returns matching rows from affiliate_matrix
    */
   async searchAffiliateLinks(criteria: AffiliateSearchCriteria): Promise<AffiliateMatrixItem[]> {
-    const supabase = requireSupabase();
-
     let query = supabase
       .from('affiliate_matrix')
       .select('*')

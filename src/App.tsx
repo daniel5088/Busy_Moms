@@ -24,7 +24,6 @@ import { OAuthDiagnostics } from './components/OAuthDiagnostics'
 import { AffirmationNotification } from './components/AffirmationNotification'
 import { DailyAffirmations } from './components/DailyAffirmations'
 import { Loader2 } from 'lucide-react'
-import { isSupabaseConfigured } from './lib/supabase'
 import { ErrorBoundary, FeatureErrorBoundary } from './components/errors/ErrorBoundary'
 import { ToastContainer } from './components/errors/ErrorToast'
 import { useToast } from './hooks/useErrorHandler'
@@ -169,14 +168,6 @@ function App() {
     const checkOnboarding = async () => {
       // Only check onboarding if we have an authenticated user
       if (!user?.id) return
-
-      // Skip onboarding check if Supabase is not fully configured
-      if (!isSupabaseConfigured) {
-        console.warn('[App] Skipping onboarding check - Supabase not fully configured')
-        setShowOnboarding(false)
-        setCheckingOnboarding(false)
-        return
-      }
 
       setCheckingOnboarding(true)
       try {

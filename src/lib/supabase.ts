@@ -1,68 +1,16 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+const url = import.meta.env.VITE_SUPABASE_URL as string
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
-const hasEnv = !!url && !!anonKey
-
-if (hasEnv) {
-  console.log('[supabase] ✓ Environment variables loaded successfully')
-} else {
-  console.log('[supabase] ✗ Environment check:', {
-    hasUrl: !!url,
-    hasKey: !!anonKey,
-    url: url ? `${url.substring(0, 30)}...` : 'NOT SET'
-  })
-}
-
-// Always create a Supabase client, even with placeholder values
-// This allows Google OAuth to work without database configuration
-export const supabase: SupabaseClient = hasEnv
-  ? createClient(url!, anonKey!, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-      db: { schema: 'public' },
-    })
-  : createClient(
-      url || 'https://placeholder.supabase.co',
-      anonKey || 'placeholder-anon-key',
-      {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-        },
-        db: { schema: 'public' },
-      }
-    )
-
-if (!hasEnv) {
-  console.warn(
-    `[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.
-Add them to Bolt → Project → Settings → Environment Variables, then rebuild.
-Local dev: put them in .env next to vite.config.ts and restart the dev server.
-Note: OAuth features may work, but database features will be unavailable.`
-  )
-}
-
-// Track whether Supabase is fully configured
-export const isSupabaseConfigured = hasEnv
-
-/**
- * Call this in code paths that MUST have a fully configured client (e.g., data loaders).
- * It throws with a clear message if env vars weren't properly set.
- */
-export function requireSupabase(): SupabaseClient {
-  if (!isSupabaseConfigured) {
-    throw new Error(
-      '[supabase] Not fully configured. Database operations require VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
-    )
-  }
-  return supabase
-}
+export const supabase: SupabaseClient = createClient(url, anonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+  db: { schema: 'public' },
+})
 
 // ---- Shared App Types (unchanged) -------------------------------------------
 export type UUID = string

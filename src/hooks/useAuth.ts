@@ -3,7 +3,6 @@ import type { User, Session } from '@supabase/supabase-js'
 import { useSessionContext, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { getOAuthConfig } from '../lib/auth-config'
 import { captureAndStoreGoogleTokens } from '../services/googleTokenStorage'
-import { isSupabaseConfigured } from '../lib/supabase'
 
 export function useAuth() {
   const session = useSessionContext()
@@ -87,12 +86,6 @@ export function useAuth() {
   }, [session, supabase, isInitialized])
 
   const handleUserProfile = async (user: User) => {
-    // Skip profile operations if Supabase is not fully configured
-    if (!isSupabaseConfigured) {
-      console.warn('[useAuth] Skipping profile operations - Supabase not fully configured')
-      return
-    }
-
     try {
       // If your RLS requires auth, ensure your policies allow SELECT/INSERT for auth.uid()=id
       const { data: existing, error: checkError } = await supabase
