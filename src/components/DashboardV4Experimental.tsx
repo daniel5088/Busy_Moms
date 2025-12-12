@@ -247,7 +247,7 @@ export function DashboardV4Experimental({
             }`}
           >
             {/* Content */}
-            <div className="relative z-10 flex flex-col justify-between h-screen">
+            <div className="relative z-10 flex flex-col h-screen">
               {/* Top Section - Centered Text Block */}
               <div className="flex-1 flex flex-col items-center justify-center text-center">
                 <div className="flex items-center justify-center space-x-2 mb-6">
