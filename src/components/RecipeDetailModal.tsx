@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Users, ShoppingCart, Loader2, Heart, Plus, Minus } from 'lucide-react';
+import { X, Clock, Users, ShoppingCart, Loader2, Heart, Plus, Minus, Trash2 } from 'lucide-react';
 import { Recipe, RecipeIngredient, ShoppingItem } from '../lib/supabase';
 import { recipeService } from '../services/recipeService';
 import { instacartService } from '../services/instacartService';
@@ -11,9 +11,10 @@ interface RecipeDetailModalProps {
   recipe: Recipe;
   onClose: () => void;
   onIngredientsAdded?: () => void;
+  onRecipeDeleted?: () => void;
 }
 
-export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded }: RecipeDetailModalProps) {
+export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded, onRecipeDeleted }: RecipeDetailModalProps) {
   const { user } = useAuth();
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
   const [selectedIngredients, setSelectedIngredients] = useState<Set<string>>(new Set());
@@ -23,6 +24,7 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded }: Recip
   const [isSaved, setIsSaved] = useState(false);
   const [servings, setServings] = useState(recipe.servings || 4);
   const originalServings = recipe.servings || 4;
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadIngredients();
@@ -139,6 +141,27 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded }: Recip
     return mapping[category.toLowerCase()] || 'other';
   };
 
+  const handleDeleteRecipe = async () => {
+    const isImported = recipe.external_source === 'themealdb';
+    const confirmMessage = isImported
+      ? 'Are you sure you want to remove this imported recipe from your collection?'
+      : 'Are you sure you want to delete this recipe? This action cannot be undone.';
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      setDeleting(true);
+      await recipeService.deleteRecipe(recipe.id);
+      onRecipeDeleted?.();
+      onClose();
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      alert('Failed to delete recipe. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const openInstacartRecipe = async () => {
     try {
       setGeneratingUrl(true);
@@ -205,12 +228,26 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded }: Recip
           <h2 id="recipe-detail-title" className="text-2xl font-bold text-gray-900">
             {recipe.title}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="w-6 h-6 text-gray-600" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDeleteRecipe}
+              disabled={deleting}
+              className="p-2 hover:bg-red-50 text-red-600 rounded-full transition-colors disabled:opacity-50"
+              title="Delete recipe"
+            >
+              {deleting ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Trash2 className="w-6 h-6" />
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-600" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-6">

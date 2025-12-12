@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Edit,
   Mail,
+  Trash2,
 } from 'lucide-react';
 import { ContactForm } from './forms/ContactForm';
 import { Contact, supabase } from '../lib/supabase';
@@ -65,6 +66,24 @@ export function Contacts() {
   const handleEditContact = (contact: Contact) => {
     setEditingContact(contact);
     setShowContactForm(true);
+  };
+
+  const handleDeleteContact = async (contactId: string) => {
+    if (!confirm('Are you sure you want to delete this contact? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('contacts').delete().eq('id', contactId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setContacts((prev) => prev.filter((contact) => contact.id !== contactId));
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      alert('Error deleting contact. Please try again.');
+    }
   };
 
   const handleCloseForm = () => {
@@ -157,7 +176,7 @@ export function Contacts() {
           {filteredContacts.map((contact) => (
             <div
               key={contact.id}
-              className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all"
+              className="group bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all"
             >
               <div className="flex items-start space-x-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
@@ -251,6 +270,13 @@ export function Contacts() {
                     >
                       <Edit className="w-2 h-2 sm:w-3 sm:h-3" />
                       <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteContact(contact.id)}
+                      className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-red-500 text-white rounded-lg text-xs sm:text-sm hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-2 h-2 sm:w-3 sm:h-3" />
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>

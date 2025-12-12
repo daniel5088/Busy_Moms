@@ -31,23 +31,34 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
 
     setLoading(true);
     try {
-      const itemData = {
-        ...formData,
-        user_id: user.id,
-        completed: false,
-        assigned_to: null,
-        purchase_status: 'not_sent',
-      };
-
       let result;
       if (editItem) {
+        // When editing, only update the fields from the form, preserve other metadata
+        const updateData = {
+          item: formData.item,
+          category: formData.category,
+          quantity: formData.quantity,
+          unit: formData.unit,
+          urgent: formData.urgent,
+          notes: formData.notes,
+          provider_name: formData.provider_name,
+        };
+
         result = await supabase
           .from('shopping_lists')
-          .update(itemData)
+          .update(updateData)
           .eq('id', editItem.id)
           .select()
           .single();
       } else {
+        // When creating, set all initial fields
+        const itemData = {
+          ...formData,
+          user_id: user.id,
+          completed: false,
+          assigned_to: null,
+          purchase_status: 'not_sent',
+        };
         result = await supabase.from('shopping_lists').insert([itemData]).select().single();
       }
 

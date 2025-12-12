@@ -11,6 +11,8 @@ import {
   Package,
   Filter,
   Store,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { ShoppingForm } from './forms/ShoppingForm';
 import {
@@ -44,6 +46,7 @@ export function Shopping() {
   const [sendingToProvider, setSendingToProvider] = useState(false);
   const [preferredRetailer, setPreferredRetailer] = useState<UserPreferredRetailer | null>(null);
   const [showGiftFinderModal, setShowGiftFinderModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -107,6 +110,40 @@ export function Shopping() {
   const handleItemCreated = (newItem: ShoppingItem) => {
     // Refresh the list to get the assigned family member data
     fetchShoppingList();
+    setEditingItem(null);
+  };
+
+  const handleEditItem = (item: ShoppingItem) => {
+    setEditingItem(item);
+    setShowShoppingForm(true);
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+
+    try {
+      const { error } = await supabase.from('shopping_lists').delete().eq('id', itemId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setShoppingList((prev) => prev.filter((item) => item.id !== itemId));
+
+      // Remove from selection if it was selected
+      setSelectedItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+    } catch (error) {
+      console.error('Error deleting shopping item:', error);
+      alert('Error deleting item. Please try again.');
+    }
+  };
+
+  const handleCloseForm = () => {
+    setShowShoppingForm(false);
+    setEditingItem(null);
   };
 
   const toggleItemCompleted = async (itemId: string) => {
@@ -385,7 +422,7 @@ export function Shopping() {
                   return (
                     <div
                       key={item.id}
-                      className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
+                      className={`group p-3 sm:p-4 rounded-xl border-2 transition-all ${
                         selectedItems.has(item.id)
                           ? 'border-green-400 bg-green-50'
                           : item.urgent
@@ -405,13 +442,31 @@ export function Shopping() {
                             <h3 className="font-medium text-sm sm:text-base text-gray-900 break-words">
                               {item.item}
                             </h3>
-                            <input
-                              type="checkbox"
-                              checked={item.completed || false}
-                              onChange={() => toggleItemCompleted(item.id)}
-                              className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 rounded focus:ring-green-500 flex-shrink-0"
-                              title="Mark as completed"
-                            />
+                            <div className="flex items-center gap-2">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                <button
+                                  onClick={() => handleEditItem(item)}
+                                  className="p-1.5 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+                                  title="Edit item"
+                                >
+                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteItem(item.id)}
+                                  className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                                  title="Delete item"
+                                >
+                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={item.completed || false}
+                                onChange={() => toggleItemCompleted(item.id)}
+                                className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 rounded focus:ring-green-500 flex-shrink-0"
+                                title="Mark as completed"
+                              />
+                            </div>
                           </div>
                           <div className="text-xs sm:text-sm text-gray-600 mt-1">
                             <p>
@@ -629,8 +684,9 @@ export function Shopping() {
 
       <ShoppingForm
         isOpen={showShoppingForm}
-        onClose={() => setShowShoppingForm(false)}
+        onClose={handleCloseForm}
         onItemCreated={handleItemCreated}
+        editItem={editingItem}
       />
 
       {selectedRecipe && (
@@ -640,6 +696,10 @@ export function Shopping() {
           onIngredientsAdded={() => {
             fetchShoppingList();
             setSelectedRecipe(null);
+          }}
+          onRecipeDeleted={() => {
+            setSelectedRecipe(null);
+            // Refresh will happen when returning to recipes tab
           }}
         />
       )}
