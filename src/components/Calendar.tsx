@@ -776,8 +776,6 @@ export function Calendar() {
                                   origin={defaultAddressString}
                                   destination={selectedEvent.location!}
                                   eventStartTime={eventStartTime}
-                                  variant="default"
-                                  size="sm"
                                   className="w-full"
                                 />
                               </div>
