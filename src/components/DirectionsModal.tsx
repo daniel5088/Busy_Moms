@@ -16,7 +16,6 @@ import {
 import { useDirections } from '../hooks/useDirections';
 import { calculateDepartureTime, formatTravelTime } from '../services/googleDirections';
 import type { TravelMode } from '../services/googleDirections';
-import { Button } from './ui/button';
 
 interface DirectionsModalProps {
   isOpen: boolean;
@@ -278,20 +277,20 @@ export function DirectionsModal({
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 flex items-center justify-between">
-          <Button
-            variant="outline"
+          <button
             onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Close
-          </Button>
+          </button>
           {directions && directions.routes.length > 0 && (
-            <Button
+            <button
               onClick={openInGoogleMaps}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Open in Google Maps
-            </Button>
+            </button>
           )}
         </div>
       </div>

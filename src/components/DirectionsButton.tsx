@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Navigation, Loader2 } from 'lucide-react';
-import { Button } from './ui/button';
+import { Navigation } from 'lucide-react';
 import { DirectionsModal } from './DirectionsModal';
 import { generateMapsUrl } from '../services/googleDirections';
 import type { TravelMode } from '../services/googleDirections';
@@ -11,8 +10,6 @@ interface DirectionsButtonProps {
   eventStartTime?: Date;
   mode?: TravelMode;
   className?: string;
-  variant?: 'default' | 'outline' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
   showModal?: boolean; // If true, shows detailed modal. If false, opens Google Maps directly
 }
 
@@ -21,9 +18,7 @@ export function DirectionsButton({
   origin,
   eventStartTime,
   mode = 'driving',
-  className,
-  variant = 'outline',
-  size = 'sm',
+  className = '',
   showModal = true,
 }: DirectionsButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,16 +45,14 @@ export function DirectionsButton({
 
   return (
     <>
-      <Button
-        variant={variant}
-        size={size}
-        className={className}
+      <button
         onClick={handleClick}
+        className={`flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors ${className}`}
         title="Get directions"
       >
         <Navigation className="h-4 w-4 mr-2" />
         {origin ? 'Get Directions' : 'Open in Maps'}
-      </Button>
+      </button>
 
       {showModal && origin && (
         <DirectionsModal
@@ -87,7 +80,7 @@ interface QuickDirectionsButtonProps {
 export function QuickDirectionsButton({
   destination,
   origin,
-  className,
+  className = '',
 }: QuickDirectionsButtonProps) {
   if (!destination) {
     return null;
@@ -99,14 +92,12 @@ export function QuickDirectionsButton({
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className={className}
+    <button
       onClick={handleClick}
+      className={`p-2 hover:bg-gray-100 rounded-lg transition-colors ${className}`}
       title={origin ? `Get directions from ${origin}` : 'Open in Google Maps'}
     >
       <Navigation className="h-4 w-4" />
-    </Button>
+    </button>
   );
 }
