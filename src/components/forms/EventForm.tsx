@@ -3,6 +3,9 @@ import { Calendar, Clock, MapPin, Users } from 'lucide-react';
 import { supabase, Event } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { LocationAutocomplete } from '../LocationAutocomplete';
+import { geocodeLocation } from '../../services/geocoding';
+import { getTravelTime } from '../../services/googleDirections';
+import { useDefaultAddress } from '../../hooks/useDefaultAddress';
 import {
   FormField,
   TextInput,
@@ -22,6 +25,7 @@ interface EventFormProps {
 
 export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormProps) {
   const { user } = useAuth();
+  const { defaultAddress } = useDefaultAddress();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -82,6 +86,49 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
 
     setLoading(true);
     try {
+      // Geocode location if provided
+      let locationLat: number | null = null;
+      let locationLng: number | null = null;
+      let travelTimeMinutes: number | null = null;
+
+      if (formData.location && formData.location.trim()) {
+        const geocodeResult = await geocodeLocation(formData.location);
+        if (geocodeResult) {
+          locationLat = geocodeResult.lat;
+          locationLng = geocodeResult.lng;
+
+          // Calculate travel time from default address if available
+          if (defaultAddress) {
+            const defaultAddressString = [
+              defaultAddress.street_address,
+              defaultAddress.city,
+              defaultAddress.state_province,
+              defaultAddress.postal_code,
+              defaultAddress.country,
+            ]
+              .filter(Boolean)
+              .join(', ');
+
+            // Create event start time for traffic-aware routing
+            let eventStartTime: Date | undefined;
+            if (formData.event_date && formData.start_time) {
+              eventStartTime = new Date(`${formData.event_date}T${formData.start_time}`);
+            }
+
+            const travelTime = await getTravelTime(
+              defaultAddressString,
+              formData.location,
+              'driving',
+              eventStartTime
+            );
+
+            if (travelTime) {
+              travelTimeMinutes = travelTime.durationMinutes;
+            }
+          }
+        }
+      }
+
       const eventData = {
         ...formData,
         start_time: formData.start_time || null,
@@ -92,6 +139,10 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
           .map((p) => p.trim())
           .filter((p) => p),
         source: 'manual' as const,
+        location_lat: locationLat,
+        location_lng: locationLng,
+        travel_time_minutes: travelTimeMinutes,
+        travel_time_updated_at: travelTimeMinutes ? new Date().toISOString() : null,
       };
 
       let result;

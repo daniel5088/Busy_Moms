@@ -205,7 +205,7 @@ export class SyncOrchestrator {
 
         if (!mapping) {
           // New Google event - create locally
-          const localEventData = calendarSyncService.googleEventToLocal(googleEvent, userId);
+          const localEventData = await calendarSyncService.googleEventToLocal(googleEvent, userId);
           const { data: newEvent, error } = await supabase
             .from('events')
             .insert([localEventData])
@@ -267,7 +267,7 @@ export class SyncOrchestrator {
               result.conflicts++;
             } else {
               // Only Google changed - update local
-              const localEventData = calendarSyncService.googleEventToLocal(googleEvent, userId);
+              const localEventData = await calendarSyncService.googleEventToLocal(googleEvent, userId);
               const { error: updateError } = await supabase
                 .from('events')
                 .update(localEventData)

@@ -19,11 +19,14 @@ import {
 import { EventForm } from './forms/EventForm';
 import { ConflictResolutionModal } from './ConflictResolutionModal';
 import { CalendarSkeleton } from './CalendarSkeleton';
+import { DirectionsButton } from './DirectionsButton';
+import { TravelTimeIndicator, TravelTimeBadge } from './TravelTimeIndicator';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import type { Event as DbEvent } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCalendarSync } from '../hooks/useCalendarSync';
+import { useDefaultAddress } from '../hooks/useDefaultAddress';
 
 // --- Helpers -----------------------------------------------------------------
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
@@ -74,6 +77,7 @@ const openInAppleMaps = (location: string) => {
 export function Calendar() {
   const supabase = useSupabaseClient();
   const { user } = useAuth();
+  const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
     useCalendarSync();
 
@@ -554,9 +558,14 @@ export function Calendar() {
                             </span>
                           </div>
                           {ev.location && (
-                            <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              <MapPin className="w-3 h-3" />
-                              <span>{ev.location}</span>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
+                                <MapPin className="w-3 h-3" />
+                                <span className="truncate">{ev.location}</span>
+                              </div>
+                              {ev.travel_time_minutes && (
+                                <TravelTimeBadge travelMinutes={ev.travel_time_minutes} />
+                              )}
                             </div>
                           )}
                         </div>
@@ -736,43 +745,44 @@ export function Calendar() {
 
                       {selectedEvent.location && (
                         <>
-                          <div className="flex items-center space-x-2 text-sm text-gray-600">
-                            <MapPin className="w-4 h-4" />
-                            <span>{selectedEvent.location}</span>
-                          </div>
+                          {(() => {
+                            const defaultAddressString = defaultAddress
+                              ? [
+                                  defaultAddress.street_address,
+                                  defaultAddress.city,
+                                  defaultAddress.state_province,
+                                  defaultAddress.postal_code,
+                                  defaultAddress.country,
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ')
+                              : undefined;
 
-                          {isMappableLocation(selectedEvent.location) && (
-                            <div className="flex items-center gap-2 pt-1">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  window.open(
-                                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                      selectedEvent.location as string
-                                    )}`,
-                                    '_blank'
-                                  )
-                                }
-                                className="px-3 py-1 text-xs bg-rose-500 text-white rounded-full hover:bg-rose-600 transition-colors"
-                              >
-                                Open in Google Maps
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  window.open(
-                                    `https://maps.apple.com/?q=${encodeURIComponent(
-                                      selectedEvent.location as string
-                                    )}`,
-                                    '_blank'
-                                  )
-                                }
-                                className="px-3 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
-                              >
-                                Open in Apple Maps
-                              </button>
-                            </div>
-                          )}
+                            const eventStartTime = selectedEvent.start_time
+                              ? new Date(`${selectedEvent.event_date}T${selectedEvent.start_time}`)
+                              : undefined;
+
+                            return (
+                              <div className="space-y-3">
+                                <TravelTimeIndicator
+                                  origin={defaultAddressString}
+                                  destination={selectedEvent.location!}
+                                  eventStartTime={eventStartTime}
+                                  cachedTravelTime={selectedEvent.travel_time_minutes ?? undefined}
+                                  showDepartureTime={true}
+                                />
+
+                                <DirectionsButton
+                                  origin={defaultAddressString}
+                                  destination={selectedEvent.location!}
+                                  eventStartTime={eventStartTime}
+                                  variant="default"
+                                  size="sm"
+                                  className="w-full"
+                                />
+                              </div>
+                            );
+                          })()}
                         </>
                       )}
 
