@@ -5,10 +5,8 @@ import {
   MessageCircle,
   Clock,
   Heart,
-  Gift,
   Users,
   LogOut,
-  Smartphone,
   User,
   Sparkles,
 } from 'lucide-react';
@@ -16,8 +14,17 @@ import { WhatsAppIntegration } from './WhatsAppIntegration';
 import { DailyAffirmations } from './DailyAffirmations';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
-import { supabase, Profile, Event, ShoppingItem, Reminder, Affirmation } from '../lib/supabase';
+import { useProfile } from '../hooks/useProfile';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { Affirmation } from '../lib/supabase';
 import { affirmationService } from '../services/affirmationService';
+import { formatEventTime } from '../utils/timeFormatters';
+import {
+  DashboardPopup,
+  EventsList,
+  TasksList,
+  RemindersList,
+} from './shared/DashboardPopup';
 
 import { SubScreen } from '../App';
 
@@ -28,138 +35,19 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }: DashboardProps) {
-  const { signOut } = useAuth();
-  const { user } = useAuth();
+  const { signOut, user } = useAuth();
+  const { profile } = useProfile();
+  const { events, todayEvents, tasks, reminders, loading, reload } = useDashboardData();
+
   const [isWhatsAppOpen, setIsWhatsAppOpen] = React.useState(false);
   const [showAffirmations, setShowAffirmations] = React.useState(false);
-  const [profile, setProfile] = React.useState<Profile | null>(null);
   const [showEventsPopup, setShowEventsPopup] = React.useState(false);
   const [showTasksPopup, setShowTasksPopup] = React.useState(false);
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
-  const [events, setEvents] = React.useState<Event[]>([]);
-  const [todayEvents, setTodayEvents] = React.useState<Event[]>([]);
-  const [tasks, setTasks] = React.useState<ShoppingItem[]>([]);
-  const [reminders, setReminders] = React.useState<Reminder[]>([]);
-  const [loading, setLoading] = React.useState(false);
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
-
-  // Load user profile
-  React.useEffect(() => {
-    let mounted = true;
-
-    const loadProfile = async () => {
-      if (!user?.id) return;
-
-      try {
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (mounted && !error && profileData) {
-          setProfile(profileData);
-        }
-      } catch (error: any) {
-        if (mounted) {
-          console.error('Error loading profile:', error);
-        }
-      }
-    };
-
-    loadProfile();
-
-    return () => {
-      mounted = false;
-    };
-  }, [user]);
-
-  // Helper function to format time for display
-  const formatEventTime = (timeString: string | null | undefined): string => {
-    if (!timeString) return 'All day';
-    try {
-      const [hours, minutes] = timeString.split(':');
-      const hour = parseInt(hours, 10);
-      const minute = parseInt(minutes, 10);
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-      return `${displayHour}:${String(minute).padStart(2, '0')} ${ampm}`;
-    } catch {
-      return timeString;
-    }
-  };
-
-  // Load events, tasks, and reminders
-  const loadDashboardData = async () => {
-    if (!user?.id) return;
-
-    setLoading(true);
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-      // Load upcoming events for next 7 days (for event count)
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('event_date', today)
-        .lte('event_date', nextWeek)
-        .order('event_date', { ascending: true });
-
-      if (!eventsError) {
-        setEvents(eventsData || []);
-
-        // Filter and sort today's events
-        const todayEventsFiltered = (eventsData || [])
-          .filter((event) => event.event_date === today)
-          .sort((a, b) => {
-            // Sort by start_time, putting all-day events (no start_time) first
-            if (!a.start_time && !b.start_time) return 0;
-            if (!a.start_time) return -1;
-            if (!b.start_time) return 1;
-            return a.start_time.localeCompare(b.start_time);
-          });
-
-        setTodayEvents(todayEventsFiltered);
-      }
-
-      // Load incomplete shopping items (tasks)
-      const { data: tasksData, error: tasksError } = await supabase
-        .from('shopping_lists')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('completed', false)
-        .order('created_at', { ascending: false });
-
-      if (!tasksError) {
-        setTasks(tasksData || []);
-      }
-
-      // Load upcoming reminders (next 7 days)
-      const { data: remindersData, error: remindersError } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('completed', false)
-        .gte('reminder_date', today)
-        .lte('reminder_date', nextWeek)
-        .order('reminder_date', { ascending: true })
-        .order('reminder_time', { ascending: true });
-
-      if (!remindersError) {
-        setReminders(remindersData || []);
-      }
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   React.useEffect(() => {
     if (user) {
-      loadDashboardData();
       loadTodayAffirmation();
     }
   }, [user]);
@@ -561,169 +449,41 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
       <WhatsAppIntegration
         isOpen={isWhatsAppOpen}
         onClose={() => setIsWhatsAppOpen(false)}
-        onEventCreated={(event) => {
-          loadDashboardData();
-        }}
+        onEventCreated={() => reload()}
       />
 
       {/* Events Popup */}
-      {showEventsPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Upcoming Events</h2>
-                <button
-                  onClick={() => setShowEventsPopup(false)}
-                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-purple-500"></div>
-                </div>
-              ) : events.length > 0 ? (
-                <div className="space-y-3">
-                  {events.map((event) => (
-                    <div key={event.id} className="p-2 sm:p-3 bg-gray-50 rounded-lg">
-                      <h3 className="font-medium text-gray-900 text-sm sm:text-base">
-                        {event.title}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(event.event_date).toLocaleDateString()}
-                        {event.start_time && ` at ${event.start_time}`}
-                      </p>
-                      {event.location && (
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          {event.location}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-8">No upcoming events</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <DashboardPopup
+        isOpen={showEventsPopup}
+        onClose={() => setShowEventsPopup(false)}
+        title="Upcoming Events"
+        loading={loading}
+        loadingColor="border-purple-500"
+      >
+        <EventsList events={events} />
+      </DashboardPopup>
 
       {/* Tasks Popup */}
-      {showTasksPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Shopping List</h2>
-                <button
-                  onClick={() => setShowTasksPopup(false)}
-                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-500"></div>
-                </div>
-              ) : tasks.length > 0 ? (
-                <div className="space-y-3">
-                  {tasks.map((task) => (
-                    <div key={task.id} className="p-2 sm:p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">
-                          {task.item}
-                        </h3>
-                        {task.urgent && (
-                          <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100 text-red-700 rounded-full text-xs">
-                            Urgent
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        <p className="capitalize">{task.category}</p>
-                        {(task as any).assigned_family_member && (
-                          <div className="flex items-center space-x-1 mt-1">
-                            <User className="w-3 h-3" />
-                            <span className="text-xs">
-                              For {(task as any).assigned_family_member.name}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {task.quantity && task.quantity > 1 && (
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          Quantity: {task.quantity}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-8">No pending items</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <DashboardPopup
+        isOpen={showTasksPopup}
+        onClose={() => setShowTasksPopup(false)}
+        title="Shopping List"
+        loading={loading}
+        loadingColor="border-green-500"
+      >
+        <TasksList tasks={tasks} />
+      </DashboardPopup>
 
       {/* Reminders Popup */}
-      {showRemindersPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Upcoming Reminders</h2>
-                <button
-                  onClick={() => setShowRemindersPopup(false)}
-                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-500"></div>
-                </div>
-              ) : reminders.length > 0 ? (
-                <div className="space-y-3">
-                  {reminders.map((reminder) => (
-                    <div key={reminder.id} className="p-2 sm:p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">
-                          {reminder.title}
-                        </h3>
-                        {reminder.priority === 'high' && (
-                          <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100 text-red-700 rounded-full text-xs">
-                            High Priority
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(reminder.reminder_date).toLocaleDateString()}
-                        {reminder.reminder_time && ` at ${reminder.reminder_time}`}
-                      </p>
-                      {reminder.description && (
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          {reminder.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-8">No upcoming reminders</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <DashboardPopup
+        isOpen={showRemindersPopup}
+        onClose={() => setShowRemindersPopup(false)}
+        title="Upcoming Reminders"
+        loading={loading}
+        loadingColor="border-blue-500"
+      >
+        <RemindersList reminders={reminders} />
+      </DashboardPopup>
 
       <DailyAffirmations
         isOpen={showAffirmations}
