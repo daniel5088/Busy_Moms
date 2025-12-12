@@ -12,12 +12,16 @@ interface NavigationProps {
   onVoiceChatOpen?: () => void;
 }
 
-export function ImprovedNavigation({ currentScreen, onScreenChange, onVoiceChatOpen }: NavigationProps) {
+export function ImprovedNavigation({
+  currentScreen,
+  onScreenChange,
+  onVoiceChatOpen,
+}: NavigationProps) {
   const navItems = [
     { id: 'dashboard' as Screen, icon: Home, label: 'Home' },
     { id: 'calendar' as Screen, icon: Calendar, label: 'Calendar' },
     { id: 'family' as Screen, icon: Users, label: 'Family' },
-    { id: 'more' as Screen, icon: Menu, label: 'More' }
+    { id: 'more' as Screen, icon: Menu, label: 'More' },
   ];
 
   return (

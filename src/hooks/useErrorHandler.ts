@@ -13,15 +13,18 @@ interface UseErrorHandlerReturn {
 export function useErrorHandler(componentName?: string): UseErrorHandlerReturn {
   const [error, setErrorState] = useState<AppError | null>(null);
 
-  const setError = useCallback((error: Error | AppError | null) => {
-    if (error === null) {
-      setErrorState(null);
-      return;
-    }
+  const setError = useCallback(
+    (error: Error | AppError | null) => {
+      if (error === null) {
+        setErrorState(null);
+        return;
+      }
 
-    const appError = errorService.normalizeError(error, { component: componentName });
-    setErrorState(appError);
-  }, [componentName]);
+      const appError = errorService.normalizeError(error, { component: componentName });
+      setErrorState(appError);
+    },
+    [componentName]
+  );
 
   const clearError = useCallback(() => {
     setErrorState(null);

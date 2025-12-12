@@ -63,12 +63,15 @@ export function RetailerSelectionModal({
     setSuccessMessage(null);
 
     try {
-      const exists = await instacartShoppingService.checkRetailerExists(userId, selectedRetailer.retailer_key);
+      const exists = await instacartShoppingService.checkRetailerExists(
+        userId,
+        selectedRetailer.retailer_key
+      );
 
       let savedRetailer;
       if (exists) {
         const retailers = await instacartShoppingService.getPreferredRetailers(userId);
-        savedRetailer = retailers.find(r => r.retailer_key === selectedRetailer.retailer_key);
+        savedRetailer = retailers.find((r) => r.retailer_key === selectedRetailer.retailer_key);
         if (savedRetailer) {
           setSuccessMessage(`Using ${selectedRetailer.name} from your saved retailers!`);
         }
@@ -101,12 +104,17 @@ export function RetailerSelectionModal({
     setSuccessMessage(null);
 
     try {
-      const exists = await instacartShoppingService.checkRetailerExists(userId, selectedRetailer.retailer_key);
+      const exists = await instacartShoppingService.checkRetailerExists(
+        userId,
+        selectedRetailer.retailer_key
+      );
 
       let savedRetailer;
       if (exists) {
         const retailers = await instacartShoppingService.getPreferredRetailers(userId);
-        const existingRetailer = retailers.find(r => r.retailer_key === selectedRetailer.retailer_key);
+        const existingRetailer = retailers.find(
+          (r) => r.retailer_key === selectedRetailer.retailer_key
+        );
         if (existingRetailer) {
           await instacartShoppingService.setPrimaryRetailer(userId, existingRetailer.id);
           savedRetailer = { ...existingRetailer, is_primary: true };
@@ -278,8 +286,18 @@ export function RetailerSelectionModal({
                     </div>
                     {selectedRetailer?.retailer_key === retailer.retailer_key && (
                       <div className="flex-shrink-0 w-6 h-6 bg-instacart-green rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-4 h-4 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       </div>
                     )}

@@ -1,5 +1,14 @@
 import React from 'react';
-import { Home, Calendar, ShoppingBag, Users, Settings, MessageCircle, CheckSquare, FolderOpen } from 'lucide-react';
+import {
+  Home,
+  Calendar,
+  ShoppingBag,
+  Users,
+  Settings,
+  MessageCircle,
+  CheckSquare,
+  FolderOpen,
+} from 'lucide-react';
 import { Screen } from '../App';
 
 interface NavigationProps {
@@ -17,7 +26,7 @@ export function Navigation({ currentScreen, onScreenChange, onVoiceChatOpen }: N
     { id: 'shopping' as Screen, icon: ShoppingBag, label: 'Shopping' },
     { id: 'tasks' as Screen, icon: CheckSquare, label: 'Tasks' },
     { id: 'contacts' as Screen, icon: Users, label: 'Contacts' },
-    { id: 'settings' as Screen, icon: Settings, label: 'Settings' }
+    { id: 'settings' as Screen, icon: Settings, label: 'Settings' },
   ];
 
   return (
@@ -37,7 +46,7 @@ export function Navigation({ currentScreen, onScreenChange, onVoiceChatOpen }: N
             <span className="text-xs font-medium hidden sm:block">{item.label}</span>
           </button>
         ))}
-        
+
         {/* Voice Chat Button - Floating */}
         <button
           onClick={onVoiceChatOpen}

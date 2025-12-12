@@ -19,14 +19,14 @@ export const colorPalette: ColorOption[] = [
   { name: 'pastelPurple', hex: '#D0BFFF' },
   { name: 'pastelPink', hex: '#FFAFCC' },
   { name: 'pastelRose', hex: '#F4C2C2' },
-  { name: 'pastelGray', hex: '#E2E2E2' }
+  { name: 'pastelGray', hex: '#E2E2E2' },
 ];
 
 export function getAvailableColors(used: string[]): string[] {
-  const usedSet = new Set(used.map(color => color.toLowerCase()));
+  const usedSet = new Set(used.map((color) => color.toLowerCase()));
   return colorPalette
-    .filter(color => !usedSet.has(color.name.toLowerCase()))
-    .map(color => color.name);
+    .filter((color) => !usedSet.has(color.name.toLowerCase()))
+    .map((color) => color.name);
 }
 
 export function getRandomColor(available: string[]): string | null {
@@ -41,8 +41,8 @@ export function validateUniqueColor(colors: string[]): boolean {
   if (!colors || colors.length === 0) {
     return true;
   }
-  const uniqueColors = new Set(colors.map(color => color.toLowerCase()));
+  const uniqueColors = new Set(colors.map((color) => color.toLowerCase()));
   return uniqueColors.size === colors.length;
 }
 
-export const ALL = colorPalette.map(color => color.hex);
+export const ALL = colorPalette.map((color) => color.hex);

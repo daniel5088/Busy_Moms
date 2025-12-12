@@ -22,7 +22,7 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
     loading: affiliateLoading,
     error: affiliateError,
     searchAffiliateLinks,
-    clearResults: clearAffiliateResults
+    clearResults: clearAffiliateResults,
   } = useAffiliateMatrix();
 
   const [step, setStep] = useState<Step>('form');
@@ -65,7 +65,10 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
     }
   };
 
-  const handleSearch = async (formData: GiftFinderFormData, affiliateCriteria?: AffiliateSearchCriteria) => {
+  const handleSearch = async (
+    formData: GiftFinderFormData,
+    affiliateCriteria?: AffiliateSearchCriteria
+  ) => {
     setSearchCriteria(formData);
 
     // Search affiliate matrix if criteria provided
@@ -109,23 +112,31 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
         <div className="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-                step === 'form' ? 'bg-purple-500 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+                  step === 'form' ? 'bg-purple-500 text-white' : 'bg-gray-300 text-gray-600'
+                }`}
+              >
                 1
               </div>
-              <span className={`text-sm font-medium ${step === 'form' ? 'text-purple-600' : 'text-gray-500'}`}>
+              <span
+                className={`text-sm font-medium ${step === 'form' ? 'text-purple-600' : 'text-gray-500'}`}
+              >
                 Search
               </span>
             </div>
             <div className="w-12 h-0.5 bg-gray-300"></div>
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-                step === 'results' ? 'bg-purple-500 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+                  step === 'results' ? 'bg-purple-500 text-white' : 'bg-gray-300 text-gray-600'
+                }`}
+              >
                 2
               </div>
-              <span className={`text-sm font-medium ${step === 'results' ? 'text-purple-600' : 'text-gray-500'}`}>
+              <span
+                className={`text-sm font-medium ${step === 'results' ? 'text-purple-600' : 'text-gray-500'}`}
+              >
                 Results
               </span>
             </div>
@@ -173,7 +184,9 @@ export function GiftFinderModal({ isOpen, onClose }: GiftFinderModalProps) {
                 />
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">No gift suggestions found. Try adjusting your search criteria.</p>
+                  <p className="text-gray-500">
+                    No gift suggestions found. Try adjusting your search criteria.
+                  </p>
                   <button
                     onClick={handleBackToForm}
                     className="mt-4 px-4 py-2 text-pink-600 hover:text-pink-700 font-medium"

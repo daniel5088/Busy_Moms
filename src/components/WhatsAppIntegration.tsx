@@ -1,5 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { MessageCircle, Upload, X, Calendar, MapPin, Clock, Users, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  MessageCircle,
+  Upload,
+  X,
+  Calendar,
+  MapPin,
+  Clock,
+  Users,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react';
 import { supabase, Event } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { openaiService } from '../services/openai';
@@ -26,7 +36,7 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
     try {
       // Use AI to parse the WhatsApp message
       const result = await openaiService.parseWhatsAppMessage(messageText);
-      
+
       if (result.isEvent && result.eventDetails) {
         setParsedEvent({
           title: result.eventDetails.title,
@@ -38,10 +48,12 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
           participants: [],
           rsvp_required: true,
           rsvp_status: 'pending',
-          source: 'whatsapp'
+          source: 'whatsapp',
         });
       } else {
-        setError('No event information found in this message. Please try a message that contains event details like date, time, and location.');
+        setError(
+          'No event information found in this message. Please try a message that contains event details like date, time, and location.'
+        );
       }
     } catch (error) {
       console.error('Error parsing WhatsApp message:', error);
@@ -54,7 +66,7 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
   const handleMessageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
-    
+
     await parseWhatsAppMessage(message);
   };
 
@@ -78,7 +90,7 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
     try {
       const eventData = {
         ...parsedEvent,
-        user_id: user.id
+        user_id: user.id,
       };
 
       const { data: newEvent, error } = await supabase
@@ -90,9 +102,8 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
       if (error) throw error;
 
       // Also save the WhatsApp message
-      await supabase
-        .from('whatsapp_messages')
-        .insert([{
+      await supabase.from('whatsapp_messages').insert([
+        {
           user_id: user.id,
           message_id: `msg_${Date.now()}`,
           sender: 'Unknown',
@@ -100,8 +111,9 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
           parsed_event_data: parsedEvent,
           processed: true,
           event_created: true,
-          created_event_id: newEvent.id
-        }]);
+          created_event_id: newEvent.id,
+        },
+      ]);
 
       onEventCreated?.(newEvent);
       onClose();
@@ -117,8 +129,8 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
 
   const sampleMessages = [
     "Hi everyone! Emma's 8th birthday party this Saturday 2-5pm at Chuck E. Cheese on Main Street. RSVP by Thursday! 🎂🎉",
-    "Soccer practice moved to Sunday 10am at Riverside Park. Please bring water bottles and cleats!",
-    "Parent-teacher conference scheduled for March 15th at 3:30pm in Room 204. Looking forward to discussing your child's progress."
+    'Soccer practice moved to Sunday 10am at Riverside Park. Please bring water bottles and cleats!',
+    "Parent-teacher conference scheduled for March 15th at 3:30pm in Room 204. Looking forward to discussing your child's progress.",
   ];
 
   if (!isOpen) return null;
@@ -134,7 +146,9 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
               </div>
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">WhatsApp Integration</h2>
-                <p className="text-xs sm:text-sm text-gray-600">Parse messages to create events automatically</p>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Parse messages to create events automatically
+                </p>
               </div>
             </div>
             <button
@@ -189,7 +203,9 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
 
           {/* Sample Messages */}
           <div className="mb-4 sm:mb-6">
-            <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Try these sample messages:</h3>
+            <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+              Try these sample messages:
+            </h3>
             <div className="space-y-1 sm:space-y-2">
               {sampleMessages.map((sample, index) => (
                 <button
@@ -223,10 +239,12 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
                 <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
                 <h3 className="font-medium text-green-900 text-sm sm:text-base">Event Detected!</h3>
               </div>
-              
+
               <div className="space-y-2 sm:space-y-3">
                 <div>
-                  <h4 className="font-semibold text-gray-900 text-sm sm:text-lg">{parsedEvent.title}</h4>
+                  <h4 className="font-semibold text-gray-900 text-sm sm:text-lg">
+                    {parsedEvent.title}
+                  </h4>
                   <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
                     {parsedEvent.event_type}
                   </span>
@@ -239,21 +257,21 @@ export function WhatsAppIntegration({ isOpen, onClose, onEventCreated }: WhatsAp
                       <span>{parsedEvent.event_date}</span>
                     </div>
                   )}
-                  
+
                   {parsedEvent.start_time && (
                     <div className="flex items-center space-x-2">
                       <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
                       <span>{parsedEvent.start_time}</span>
                     </div>
                   )}
-                  
+
                   {parsedEvent.location && (
                     <div className="flex items-center space-x-2">
                       <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
                       <span>{parsedEvent.location}</span>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center space-x-2">
                     <Users className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
                     <span>RSVP Required</span>

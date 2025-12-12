@@ -25,29 +25,29 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
       icon: FolderOpen,
       title: 'Family Folders',
       description: 'Organize by family member',
-      color: 'from-violet-400 to-purple-400'
+      color: 'from-violet-400 to-purple-400',
     },
     {
       id: 'contacts' as SubScreen,
       icon: Users,
       title: 'Contacts',
       description: 'Manage family contacts',
-      color: 'from-rose-400 to-pink-400'
+      color: 'from-rose-400 to-pink-400',
     },
     {
       id: 'tasks' as SubScreen,
       icon: CheckSquare,
       title: 'Tasks',
       description: 'Family task management',
-      color: 'from-amber-400 to-orange-400'
+      color: 'from-amber-400 to-orange-400',
     },
     {
       id: 'shopping' as SubScreen,
       icon: ShoppingBag,
       title: 'Shopping',
       description: 'Shopping lists and items',
-      color: 'from-fuchsia-400 to-pink-400'
-    }
+      color: 'from-fuchsia-400 to-pink-400',
+    },
   ];
 
   return (
@@ -65,10 +65,14 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
               onClick={() => onNavigateToSubScreen(feature.id)}
               className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all text-left group"
             >
-              <div className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+              <div
+                className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+              >
                 <feature.icon className="w-7 h-7 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{feature.title}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                {feature.title}
+              </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
             </button>
           ))}
@@ -81,7 +85,9 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">Family Calendar</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">View all family events in one place</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                View all family events in one place
+              </p>
             </div>
           </div>
           <button

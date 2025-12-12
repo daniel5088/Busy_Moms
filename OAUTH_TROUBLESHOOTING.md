@@ -16,6 +16,7 @@ Go to your Supabase Dashboard: https://supabase.com/dashboard/project/[your-proj
    - [ ] Click **Save** after making any changes
 
 **Common Issue:** Copy-paste can add extra spaces. Try these steps:
+
 - Copy Client ID from Google Cloud Console
 - Paste into a plain text editor (like Notepad)
 - Verify there are no spaces before or after
@@ -29,6 +30,7 @@ Go to: https://console.cloud.google.com/apis/credentials
 
 1. Click on your OAuth 2.0 Client ID
 2. Verify **Authorized JavaScript origins** includes:
+
    ```
    https://chic-duckanoo-b6e66f.netlify.app
    ```
@@ -39,6 +41,7 @@ Go to: https://console.cloud.google.com/apis/credentials
    ```
 
 **Critical:** The redirect URI must match EXACTLY. Check:
+
 - [ ] No trailing slash
 - [ ] Correct project reference ID
 - [ ] `/auth/v1/callback` path is correct
@@ -89,12 +92,14 @@ Go to: https://console.cloud.google.com/apis/library/calendar-json.googleapis.co
 ### Step 7: Verify Environment Variables
 
 Check your `.env` file has:
+
 ```
 VITE_SUPABASE_URL=https://0ec90b57d6e95fcbda19832f.supabase.co
 VITE_SUPABASE_ANON_KEY=[your-anon-key]
 ```
 
 After updating `.env`:
+
 1. Stop your dev server
 2. Run `npm run dev` again
 3. Hard refresh your browser (Ctrl+Shift+R or Cmd+Shift+R)
@@ -104,12 +109,14 @@ After updating `.env`:
 Print this checklist and verify each item:
 
 **Supabase Dashboard:**
+
 - [ ] Google provider is enabled
 - [ ] Client ID has no extra spaces
 - [ ] Client Secret has no extra spaces
 - [ ] Clicked Save after configuration
 
 **Google Cloud Console - Credentials:**
+
 - [ ] Using correct project (check top bar)
 - [ ] OAuth client type is "Web application"
 - [ ] Authorized JavaScript origins: `https://chic-duckanoo-b6e66f.netlify.app`
@@ -118,11 +125,13 @@ Print this checklist and verify each item:
 - [ ] Client Secret matches what's in Supabase
 
 **Google Cloud Console - APIs:**
+
 - [ ] Google Calendar API is enabled
 - [ ] OAuth consent screen is configured
 - [ ] Test users are added (if using External type)
 
 **Local Environment:**
+
 - [ ] .env file has correct VITE_SUPABASE_URL
 - [ ] .env file has correct VITE_SUPABASE_ANON_KEY
 - [ ] Dev server restarted after .env changes
@@ -149,6 +158,7 @@ If you've verified all the above and it's still not working:
 ### Contact Support
 
 If none of the above works, gather this information:
+
 - Screenshot of Google OAuth client configuration (hide sensitive data)
 - Screenshot of Supabase Google provider settings (hide Client Secret)
 - The exact error message from console

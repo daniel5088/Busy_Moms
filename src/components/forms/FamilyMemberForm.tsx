@@ -1,19 +1,24 @@
-import React, { useState } from 'react'
-import { X, User, Heart, School } from 'lucide-react'
-import { supabase, FamilyMember } from '../../lib/supabase'
-import { useAuth } from '../../hooks/useAuth'
+import React, { useState } from 'react';
+import { X, User, Heart, School } from 'lucide-react';
+import { supabase, FamilyMember } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface FamilyMemberFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onMemberCreated: (member: FamilyMember) => void
-  editMember?: FamilyMember | null
+  isOpen: boolean;
+  onClose: () => void;
+  onMemberCreated: (member: FamilyMember) => void;
+  editMember?: FamilyMember | null;
 }
 
-export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember }: FamilyMemberFormProps) {
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+export function FamilyMemberForm({
+  isOpen,
+  onClose,
+  onMemberCreated,
+  editMember,
+}: FamilyMemberFormProps) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     relationship: 'Child',
@@ -22,8 +27,8 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
     allergies: '',
     medical_notes: '',
     school: '',
-    grade: ''
-  })
+    grade: '',
+  });
 
   // Update form data when editMember changes
   React.useEffect(() => {
@@ -36,8 +41,8 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
         allergies: editMember.allergies?.join(', ') || '',
         medical_notes: editMember.medical_notes || '',
         school: editMember.school || '',
-        grade: editMember.grade || ''
-      })
+        grade: editMember.grade || '',
+      });
     } else {
       // Reset form for new member
       setFormData({
@@ -48,30 +53,33 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
         allergies: '',
         medical_notes: '',
         school: '',
-        grade: ''
-      })
+        grade: '',
+      });
     }
-  }, [editMember])
+  }, [editMember]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    
-    setLoading(true)
+    e.preventDefault();
+    setError('');
+
+    setLoading(true);
     try {
       // Ensure we have a valid authenticated user
       if (!user?.id) {
-        throw new Error('You must be logged in to add family members.')
+        throw new Error('You must be logged in to add family members.');
       }
 
       const memberData = {
         ...formData,
         user_id: user.id,
         age: formData.age ? parseInt(formData.age.toString()) : null,
-        allergies: formData.allergies.split(',').map(a => a.trim()).filter(a => a)
-      }
+        allergies: formData.allergies
+          .split(',')
+          .map((a) => a.trim())
+          .filter((a) => a),
+      };
 
-      let result
+      let result;
       if (editMember) {
         // Update existing family member
         result = await supabase
@@ -79,24 +87,20 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
           .update(memberData)
           .eq('id', editMember.id)
           .select()
-          .single()
+          .single();
       } else {
         // Insert new family member
-        result = await supabase
-          .from('family_members')
-          .insert([memberData])
-          .select()
-          .single()
+        result = await supabase.from('family_members').insert([memberData]).select().single();
       }
 
       if (result.error) {
-        throw result.error
+        throw result.error;
       }
 
       // Call the callback with the saved member
-      onMemberCreated(result.data)
-      onClose()
-      
+      onMemberCreated(result.data);
+      onClose();
+
       // Reset form
       setFormData({
         name: '',
@@ -106,17 +110,17 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
         allergies: '',
         medical_notes: '',
         school: '',
-        grade: ''
-      })
+        grade: '',
+      });
     } catch (error) {
-      console.error('Error saving family member:', error)
-      setError(`Error saving family member: ${error.message || 'Please try again.'}`)
+      console.error('Error saving family member:', error);
+      setError(`Error saving family member: ${error.message || 'Please try again.'}`);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -140,7 +144,7 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
                 <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
-            
+
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
                 <User className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
@@ -279,5 +283,5 @@ export function FamilyMemberForm({ isOpen, onClose, onMemberCreated, editMember 
         </div>
       </div>
     </div>
-  )
+  );
 }

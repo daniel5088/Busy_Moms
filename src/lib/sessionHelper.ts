@@ -3,7 +3,10 @@ import type { Session } from '@supabase/supabase-js';
 
 export async function getActiveSession(): Promise<Session | null> {
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
 
     if (error) {
       console.error('Error getting session:', error);

@@ -1,117 +1,119 @@
-import React, { useState, useEffect } from 'react'
-import { X, User, Mail, Heart } from 'lucide-react'
-import { supabase, Profile } from '../../lib/supabase'
-import { useAuth } from '../../hooks/useAuth'
+import React, { useState, useEffect } from 'react';
+import { X, User, Mail, Heart } from 'lucide-react';
+import { supabase, Profile } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ProfileFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onProfileUpdated: (profile: Profile) => void
+  isOpen: boolean;
+  onClose: () => void;
+  onProfileUpdated: (profile: Profile) => void;
 }
 
 export function ProfileForm({ isOpen, onClose, onProfileUpdated }: ProfileFormProps) {
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [loadingProfile, setLoadingProfile] = useState(true)
-  const [error, setError] = useState('')
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     full_name: '',
     user_type: 'Mom' as 'Mom' | 'Dad' | 'Guardian' | 'Other',
-    ai_personality: 'Friendly' as 'Friendly' | 'Professional' | 'Humorous'
-  })
+    ai_personality: 'Friendly' as 'Friendly' | 'Professional' | 'Humorous',
+  });
 
   // Load current profile data when form opens
   useEffect(() => {
     if (isOpen && user) {
-      loadProfile()
+      loadProfile();
     }
-  }, [isOpen, user])
+  }, [isOpen, user]);
 
   const loadProfile = async () => {
-    if (!user) return
+    if (!user) return;
 
-    setLoadingProfile(true)
+    setLoadingProfile(true);
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .maybeSingle()
+        .maybeSingle();
 
       if (error) {
-        throw error
+        throw error;
       }
 
       if (profile) {
         setFormData({
           full_name: profile.full_name || '',
           user_type: profile.user_type || 'Mom',
-          ai_personality: profile.ai_personality || 'Friendly'
-        })
+          ai_personality: profile.ai_personality || 'Friendly',
+        });
       }
     } catch (error: any) {
-      console.error('Error loading profile:', error)
-      setError(`Error loading profile: ${error.message}`)
+      console.error('Error loading profile:', error);
+      setError(`Error loading profile: ${error.message}`);
     } finally {
-      setLoadingProfile(false)
+      setLoadingProfile(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!user?.id) {
-      setError('No authenticated user found')
-      return
+      setError('No authenticated user found');
+      return;
     }
 
-    setError('')
-    setLoading(true)
+    setError('');
+    setLoading(true);
 
     try {
       const updateData = {
         full_name: formData.full_name,
         user_type: formData.user_type,
         ai_personality: formData.ai_personality,
-        updated_at: new Date().toISOString()
-      }
+        updated_at: new Date().toISOString(),
+      };
 
-      console.log('Updating profile for user:', user.id, 'with data:', updateData)
+      console.log('Updating profile for user:', user.id, 'with data:', updateData);
 
       const { data: updatedProfile, error } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('id', user.id)
         .select()
-        .maybeSingle()
+        .maybeSingle();
 
       if (error) {
-        console.error('Profile update error:', error)
-        throw error
+        console.error('Profile update error:', error);
+        throw error;
       }
 
       if (!updatedProfile) {
-        throw new Error('Profile not found or update failed')
+        throw new Error('Profile not found or update failed');
       }
 
-      console.log('Profile updated successfully:', updatedProfile)
-      onProfileUpdated(updatedProfile)
-      onClose()
+      console.log('Profile updated successfully:', updatedProfile);
+      onProfileUpdated(updatedProfile);
+      onClose();
     } catch (error: any) {
-      console.error('Error updating profile:', error)
-      setError(error.message || 'Failed to update profile')
+      console.error('Error updating profile:', error);
+      setError(error.message || 'Failed to update profile');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Edit Profile</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
+              Edit Profile
+            </h2>
             <button
               onClick={onClose}
               className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -159,7 +161,9 @@ export function ProfileForm({ isOpen, onClose, onProfileUpdated }: ProfileFormPr
                   className="w-full px-3 py-2 sm:px-4 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 text-sm sm:text-base"
                   placeholder="Email cannot be changed"
                 />
-                <p className="text-xs text-gray-500 mt-1">Email cannot be changed after registration</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Email cannot be changed after registration
+                </p>
               </div>
 
               <div>
@@ -185,14 +189,18 @@ export function ProfileForm({ isOpen, onClose, onProfileUpdated }: ProfileFormPr
                 </label>
                 <select
                   value={formData.ai_personality}
-                  onChange={(e) => setFormData({ ...formData, ai_personality: e.target.value as any })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, ai_personality: e.target.value as any })
+                  }
                   className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                 >
                   <option value="Friendly">Friendly</option>
                   <option value="Professional">Professional</option>
                   <option value="Humorous">Humorous</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">This affects how your AI assistant communicates with you</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  This affects how your AI assistant communicates with you
+                </p>
               </div>
 
               <div className="flex space-x-2 sm:space-x-3 pt-3 sm:pt-4">
@@ -216,5 +224,5 @@ export function ProfileForm({ isOpen, onClose, onProfileUpdated }: ProfileFormPr
         </div>
       </div>
     </div>
-  )
+  );
 }

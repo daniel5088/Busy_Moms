@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, ShoppingCart, ExternalLink, AlertCircle, CheckCircle, Loader2, Store, MapPin } from 'lucide-react';
+import {
+  X,
+  ShoppingCart,
+  ExternalLink,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  Store,
+  MapPin,
+} from 'lucide-react';
 import type { ShoppingItem, ProviderName, UserPreferredRetailer } from '../lib/supabase';
 import { instacartShoppingService } from '../services/instacartShoppingService';
 import { RetailerSelectionModal } from './RetailerSelectionModal';
@@ -40,7 +49,7 @@ export function SendToProviderModal({
   const currentProvider = provider ? providerDisplay[provider] : null;
 
   const itemsAlreadyInCart = items.filter(
-    item => item.provider_name === provider && item.purchase_status === 'in_cart'
+    (item) => item.provider_name === provider && item.purchase_status === 'in_cart'
   );
 
   useEffect(() => {
@@ -121,7 +130,9 @@ export function SendToProviderModal({
                   <span className="text-lg font-semibold text-instacart-kale">Instacart</span>
                 </div>
               ) : (
-                <div className={`w-10 h-10 ${currentProvider.color} rounded-full flex items-center justify-center`}>
+                <div
+                  className={`w-10 h-10 ${currentProvider.color} rounded-full flex items-center justify-center`}
+                >
                   <ShoppingCart className="w-5 h-5 text-white" />
                 </div>
               )}
@@ -130,7 +141,9 @@ export function SendToProviderModal({
                   {success ? 'Items Sent!' : `Send to ${currentProvider.name}`}
                 </h2>
                 <p className="text-sm text-gray-600">
-                  {success ? 'Successfully added to cart' : `${items.length} item${items.length !== 1 ? 's' : ''}`}
+                  {success
+                    ? 'Successfully added to cart'
+                    : `${items.length} item${items.length !== 1 ? 's' : ''}`}
                 </p>
               </div>
             </div>
@@ -173,7 +186,9 @@ export function SendToProviderModal({
                               {selectedRetailer.retailer_name}
                             </p>
                             <p className="text-xs text-green-700">
-                              {selectedRetailer.is_primary ? 'Your primary retailer' : 'Selected retailer'}
+                              {selectedRetailer.is_primary
+                                ? 'Your primary retailer'
+                                : 'Selected retailer'}
                             </p>
                           </div>
                         </div>
@@ -190,9 +205,7 @@ export function SendToProviderModal({
                       <div className="flex items-start space-x-2">
                         <Store className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
-                          <p className="text-sm text-blue-800 font-medium">
-                            No retailer selected
-                          </p>
+                          <p className="text-sm text-blue-800 font-medium">No retailer selected</p>
                           <p className="text-sm text-blue-700 mt-1">
                             Choose a retailer to get the best shopping experience.
                           </p>
@@ -216,7 +229,8 @@ export function SendToProviderModal({
                     <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-sm text-yellow-800 font-medium">
-                        {itemsAlreadyInCart.length} item{itemsAlreadyInCart.length !== 1 ? 's' : ''} already in {currentProvider.name} cart
+                        {itemsAlreadyInCart.length} item{itemsAlreadyInCart.length !== 1 ? 's' : ''}{' '}
+                        already in {currentProvider.name} cart
                       </p>
                       <p className="text-sm text-yellow-700 mt-1">
                         These items will be updated with the new cart information.
@@ -237,13 +251,12 @@ export function SendToProviderModal({
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">{item.item}</p>
                         <p className="text-xs text-gray-600">
-                          {item.category} {item.quantity && item.quantity > 1 ? `(${item.quantity})` : ''}
+                          {item.category}{' '}
+                          {item.quantity && item.quantity > 1 ? `(${item.quantity})` : ''}
                         </p>
                       </div>
                       {item.provider_name === provider && item.purchase_status === 'in_cart' && (
-                        <div className="text-xs text-yellow-600 font-medium">
-                          Already in cart
-                        </div>
+                        <div className="text-xs text-yellow-600 font-medium">Already in cart</div>
                       )}
                     </div>
                   ))}

@@ -5,7 +5,11 @@ declare const Deno: any;
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
 function getCorrelationId(req: Request) {
-  return req.headers.get('x-correlation-id') || req.headers.get('X-Correlation-ID') || crypto.randomUUID();
+  return (
+    req.headers.get('x-correlation-id') ||
+    req.headers.get('X-Correlation-ID') ||
+    crypto.randomUUID()
+  );
 }
 
 Deno.serve(async (req: Request) => {
@@ -24,7 +28,7 @@ Deno.serve(async (req: Request) => {
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
         'x-correlation-id': correlationId,
       },

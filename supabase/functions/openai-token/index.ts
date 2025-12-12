@@ -33,19 +33,23 @@ interface TokenResponse {
 }
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
 Deno;
 declare const Deno: any;
 
 function getCorrelationId(req: Request) {
-  return req.headers.get('x-correlation-id') || req.headers.get('X-Correlation-ID') || crypto.randomUUID();
+  return (
+    req.headers.get('x-correlation-id') ||
+    req.headers.get('X-Correlation-ID') ||
+    crypto.randomUUID()
+  );
 }
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     const correlationId = getCorrelationId(req);
     return new Response(null, {
       status: 200,
@@ -60,33 +64,27 @@ Deno.serve(async (req: Request) => {
     const correlationId = getCorrelationId(req);
     console.log(`🚀 OpenAI token request - ${req.method} ${req.url}`, { correlationId });
 
-    if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Method not allowed" }),
-        {
-          status: 405,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -103,20 +101,20 @@ Deno.serve(async (req: Request) => {
       },
     });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
     if (userError || !user) {
       console.error('❌ Authentication failed:', userError?.message, { correlationId });
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     console.log('✅ Authenticated user:', user.id);
@@ -138,13 +136,13 @@ Deno.serve(async (req: Request) => {
       console.error('❌ OpenAI API key not configured', { correlationId });
       return new Response(
         JSON.stringify({
-          error: "Service unavailable",
-          message: "OpenAI service is not configured"
+          error: 'Service unavailable',
+          message: 'OpenAI service is not configured',
         }),
         {
           status: 503,
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             ...corsHeaders,
             'x-correlation-id': correlationId,
           },
@@ -152,12 +150,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log("🤖 Generating OpenAI Realtime session...");
+    console.log('🤖 Generating OpenAI Realtime session...');
 
     const tokenResponse = await fetch('https://api.openai.com/v1/realtime/sessions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+        Authorization: `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
         'x-correlation-id': correlationId,
       },
@@ -181,17 +179,21 @@ Deno.serve(async (req: Request) => {
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('❌ OpenAI token generation failed:', tokenResponse.status, errorText.substring(0, 200));
+      console.error(
+        '❌ OpenAI token generation failed:',
+        tokenResponse.status,
+        errorText.substring(0, 200)
+      );
 
       return new Response(
         JSON.stringify({
-          error: "Failed to generate token",
-          message: "Unable to create OpenAI session at this time"
+          error: 'Failed to generate token',
+          message: 'Unable to create OpenAI session at this time',
         }),
         {
           status: 503,
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             ...corsHeaders,
             'x-correlation-id': correlationId,
           },
@@ -200,42 +202,38 @@ Deno.serve(async (req: Request) => {
     }
 
     const tokenData = await tokenResponse.json();
-    const expiresAt = Date.now() + (60 * 60 * 1000);
+    const expiresAt = Date.now() + 60 * 60 * 1000;
 
     const response: TokenResponse = {
       client_secret: {
-        value: tokenData.client_secret?.value || tokenData.token
+        value: tokenData.client_secret?.value || tokenData.token,
       },
       expiresAt,
-      userId
+      userId,
     };
 
     console.log(`✅ Generated OpenAI Realtime token for user ${userId}`, { correlationId });
 
-    return new Response(
-      JSON.stringify(response),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-          'x-correlation-id': correlationId,
-        },
-      }
-    );
-
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+        'x-correlation-id': correlationId,
+      },
+    });
   } catch (error) {
     console.error('❌ OpenAI token generation error:', error);
 
     return new Response(
       JSON.stringify({
-        error: "Internal server error",
-        message: "An unexpected error occurred"
+        error: 'Internal server error',
+        message: 'An unexpected error occurred',
       }),
       {
         status: 500,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           ...corsHeaders,
         },
       }

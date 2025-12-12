@@ -100,16 +100,16 @@ export class SyncOrchestrator {
         maxResults: 250,
       });
 
-      console.log(`📊 Found ${localEvents?.length || 0} local events and ${googleEvents.length} Google events`);
+      console.log(
+        `📊 Found ${localEvents?.length || 0} local events and ${googleEvents.length} Google events`
+      );
 
       // Get existing sync mappings
       const mappings = await calendarSyncService.getSyncMappings(userId);
       const mappingsByLocalId = new Map(
-        mappings.filter(m => m.local_event_id).map(m => [m.local_event_id!, m])
+        mappings.filter((m) => m.local_event_id).map((m) => [m.local_event_id!, m])
       );
-      const mappingsByGoogleId = new Map(
-        mappings.map(m => [m.google_event_id, m])
-      );
+      const mappingsByGoogleId = new Map(mappings.map((m) => [m.google_event_id, m]));
 
       // Process events based on sync direction
       if (prefs.sync_direction === 'bidirectional' || prefs.sync_direction === 'google_to_local') {
@@ -144,7 +144,9 @@ export class SyncOrchestrator {
       // Update sync preferences
       await calendarSyncService.updateUserSyncPreferences(userId, {
         last_sync_at: new Date().toISOString(),
-        last_successful_sync_at: result.success ? new Date().toISOString() : prefs.last_successful_sync_at,
+        last_successful_sync_at: result.success
+          ? new Date().toISOString()
+          : prefs.last_successful_sync_at,
       });
 
       // Update sync log
@@ -309,7 +311,7 @@ export class SyncOrchestrator {
   ): Promise<{ created: number; updated: number; conflicts: number; errors: string[] }> {
     const result = { created: 0, updated: 0, conflicts: 0, errors: [] as string[] };
 
-    const googleEventsById = new Map(googleEvents.map(e => [e.id!, e]));
+    const googleEventsById = new Map(googleEvents.map((e) => [e.id!, e]));
 
     for (const localEvent of localEvents) {
       try {

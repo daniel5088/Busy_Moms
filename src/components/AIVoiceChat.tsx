@@ -1,6 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Mic, MicOff, MessageCircle, X, Loader2, Phone, PhoneOff, Send, MessageSquare
+  Mic,
+  MicOff,
+  MessageCircle,
+  X,
+  Loader2,
+  Phone,
+  PhoneOff,
+  Send,
+  MessageSquare,
 } from 'lucide-react';
 import { openaiRealtimeService, RealtimeEvent } from '../services/openaiRealtimeService';
 import { aiAssistantService } from '../services/aiAssistantService';
@@ -36,7 +44,9 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
       setIsWaitingForWakeWord(true);
     }
   }, [chatMode, isConnected]);
-  const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ role: 'user' | 'assistant'; content: string }>
+  >([]);
   const [textInput, setTextInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -124,14 +134,18 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
   // Flip connecting spinner if we reach a terminal state
   useEffect(() => {
-    if (connectionState === 'connected' || connectionState === 'failed' || connectionState === 'closed') {
+    if (
+      connectionState === 'connected' ||
+      connectionState === 'failed' ||
+      connectionState === 'closed'
+    ) {
       setIsConnecting(false);
     }
   }, [connectionState]);
 
   const handleRealtimeEvent = (event: RealtimeEvent) => {
     // console.debug('📨 Realtime event:', event.type, event);
-    setConversation(prev => [...prev, event]);
+    setConversation((prev) => [...prev, event]);
 
     switch (event.type) {
       case 'session.created':
@@ -143,7 +157,7 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
         break;
 
       case 'response.text.delta':
-        if (event.delta) setCurrentResponse(prev => prev + event.delta);
+        if (event.delta) setCurrentResponse((prev) => prev + event.delta);
         break;
 
       case 'response.done':
@@ -183,15 +197,19 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
       try {
         // Pass conversation history to maintain context
-        const result = await aiAssistantService.processUserMessage(text.trim(), user!.id, chatMessages);
+        const result = await aiAssistantService.processUserMessage(
+          text.trim(),
+          user!.id,
+          chatMessages
+        );
         const assistantMessage = { role: 'assistant' as const, content: result.message };
-        setChatMessages(prev => [...prev, assistantMessage]);
+        setChatMessages((prev) => [...prev, assistantMessage]);
       } catch (error) {
         const errorMessage = {
           role: 'assistant' as const,
-          content: 'I apologize, but I encountered an error. Please try again.'
+          content: 'I apologize, but I encountered an error. Please try again.',
         };
-        setChatMessages(prev => [...prev, errorMessage]);
+        setChatMessages((prev) => [...prev, errorMessage]);
       } finally {
         setIsProcessing(false);
       }
@@ -204,9 +222,9 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
       openaiRealtimeService.sendMessage?.(text);
 
-      setConversation(prev => [
+      setConversation((prev) => [
         ...prev,
-        { type: 'user_message', content: text, timestamp: Date.now() } as RealtimeEvent
+        { type: 'user_message', content: text, timestamp: Date.now() } as RealtimeEvent,
       ]);
     }
   };
@@ -248,24 +266,35 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
   const getConnectionStatusColor = () => {
     switch (connectionState) {
-      case 'connected': return 'text-green-600';
-      case 'connecting': return 'text-yellow-600';
+      case 'connected':
+        return 'text-green-600';
+      case 'connecting':
+        return 'text-yellow-600';
       case 'disconnected':
       case 'failed':
-      case 'closed': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'closed':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
   const getConnectionStatusText = () => {
     switch (connectionState) {
-      case 'new': return 'Initializing...';
-      case 'connecting': return 'Connecting to Sarah...';
-      case 'connected': return 'Connected to Sarah';
-      case 'disconnected': return 'Disconnected';
-      case 'failed': return 'Connection failed';
-      case 'closed': return 'Connection closed';
-      default: return 'Unknown';
+      case 'new':
+        return 'Initializing...';
+      case 'connecting':
+        return 'Connecting to Sarah...';
+      case 'connected':
+        return 'Connected to Sarah';
+      case 'disconnected':
+        return 'Disconnected';
+      case 'failed':
+        return 'Connection failed';
+      case 'closed':
+        return 'Connection closed';
+      default:
+        return 'Unknown';
     }
   };
 
@@ -296,7 +325,9 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
               </div>
               <div>
                 <h3 className="font-bold text-white text-lg">Sarah Assistant</h3>
-                <p className={`text-sm font-medium ${connectionState === 'connected' ? 'text-green-100' : connectionState === 'connecting' ? 'text-yellow-100' : 'text-rose-100'}`}>
+                <p
+                  className={`text-sm font-medium ${connectionState === 'connected' ? 'text-green-100' : connectionState === 'connecting' ? 'text-yellow-100' : 'text-rose-100'}`}
+                >
                   {chatMode === 'text' ? 'Text Chat Mode' : getConnectionStatusText()}
                 </p>
               </div>
@@ -349,7 +380,9 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
                       <MessageSquare className="w-10 h-10 text-white" />
                     </div>
                     <p className="text-lg font-semibold text-gray-800 mb-2">Text Chat with Sarah</p>
-                    <p className="text-sm text-gray-600 mb-4">Type your message below to start chatting</p>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Type your message below to start chatting
+                    </p>
                     <div className="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 p-4 rounded-2xl max-w-sm mx-auto">
                       <p className="text-sm text-rose-800 font-medium">
                         💡 Ask me to schedule events, add shopping items, create tasks, and more!
@@ -391,110 +424,114 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
           {/* Voice Mode */}
           {chatMode === 'voice' && (
-          <div className="p-6">
-          {!isConnected && (
-            <div className="text-center py-8">
-              {isConnecting ? (
-                <>
-                  <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                    <Loader2 className="w-10 h-10 text-white animate-spin" />
-                  </div>
-                  <p className="text-lg font-semibold text-gray-800">Connecting to Sarah...</p>
-                  <p className="text-sm text-gray-600">Setting up real-time voice connection</p>
-                </>
-              ) : error ? (
-                <>
-                  <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <X className="w-10 h-10 text-white" />
-                  </div>
-                  <p className="text-lg font-semibold text-rose-600 mb-2">Connection Error</p>
-                  <p className="text-sm text-gray-600 mb-4 whitespace-pre-wrap">{error}</p>
-                  <button
-                    onClick={() => {
-                      setError(null);
-                      setIsConnecting(true);
-                      // re-run init
-                      (async () => {
-                        try {
-                          await openaiRealtimeService.initialize(user!.id);
-                        } catch (e: any) {
-                          setError(e?.message || 'Failed to initialize AI voice chat');
-                        } finally {
-                          setIsConnecting(false);
-                        }
-                      })();
-                    }}
-                    className="px-6 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all"
-                  >
-                    Retry Connection
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="w-10 h-10 text-white" />
-                  </div>
-                  <p className="text-lg font-semibold text-gray-800">Ready to talk to Sarah</p>
-                  <p className="text-sm text-gray-600">Click the microphone to start talking</p>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Wake Word Status */}
-          {isConnected && isWaitingForWakeWord && (
-            <div className="space-y-6">
-              <div className="text-center py-8">
-                <div className="relative">
-                  <div className="w-24 h-24 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse shadow-lg">
-                    <Mic className="w-12 h-12 text-white" />
-                  </div>
-                  <div className="absolute inset-0 w-24 h-24 mx-auto bg-gradient-to-br from-rose-400 to-pink-400 rounded-full animate-ping opacity-20"></div>
-                </div>
-                <p className="text-xl font-bold text-gray-800 mb-2">Listening for wake word</p>
-                <p className="text-base text-gray-600 mb-4">Say <strong className="text-rose-600">"Hey, Sarah"</strong> to start</p>
-                <div className="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 p-4 rounded-2xl">
-                  <p className="text-sm text-rose-800 font-medium">
-                    💡 Sarah is waiting for you to say the wake word before she starts listening to your requests
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Active Conversation */}
-          {isConnected && inConversation && (
-            <div className="space-y-6">
-              <div className="text-center py-8">
-                <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <MessageCircle className="w-12 h-12 text-white" />
-                </div>
-                <p className="text-xl font-bold text-gray-800 mb-2">Conversation Active</p>
-                <p className="text-base text-gray-600">I'm listening and ready to help!</p>
-              </div>
-            </div>
-          )}
-
-          {/* Conversation Display */}
-          {isConnected && inConversation && (
-            <div className="space-y-4">
-              {currentResponse && (
-                <div className="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 p-4 rounded-2xl">
-                  <p className="text-sm text-rose-900">
-                    <span className="font-semibold">Sarah is responding:</span> {currentResponse}
-                  </p>
+            <div className="p-6">
+              {!isConnected && (
+                <div className="text-center py-8">
+                  {isConnecting ? (
+                    <>
+                      <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <Loader2 className="w-10 h-10 text-white animate-spin" />
+                      </div>
+                      <p className="text-lg font-semibold text-gray-800">Connecting to Sarah...</p>
+                      <p className="text-sm text-gray-600">Setting up real-time voice connection</p>
+                    </>
+                  ) : error ? (
+                    <>
+                      <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <X className="w-10 h-10 text-white" />
+                      </div>
+                      <p className="text-lg font-semibold text-rose-600 mb-2">Connection Error</p>
+                      <p className="text-sm text-gray-600 mb-4 whitespace-pre-wrap">{error}</p>
+                      <button
+                        onClick={() => {
+                          setError(null);
+                          setIsConnecting(true);
+                          // re-run init
+                          (async () => {
+                            try {
+                              await openaiRealtimeService.initialize(user!.id);
+                            } catch (e: any) {
+                              setError(e?.message || 'Failed to initialize AI voice chat');
+                            } finally {
+                              setIsConnecting(false);
+                            }
+                          })();
+                        }}
+                        className="px-6 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all"
+                      >
+                        Retry Connection
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageCircle className="w-10 h-10 text-white" />
+                      </div>
+                      <p className="text-lg font-semibold text-gray-800">Ready to talk to Sarah</p>
+                      <p className="text-sm text-gray-600">Click the microphone to start talking</p>
+                    </>
+                  )}
                 </div>
               )}
 
-              {isListening && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 p-4 rounded-2xl flex items-center space-x-3">
-                  <div className="w-4 h-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-pulse shadow-lg"></div>
-                  <p className="text-sm text-green-900 font-semibold">Listening...</p>
+              {/* Wake Word Status */}
+              {isConnected && isWaitingForWakeWord && (
+                <div className="space-y-6">
+                  <div className="text-center py-8">
+                    <div className="relative">
+                      <div className="w-24 h-24 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse shadow-lg">
+                        <Mic className="w-12 h-12 text-white" />
+                      </div>
+                      <div className="absolute inset-0 w-24 h-24 mx-auto bg-gradient-to-br from-rose-400 to-pink-400 rounded-full animate-ping opacity-20"></div>
+                    </div>
+                    <p className="text-xl font-bold text-gray-800 mb-2">Listening for wake word</p>
+                    <p className="text-base text-gray-600 mb-4">
+                      Say <strong className="text-rose-600">"Hey, Sarah"</strong> to start
+                    </p>
+                    <div className="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 p-4 rounded-2xl">
+                      <p className="text-sm text-rose-800 font-medium">
+                        💡 Sarah is waiting for you to say the wake word before she starts listening
+                        to your requests
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Active Conversation */}
+              {isConnected && inConversation && (
+                <div className="space-y-6">
+                  <div className="text-center py-8">
+                    <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <MessageCircle className="w-12 h-12 text-white" />
+                    </div>
+                    <p className="text-xl font-bold text-gray-800 mb-2">Conversation Active</p>
+                    <p className="text-base text-gray-600">I'm listening and ready to help!</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Conversation Display */}
+              {isConnected && inConversation && (
+                <div className="space-y-4">
+                  {currentResponse && (
+                    <div className="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 p-4 rounded-2xl">
+                      <p className="text-sm text-rose-900">
+                        <span className="font-semibold">Sarah is responding:</span>{' '}
+                        {currentResponse}
+                      </p>
+                    </div>
+                  )}
+
+                  {isListening && (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 p-4 rounded-2xl flex items-center space-x-3">
+                      <div className="w-4 h-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-pulse shadow-lg"></div>
+                      <p className="text-sm text-green-900 font-semibold">Listening...</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-          </div>
           )}
         </div>
 
@@ -531,55 +568,62 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
         {/* Controls - Only show in voice mode */}
         {chatMode === 'voice' && (
-        <div className="p-6 bg-gradient-to-r from-rose-50 to-pink-50 border-t-2 border-rose-100 flex items-center justify-center space-x-4">
-          <button
-            onClick={toggleMute}
-            disabled={!isConnected}
-            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md hover:shadow-lg ${
-              isMuted
-                ? 'bg-gradient-to-br from-red-400 to-red-500 text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-rose-300'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-            title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
-          >
-            {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-          </button>
+          <div className="p-6 bg-gradient-to-r from-rose-50 to-pink-50 border-t-2 border-rose-100 flex items-center justify-center space-x-4">
+            <button
+              onClick={toggleMute}
+              disabled={!isConnected}
+              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md hover:shadow-lg ${
+                isMuted
+                  ? 'bg-gradient-to-br from-red-400 to-red-500 text-white'
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-rose-300'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
+            >
+              {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+            </button>
 
-          <button
-            onClick={startVoiceConversation}
-            disabled={!isConnected || inConversation}
-            className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            title="Start voice conversation"
-          >
-            <Phone className="w-7 h-7" />
-          </button>
+            <button
+              onClick={startVoiceConversation}
+              disabled={!isConnected || inConversation}
+              className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              title="Start voice conversation"
+            >
+              <Phone className="w-7 h-7" />
+            </button>
 
-          <button
-            onClick={endConversation}
-            disabled={!isConnected || !inConversation}
-            className="w-14 h-14 bg-gradient-to-br from-red-400 to-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            title="End conversation"
-          >
-            <PhoneOff className="w-6 h-6" />
-          </button>
+            <button
+              onClick={endConversation}
+              disabled={!isConnected || !inConversation}
+              className="w-14 h-14 bg-gradient-to-br from-red-400 to-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="End conversation"
+            >
+              <PhoneOff className="w-6 h-6" />
+            </button>
 
-          <div className="flex items-center space-x-2 text-sm font-medium text-rose-700">
-            <MessageCircle className="w-5 h-5" />
-            <span>
-              {isWaitingForWakeWord ? 'Say "Hey, Sarah"' : inConversation ? 'In conversation' : 'Talk to Sarah'}
-            </span>
+            <div className="flex items-center space-x-2 text-sm font-medium text-rose-700">
+              <MessageCircle className="w-5 h-5" />
+              <span>
+                {isWaitingForWakeWord
+                  ? 'Say "Hey, Sarah"'
+                  : inConversation
+                    ? 'In conversation'
+                    : 'Talk to Sarah'}
+              </span>
+            </div>
           </div>
-        </div>
         )}
 
         {/* WebRTC Not Supported Warning - Only show in voice mode */}
-        {chatMode === 'voice' && typeof openaiRealtimeService.isSupported === 'function' && !openaiRealtimeService.isSupported() && (
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-t-2 border-amber-300">
-            <p className="text-sm font-medium text-amber-900">
-              ⚠️ WebRTC is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.
-            </p>
-          </div>
-        )}
+        {chatMode === 'voice' &&
+          typeof openaiRealtimeService.isSupported === 'function' &&
+          !openaiRealtimeService.isSupported() && (
+            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-t-2 border-amber-300">
+              <p className="text-sm font-medium text-amber-900">
+                ⚠️ WebRTC is not supported in this browser. Please use a modern browser like Chrome,
+                Firefox, or Safari.
+              </p>
+            </div>
+          )}
       </div>
     </div>
   );

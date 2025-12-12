@@ -13,11 +13,7 @@ import {
   APIError,
   IntegrationError,
 } from './types';
-import {
-  ERROR_MESSAGES,
-  ERROR_LOG_CONFIG,
-  USER_FRIENDLY_ERROR_MAP,
-} from './constants';
+import { ERROR_MESSAGES, ERROR_LOG_CONFIG, USER_FRIENDLY_ERROR_MAP } from './constants';
 
 class ErrorService {
   private errorQueue: Map<string, { count: number; timestamp: number }> = new Map();
@@ -37,7 +33,9 @@ class ErrorService {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       const errorLog: ErrorLog = {
         user_id: user?.id || context?.userId,
@@ -96,35 +94,19 @@ class ErrorService {
     const errorMessage = error.message.toLowerCase();
 
     if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-      return new NetworkError(
-        this.getUserFriendlyMessage(error.message),
-        context,
-        error
-      );
+      return new NetworkError(this.getUserFriendlyMessage(error.message), context, error);
     }
 
     if (errorMessage.includes('auth') || errorMessage.includes('unauthorized')) {
-      return new AuthenticationError(
-        this.getUserFriendlyMessage(error.message),
-        context,
-        error
-      );
+      return new AuthenticationError(this.getUserFriendlyMessage(error.message), context, error);
     }
 
     if (errorMessage.includes('permission') || errorMessage.includes('forbidden')) {
-      return new AuthorizationError(
-        this.getUserFriendlyMessage(error.message),
-        context,
-        error
-      );
+      return new AuthorizationError(this.getUserFriendlyMessage(error.message), context, error);
     }
 
     if (errorMessage.includes('database') || errorMessage.includes('sql')) {
-      return new DatabaseError(
-        this.getUserFriendlyMessage(error.message),
-        context,
-        error
-      );
+      return new DatabaseError(this.getUserFriendlyMessage(error.message), context, error);
     }
 
     const appError = error as AppError;
@@ -153,84 +135,41 @@ class ErrorService {
     const code = error?.code || '';
 
     if (message.includes('JWT') || message.includes('session')) {
-      return new AuthenticationError(
-        ERROR_MESSAGES.AUTHENTICATION.SESSION_EXPIRED,
-        context,
-        error
-      );
+      return new AuthenticationError(ERROR_MESSAGES.AUTHENTICATION.SESSION_EXPIRED, context, error);
     }
 
     if (code === '23505' || message.includes('unique')) {
-      return new DatabaseError(
-        ERROR_MESSAGES.DATABASE.UNIQUE_CONSTRAINT,
-        context,
-        error,
-        code
-      );
+      return new DatabaseError(ERROR_MESSAGES.DATABASE.UNIQUE_CONSTRAINT, context, error, code);
     }
 
     if (code === '23503' || message.includes('foreign key')) {
-      return new DatabaseError(
-        ERROR_MESSAGES.DATABASE.FOREIGN_KEY_VIOLATION,
-        context,
-        error,
-        code
-      );
+      return new DatabaseError(ERROR_MESSAGES.DATABASE.FOREIGN_KEY_VIOLATION, context, error, code);
     }
 
     if (code === '42501' || message.includes('permission')) {
-      return new AuthorizationError(
-        ERROR_MESSAGES.AUTHORIZATION.PERMISSION_DENIED,
-        context,
-        error
-      );
+      return new AuthorizationError(ERROR_MESSAGES.AUTHORIZATION.PERMISSION_DENIED, context, error);
     }
 
-    return new DatabaseError(
-      this.getUserFriendlyMessage(message),
-      context,
-      error,
-      code
-    );
+    return new DatabaseError(this.getUserFriendlyMessage(message), context, error, code);
   }
 
   parseNetworkError(error: any, statusCode?: number, context?: ErrorContext): AppError {
     if (statusCode) {
       const statusKey = statusCode.toString();
       if (USER_FRIENDLY_ERROR_MAP[statusKey]) {
-        return new NetworkError(
-          USER_FRIENDLY_ERROR_MAP[statusKey],
-          context,
-          error,
-          statusCode
-        );
+        return new NetworkError(USER_FRIENDLY_ERROR_MAP[statusKey], context, error, statusCode);
       }
     }
 
     if (error.message.includes('timeout')) {
-      return new NetworkError(
-        ERROR_MESSAGES.NETWORK.TIMEOUT,
-        context,
-        error,
-        statusCode
-      );
+      return new NetworkError(ERROR_MESSAGES.NETWORK.TIMEOUT, context, error, statusCode);
     }
 
     if (error.message.includes('fetch failed') || !navigator.onLine) {
-      return new NetworkError(
-        ERROR_MESSAGES.NETWORK.OFFLINE,
-        context,
-        error,
-        statusCode
-      );
+      return new NetworkError(ERROR_MESSAGES.NETWORK.OFFLINE, context, error, statusCode);
     }
 
-    return new NetworkError(
-      ERROR_MESSAGES.NETWORK.REQUEST_FAILED,
-      context,
-      error,
-      statusCode
-    );
+    return new NetworkError(ERROR_MESSAGES.NETWORK.REQUEST_FAILED, context, error, statusCode);
   }
 
   async getErrorLogs(filters?: {
@@ -351,11 +290,7 @@ class ErrorService {
   }
 
   private isAppError(error: any): error is AppError {
-    return (
-      error &&
-      typeof error.type === 'string' &&
-      typeof error.severity === 'string'
-    );
+    return error && typeof error.type === 'string' && typeof error.severity === 'string';
   }
 
   private generateErrorKey(error: AppError): string {

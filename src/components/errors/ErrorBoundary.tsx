@@ -87,20 +87,17 @@ export class ErrorBoundary extends Component<Props, State> {
                 <AlertTriangle className="w-8 h-8 text-red-600" />
               </div>
 
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Oops! Something went wrong
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h1>
 
               <p className="text-gray-600 mb-6">
-                We encountered an unexpected error. Don't worry, this has been reported and we'll look into it.
+                We encountered an unexpected error. Don't worry, this has been reported and we'll
+                look into it.
               </p>
 
               {error && (
                 <div className="w-full bg-gray-50 rounded-lg p-4 mb-6 text-left">
                   <p className="text-sm font-medium text-gray-700 mb-1">Error Details:</p>
-                  <p className="text-sm text-gray-600 font-mono break-all">
-                    {error.message}
-                  </p>
+                  <p className="text-sm text-gray-600 font-mono break-all">{error.message}</p>
                 </div>
               )}
 
@@ -135,7 +132,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export function FeatureErrorBoundary({ children, featureName }: { children: ReactNode; featureName: string }) {
+export function FeatureErrorBoundary({
+  children,
+  featureName,
+}: {
+  children: ReactNode;
+  featureName: string;
+}) {
   return (
     <ErrorBoundary
       componentName={featureName}
@@ -144,9 +147,7 @@ export function FeatureErrorBoundary({ children, featureName }: { children: Reac
           <div className="flex items-start space-x-3">
             <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-yellow-900 mb-1">
-                {featureName} Unavailable
-              </h3>
+              <h3 className="font-semibold text-yellow-900 mb-1">{featureName} Unavailable</h3>
               <p className="text-sm text-yellow-700 mb-3">
                 This feature is temporarily unavailable. Please try refreshing the page.
               </p>

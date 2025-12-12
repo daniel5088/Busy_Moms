@@ -19,7 +19,7 @@ export function useDarkMode() {
   }, [darkMode]);
 
   const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
+    setDarkMode((prev) => !prev);
   };
 
   return { darkMode, toggleDarkMode };

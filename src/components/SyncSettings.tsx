@@ -14,13 +14,15 @@ export function SyncSettings({ isOpen, onClose }: SyncSettingsProps) {
   const { syncEnabled, syncFrequencyMinutes, updateSyncPreferences } = useCalendarSync();
   const [localSyncEnabled, setLocalSyncEnabled] = useState(syncEnabled);
   const [localSyncFrequency, setLocalSyncFrequency] = useState(syncFrequencyMinutes);
-  const [syncDirection, setSyncDirection] = useState<'bidirectional' | 'google_to_local' | 'local_to_google'>('bidirectional');
+  const [syncDirection, setSyncDirection] = useState<
+    'bidirectional' | 'google_to_local' | 'local_to_google'
+  >('bidirectional');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen && user?.id) {
       // Load current preferences
-      calendarSyncService.getUserSyncPreferences(user.id).then(prefs => {
+      calendarSyncService.getUserSyncPreferences(user.id).then((prefs) => {
         if (prefs) {
           setLocalSyncEnabled(prefs.sync_enabled);
           setLocalSyncFrequency(prefs.sync_frequency_minutes);
@@ -70,7 +72,9 @@ export function SyncSettings({ isOpen, onClose }: SyncSettingsProps) {
                 <Settings className="w-5 h-5 text-blue-600" />
               </div>
               {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
-              <h2 id="sync-settings-title" className="text-xl font-bold text-gray-900">Sync Settings</h2>
+              <h2 id="sync-settings-title" className="text-xl font-bold text-gray-900">
+                Sync Settings
+              </h2>
             </div>
             <button
               onClick={onClose}
@@ -101,9 +105,7 @@ export function SyncSettings({ isOpen, onClose }: SyncSettingsProps) {
 
             {/* Sync Frequency */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sync frequency
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sync frequency</label>
               <select
                 value={localSyncFrequency}
                 onChange={(e) => setLocalSyncFrequency(Number(e.target.value))}
@@ -118,16 +120,12 @@ export function SyncSettings({ isOpen, onClose }: SyncSettingsProps) {
                 <option value={120}>Every 2 hours</option>
                 <option value={240}>Every 4 hours</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                How often to check for changes and sync
-              </p>
+              <p className="text-xs text-gray-500 mt-1">How often to check for changes and sync</p>
             </div>
 
             {/* Sync Direction */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sync direction
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sync direction</label>
               <div className="space-y-2">
                 <label className="flex items-start space-x-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                   <input
@@ -141,7 +139,8 @@ export function SyncSettings({ isOpen, onClose }: SyncSettingsProps) {
                   <div className="flex-1">
                     <span className="font-medium text-gray-900">Two-way sync</span>
                     <p className="text-xs text-gray-500">
-                      Sync changes in both directions. Conflicts will be detected for manual resolution.
+                      Sync changes in both directions. Conflicts will be detected for manual
+                      resolution.
                     </p>
                   </div>
                 </label>
@@ -158,7 +157,8 @@ export function SyncSettings({ isOpen, onClose }: SyncSettingsProps) {
                   <div className="flex-1">
                     <span className="font-medium text-gray-900">Google Calendar to Local</span>
                     <p className="text-xs text-gray-500">
-                      Only sync from Google Calendar to this app. Local changes won't affect Google Calendar.
+                      Only sync from Google Calendar to this app. Local changes won't affect Google
+                      Calendar.
                     </p>
                   </div>
                 </label>
@@ -175,7 +175,8 @@ export function SyncSettings({ isOpen, onClose }: SyncSettingsProps) {
                   <div className="flex-1">
                     <span className="font-medium text-gray-900">Local to Google Calendar</span>
                     <p className="text-xs text-gray-500">
-                      Only sync from this app to Google Calendar. Google Calendar changes won't affect local events.
+                      Only sync from this app to Google Calendar. Google Calendar changes won't
+                      affect local events.
                     </p>
                   </div>
                 </label>

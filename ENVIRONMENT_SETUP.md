@@ -25,11 +25,13 @@ The application requires Supabase credentials to function. These are configured 
 ### Step 2: Configure Environment Variables
 
 1. Copy the example file:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit `.env` and replace the placeholder values:
+
    ```
    VITE_SUPABASE_URL=https://your-actual-project.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJhbGc...your-actual-key
@@ -53,12 +55,13 @@ Since `.env` files are not deployed to Bolt Cloud, you must configure environmen
 
 Add the following secrets (case-sensitive):
 
-| Secret Name | Value |
-|------------|-------|
-| `VITE_SUPABASE_URL` | Your Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
+| Secret Name              | Value                     |
+| ------------------------ | ------------------------- |
+| `VITE_SUPABASE_URL`      | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key    |
 
 **Important:**
+
 - Ensure there are NO extra spaces before or after the values
 - Ensure there are NO newlines at the end
 - Variable names must be EXACTLY as shown (including the `VITE_` prefix)
@@ -66,6 +69,7 @@ Add the following secrets (case-sensitive):
 ### Step 3: Redeploy
 
 After adding the secrets:
+
 1. Commit and push your changes
 2. Bolt will automatically redeploy with the new environment variables
 
@@ -76,12 +80,14 @@ After adding the secrets:
 This error occurs when environment variables are not properly configured.
 
 **For Local Development:**
+
 1. Verify `.env` file exists in the project root
 2. Check that variables are named correctly (must start with `VITE_`)
 3. Ensure no quotes around values in `.env` file
 4. Restart the dev server
 
 **For Bolt Cloud:**
+
 1. Verify secrets are added in Project → Secrets
 2. Check for typos in secret names
 3. Ensure values don't have extra whitespace
@@ -90,6 +96,7 @@ This error occurs when environment variables are not properly configured.
 ### Configuration Error Screen
 
 If you see a red "Configuration Error" screen:
+
 1. Read the detailed error message
 2. Follow the instructions provided
 3. Click "Retry Configuration" after fixing the issue
@@ -97,6 +104,7 @@ If you see a red "Configuration Error" screen:
 ### Verifying Configuration
 
 After the app loads, check the browser console for:
+
 ```
 🔧 Environment Configuration Status
 ✅ Configuration is valid
@@ -131,11 +139,13 @@ project/
 ## Next Steps
 
 Once environment variables are configured:
+
 1. The app should load without errors
 2. You can sign up/sign in with email
 3. All Supabase features will be available
 
 For further assistance, check the other documentation files:
+
 - `GOOGLE_CALENDAR_SETUP.md` - Google Calendar integration
 - `RECIPE_FEATURE_GUIDE.md` - Recipe and shopping features
 - `SYNC_SYSTEM_GUIDE.md` - Calendar sync configuration

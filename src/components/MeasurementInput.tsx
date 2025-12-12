@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react'
-import { Calculator } from 'lucide-react'
-import { MeasurementConverter, MeasurementType } from '../utils/measurementConverter'
-import { InstacartUnitMapper } from '../utils/instacartUnitMapper'
+import React, { useState, useEffect } from 'react';
+import { Calculator } from 'lucide-react';
+import { MeasurementConverter, MeasurementType } from '../utils/measurementConverter';
+import { InstacartUnitMapper } from '../utils/instacartUnitMapper';
 
 interface MeasurementInputProps {
-  quantity: number | null
-  unit: string | null
-  ingredientName?: string
-  category?: string
-  onQuantityChange: (quantity: number | null) => void
-  onUnitChange: (unit: string | null) => void
-  showConverter?: boolean
-  preferredSystem?: 'metric' | 'imperial'
-  disabled?: boolean
-  className?: string
+  quantity: number | null;
+  unit: string | null;
+  ingredientName?: string;
+  category?: string;
+  onQuantityChange: (quantity: number | null) => void;
+  onUnitChange: (unit: string | null) => void;
+  showConverter?: boolean;
+  preferredSystem?: 'metric' | 'imperial';
+  disabled?: boolean;
+  className?: string;
 }
 
 export function MeasurementInput({
@@ -28,70 +28,68 @@ export function MeasurementInput({
   disabled = false,
   className = '',
 }: MeasurementInputProps) {
-  const [showConversion, setShowConversion] = useState(false)
-  const [conversionResult, setConversionResult] = useState<string>('')
+  const [showConversion, setShowConversion] = useState(false);
+  const [conversionResult, setConversionResult] = useState<string>('');
 
   const measurementType: MeasurementType = unit
     ? MeasurementConverter.getMeasurementType(unit)
-    : 'count'
+    : 'count';
 
-  const availableUnits = MeasurementConverter.getCommonUnits(preferredSystem)[measurementType]
+  const availableUnits = MeasurementConverter.getCommonUnits(preferredSystem)[measurementType];
 
   useEffect(() => {
     if (!unit && ingredientName && category) {
-      const suggestedUnit = InstacartUnitMapper.suggestUnitForIngredient(ingredientName, category)
-      onUnitChange(suggestedUnit)
+      const suggestedUnit = InstacartUnitMapper.suggestUnitForIngredient(ingredientName, category);
+      onUnitChange(suggestedUnit);
     }
-  }, [ingredientName, category])
+  }, [ingredientName, category]);
 
   useEffect(() => {
     if (quantity && unit && showConverter) {
-      updateConversion()
+      updateConversion();
     }
-  }, [quantity, unit, preferredSystem])
+  }, [quantity, unit, preferredSystem]);
 
   const updateConversion = () => {
     if (!quantity || !unit) {
-      setConversionResult('')
-      return
+      setConversionResult('');
+      return;
     }
 
-    const targetSystem = preferredSystem === 'metric' ? 'imperial' : 'metric'
-    const converted = MeasurementConverter.convertToSystem(quantity, unit, targetSystem)
+    const targetSystem = preferredSystem === 'metric' ? 'imperial' : 'metric';
+    const converted = MeasurementConverter.convertToSystem(quantity, unit, targetSystem);
 
     if (converted.conversionApplied) {
-      const formattedQuantity = MeasurementConverter.formatQuantity(converted.quantity)
-      setConversionResult(`≈ ${formattedQuantity} ${converted.unit}`)
+      const formattedQuantity = MeasurementConverter.formatQuantity(converted.quantity);
+      setConversionResult(`≈ ${formattedQuantity} ${converted.unit}`);
     } else {
-      setConversionResult('')
+      setConversionResult('');
     }
-  }
+  };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+    const value = e.target.value;
     if (value === '') {
-      onQuantityChange(null)
-      return
+      onQuantityChange(null);
+      return;
     }
 
-    const num = parseFloat(value)
+    const num = parseFloat(value);
     if (!isNaN(num) && num >= 0) {
-      onQuantityChange(num)
+      onQuantityChange(num);
     }
-  }
+  };
 
   const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newUnit = e.target.value
-    onUnitChange(newUnit || null)
-  }
+    const newUnit = e.target.value;
+    onUnitChange(newUnit || null);
+  };
 
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex space-x-2">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Quantity
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
           <input
             type="number"
             step="any"
@@ -105,9 +103,7 @@ export function MeasurementInput({
         </div>
 
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Unit
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
           <select
             value={unit || ''}
             onChange={handleUnitChange}
@@ -116,7 +112,7 @@ export function MeasurementInput({
           >
             <option value="">Select unit</option>
             <optgroup label="Common Units">
-              {availableUnits.map(u => (
+              {availableUnits.map((u) => (
                 <option key={u} value={u}>
                   {u}
                 </option>
@@ -145,5 +141,5 @@ export function MeasurementInput({
         </div>
       )}
     </div>
-  )
+  );
 }

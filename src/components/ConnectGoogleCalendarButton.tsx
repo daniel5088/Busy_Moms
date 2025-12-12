@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { AlertTriangle, Calendar } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import React, { useState } from 'react';
+import { AlertTriangle, Calendar } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export function ConnectGoogleCalendarButton({ onConnected } = {}) {
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export function ConnectGoogleCalendarButton({ onConnected } = {}) {
 
       // Use Supabase built-in Google OAuth
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider: 'google',
         options: {
           redirectTo: `${returnTo}/auth/callback`, // adjust to your callback route
           // you can also add scopes here if needed:
@@ -24,7 +24,7 @@ export function ConnectGoogleCalendarButton({ onConnected } = {}) {
       });
 
       if (error) {
-        console.error("❌ Google OAuth start error:", error);
+        console.error('❌ Google OAuth start error:', error);
         setError(error.message);
         setLoading(false);
         return;
@@ -32,7 +32,7 @@ export function ConnectGoogleCalendarButton({ onConnected } = {}) {
 
       // Supabase will redirect the browser to Google automatically.
       // No need to manually set window.location.href here.
-      console.log("🔗 Google OAuth redirect started:", data);
+      console.log('🔗 Google OAuth redirect started:', data);
 
       // If you *don’t* get redirected (e.g., in some dev setups),
       // you could optionally call onConnected here, but usually
@@ -42,11 +42,11 @@ export function ConnectGoogleCalendarButton({ onConnected } = {}) {
         try {
           await onConnected();
         } catch (e) {
-          console.error("onConnected callback error:", e);
+          console.error('onConnected callback error:', e);
         }
       }
     } catch (e: any) {
-      console.error("❌ Unexpected Google auth error:", e);
+      console.error('❌ Unexpected Google auth error:', e);
       setError(e?.message ?? String(e));
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export function ConnectGoogleCalendarButton({ onConnected } = {}) {
         className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
       >
         <Calendar className="w-4 h-4" />
-        <span>{loading ? "Connecting..." : "Connect Google Calendar"}</span>
+        <span>{loading ? 'Connecting...' : 'Connect Google Calendar'}</span>
       </button>
 
       {error && (

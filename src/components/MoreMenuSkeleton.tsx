@@ -1,4 +1,4 @@
-// Alvaros Skeletons 
+// Alvaros Skeletons
 
 export function MoreMenuSkeleton() {
   return (

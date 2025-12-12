@@ -1,13 +1,5 @@
 // tests/instacart.spec.ts
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  afterEach,
-  type Mock,
-} from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 
 // ---- Mock Supabase so sendToInstacart sees an authenticated user ----
 vi.mock('../src/lib/supabase', () => ({
@@ -48,7 +40,7 @@ describe('Instacart Shopping Service', () => {
       new Response(JSON.stringify({ url: 'https://instacart.com/fake-link' }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
-      }),
+      })
     );
 
     const items = [
@@ -88,14 +80,14 @@ describe('Instacart Shopping Service', () => {
       new Response(JSON.stringify({ message: 'Bad request' }), {
         status: 400,
         headers: { 'content-type': 'application/json' },
-      }),
+      })
     );
 
     await expect(
       instacartShoppingService.createCartLink({
         items: [],
         retailerId: 'costco',
-      }),
+      })
     ).rejects.toThrow(/instacart/i);
   });
 
@@ -107,13 +99,10 @@ describe('Instacart Shopping Service', () => {
       .mockResolvedValueOnce(new Response('server error', { status: 500 }))
       .mockResolvedValueOnce(new Response('server error', { status: 500 }))
       .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ url: 'https://instacart.com/retry-link' }),
-          {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          },
-        ),
+        new Response(JSON.stringify({ url: 'https://instacart.com/retry-link' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
       );
 
     const result = await instacartShoppingService.createCartLink({

@@ -1,20 +1,20 @@
-import React, { useState } from 'react'
-import { X, ShoppingBag, Hash, Package } from 'lucide-react'
-import { supabase, ShoppingItem, ProviderName } from '../../lib/supabase'
-import { useAuth } from '../../hooks/useAuth'
-import { MeasurementInput } from '../MeasurementInput'
-import { InstacartUnitMapper } from '../../utils/instacartUnitMapper'
+import React, { useState } from 'react';
+import { X, ShoppingBag, Hash, Package } from 'lucide-react';
+import { supabase, ShoppingItem, ProviderName } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
+import { MeasurementInput } from '../MeasurementInput';
+import { InstacartUnitMapper } from '../../utils/instacartUnitMapper';
 
 interface ShoppingFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onItemCreated: (item: ShoppingItem) => void
-  editItem?: ShoppingItem | null
+  isOpen: boolean;
+  onClose: () => void;
+  onItemCreated: (item: ShoppingItem) => void;
+  editItem?: ShoppingItem | null;
 }
 
 export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: ShoppingFormProps) {
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     item: editItem?.item || '',
     category: editItem?.category || 'other',
@@ -22,44 +22,39 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
     unit: editItem?.unit || null,
     urgent: editItem?.urgent || false,
     notes: editItem?.notes || '',
-    provider_name: editItem?.provider_name || null
-  })
-
+    provider_name: editItem?.provider_name || null,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
+    e.preventDefault();
+    if (!user) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       const itemData = {
         ...formData,
         user_id: user.id,
         completed: false,
         assigned_to: null,
-        purchase_status: 'not_sent'
-      }
+        purchase_status: 'not_sent',
+      };
 
-      let result
+      let result;
       if (editItem) {
         result = await supabase
           .from('shopping_lists')
           .update(itemData)
           .eq('id', editItem.id)
           .select()
-          .single()
+          .single();
       } else {
-        result = await supabase
-          .from('shopping_lists')
-          .insert([itemData])
-          .select()
-          .single()
+        result = await supabase.from('shopping_lists').insert([itemData]).select().single();
       }
 
-      if (result.error) throw result.error
+      if (result.error) throw result.error;
 
-      onItemCreated(result.data)
-      onClose()
+      onItemCreated(result.data);
+      onClose();
       setFormData({
         item: '',
         category: 'other',
@@ -67,17 +62,17 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
         unit: null,
         urgent: false,
         notes: '',
-        provider_name: null
-      })
+        provider_name: null,
+      });
     } catch (error) {
-      console.error('Error saving shopping item:', error)
-      alert('Error saving item. Please try again.')
+      console.error('Error saving shopping item:', error);
+      alert('Error saving item. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -223,7 +218,9 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                   onChange={(e) => setFormData({ ...formData, urgent: e.target.checked })}
                   className="w-3 h-3 sm:w-4 sm:h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
                 />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">Mark as urgent</span>
+                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  Mark as urgent
+                </span>
               </label>
             </div>
 
@@ -247,5 +244,5 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
         </div>
       </div>
     </div>
-  )
+  );
 }

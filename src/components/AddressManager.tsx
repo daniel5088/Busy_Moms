@@ -1,113 +1,122 @@
-import React, { useState, useEffect } from 'react'
-import { MapPin, Plus, Edit, Trash2, Star, Home, Briefcase, MapPinned, Loader2, AlertTriangle, CheckCircle } from 'lucide-react'
-import { supabase, Address } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
-import { AddressForm } from './AddressForm'
+import React, { useState, useEffect } from 'react';
+import {
+  MapPin,
+  Plus,
+  Edit,
+  Trash2,
+  Star,
+  Home,
+  Briefcase,
+  MapPinned,
+  Loader2,
+  AlertTriangle,
+  CheckCircle,
+} from 'lucide-react';
+import { supabase, Address } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
+import { AddressForm } from './AddressForm';
 
 export function AddressManager() {
-  const { user } = useAuth()
-  const [addresses, setAddresses] = useState<Address[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingAddress, setEditingAddress] = useState<Address | null>(null)
-  const [error, setError] = useState('')
+  const { user } = useAuth();
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [error, setError] = useState('');
 
   const loadAddresses = async () => {
     if (!user?.id) {
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('addresses')
         .select('*')
         .eq('user_id', user.id)
         .order('is_default', { ascending: false })
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: true });
 
-      if (error) throw error
-      setAddresses(data || [])
+      if (error) throw error;
+      setAddresses(data || []);
     } catch (err: any) {
-      console.error('Error loading addresses:', err)
-      setError(err.message || 'Failed to load addresses')
+      console.error('Error loading addresses:', err);
+      setError(err.message || 'Failed to load addresses');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadAddresses()
-  }, [user])
+    loadAddresses();
+  }, [user]);
 
   const handleSetDefault = async (addressId: string) => {
-    if (!user?.id) return
+    if (!user?.id) return;
 
     try {
       const { error } = await supabase
         .from('addresses')
         .update({ is_default: true })
-        .eq('id', addressId)
+        .eq('id', addressId);
 
-      if (error) throw error
-      await loadAddresses()
+      if (error) throw error;
+      await loadAddresses();
     } catch (err: any) {
-      console.error('Error setting default address:', err)
-      alert('Failed to set default address. Please try again.')
+      console.error('Error setting default address:', err);
+      alert('Failed to set default address. Please try again.');
     }
-  }
+  };
 
   const handleDelete = async (addressId: string) => {
     if (!confirm('Are you sure you want to delete this address?')) {
-      return
+      return;
     }
 
     try {
-      const { error } = await supabase
-        .from('addresses')
-        .delete()
-        .eq('id', addressId)
+      const { error } = await supabase.from('addresses').delete().eq('id', addressId);
 
-      if (error) throw error
-      await loadAddresses()
+      if (error) throw error;
+      await loadAddresses();
     } catch (err: any) {
-      console.error('Error deleting address:', err)
-      alert('Failed to delete address. Please try again.')
+      console.error('Error deleting address:', err);
+      alert('Failed to delete address. Please try again.');
     }
-  }
+  };
 
   const handleEdit = (address: Address) => {
-    setEditingAddress(address)
-    setShowForm(true)
-  }
+    setEditingAddress(address);
+    setShowForm(true);
+  };
 
   const handleAddressSaved = () => {
-    loadAddresses()
-    setShowForm(false)
-    setEditingAddress(null)
-  }
+    loadAddresses();
+    setShowForm(false);
+    setEditingAddress(null);
+  };
 
   const getAddressIcon = (addressType: string) => {
     switch (addressType) {
       case 'home':
-        return Home
+        return Home;
       case 'work':
-        return Briefcase
+        return Briefcase;
       default:
-        return MapPinned
+        return MapPinned;
     }
-  }
+  };
 
   const formatAddress = (address: Address) => {
-    const parts = [address.street_address]
+    const parts = [address.street_address];
     if (address.apartment_unit) {
-      parts.push(address.apartment_unit)
+      parts.push(address.apartment_unit);
     }
-    parts.push(`${address.city}, ${address.state_province} ${address.postal_code}`)
-    parts.push(address.country)
-    return parts.join(', ')
-  }
+    parts.push(`${address.city}, ${address.state_province} ${address.postal_code}`);
+    parts.push(address.country);
+    return parts.join(', ');
+  };
 
   if (loading) {
     return (
@@ -115,7 +124,7 @@ export function AddressManager() {
         <Loader2 className="w-6 h-6 animate-spin text-rose-500" />
         <span className="ml-2 text-gray-600">Loading addresses...</span>
       </div>
-    )
+    );
   }
 
   return (
@@ -130,8 +139,8 @@ export function AddressManager() {
         </div>
         <button
           onClick={() => {
-            setEditingAddress(null)
-            setShowForm(true)
+            setEditingAddress(null);
+            setShowForm(true);
           }}
           className="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors flex items-center gap-2"
         >
@@ -161,8 +170,8 @@ export function AddressManager() {
           </ul>
           <button
             onClick={() => {
-              setEditingAddress(null)
-              setShowForm(true)
+              setEditingAddress(null);
+              setShowForm(true);
             }}
             className="px-6 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors"
           >
@@ -172,7 +181,7 @@ export function AddressManager() {
       ) : (
         <div className="space-y-3">
           {addresses.map((address) => {
-            const Icon = getAddressIcon(address.address_type)
+            const Icon = getAddressIcon(address.address_type);
             return (
               <div
                 key={address.id}
@@ -182,10 +191,14 @@ export function AddressManager() {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      address.is_default ? 'bg-rose-500' : 'bg-gray-100'
-                    }`}>
-                      <Icon className={`w-5 h-5 ${address.is_default ? 'text-white' : 'text-gray-600'}`} />
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        address.is_default ? 'bg-rose-500' : 'bg-gray-100'
+                      }`}
+                    >
+                      <Icon
+                        className={`w-5 h-5 ${address.is_default ? 'text-white' : 'text-gray-600'}`}
+                      />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -205,9 +218,7 @@ export function AddressManager() {
                         )}
                       </div>
 
-                      <p className="text-sm text-gray-600 break-words">
-                        {formatAddress(address)}
-                      </p>
+                      <p className="text-sm text-gray-600 break-words">{formatAddress(address)}</p>
 
                       {address.validation_metadata?.formatted_address && (
                         <p className="text-xs text-gray-500 mt-1">
@@ -244,7 +255,7 @@ export function AddressManager() {
                   </div>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       )}
@@ -252,12 +263,12 @@ export function AddressManager() {
       <AddressForm
         isOpen={showForm}
         onClose={() => {
-          setShowForm(false)
-          setEditingAddress(null)
+          setShowForm(false);
+          setEditingAddress(null);
         }}
         onAddressSaved={handleAddressSaved}
         editAddress={editingAddress}
       />
     </div>
-  )
+  );
 }

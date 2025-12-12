@@ -1,5 +1,16 @@
 import React from 'react';
-import { Settings, HelpCircle, Info, Bell, MessageCircle, Shield, CreditCard, LogOut, Sparkles, Link } from 'lucide-react'; // Alvaro-quicklinks: Import Link icon
+import {
+  Settings,
+  HelpCircle,
+  Info,
+  Bell,
+  MessageCircle,
+  Shield,
+  CreditCard,
+  LogOut,
+  Sparkles,
+  Link,
+} from 'lucide-react'; // Alvaro-quicklinks: Import Link icon
 import { NavigationHeader } from './NavigationHeader';
 // import { MoreMenuSkeleton } from './skeletons/MoreMenuSkeleton';
 import { SubScreen } from '../App';
@@ -29,9 +40,9 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
           id: 'settings' as SubScreen,
           icon: Settings,
           title: 'App Settings',
-          description: 'Preferences and configuration'
-        }
-      ]
+          description: 'Preferences and configuration',
+        },
+      ],
     },
     {
       title: 'Features',
@@ -40,22 +51,22 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
           icon: Sparkles,
           title: 'Daily Affirmations',
           description: 'Manage your daily encouragement',
-          action: () => window.dispatchEvent(new CustomEvent('open-affirmations'))
+          action: () => window.dispatchEvent(new CustomEvent('open-affirmations')),
         },
         // Alvaro-quicklinks: Add Quick Links menu item
         {
           id: 'quick-links' as SubScreen,
           icon: Link,
           title: 'Quick Links',
-          description: 'Save important websites for one-tap access'
+          description: 'Save important websites for one-tap access',
         },
         {
           icon: Bell,
           title: 'Notifications',
           description: 'Manage alerts and reminders',
-          action: () => onNavigateToSubScreen('settings' as SubScreen)
-        }
-      ]
+          action: () => onNavigateToSubScreen('settings' as SubScreen),
+        },
+      ],
     },
     {
       title: 'Support',
@@ -63,23 +74,20 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
         {
           icon: HelpCircle,
           title: 'Help & Support',
-          description: 'Get help and contact support'
+          description: 'Get help and contact support',
         },
         {
           icon: Info,
           title: 'About',
-          description: 'App version and information'
-        }
-      ]
-    }
+          description: 'App version and information',
+        },
+      ],
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-24">
-      <NavigationHeader
-        title="More"
-        subtitle="Additional features and settings"
-      />
+      <NavigationHeader title="More" subtitle="Additional features and settings" />
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         {userName && (

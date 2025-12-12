@@ -1,31 +1,31 @@
-import { supabase } from '../lib/supabase'
-import type { UserMeasurementPreferences, MeasurementOverride } from '../lib/supabase'
-import { MeasurementConverter, MeasurementSystem } from '../utils/measurementConverter'
+import { supabase } from '../lib/supabase';
+import type { UserMeasurementPreferences, MeasurementOverride } from '../lib/supabase';
+import { MeasurementConverter, MeasurementSystem } from '../utils/measurementConverter';
 
 export class MeasurementPreferencesService {
-  private preferencesCache: Map<string, UserMeasurementPreferences> = new Map()
+  private preferencesCache: Map<string, UserMeasurementPreferences> = new Map();
 
   async getPreferences(userId: string): Promise<UserMeasurementPreferences> {
     if (this.preferencesCache.has(userId)) {
-      return this.preferencesCache.get(userId)!
+      return this.preferencesCache.get(userId)!;
     }
 
     const { data, error } = await supabase
       .from('user_measurement_preferences')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle()
+      .maybeSingle();
 
-    if (error) throw error
+    if (error) throw error;
 
     if (!data) {
-      const defaultPrefs = await this.createDefaultPreferences(userId)
-      this.preferencesCache.set(userId, defaultPrefs)
-      return defaultPrefs
+      const defaultPrefs = await this.createDefaultPreferences(userId);
+      this.preferencesCache.set(userId, defaultPrefs);
+      return defaultPrefs;
     }
 
-    this.preferencesCache.set(userId, data)
-    return data
+    this.preferencesCache.set(userId, data);
+    return data;
   }
 
   async createDefaultPreferences(userId: string): Promise<UserMeasurementPreferences> {
@@ -39,10 +39,10 @@ export class MeasurementPreferencesService {
         auto_convert: true,
       })
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async updatePreferences(
@@ -54,36 +54,36 @@ export class MeasurementPreferencesService {
       .update(updates)
       .eq('user_id', userId)
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
+    if (error) throw error;
 
-    this.preferencesCache.set(userId, data)
-    return data
+    this.preferencesCache.set(userId, data);
+    return data;
   }
 
   async setPreferredSystem(userId: string, system: MeasurementSystem): Promise<void> {
     const updates: Partial<UserMeasurementPreferences> = {
       preferred_system: system,
-    }
+    };
 
     if (system === 'metric') {
-      updates.default_volume_unit = 'milliliter'
-      updates.default_weight_unit = 'gram'
+      updates.default_volume_unit = 'milliliter';
+      updates.default_weight_unit = 'gram';
     } else {
-      updates.default_volume_unit = 'cup'
-      updates.default_weight_unit = 'pound'
+      updates.default_volume_unit = 'cup';
+      updates.default_weight_unit = 'pound';
     }
 
-    await this.updatePreferences(userId, updates)
+    await this.updatePreferences(userId, updates);
   }
 
   async toggleAutoConvert(userId: string): Promise<boolean> {
-    const prefs = await this.getPreferences(userId)
-    const newValue = !prefs.auto_convert
+    const prefs = await this.getPreferences(userId);
+    const newValue = !prefs.auto_convert;
 
-    await this.updatePreferences(userId, { auto_convert: newValue })
-    return newValue
+    await this.updatePreferences(userId, { auto_convert: newValue });
+    return newValue;
   }
 
   async addOverride(
@@ -97,10 +97,10 @@ export class MeasurementPreferencesService {
         ...override,
       })
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async getOverride(
@@ -108,32 +108,26 @@ export class MeasurementPreferencesService {
     recipeIngredientId?: string,
     shoppingListId?: string
   ): Promise<MeasurementOverride | null> {
-    let query = supabase
-      .from('measurement_overrides')
-      .select('*')
-      .eq('user_id', userId)
+    let query = supabase.from('measurement_overrides').select('*').eq('user_id', userId);
 
     if (recipeIngredientId) {
-      query = query.eq('recipe_ingredient_id', recipeIngredientId)
+      query = query.eq('recipe_ingredient_id', recipeIngredientId);
     }
 
     if (shoppingListId) {
-      query = query.eq('shopping_list_id', shoppingListId)
+      query = query.eq('shopping_list_id', shoppingListId);
     }
 
-    const { data, error } = await query.maybeSingle()
+    const { data, error } = await query.maybeSingle();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async removeOverride(overrideId: string): Promise<void> {
-    const { error } = await supabase
-      .from('measurement_overrides')
-      .delete()
-      .eq('id', overrideId)
+    const { error } = await supabase.from('measurement_overrides').delete().eq('id', overrideId);
 
-    if (error) throw error
+    if (error) throw error;
   }
 
   async convertBasedOnPreferences(
@@ -141,30 +135,26 @@ export class MeasurementPreferencesService {
     quantity: number,
     unit: string
   ): Promise<{ quantity: number; unit: string }> {
-    const prefs = await this.getPreferences(userId)
+    const prefs = await this.getPreferences(userId);
 
     if (!prefs.auto_convert) {
-      return { quantity, unit }
+      return { quantity, unit };
     }
 
-    const result = MeasurementConverter.convertToSystem(
-      quantity,
-      unit,
-      prefs.preferred_system
-    )
+    const result = MeasurementConverter.convertToSystem(quantity, unit, prefs.preferred_system);
 
     if (result.conversionApplied) {
-      return { quantity: result.quantity, unit: result.unit }
+      return { quantity: result.quantity, unit: result.unit };
     }
 
-    return { quantity, unit }
+    return { quantity, unit };
   }
 
   clearCache(userId?: string): void {
     if (userId) {
-      this.preferencesCache.delete(userId)
+      this.preferencesCache.delete(userId);
     } else {
-      this.preferencesCache.clear()
+      this.preferencesCache.clear();
     }
   }
 
@@ -172,32 +162,32 @@ export class MeasurementPreferencesService {
     userId: string,
     measurementType: 'volume' | 'weight' | 'count'
   ): Promise<string> {
-    const prefs = await this.getPreferences(userId)
+    const prefs = await this.getPreferences(userId);
 
     if (measurementType === 'volume') {
-      return prefs.default_volume_unit || 'cup'
+      return prefs.default_volume_unit || 'cup';
     }
 
     if (measurementType === 'weight') {
-      return prefs.default_weight_unit || 'pound'
+      return prefs.default_weight_unit || 'pound';
     }
 
-    return 'each'
+    return 'each';
   }
 
   async shouldAutoConvert(userId: string): Promise<boolean> {
-    const prefs = await this.getPreferences(userId)
-    return prefs.auto_convert ?? true
+    const prefs = await this.getPreferences(userId);
+    return prefs.auto_convert ?? true;
   }
 
   async getCommonUnits(userId: string): Promise<{
-    volume: string[]
-    weight: string[]
-    count: string[]
+    volume: string[];
+    weight: string[];
+    count: string[];
   }> {
-    const prefs = await this.getPreferences(userId)
-    return MeasurementConverter.getCommonUnits(prefs.preferred_system)
+    const prefs = await this.getPreferences(userId);
+    return MeasurementConverter.getCommonUnits(prefs.preferred_system);
   }
 }
 
-export const measurementPreferencesService = new MeasurementPreferencesService()
+export const measurementPreferencesService = new MeasurementPreferencesService();

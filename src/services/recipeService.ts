@@ -1,18 +1,14 @@
-import { supabase } from '../lib/supabase'
-import type { Recipe, RecipeIngredient, UserSavedRecipe, RecipeFilter } from '../lib/supabase'
-import type { SimplifiedRecipe } from './themealdb'
-import { IngredientParser } from '../utils/ingredientParser'
+import { supabase } from '../lib/supabase';
+import type { Recipe, RecipeIngredient, UserSavedRecipe, RecipeFilter } from '../lib/supabase';
+import type { SimplifiedRecipe } from './themealdb';
+import { IngredientParser } from '../utils/ingredientParser';
 
 export class RecipeService {
   async createRecipe(recipe: Omit<Recipe, 'id' | 'created_at' | 'updated_at'>): Promise<Recipe> {
-    const { data, error } = await supabase
-      .from('recipes')
-      .insert(recipe)
-      .select()
-      .single()
+    const { data, error } = await supabase.from('recipes').insert(recipe).select().single();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async getRecipe(recipeId: string): Promise<Recipe | null> {
@@ -20,10 +16,10 @@ export class RecipeService {
       .from('recipes')
       .select('*')
       .eq('id', recipeId)
-      .maybeSingle()
+      .maybeSingle();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async getRecipes(userId: string, filter?: RecipeFilter): Promise<Recipe[]> {
@@ -31,32 +27,32 @@ export class RecipeService {
       .from('recipes')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false });
 
     if (filter?.search) {
-      query = query.or(`title.ilike.%${filter.search}%,author.ilike.%${filter.search}%`)
+      query = query.or(`title.ilike.%${filter.search}%,author.ilike.%${filter.search}%`);
     }
 
     if (filter?.author) {
-      query = query.ilike('author', `%${filter.author}%`)
+      query = query.ilike('author', `%${filter.author}%`);
     }
 
     if (filter?.maxCookingTime) {
-      query = query.lte('cooking_time_minutes', filter.maxCookingTime)
+      query = query.lte('cooking_time_minutes', filter.maxCookingTime);
     }
 
     if (filter?.minServings) {
-      query = query.gte('servings', filter.minServings)
+      query = query.gte('servings', filter.minServings);
     }
 
     if (filter?.maxServings) {
-      query = query.lte('servings', filter.maxServings)
+      query = query.lte('servings', filter.maxServings);
     }
 
-    const { data, error } = await query
+    const { data, error } = await query;
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   }
 
   async updateRecipe(recipeId: string, updates: Partial<Recipe>): Promise<Recipe> {
@@ -65,29 +61,25 @@ export class RecipeService {
       .update(updates)
       .eq('id', recipeId)
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async deleteRecipe(recipeId: string): Promise<void> {
-    const { error } = await supabase
-      .from('recipes')
-      .delete()
-      .eq('id', recipeId)
+    const { error } = await supabase.from('recipes').delete().eq('id', recipeId);
 
-    if (error) throw error
+    if (error) throw error;
   }
 
-  async addIngredients(ingredients: Omit<RecipeIngredient, 'id' | 'created_at'>[]): Promise<RecipeIngredient[]> {
-    const { data, error } = await supabase
-      .from('recipe_ingredients')
-      .insert(ingredients)
-      .select()
+  async addIngredients(
+    ingredients: Omit<RecipeIngredient, 'id' | 'created_at'>[]
+  ): Promise<RecipeIngredient[]> {
+    const { data, error } = await supabase.from('recipe_ingredients').insert(ingredients).select();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async getIngredients(recipeId: string): Promise<RecipeIngredient[]> {
@@ -95,31 +87,31 @@ export class RecipeService {
       .from('recipe_ingredients')
       .select('*')
       .eq('recipe_id', recipeId)
-      .order('display_order', { ascending: true })
+      .order('display_order', { ascending: true });
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   }
 
-  async updateIngredient(ingredientId: string, updates: Partial<RecipeIngredient>): Promise<RecipeIngredient> {
+  async updateIngredient(
+    ingredientId: string,
+    updates: Partial<RecipeIngredient>
+  ): Promise<RecipeIngredient> {
     const { data, error } = await supabase
       .from('recipe_ingredients')
       .update(updates)
       .eq('id', ingredientId)
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async deleteIngredient(ingredientId: string): Promise<void> {
-    const { error } = await supabase
-      .from('recipe_ingredients')
-      .delete()
-      .eq('id', ingredientId)
+    const { error } = await supabase.from('recipe_ingredients').delete().eq('id', ingredientId);
 
-    if (error) throw error
+    if (error) throw error;
   }
 
   async saveRecipe(userId: string, recipeId: string): Promise<UserSavedRecipe> {
@@ -127,10 +119,10 @@ export class RecipeService {
       .from('user_saved_recipes')
       .insert({ user_id: userId, recipe_id: recipeId })
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   async unsaveRecipe(userId: string, recipeId: string): Promise<void> {
@@ -138,9 +130,9 @@ export class RecipeService {
       .from('user_saved_recipes')
       .delete()
       .eq('user_id', userId)
-      .eq('recipe_id', recipeId)
+      .eq('recipe_id', recipeId);
 
-    if (error) throw error
+    if (error) throw error;
   }
 
   async isRecipeSaved(userId: string, recipeId: string): Promise<boolean> {
@@ -149,37 +141,39 @@ export class RecipeService {
       .select('id')
       .eq('user_id', userId)
       .eq('recipe_id', recipeId)
-      .maybeSingle()
+      .maybeSingle();
 
-    if (error) throw error
-    return !!data
+    if (error) throw error;
+    return !!data;
   }
 
   async getSavedRecipes(userId: string): Promise<Recipe[]> {
     const { data, error } = await supabase
       .from('user_saved_recipes')
-      .select(`
+      .select(
+        `
         recipe_id,
         recipes (*)
-      `)
+      `
+      )
       .eq('user_id', userId)
-      .order('saved_at', { ascending: false })
+      .order('saved_at', { ascending: false });
 
-    if (error) throw error
+    if (error) throw error;
 
-    return data?.map((item: any) => item.recipes).filter(Boolean) || []
+    return data?.map((item: any) => item.recipes).filter(Boolean) || [];
   }
 
   async needsInstacartUrlRefresh(recipe: Recipe): Promise<boolean> {
     if (!recipe.instacart_recipe_url || !recipe.url_expires_at) {
-      return true
+      return true;
     }
 
-    const expiresAt = new Date(recipe.url_expires_at)
-    const now = new Date()
-    const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+    const expiresAt = new Date(recipe.url_expires_at);
+    const now = new Date();
+    const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    return expiresAt <= oneDayFromNow
+    return expiresAt <= oneDayFromNow;
   }
 
   async importFromTheMealDB(userId: string, themealdbRecipe: SimplifiedRecipe): Promise<Recipe> {
@@ -194,21 +188,21 @@ export class RecipeService {
       image_url: themealdbRecipe.imageUrl,
       instructions: themealdbRecipe.instructions,
       external_id: themealdbRecipe.id,
-      external_source: 'themealdb'
-    })
+      external_source: 'themealdb',
+    });
 
     const ingredients = themealdbRecipe.ingredients.map((ing, index) => {
-      let quantity = ing.quantity
-      let unit = ing.unit
+      let quantity = ing.quantity;
+      let unit = ing.unit;
 
       if (!quantity || !unit) {
-        const displayText = `${ing.quantity || ''} ${ing.unit || ''} ${ing.name}`.trim()
-        const parsed = IngredientParser.parse(displayText)
+        const displayText = `${ing.quantity || ''} ${ing.unit || ''} ${ing.name}`.trim();
+        const parsed = IngredientParser.parse(displayText);
         if (parsed.quantity && parsed.unit) {
-          quantity = parsed.quantity
-          unit = parsed.unit
+          quantity = parsed.quantity;
+          unit = parsed.unit;
         } else if (!unit) {
-          unit = IngredientParser.smartDetectUnit(ing.name, ing.category)
+          unit = IngredientParser.smartDetectUnit(ing.name, ing.category);
         }
       }
 
@@ -220,27 +214,27 @@ export class RecipeService {
         unit: unit,
         category: ing.category,
         display_order: index,
-        is_pantry_item: ing.category === 'pantry'
-      }
-    })
+        is_pantry_item: ing.category === 'pantry',
+      };
+    });
 
-    await this.addIngredients(ingredients)
+    await this.addIngredients(ingredients);
 
-    return recipe
+    return recipe;
   }
 
   parseIngredientText(text: string): {
-    quantity: number | null
-    unit: string | null
-    name: string
+    quantity: number | null;
+    unit: string | null;
+    name: string;
   } {
-    const parsed = IngredientParser.parse(text)
+    const parsed = IngredientParser.parse(text);
     return {
       quantity: parsed.quantity,
       unit: parsed.unit,
       name: parsed.ingredient,
-    }
+    };
   }
 }
 
-export const recipeService = new RecipeService()
+export const recipeService = new RecipeService();

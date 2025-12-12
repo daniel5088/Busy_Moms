@@ -63,7 +63,7 @@ export class CalendarContextService {
         .gte('event_date', past)
         .lt('event_date', today)
         .order('event_date', { ascending: false })
-        .limit(5)
+        .limit(5),
     ]);
 
     const todayEvents = todayResult.data || [];
@@ -84,7 +84,11 @@ export class CalendarContextService {
     };
   }
 
-  async getEventsForDateRange(userId: string, startDate: string, endDate: string): Promise<DbEvent[]> {
+  async getEventsForDateRange(
+    userId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<DbEvent[]> {
     const { data, error } = await supabase
       .from('events')
       .select('*')
@@ -118,7 +122,10 @@ export class CalendarContextService {
     return data || [];
   }
 
-  async checkAvailability(userId: string, query: AvailabilityQuery): Promise<{
+  async checkAvailability(
+    userId: string,
+    query: AvailabilityQuery
+  ): Promise<{
     available: boolean;
     events: DbEvent[];
     freeSlots: TimeSlot[];
@@ -147,7 +154,7 @@ export class CalendarContextService {
     const requestedStart = this.timeToMinutes(query.startTime);
     const requestedEnd = this.timeToMinutes(query.endTime);
 
-    const isAvailable = freeSlots.some(slot => {
+    const isAvailable = freeSlots.some((slot) => {
       const slotStart = this.timeToMinutes(slot.start);
       const slotEnd = this.timeToMinutes(slot.end);
       return requestedStart >= slotStart && requestedEnd <= slotEnd;
@@ -168,7 +175,7 @@ export class CalendarContextService {
     excludeEventId?: string
   ): Promise<ConflictCheck> {
     const events = await this.getEventsForDate(userId, date);
-    const relevantEvents = events.filter(e => e.id !== excludeEventId);
+    const relevantEvents = events.filter((e) => e.id !== excludeEventId);
 
     if (!startTime) {
       return {
@@ -181,15 +188,13 @@ export class CalendarContextService {
     const newStart = this.timeToMinutes(startTime);
     const newEnd = endTime ? this.timeToMinutes(endTime) : newStart + 60;
 
-    const conflictingEvents = relevantEvents.filter(event => {
+    const conflictingEvents = relevantEvents.filter((event) => {
       if (!event.start_time) return false;
 
       const eventStart = this.timeToMinutes(event.start_time);
-      const eventEnd = event.end_time
-        ? this.timeToMinutes(event.end_time)
-        : eventStart + 60;
+      const eventEnd = event.end_time ? this.timeToMinutes(event.end_time) : eventStart + 60;
 
-      return (newStart < eventEnd && newEnd > eventStart);
+      return newStart < eventEnd && newEnd > eventStart;
     });
 
     if (conflictingEvents.length === 0) {
@@ -253,8 +258,8 @@ export class CalendarContextService {
 
   private extractBusySlots(events: DbEvent[]): TimeSlot[] {
     return events
-      .filter(e => e.start_time)
-      .map(event => ({
+      .filter((e) => e.start_time)
+      .map((event) => ({
         start: event.start_time!,
         end: event.end_time || this.addMinutesToTime(event.start_time!, 60),
         event,
@@ -290,29 +295,33 @@ export class CalendarContextService {
       freeSlots.push({ start: lastBusyEnd, end: workDayEnd });
     }
 
-    return freeSlots.filter(slot =>
-      this.timeToMinutes(slot.end) - this.timeToMinutes(slot.start) >= 30
+    return freeSlots.filter(
+      (slot) => this.timeToMinutes(slot.end) - this.timeToMinutes(slot.start) >= 30
     );
   }
 
-  private generateContextSummary(todayEvents: DbEvent[], upcomingEvents: DbEvent[], today: string): string {
+  private generateContextSummary(
+    todayEvents: DbEvent[],
+    upcomingEvents: DbEvent[],
+    today: string
+  ): string {
     const parts: string[] = [];
 
-    parts.push(`Today is ${new Date(today).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })}.`);
+    parts.push(
+      `Today is ${new Date(today).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}.`
+    );
 
     if (todayEvents.length === 0) {
       parts.push('You have no events scheduled for today.');
     } else {
       parts.push(`You have ${todayEvents.length} event${todayEvents.length > 1 ? 's' : ''} today:`);
-      todayEvents.forEach(event => {
-        const time = event.start_time
-          ? ` at ${this.formatTime(event.start_time)}`
-          : '';
+      todayEvents.forEach((event) => {
+        const time = event.start_time ? ` at ${this.formatTime(event.start_time)}` : '';
         parts.push(`- ${event.title}${time}${event.location ? ` at ${event.location}` : ''}`);
       });
     }
@@ -320,27 +329,30 @@ export class CalendarContextService {
     if (upcomingEvents.length > 0) {
       const nextFewDays = upcomingEvents.slice(0, 5);
       parts.push(`\nUpcoming events (next 7 days):`);
-      nextFewDays.forEach(event => {
+      nextFewDays.forEach((event) => {
         const date = new Date(event.event_date).toLocaleDateString('en-US', {
           weekday: 'short',
           month: 'short',
-          day: 'numeric'
+          day: 'numeric',
         });
-        const time = event.start_time
-          ? ` at ${this.formatTime(event.start_time)}`
-          : '';
+        const time = event.start_time ? ` at ${this.formatTime(event.start_time)}` : '';
         parts.push(`- ${date}: ${event.title}${time}`);
       });
 
       if (upcomingEvents.length > 5) {
-        parts.push(`... and ${upcomingEvents.length - 5} more upcoming event${upcomingEvents.length - 5 > 1 ? 's' : ''}.`);
+        parts.push(
+          `... and ${upcomingEvents.length - 5} more upcoming event${upcomingEvents.length - 5 > 1 ? 's' : ''}.`
+        );
       }
     }
 
     return parts.join('\n');
   }
 
-  private generateAlternativeTimeSuggestions(freeSlots: TimeSlot[], durationMinutes: number): string[] {
+  private generateAlternativeTimeSuggestions(
+    freeSlots: TimeSlot[],
+    durationMinutes: number
+  ): string[] {
     const suggestions: string[] = [];
 
     for (const slot of freeSlots.slice(0, 3)) {
@@ -377,39 +389,41 @@ export class CalendarContextService {
       return 'You have no events.';
     }
 
-    return events.map((event, index) => {
-      const parts: string[] = [];
+    return events
+      .map((event, index) => {
+        const parts: string[] = [];
 
-      if (index === 0) parts.push(`${index + 1}. `);
-      else parts.push(`\n${index + 1}. `);
+        if (index === 0) parts.push(`${index + 1}. `);
+        else parts.push(`\n${index + 1}. `);
 
-      parts.push(event.title);
+        parts.push(event.title);
 
-      const date = new Date(event.event_date).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
-      parts.push(` on ${date}`);
+        const date = new Date(event.event_date).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        });
+        parts.push(` on ${date}`);
 
-      if (event.start_time) {
-        parts.push(` at ${this.formatTime(event.start_time)}`);
-      }
+        if (event.start_time) {
+          parts.push(` at ${this.formatTime(event.start_time)}`);
+        }
 
-      if (event.end_time) {
-        parts.push(` until ${this.formatTime(event.end_time)}`);
-      }
+        if (event.end_time) {
+          parts.push(` until ${this.formatTime(event.end_time)}`);
+        }
 
-      if (event.location) {
-        parts.push(` at ${event.location}`);
-      }
+        if (event.location) {
+          parts.push(` at ${event.location}`);
+        }
 
-      if (event.participants && event.participants.length > 0) {
-        parts.push(` with ${event.participants.join(', ')}`);
-      }
+        if (event.participants && event.participants.length > 0) {
+          parts.push(` with ${event.participants.join(', ')}`);
+        }
 
-      return parts.join('');
-    }).join('');
+        return parts.join('');
+      })
+      .join('');
   }
 }
 

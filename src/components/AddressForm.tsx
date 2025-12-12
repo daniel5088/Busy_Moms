@@ -1,22 +1,31 @@
-import React, { useState, useEffect } from 'react'
-import { X, MapPin, Loader2, CheckCircle, AlertCircle, Home, Briefcase, MapPinned } from 'lucide-react'
-import { supabase, Address, AddressType } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
-import { addressValidationService } from '../services/addressValidation'
+import React, { useState, useEffect } from 'react';
+import {
+  X,
+  MapPin,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Home,
+  Briefcase,
+  MapPinned,
+} from 'lucide-react';
+import { supabase, Address, AddressType } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
+import { addressValidationService } from '../services/addressValidation';
 
 interface AddressFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onAddressSaved: (address: Address) => void
-  editAddress?: Address | null
+  isOpen: boolean;
+  onClose: () => void;
+  onAddressSaved: (address: Address) => void;
+  editAddress?: Address | null;
 }
 
 export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: AddressFormProps) {
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [validating, setValidating] = useState(false)
-  const [error, setError] = useState('')
-  const [validationMessage, setValidationMessage] = useState('')
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [error, setError] = useState('');
+  const [validationMessage, setValidationMessage] = useState('');
   const [formData, setFormData] = useState({
     address_type: 'home' as AddressType,
     display_name: '',
@@ -26,8 +35,8 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
     state_province: '',
     postal_code: '',
     country: 'US',
-    is_default: false
-  })
+    is_default: false,
+  });
 
   useEffect(() => {
     if (isOpen && editAddress) {
@@ -40,8 +49,8 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
         state_province: editAddress.state_province,
         postal_code: editAddress.postal_code,
         country: editAddress.country,
-        is_default: editAddress.is_default || false
-      })
+        is_default: editAddress.is_default || false,
+      });
     } else if (isOpen && !editAddress) {
       setFormData({
         address_type: 'home',
@@ -52,33 +61,38 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
         state_province: '',
         postal_code: '',
         country: 'US',
-        is_default: false
-      })
+        is_default: false,
+      });
     }
-  }, [isOpen, editAddress])
+  }, [isOpen, editAddress]);
 
   useEffect(() => {
     if (formData.address_type && !editAddress) {
       const displayNames: Record<AddressType, string> = {
         home: 'Home',
         work: 'Work',
-        other: 'Other'
-      }
+        other: 'Other',
+      };
       if (!formData.display_name || Object.values(displayNames).includes(formData.display_name)) {
-        setFormData(prev => ({ ...prev, display_name: displayNames[formData.address_type] }))
+        setFormData((prev) => ({ ...prev, display_name: displayNames[formData.address_type] }));
       }
     }
-  }, [formData.address_type, editAddress])
+  }, [formData.address_type, editAddress]);
 
   const handleValidate = async () => {
-    if (!formData.street_address || !formData.city || !formData.state_province || !formData.postal_code) {
-      setValidationMessage('Please fill in all required fields before validating')
-      return
+    if (
+      !formData.street_address ||
+      !formData.city ||
+      !formData.state_province ||
+      !formData.postal_code
+    ) {
+      setValidationMessage('Please fill in all required fields before validating');
+      return;
     }
 
-    setValidating(true)
-    setValidationMessage('')
-    setError('')
+    setValidating(true);
+    setValidationMessage('');
+    setError('');
 
     try {
       const result = await addressValidationService.validateAddress(
@@ -88,46 +102,53 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
         formData.postal_code,
         formData.country,
         formData.apartment_unit
-      )
+      );
 
       if (result.valid) {
-        setValidationMessage(`Address validated successfully! ${result.formatted_address || ''}`)
+        setValidationMessage(`Address validated successfully! ${result.formatted_address || ''}`);
       } else {
-        setError(result.error_message || 'Address could not be validated')
+        setError(result.error_message || 'Address could not be validated');
         if (result.suggestions && result.suggestions.length > 0) {
-          setError(`${result.error_message || 'Address could not be validated'}. Did you mean: ${result.suggestions[0]}?`)
+          setError(
+            `${result.error_message || 'Address could not be validated'}. Did you mean: ${result.suggestions[0]}?`
+          );
         }
       }
     } catch (err) {
-      console.error('Validation error:', err)
-      setError('Failed to validate address. You can still save it.')
+      console.error('Validation error:', err);
+      setError('Failed to validate address. You can still save it.');
     } finally {
-      setValidating(false)
+      setValidating(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!user?.id) {
-      setError('No authenticated user found')
-      return
+      setError('No authenticated user found');
+      return;
     }
 
-    if (!formData.street_address || !formData.city || !formData.state_province || !formData.postal_code) {
-      setError('Please fill in all required fields')
-      return
+    if (
+      !formData.street_address ||
+      !formData.city ||
+      !formData.state_province ||
+      !formData.postal_code
+    ) {
+      setError('Please fill in all required fields');
+      return;
     }
 
     if (!addressValidationService.validatePostalCode(formData.postal_code, formData.country)) {
-      setError('Invalid postal code format for the selected country')
-      return
+      setError('Invalid postal code format for the selected country');
+      return;
     }
 
-    setError('')
-    setLoading(true)
+    setError('');
+    setLoading(true);
 
     try {
-      let validationMetadata = null
+      let validationMetadata = null;
 
       const result = await addressValidationService.validateAddress(
         formData.street_address,
@@ -136,15 +157,15 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
         formData.postal_code,
         formData.country,
         formData.apartment_unit
-      )
+      );
 
       validationMetadata = {
         validated_at: new Date().toISOString(),
         formatted_address: result.formatted_address,
         latitude: result.latitude,
         longitude: result.longitude,
-        valid: result.valid
-      }
+        valid: result.valid,
+      };
 
       const addressData = {
         user_id: user.id,
@@ -159,10 +180,10 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
         is_default: formData.is_default,
         validated: result.valid,
         validation_metadata: validationMetadata,
-        updated_at: new Date().toISOString()
-      }
+        updated_at: new Date().toISOString(),
+      };
 
-      let savedAddress: Address | null = null
+      let savedAddress: Address | null = null;
 
       if (editAddress) {
         const { data, error } = await supabase
@@ -170,48 +191,48 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
           .update(addressData)
           .eq('id', editAddress.id)
           .select()
-          .maybeSingle()
+          .maybeSingle();
 
-        if (error) throw error
-        savedAddress = data
+        if (error) throw error;
+        savedAddress = data;
       } else {
         const { data, error } = await supabase
           .from('addresses')
           .insert([addressData])
           .select()
-          .maybeSingle()
+          .maybeSingle();
 
-        if (error) throw error
-        savedAddress = data
+        if (error) throw error;
+        savedAddress = data;
       }
 
       if (!savedAddress) {
-        throw new Error('Failed to save address')
+        throw new Error('Failed to save address');
       }
 
-      onAddressSaved(savedAddress)
-      onClose()
+      onAddressSaved(savedAddress);
+      onClose();
     } catch (error: any) {
-      console.error('Error saving address:', error)
-      setError(error.message || 'Failed to save address')
+      console.error('Error saving address:', error);
+      setError(error.message || 'Failed to save address');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getStateProvinceOptions = () => {
     if (formData.country === 'US') {
-      return addressValidationService.getUSStates()
+      return addressValidationService.getUSStates();
     } else if (formData.country === 'CA') {
-      return addressValidationService.getCanadianProvinces()
+      return addressValidationService.getCanadianProvinces();
     }
-    return []
-  }
+    return [];
+  };
 
-  const countries = addressValidationService.getCountries()
-  const stateProvinceOptions = getStateProvinceOptions()
+  const countries = addressValidationService.getCountries();
+  const stateProvinceOptions = getStateProvinceOptions();
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -246,13 +267,11 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address Type
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address Type</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['home', 'work', 'other'] as AddressType[]).map((type) => {
-                    const icons = { home: Home, work: Briefcase, other: MapPinned }
-                    const Icon = icons[type]
+                    const icons = { home: Home, work: Briefcase, other: MapPinned };
+                    const Icon = icons[type];
                     return (
                       <button
                         key={type}
@@ -267,15 +286,13 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
                         <Icon className="w-3 h-3" />
                         {type.charAt(0).toUpperCase() + type.slice(1)}
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Display Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
                 <input
                   type="text"
                   value={formData.display_name}
@@ -317,9 +334,7 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  City *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
                 <input
                   type="text"
                   value={formData.city}
@@ -331,12 +346,12 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Country *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Country *</label>
                 <select
                   value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value, state_province: '' })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, country: e.target.value, state_province: '' })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   required
                 >
@@ -352,7 +367,12 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {formData.country === 'US' ? 'State' : formData.country === 'CA' ? 'Province' : 'State/Province'} *
+                  {formData.country === 'US'
+                    ? 'State'
+                    : formData.country === 'CA'
+                      ? 'Province'
+                      : 'State/Province'}{' '}
+                  *
                 </label>
                 {stateProvinceOptions.length > 0 ? (
                   <select
@@ -446,5 +466,5 @@ export function AddressForm({ isOpen, onClose, onAddressSaved, editAddress }: Ad
         </div>
       </div>
     </div>
-  )
+  );
 }

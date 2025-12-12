@@ -96,109 +96,92 @@ export const Diagnostics: React.FC = () => {
 
       {/* Alvaro-landmarks: Main content area wrapper */}
       <main className="space-y-8">
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Environment</h2>
-        <div className="bg-gray-50 rounded-lg p-3 border">
-          {Object.entries(envInfo).map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-4 text-sm">
-              <span className="font-medium">{k}</span>
-              <span className="font-mono break-all">{v}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-semibold">Endpoint Health</h2>
-          <button
-            onClick={runPings}
-            className="px-3 py-1 rounded-lg border text-sm hover:bg-gray-100"
-          >
-            Run Pings
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {pings.map((p) => (
-            <div
-              key={p.name}
-              className="border rounded-lg p-3 text-sm flex flex-col gap-1"
-            >
-              <div className="flex justify-between">
-                <span className="font-medium">{p.name}</span>
-                <span
-                  className={
-                    p.status === 'ok'
-                      ? 'text-green-600'
-                      : p.status === 'fail'
-                      ? 'text-red-600'
-                      : 'text-gray-500'
-                  }
-                >
-                  {p.status.toUpperCase()}
-                </span>
+        <section>
+          <h2 className="text-xl font-semibold mb-2">Environment</h2>
+          <div className="bg-gray-50 rounded-lg p-3 border">
+            {Object.entries(envInfo).map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-4 text-sm">
+                <span className="font-medium">{k}</span>
+                <span className="font-mono break-all">{v}</span>
               </div>
+            ))}
+          </div>
+        </section>
 
-              <div className="text-xs text-gray-600">URL: {p.url}</div>
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-semibold">Endpoint Health</h2>
+            <button
+              onClick={runPings}
+              className="px-3 py-1 rounded-lg border text-sm hover:bg-gray-100"
+            >
+              Run Pings
+            </button>
+          </div>
 
-              {p.message && (
-                <div className="text-xs text-gray-700">Message: {p.message}</div>
-              )}
-
-              {p.correlationId && (
-                <div className="text-xs text-gray-700">
-                  Correlation ID:{' '}
-                  <span className="font-mono">{p.correlationId}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Recent Errors</h2>
-
-        {errorLogs.length === 0 ? (
-          <p className="text-sm text-gray-500">No errors captured yet.</p>
-        ) : (
           <div className="space-y-2">
-            {errorLogs.map((log) => (
-              <div
-                key={log.id}
-                className="border rounded-lg p-3 text-sm flex flex-col gap-1"
-              >
+            {pings.map((p) => (
+              <div key={p.name} className="border rounded-lg p-3 text-sm flex flex-col gap-1">
                 <div className="flex justify-between">
-                  <span className="font-medium">
-                    {new Date(log.createdAt).toLocaleString()}
+                  <span className="font-medium">{p.name}</span>
+                  <span
+                    className={
+                      p.status === 'ok'
+                        ? 'text-green-600'
+                        : p.status === 'fail'
+                          ? 'text-red-600'
+                          : 'text-gray-500'
+                    }
+                  >
+                    {p.status.toUpperCase()}
                   </span>
-                  {log.correlationId && (
-                    <span className="text-xs font-mono text-gray-700">
-                      {log.correlationId}
-                    </span>
-                  )}
                 </div>
 
-                <div className="text-red-700">{log.message}</div>
+                <div className="text-xs text-gray-600">URL: {p.url}</div>
 
-                {log.url && (
-                  <div className="text-xs text-gray-600 break-all">
-                    URL: {log.url}
+                {p.message && <div className="text-xs text-gray-700">Message: {p.message}</div>}
+
+                {p.correlationId && (
+                  <div className="text-xs text-gray-700">
+                    Correlation ID: <span className="font-mono">{p.correlationId}</span>
                   </div>
-                )}
-
-                {log.stack && (
-                  <details className="text-xs text-gray-600">
-                    <summary>Stack trace</summary>
-                    <pre className="whitespace-pre-wrap">{log.stack}</pre>
-                  </details>
                 )}
               </div>
             ))}
           </div>
-        )}
-      </section>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold mb-2">Recent Errors</h2>
+
+          {errorLogs.length === 0 ? (
+            <p className="text-sm text-gray-500">No errors captured yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {errorLogs.map((log) => (
+                <div key={log.id} className="border rounded-lg p-3 text-sm flex flex-col gap-1">
+                  <div className="flex justify-between">
+                    <span className="font-medium">{new Date(log.createdAt).toLocaleString()}</span>
+                    {log.correlationId && (
+                      <span className="text-xs font-mono text-gray-700">{log.correlationId}</span>
+                    )}
+                  </div>
+
+                  <div className="text-red-700">{log.message}</div>
+
+                  {log.url && <div className="text-xs text-gray-600 break-all">URL: {log.url}</div>}
+
+                  {log.stack && (
+                    <details className="text-xs text-gray-600">
+                      <summary>Stack trace</summary>
+                      <pre className="whitespace-pre-wrap">{log.stack}</pre>
+                    </details>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );

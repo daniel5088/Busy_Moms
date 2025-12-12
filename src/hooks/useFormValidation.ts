@@ -10,7 +10,9 @@ interface UseFormValidationReturn<T> {
   isValidating: boolean;
   handleChange: (name: string, value: any) => void;
   handleBlur: (name: string) => void;
-  handleSubmit: (onSubmit: (values: T) => void | Promise<void>) => (e?: React.FormEvent) => Promise<void>;
+  handleSubmit: (
+    onSubmit: (values: T) => void | Promise<void>
+  ) => (e?: React.FormEvent) => Promise<void>;
   setFieldError: (name: string, error: string) => void;
   setFieldValue: (name: string, value: any) => void;
   setErrors: (errors: FormErrors) => void;
@@ -116,24 +118,23 @@ export function useFormValidation<T extends Record<string, any>>({
   );
 
   const handleSubmit = useCallback(
-    (submitHandler: (values: T) => void | Promise<void>) =>
-      async (e?: React.FormEvent) => {
-        if (e) {
-          e.preventDefault();
-        }
+    (submitHandler: (values: T) => void | Promise<void>) => async (e?: React.FormEvent) => {
+      if (e) {
+        e.preventDefault();
+      }
 
-        const allTouched: Record<string, boolean> = {};
-        Object.keys(values).forEach((key) => {
-          allTouched[key] = true;
-        });
-        setTouched(allTouched);
+      const allTouched: Record<string, boolean> = {};
+      Object.keys(values).forEach((key) => {
+        allTouched[key] = true;
+      });
+      setTouched(allTouched);
 
-        const isValid = await validateForm();
+      const isValid = await validateForm();
 
-        if (isValid) {
-          await submitHandler(values);
-        }
-      },
+      if (isValid) {
+        await submitHandler(values);
+      }
+    },
     [values, validateForm]
   );
 

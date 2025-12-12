@@ -59,7 +59,9 @@ export function ErrorModal({
       >
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${bgColors[type]}`}>
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center ${bgColors[type]}`}
+            >
               {icons[type]}
             </div>
             <button
@@ -86,9 +88,7 @@ export function ErrorModal({
 
               {detailsVisible && (
                 <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs font-mono text-gray-700 break-all">
-                    {details}
-                  </p>
+                  <p className="text-xs font-mono text-gray-700 break-all">{details}</p>
                 </div>
               )}
             </div>

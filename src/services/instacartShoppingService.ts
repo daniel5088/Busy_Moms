@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabase';
 import type {
   ShoppingItem,
   InstacartShoppingListRequest,
@@ -8,57 +8,62 @@ import type {
   GetNearbyRetailersRequest,
   GetNearbyRetailersResponse,
   UserPreferredRetailer,
-  Retailer
-} from '../lib/supabase'
-import { InstacartUnitMapper } from '../utils/instacartUnitMapper'
+  Retailer,
+} from '../lib/supabase';
+import { InstacartUnitMapper } from '../utils/instacartUnitMapper';
 // Note: getPreferredRetailer is from legacy user_settings table - no longer used
 
 export class InstacartShoppingService {
-  private edgeFunctionUrl: string
+  private edgeFunctionUrl: string;
 
   constructor() {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    this.edgeFunctionUrl = `${supabaseUrl}/functions/v1/instacart-shopping-list`
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    this.edgeFunctionUrl = `${supabaseUrl}/functions/v1/instacart-shopping-list`;
   }
 
-  async sendToInstacart(items: ShoppingItem[], retailerKey?: string): Promise<InstacartShoppingListResponse> {
-    const { data: { session } } = await supabase.auth.getSession()
+  async sendToInstacart(
+    items: ShoppingItem[],
+    retailerKey?: string
+  ): Promise<InstacartShoppingListResponse> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session?.access_token) {
-      throw new Error('User must be authenticated to send items to Instacart')
+      throw new Error('User must be authenticated to send items to Instacart');
     }
 
-    const formattedItems = this.formatItemsForInstacart(items)
+    const formattedItems = this.formatItemsForInstacart(items);
 
     // ✅ Determine which retailer to use:
     // 1) explicit override from caller
     // 2) fallback to primary retailer from user_preferred_retailers table
-    let effectiveRetailerKey: string | null | undefined = retailerKey
+    let effectiveRetailerKey: string | null | undefined = retailerKey;
 
-    const userId = items[0]?.user_id
+    const userId = items[0]?.user_id;
     if (!effectiveRetailerKey && userId) {
-      const primaryRetailer = await this.getPrimaryRetailer(userId)
-      effectiveRetailerKey = primaryRetailer?.retailer_key
+      const primaryRetailer = await this.getPrimaryRetailer(userId);
+      effectiveRetailerKey = primaryRetailer?.retailer_key;
     }
 
     const requestBody: any = {
       action: 'create_shopping_list',
       items: formattedItems,
       title: 'My Shopping List',
-    }
+    };
 
     if (effectiveRetailerKey) {
-      requestBody.retailer_key = effectiveRetailerKey
+      requestBody.retailer_key = effectiveRetailerKey;
     }
 
     const response = await fetch(this.edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify(requestBody),
-    })
+    });
 
     let data: any;
 
@@ -73,7 +78,8 @@ export class InstacartShoppingService {
           errorData = { raw: responseText };
         }
 
-        const errorMessage = errorData.error ||
+        const errorMessage =
+          errorData.error ||
           errorData.details?.error ||
           responseText ||
           `Failed to create Instacart shopping list: ${response.statusText}`;
@@ -84,16 +90,18 @@ export class InstacartShoppingService {
       data = JSON.parse(responseText);
     } catch (error) {
       if (error instanceof Error && error.message.includes('Unexpected token')) {
-        throw new Error('Invalid response from Instacart API. Please check your API configuration.');
+        throw new Error(
+          'Invalid response from Instacart API. Please check your API configuration.'
+        );
       }
       throw error;
     }
 
-    let retailerName: string | undefined
+    let retailerName: string | undefined;
     if (effectiveRetailerKey && userId) {
-      const retailers = await this.getPreferredRetailers(userId)
-      const matchingRetailer = retailers.find(r => r.retailer_key === effectiveRetailerKey)
-      retailerName = matchingRetailer?.retailer_name
+      const retailers = await this.getPreferredRetailers(userId);
+      const matchingRetailer = retailers.find((r) => r.retailer_key === effectiveRetailerKey);
+      retailerName = matchingRetailer?.retailer_name;
     }
 
     await this.updateItemsProviderStatus(
@@ -101,28 +109,34 @@ export class InstacartShoppingService {
       data,
       effectiveRetailerKey ?? undefined,
       retailerName
-    )
+    );
 
-    return data as InstacartShoppingListResponse
+    return data as InstacartShoppingListResponse;
   }
 
   // Backwards-compatible helper used by some tests and older callers
   // Calls the edge function directly so tests can mock global.fetch. Adds retry logic for 5xx/429 and
   // ensures thrown errors include 'instacart' so callers/tests can identify origin.
-  async createCartLink({ items, retailerId }: { items: Array<{ name: string; quantity: number; unit: string }>; retailerId?: string }) {
+  async createCartLink({
+    items,
+    retailerId,
+  }: {
+    items: Array<{ name: string; quantity: number; unit: string }>;
+    retailerId?: string;
+  }) {
     const requestBody: any = {
       action: 'create_shopping_list',
       items,
       title: 'My Shopping List',
-    }
+    };
 
     if (retailerId) {
-      requestBody.retailerId = retailerId
-      requestBody.retailer_key = retailerId
+      requestBody.retailerId = retailerId;
+      requestBody.retailer_key = retailerId;
     }
 
-    const maxAttempts = 3
-    let lastError: any = null
+    const maxAttempts = 3;
+    let lastError: any = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const response = await fetch(this.edgeFunctionUrl, {
@@ -131,62 +145,68 @@ export class InstacartShoppingService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-      })
+      });
 
       if (response.ok) {
-        const data = await response.json().catch(() => ({}))
-        return { url: data.url || data.products_link_url }
+        const data = await response.json().catch(() => ({}));
+        return { url: data.url || data.products_link_url };
       }
 
-      const text = await response.text().catch(() => '')
-      lastError = text || `Instacart edge function error: ${response.status}`
+      const text = await response.text().catch(() => '');
+      lastError = text || `Instacart edge function error: ${response.status}`;
 
       // Retry on server errors or rate limits
       if ((response.status >= 500 && response.status < 600) || response.status === 429) {
-        if (attempt < maxAttempts) continue
+        if (attempt < maxAttempts) continue;
       }
 
-      throw new Error(`instacart: ${lastError}`)
+      throw new Error(`instacart: ${lastError}`);
     }
 
-    throw new Error(`instacart: ${lastError || 'unknown error'}`)
+    throw new Error(`instacart: ${lastError || 'unknown error'}`);
   }
 
-  async sendAllToInstacart(userId: string, retailerKey?: string): Promise<InstacartShoppingListResponse> {
-    const items = await this.getItemsNotSent(userId)
+  async sendAllToInstacart(
+    userId: string,
+    retailerKey?: string
+  ): Promise<InstacartShoppingListResponse> {
+    const items = await this.getItemsNotSent(userId);
 
     if (items.length === 0) {
-      throw new Error('No items available to send to Instacart')
+      throw new Error('No items available to send to Instacart');
     }
 
-    return this.sendToInstacart(items, retailerKey)
+    return this.sendToInstacart(items, retailerKey);
   }
 
-  async sendSelectedToInstacart(itemIds: string[], retailerKey?: string): Promise<InstacartShoppingListResponse> {
-    const items = await this.getItemsByIds(itemIds)
+  async sendSelectedToInstacart(
+    itemIds: string[],
+    retailerKey?: string
+  ): Promise<InstacartShoppingListResponse> {
+    const items = await this.getItemsByIds(itemIds);
 
     if (items.length === 0) {
-      throw new Error('No valid items found to send to Instacart')
+      throw new Error('No valid items found to send to Instacart');
     }
 
-    return this.sendToInstacart(items, retailerKey)
+    return this.sendToInstacart(items, retailerKey);
   }
 
   private formatItemsForInstacart(items: ShoppingItem[]) {
-    return items.map(item => {
+    return items.map((item) => {
       const formatted = InstacartUnitMapper.formatForInstacart(
         item.quantity,
         item.unit,
         item.category || undefined
-      )
+      );
 
       return {
         name: item.item,
         quantity: formatted.quantity,
         unit: formatted.unit,
         category: item.category || 'other',
-      }
-    })
+      };
+    });
   }
 
   private async updateItemsProviderStatus(
@@ -198,29 +218,26 @@ export class InstacartShoppingService {
     const metadata: ProviderMetadata = {
       cart_url: response.products_link_url,
       timestamp: new Date().toISOString(),
-    }
+    };
 
     if (retailerKey) {
-      metadata.retailer_key = retailerKey
+      metadata.retailer_key = retailerKey;
     }
     if (retailerName) {
-      metadata.retailer_name = retailerName
+      metadata.retailer_name = retailerName;
     }
 
-    const updates = items.map(item => ({
+    const updates = items.map((item) => ({
       id: item.id,
       provider_name: 'instacart' as const,
       purchase_status: 'in_cart' as PurchaseStatus,
       external_order_id: null,
       provider_metadata: metadata,
       provider_synced_at: new Date().toISOString(),
-    }))
+    }));
 
     for (const update of updates) {
-      await supabase
-        .from('shopping_lists')
-        .update(update)
-        .eq('id', update.id)
+      await supabase.from('shopping_lists').update(update).eq('id', update.id);
     }
   }
 
@@ -230,10 +247,10 @@ export class InstacartShoppingService {
       .select('*')
       .eq('user_id', userId)
       .eq('provider_name', providerName)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false });
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   }
 
   async getItemsByStatus(userId: string, status: PurchaseStatus): Promise<ShoppingItem[]> {
@@ -242,10 +259,10 @@ export class InstacartShoppingService {
       .select('*')
       .eq('user_id', userId)
       .eq('purchase_status', status)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false });
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   }
 
   async getItemsNotSent(userId: string): Promise<ShoppingItem[]> {
@@ -255,24 +272,21 @@ export class InstacartShoppingService {
       .eq('user_id', userId)
       .eq('completed', false)
       .or('purchase_status.eq.not_sent,purchase_status.is.null')
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false });
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   }
 
   private async getItemsByIds(itemIds: string[]): Promise<ShoppingItem[]> {
-    const { data, error } = await supabase
-      .from('shopping_lists')
-      .select('*')
-      .in('id', itemIds)
+    const { data, error } = await supabase.from('shopping_lists').select('*').in('id', itemIds);
 
-    if (error) throw error
-    return data || []
+    if (error) throw error;
+    return data || [];
   }
 
   buildPartnerLinkbackUrl(): string {
-    return window.location.origin + '/shopping'
+    return window.location.origin + '/shopping';
   }
 
   async updateItemStatus(
@@ -283,18 +297,15 @@ export class InstacartShoppingService {
     const updates: any = {
       purchase_status: status,
       provider_synced_at: new Date().toISOString(),
-    }
+    };
 
     if (metadata) {
-      updates.provider_metadata = metadata
+      updates.provider_metadata = metadata;
     }
 
-    const { error } = await supabase
-      .from('shopping_lists')
-      .update(updates)
-      .eq('id', itemId)
+    const { error } = await supabase.from('shopping_lists').update(updates).eq('id', itemId);
 
-    if (error) throw error
+    if (error) throw error;
   }
 
   async clearProviderFromItems(itemIds: string[]): Promise<void> {
@@ -307,9 +318,9 @@ export class InstacartShoppingService {
         provider_metadata: null,
         provider_synced_at: null,
       })
-      .in('id', itemIds)
+      .in('id', itemIds);
 
-    if (error) throw error
+    if (error) throw error;
   }
 
   async getProviderStats(userId: string) {
@@ -317,63 +328,65 @@ export class InstacartShoppingService {
       .from('shopping_lists')
       .select('provider_name, purchase_status')
       .eq('user_id', userId)
-      .eq('completed', false)
+      .eq('completed', false);
 
-    if (error) throw error
+    if (error) throw error;
 
     const stats = {
       instacart: { not_sent: 0, in_cart: 0, purchased: 0, failed: 0 },
       amazon: { not_sent: 0, in_cart: 0, purchased: 0, failed: 0 },
       manual: { not_sent: 0, in_cart: 0, purchased: 0, failed: 0 },
       unassigned: { not_sent: 0, in_cart: 0, purchased: 0, failed: 0 },
-    }
+    };
 
-    data?.forEach(item => {
-      const provider = item.provider_name || 'unassigned'
-      const status = item.purchase_status || 'not_sent'
+    data?.forEach((item) => {
+      const provider = item.provider_name || 'unassigned';
+      const status = item.purchase_status || 'not_sent';
       if (stats[provider as keyof typeof stats]) {
-        stats[provider as keyof typeof stats][status as keyof typeof stats.instacart]++
+        stats[provider as keyof typeof stats][status as keyof typeof stats.instacart]++;
       }
-    })
+    });
 
-    return stats
+    return stats;
   }
 
-  async getNearbyRetailers(postalCode: string, countryCode: 'US' | 'CA' = 'US'): Promise<GetNearbyRetailersResponse> {
-    const { data: { session } } = await supabase.auth.getSession()
+  async getNearbyRetailers(
+    postalCode: string,
+    countryCode: 'US' | 'CA' = 'US'
+  ): Promise<GetNearbyRetailersResponse> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session?.access_token) {
-      throw new Error('User must be authenticated to get nearby retailers')
+      throw new Error('User must be authenticated to get nearby retailers');
     }
 
     const response = await fetch(this.edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
         action: 'get_nearby_retailers',
         postal_code: postalCode,
         country_code: countryCode,
       }),
-    })
+    });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(
-        errorData.error ||
-        `Failed to get nearby retailers: ${response.statusText}`
-      )
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to get nearby retailers: ${response.statusText}`);
     }
 
-    const data = await response.json()
-    return data as GetNearbyRetailersResponse
+    const data = await response.json();
+    return data as GetNearbyRetailersResponse;
   }
 
   async getPreferredRetailers(userId: string): Promise<UserPreferredRetailer[]> {
     if (!userId) {
-      return []
+      return [];
     }
 
     try {
@@ -381,23 +394,23 @@ export class InstacartShoppingService {
         .from('user_preferred_retailers')
         .select('*')
         .eq('user_id', userId)
-        .order('display_order', { ascending: true })
+        .order('display_order', { ascending: true });
 
       if (error) {
-        console.error('Error fetching preferred retailers:', error)
-        throw new Error(`Failed to load preferred retailers: ${error.message}`)
+        console.error('Error fetching preferred retailers:', error);
+        throw new Error(`Failed to load preferred retailers: ${error.message}`);
       }
 
-      return data || []
+      return data || [];
     } catch (error) {
-      console.error('Error in getPreferredRetailers:', error)
-      throw error
+      console.error('Error in getPreferredRetailers:', error);
+      throw error;
     }
   }
 
   async getPrimaryRetailer(userId: string): Promise<UserPreferredRetailer | null> {
     if (!userId) {
-      return null
+      return null;
     }
 
     try {
@@ -406,23 +419,27 @@ export class InstacartShoppingService {
         .select('*')
         .eq('user_id', userId)
         .eq('is_primary', true)
-        .maybeSingle()
+        .maybeSingle();
 
       if (error) {
-        console.error('Error fetching primary retailer:', error)
-        throw new Error(`Failed to load primary retailer: ${error.message}`)
+        console.error('Error fetching primary retailer:', error);
+        throw new Error(`Failed to load primary retailer: ${error.message}`);
       }
 
-      return data
+      return data;
     } catch (error) {
-      console.error('Error in getPrimaryRetailer:', error)
-      throw error
+      console.error('Error in getPrimaryRetailer:', error);
+      throw error;
     }
   }
 
-  async savePreferredRetailer(userId: string, retailer: Retailer, isPrimary: boolean = false): Promise<UserPreferredRetailer> {
+  async savePreferredRetailer(
+    userId: string,
+    retailer: Retailer,
+    isPrimary: boolean = false
+  ): Promise<UserPreferredRetailer> {
     if (!userId || !retailer?.retailer_key) {
-      throw new Error('User ID and retailer information are required')
+      throw new Error('User ID and retailer information are required');
     }
 
     try {
@@ -430,15 +447,15 @@ export class InstacartShoppingService {
         const { error: updateError } = await supabase
           .from('user_preferred_retailers')
           .update({ is_primary: false })
-          .eq('user_id', userId)
+          .eq('user_id', userId);
 
         if (updateError) {
-          console.error('Error clearing primary flags:', updateError)
+          console.error('Error clearing primary flags:', updateError);
         }
       }
 
-      const existingRetailers = await this.getPreferredRetailers(userId)
-      const displayOrder = existingRetailers.length
+      const existingRetailers = await this.getPreferredRetailers(userId);
+      const displayOrder = existingRetailers.length;
 
       const { data, error } = await supabase
         .from('user_preferred_retailers')
@@ -451,59 +468,59 @@ export class InstacartShoppingService {
           display_order: displayOrder,
         })
         .select()
-        .single()
+        .single();
 
       if (error) {
         if (error.code === '23505') {
-          throw new Error('This retailer is already in your preferred list')
+          throw new Error('This retailer is already in your preferred list');
         }
-        throw new Error(`Failed to save retailer: ${error.message}`)
+        throw new Error(`Failed to save retailer: ${error.message}`);
       }
 
       if (!data) {
-        throw new Error('Failed to save retailer: No data returned')
+        throw new Error('Failed to save retailer: No data returned');
       }
 
-      return data
+      return data;
     } catch (error) {
-      console.error('Error in savePreferredRetailer:', error)
-      throw error
+      console.error('Error in savePreferredRetailer:', error);
+      throw error;
     }
   }
 
   async setPrimaryRetailer(userId: string, retailerId: string): Promise<void> {
     if (!userId || !retailerId) {
-      throw new Error('User ID and retailer ID are required')
+      throw new Error('User ID and retailer ID are required');
     }
 
     try {
       const { error: clearError } = await supabase
         .from('user_preferred_retailers')
         .update({ is_primary: false })
-        .eq('user_id', userId)
+        .eq('user_id', userId);
 
       if (clearError) {
-        throw new Error(`Failed to clear primary flags: ${clearError.message}`)
+        throw new Error(`Failed to clear primary flags: ${clearError.message}`);
       }
 
       const { error: setPrimaryError } = await supabase
         .from('user_preferred_retailers')
         .update({ is_primary: true })
         .eq('id', retailerId)
-        .eq('user_id', userId)
+        .eq('user_id', userId);
 
       if (setPrimaryError) {
-        throw new Error(`Failed to set primary retailer: ${setPrimaryError.message}`)
+        throw new Error(`Failed to set primary retailer: ${setPrimaryError.message}`);
       }
     } catch (error) {
-      console.error('Error in setPrimaryRetailer:', error)
-      throw error
+      console.error('Error in setPrimaryRetailer:', error);
+      throw error;
     }
   }
 
   async removePreferredRetailer(userId: string, retailerId: string): Promise<void> {
     if (!userId || !retailerId) {
-      throw new Error('User ID and retailer ID are required')
+      throw new Error('User ID and retailer ID are required');
     }
 
     try {
@@ -511,14 +528,14 @@ export class InstacartShoppingService {
         .from('user_preferred_retailers')
         .delete()
         .eq('id', retailerId)
-        .eq('user_id', userId)
+        .eq('user_id', userId);
 
       if (error) {
-        throw new Error(`Failed to remove retailer: ${error.message}`)
+        throw new Error(`Failed to remove retailer: ${error.message}`);
       }
     } catch (error) {
-      console.error('Error in removePreferredRetailer:', error)
-      throw error
+      console.error('Error in removePreferredRetailer:', error);
+      throw error;
     }
   }
 
@@ -527,14 +544,14 @@ export class InstacartShoppingService {
       .from('user_preferred_retailers')
       .update({ display_order: newOrder })
       .eq('id', retailerId)
-      .eq('user_id', userId)
+      .eq('user_id', userId);
 
-    if (error) throw error
+    if (error) throw error;
   }
 
   async checkRetailerExists(userId: string, retailerKey: string): Promise<boolean> {
     if (!userId || !retailerKey) {
-      return false
+      return false;
     }
 
     try {
@@ -543,19 +560,19 @@ export class InstacartShoppingService {
         .select('id')
         .eq('user_id', userId)
         .eq('retailer_key', retailerKey)
-        .maybeSingle()
+        .maybeSingle();
 
       if (error) {
-        console.error('Error checking retailer existence:', error)
-        return false
+        console.error('Error checking retailer existence:', error);
+        return false;
       }
 
-      return data !== null
+      return data !== null;
     } catch (error) {
-      console.error('Error in checkRetailerExists:', error)
-      return false
+      console.error('Error in checkRetailerExists:', error);
+      return false;
     }
   }
 }
 
-export const instacartShoppingService = new InstacartShoppingService()
+export const instacartShoppingService = new InstacartShoppingService();

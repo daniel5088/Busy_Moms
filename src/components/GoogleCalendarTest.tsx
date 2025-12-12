@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Calendar, CheckCircle, XCircle, AlertCircle, Loader2, ExternalLink, X, RefreshCw } from 'lucide-react';
+import {
+  Calendar,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  ExternalLink,
+  X,
+  RefreshCw,
+} from 'lucide-react';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
 
 interface GoogleCalendarTestProps {
@@ -25,16 +34,21 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
       { name: 'Service Initialization', status: 'idle' },
       { name: 'Authentication Check', status: 'idle' },
       { name: 'List Upcoming Events', status: 'idle' },
-      { name: 'Create Test Event', status: 'idle' }
-    ]
+      { name: 'Create Test Event', status: 'idle' },
+    ],
   });
   const [upcomingEvents, setUpcomingEvents] = useState<GoogleCalendarEvent[]>([]);
 
   const runGoogleCalendarTest = async () => {
     setTesting(true);
-    setResults(prev => ({
+    setResults((prev) => ({
       overall: 'testing',
-      tests: prev.tests.map(test => ({ ...test, status: 'testing', message: undefined, details: undefined }))
+      tests: prev.tests.map((test) => ({
+        ...test,
+        status: 'testing',
+        message: undefined,
+        details: undefined,
+      })),
     }));
 
     const testResults = [...results.tests];
@@ -54,13 +68,15 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
 
           testResults[0] = {
             name: 'Check Backend Configuration',
-            status: diagStatus === 'pass' ? 'success' : diagStatus === 'warning' ? 'success' : 'error',
-            message: diagStatus === 'pass'
-              ? 'Backend configuration is correct'
-              : diagStatus === 'warning'
-              ? 'Backend has warnings but may work'
-              : 'Backend configuration has errors',
-            details: JSON.stringify(diagnosticsData.checks, null, 2)
+            status:
+              diagStatus === 'pass' ? 'success' : diagStatus === 'warning' ? 'success' : 'error',
+            message:
+              diagStatus === 'pass'
+                ? 'Backend configuration is correct'
+                : diagStatus === 'warning'
+                  ? 'Backend has warnings but may work'
+                  : 'Backend configuration has errors',
+            details: JSON.stringify(diagnosticsData.checks, null, 2),
           };
 
           if (diagStatus === 'fail') {
@@ -77,7 +93,7 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
           name: 'Check Backend Configuration',
           status: 'error',
           message: 'Failed to run backend diagnostics',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ Backend diagnostics failed:', error.message);
@@ -93,18 +109,20 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
             name: 'Service Initialization',
             status: 'success',
             message: 'Google Calendar service initialized successfully',
-            details: `Ready: ${googleCalendarService.isReady()}, Available: ${googleCalendarService.isAvailable()}`
+            details: `Ready: ${googleCalendarService.isReady()}, Available: ${googleCalendarService.isAvailable()}`,
           };
           console.log('✅ Service initialization OK');
         } else {
-          throw new Error('Google Calendar service not available. Check that GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are configured.');
+          throw new Error(
+            'Google Calendar service not available. Check that GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are configured.'
+          );
         }
       } catch (error: any) {
         testResults[1] = {
           name: 'Service Initialization',
           status: 'error',
           message: 'Failed to initialize Google Calendar service',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ Service initialization failed:', error.message);
@@ -120,7 +138,7 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
             name: 'Authentication Check',
             status: 'success',
             message: 'User is authenticated with Google Calendar',
-            details: 'Ready to make API calls'
+            details: 'Ready to make API calls',
           };
           console.log('✅ Authentication OK');
         } else {
@@ -128,7 +146,8 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
             name: 'Authentication Check',
             status: 'error',
             message: 'User not authenticated with Google Calendar',
-            details: 'Please connect Google Calendar first using the "Connect Google Calendar" button in Settings'
+            details:
+              'Please connect Google Calendar first using the "Connect Google Calendar" button in Settings',
           };
           overallSuccess = false;
           console.log('❌ Authentication failed');
@@ -138,7 +157,7 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
           name: 'Authentication Check',
           status: 'error',
           message: 'Authentication check failed',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ Authentication check failed:', error.message);
@@ -153,7 +172,8 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
           name: 'List Upcoming Events',
           status: 'success',
           message: `Successfully retrieved ${events.length} upcoming events`,
-          details: events.length > 0 ? `First event: ${events[0].summary}` : 'No upcoming events found'
+          details:
+            events.length > 0 ? `First event: ${events[0].summary}` : 'No upcoming events found',
         };
         setUpcomingEvents(events);
         console.log('✅ List events OK');
@@ -162,7 +182,7 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
           name: 'List Upcoming Events',
           status: 'error',
           message: 'Failed to retrieve upcoming events',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ List events failed:', error.message);
@@ -173,7 +193,8 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
       try {
         const testEvent = {
           summary: 'Busy Moms App Test Event',
-          description: 'This is a test event created by the Busy Moms app to verify Google Calendar integration.',
+          description:
+            'This is a test event created by the Busy Moms app to verify Google Calendar integration.',
           start: {
             dateTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
           },
@@ -188,7 +209,7 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
           name: 'Create Test Event',
           status: 'success',
           message: 'Successfully created test event',
-          details: `Event ID: ${(createdEvent as any)?.id || 'Unknown'}`
+          details: `Event ID: ${(createdEvent as any)?.id || 'Unknown'}`,
         };
         console.log('✅ Create event OK');
       } catch (error: any) {
@@ -196,12 +217,11 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
           name: 'Create Test Event',
           status: 'error',
           message: 'Failed to create test event',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ Create event failed:', error.message);
       }
-
     } catch (error: any) {
       console.error('❌ Google Calendar test failed:', error);
       overallSuccess = false;
@@ -211,11 +231,15 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
     setResults({
       overall: overallSuccess ? 'success' : 'error',
       diagnostics: diagnosticsData,
-      tests: testResults
+      tests: testResults,
     });
     setTesting(false);
 
-    console.log(overallSuccess ? '✅ All Google Calendar tests passed!' : '❌ Some Google Calendar tests failed');
+    console.log(
+      overallSuccess
+        ? '✅ All Google Calendar tests passed!'
+        : '❌ Some Google Calendar tests failed'
+    );
   };
 
   const getStatusIcon = (status: string) => {
@@ -261,8 +285,12 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
               <Calendar className="w-8 h-8 text-blue-500" />
               <div>
                 {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
-                <h2 id="google-calendar-test-title" className="text-xl font-bold text-gray-900">Google Calendar API Test</h2>
-                <p className="text-gray-600">Test Google Calendar integration and API connectivity</p>
+                <h2 id="google-calendar-test-title" className="text-xl font-bold text-gray-900">
+                  Google Calendar API Test
+                </h2>
+                <p className="text-gray-600">
+                  Test Google Calendar integration and API connectivity
+                </p>
               </div>
             </div>
             <button
@@ -285,9 +313,12 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
                   {results.overall === 'error' && 'Some Google Calendar tests failed'}
                 </h3>
                 <p className="text-sm opacity-75">
-                  {results.overall === 'idle' && 'Click "Run Test" to verify your Google Calendar integration'}
-                  {results.overall === 'testing' && 'Please wait while we test your Google Calendar connection'}
-                  {results.overall === 'success' && 'Your Google Calendar integration is working perfectly'}
+                  {results.overall === 'idle' &&
+                    'Click "Run Test" to verify your Google Calendar integration'}
+                  {results.overall === 'testing' &&
+                    'Please wait while we test your Google Calendar connection'}
+                  {results.overall === 'success' &&
+                    'Your Google Calendar integration is working perfectly'}
                   {results.overall === 'error' && 'Check the details below to resolve issues'}
                 </p>
               </div>
@@ -302,9 +333,7 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
                   {getStatusIcon(test.status)}
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{test.name}</h4>
-                    {test.message && (
-                      <p className="text-sm text-gray-600 mt-1">{test.message}</p>
-                    )}
+                    {test.message && <p className="text-sm text-gray-600 mt-1">{test.message}</p>}
                     {test.details && (
                       <p className="text-xs text-gray-500 mt-1 font-mono bg-gray-100 p-2 rounded">
                         {test.details}
@@ -319,23 +348,26 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
           {/* Diagnostics Display */}
           {results.diagnostics && results.diagnostics.overall_status === 'fail' && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <h3 className="font-medium text-red-900 mb-3">Backend Configuration Issues Detected</h3>
+              <h3 className="font-medium text-red-900 mb-3">
+                Backend Configuration Issues Detected
+              </h3>
               <div className="space-y-2 text-sm">
-                {results.diagnostics.checks.map((check: any, idx: number) => (
-                  check.status === 'fail' && (
-                    <div key={idx} className="bg-white p-2 rounded border border-red-200">
-                      <div className="font-medium text-gray-900">{check.name}</div>
-                      <div className="text-red-700">{check.message}</div>
-                      {check.instructions && (
-                        <ul className="mt-2 ml-4 list-disc text-xs text-gray-600">
-                          {check.instructions.map((instruction: string, i: number) => (
-                            <li key={i}>{instruction}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )
-                ))}
+                {results.diagnostics.checks.map(
+                  (check: any, idx: number) =>
+                    check.status === 'fail' && (
+                      <div key={idx} className="bg-white p-2 rounded border border-red-200">
+                        <div className="font-medium text-gray-900">{check.name}</div>
+                        <div className="text-red-700">{check.message}</div>
+                        {check.instructions && (
+                          <ul className="mt-2 ml-4 list-disc text-xs text-gray-600">
+                            {check.instructions.map((instruction: string, i: number) => (
+                              <li key={i}>{instruction}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )
+                )}
               </div>
               <a
                 href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-diagnostics`}
@@ -352,20 +384,23 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
           {/* Upcoming Events Display */}
           {upcomingEvents.length > 0 && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-medium text-blue-900 mb-3">Upcoming Events from Google Calendar</h3>
+              <h3 className="font-medium text-blue-900 mb-3">
+                Upcoming Events from Google Calendar
+              </h3>
               <div className="space-y-2">
                 {upcomingEvents.slice(0, 3).map((event, index) => (
                   <div key={index} className="bg-white p-3 rounded border">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium text-gray-900">{event.summary || 'Untitled Event'}</h4>
+                        <h4 className="font-medium text-gray-900">
+                          {event.summary || 'Untitled Event'}
+                        </h4>
                         <p className="text-sm text-gray-600">
-                          {event.start?.dateTime 
+                          {event.start?.dateTime
                             ? new Date(event.start.dateTime).toLocaleString()
-                            : event.start?.date 
-                            ? new Date(event.start.date).toLocaleDateString()
-                            : 'No date'
-                          }
+                            : event.start?.date
+                              ? new Date(event.start.date).toLocaleDateString()
+                              : 'No date'}
                         </p>
                         {event.location && (
                           <p className="text-xs text-gray-500">{event.location}</p>
@@ -400,25 +435,39 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Supabase URL:</span>
-                <span className={import.meta.env.VITE_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}>
+                <span
+                  className={import.meta.env.VITE_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}
+                >
                   {import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Supabase Anon Key:</span>
-                <span className={import.meta.env.VITE_SUPABASE_ANON_KEY ? 'text-green-600' : 'text-red-600'}>
+                <span
+                  className={
+                    import.meta.env.VITE_SUPABASE_ANON_KEY ? 'text-green-600' : 'text-red-600'
+                  }
+                >
                   {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Edge Functions URL:</span>
-                <span className={import.meta.env.VITE_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}>
-                  {import.meta.env.VITE_SUPABASE_URL ? `✅ ${import.meta.env.VITE_SUPABASE_URL}/functions/v1` : '❌ Missing'}
+                <span
+                  className={import.meta.env.VITE_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}
+                >
+                  {import.meta.env.VITE_SUPABASE_URL
+                    ? `✅ ${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
+                    : '❌ Missing'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Service Available:</span>
-                <span className={googleCalendarService.isAvailable() ? 'text-green-600' : 'text-red-600'}>
+                <span
+                  className={
+                    googleCalendarService.isAvailable() ? 'text-green-600' : 'text-red-600'
+                  }
+                >
                   {googleCalendarService.isAvailable() ? '✅ Yes' : '❌ No'}
                 </span>
               </div>
@@ -450,24 +499,29 @@ export function GoogleCalendarTest({ isOpen, onClose }: GoogleCalendarTestProps)
               <p className="font-medium">If tests fail, check the following:</p>
               <ol className="list-decimal ml-5 space-y-1">
                 <li>
-                  <strong>Backend Configuration:</strong> Google OAuth credentials must be set in Supabase Dashboard → Project Settings → Edge Functions → Secrets
+                  <strong>Backend Configuration:</strong> Google OAuth credentials must be set in
+                  Supabase Dashboard → Project Settings → Edge Functions → Secrets
                   <ul className="ml-4 mt-1 list-disc">
                     <li>GOOGLE_CLIENT_ID</li>
                     <li>GOOGLE_CLIENT_SECRET</li>
                   </ul>
                 </li>
                 <li>
-                  <strong>User Authentication:</strong> You must connect your Google Calendar first using the "Connect Google Calendar" button in Settings
+                  <strong>User Authentication:</strong> You must connect your Google Calendar first
+                  using the "Connect Google Calendar" button in Settings
                 </li>
                 <li>
-                  <strong>Edge Functions:</strong> All Google Calendar Edge Functions must be deployed (they are already deployed for this project)
+                  <strong>Edge Functions:</strong> All Google Calendar Edge Functions must be
+                  deployed (they are already deployed for this project)
                 </li>
                 <li>
-                  <strong>Run Diagnostics:</strong> Click the diagnostics link above to get a detailed configuration report
+                  <strong>Run Diagnostics:</strong> Click the diagnostics link above to get a
+                  detailed configuration report
                 </li>
               </ol>
               <p className="mt-2">
-                <strong>Note:</strong> The first test checks your backend configuration. If it fails, fix the configuration issues before proceeding.
+                <strong>Note:</strong> The first test checks your backend configuration. If it
+                fails, fix the configuration issues before proceeding.
               </p>
             </div>
           </div>

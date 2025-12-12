@@ -1,18 +1,18 @@
-import React, { useState } from 'react'
-import { X, User, Phone, Mail, Star } from 'lucide-react'
-import { supabase, Contact } from '../../lib/supabase'
-import { useAuth } from '../../hooks/useAuth'
+import React, { useState } from 'react';
+import { X, User, Phone, Mail, Star } from 'lucide-react';
+import { supabase, Contact } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ContactFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onContactCreated: (contact: Contact) => void
-  editContact?: Contact | null
+  isOpen: boolean;
+  onClose: () => void;
+  onContactCreated: (contact: Contact) => void;
+  editContact?: Contact | null;
 }
 
 export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: ContactFormProps) {
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -22,8 +22,8 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
     rating: 0,
     notes: '',
     verified: false,
-    available: true
-  })
+    available: true,
+  });
 
   // Update form data when editContact changes
   React.useEffect(() => {
@@ -37,8 +37,8 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
         rating: editContact.rating || 0,
         notes: editContact.notes || '',
         verified: editContact.verified || false,
-        available: editContact.available !== false
-      })
+        available: editContact.available !== false,
+      });
     } else {
       // Reset form for new contact
       setFormData({
@@ -50,51 +50,47 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
         rating: 0,
         notes: '',
         verified: false,
-        available: true
-      })
+        available: true,
+      });
     }
-  }, [editContact])
+  }, [editContact]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
+    e.preventDefault();
+    if (!user) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       const contactData = {
         ...formData,
-        user_id: user.id
-      }
+        user_id: user.id,
+      };
 
-      let result
+      let result;
       if (editContact) {
         result = await supabase
           .from('contacts')
           .update(contactData)
           .eq('id', editContact.id)
           .select()
-          .single()
+          .single();
       } else {
-        result = await supabase
-          .from('contacts')
-          .insert([contactData])
-          .select()
-          .single()
+        result = await supabase.from('contacts').insert([contactData]).select().single();
       }
 
-      if (result.error) throw result.error
+      if (result.error) throw result.error;
 
-      onContactCreated(result.data)
-      onClose()
+      onContactCreated(result.data);
+      onClose();
     } catch (error) {
-      console.error('Error saving contact:', error)
-      alert('Error saving contact. Please try again.')
+      console.error('Error saving contact:', error);
+      alert('Error saving contact. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -201,7 +197,9 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
                 max="5"
                 step="0.1"
                 value={formData.rating}
-                onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) || 0 })}
+                onChange={(e) =>
+                  setFormData({ ...formData, rating: parseFloat(e.target.value) || 0 })
+                }
                 className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
               />
             </div>
@@ -227,7 +225,9 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
                   onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
                   className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                 />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">Verified</span>
+                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  Verified
+                </span>
               </label>
 
               <label className="flex items-center">
@@ -237,7 +237,9 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
                   onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
                   className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                 />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">Available</span>
+                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  Available
+                </span>
               </label>
             </div>
 
@@ -261,5 +263,5 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
         </div>
       </div>
     </div>
-  )
+  );
 }

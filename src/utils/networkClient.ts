@@ -22,10 +22,7 @@ export class NetworkClient {
     retryOptions: RetryOptions
   ): Promise<Response> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      options.timeout || RETRY_CONFIG.TIMEOUT
-    );
+    const timeoutId = setTimeout(() => controller.abort(), options.timeout || RETRY_CONFIG.TIMEOUT);
 
     try {
       const response = await fetch(url, {
@@ -193,12 +190,7 @@ export class NetworkClient {
 
 export const networkClient = new NetworkClient();
 
-
-export function http<T = unknown>(
-  url: string,
-  init: RequestOptions = {},
-  retries = 2
-): Promise<T> {
+export function http<T = unknown>(url: string, init: RequestOptions = {}, retries = 2): Promise<T> {
   return networkClient.http<T>(url, {
     ...init,
     retries: init.retries ?? retries,

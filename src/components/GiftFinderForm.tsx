@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, DollarSign, User, Calendar, Users, Heart } from 'lucide-react';
-import { FamilyMember, Event, AffiliateMatrixLookup, AffiliateSearchCriteria } from '../lib/supabase';
+import {
+  FamilyMember,
+  Event,
+  AffiliateMatrixLookup,
+  AffiliateSearchCriteria,
+} from '../lib/supabase';
 import { affiliateMatrixService } from '../services/affiliateMatrixService';
 
 interface GiftFinderFormProps {
@@ -33,7 +38,7 @@ export function GiftFinderForm({
   affiliateLookup,
   onSearch,
   onClose,
-  loading = false
+  loading = false,
 }: GiftFinderFormProps) {
   const [formData, setFormData] = useState<GiftFinderFormData>({
     recipient_name: '',
@@ -46,11 +51,13 @@ export function GiftFinderForm({
     relationship_key: undefined,
     age_group_key: undefined,
     gender_key: undefined,
-    budget_key: undefined
+    budget_key: undefined,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof GiftFinderFormData, string>>>({});
-  const [selectedMemberRelationship, setSelectedMemberRelationship] = useState<string | undefined>(undefined);
+  const [selectedMemberRelationship, setSelectedMemberRelationship] = useState<string | undefined>(
+    undefined
+  );
 
   // Mapping functions to convert affiliate matrix selections to form values
   const mapAgeGroupToAge = (ageGroupLabel: string): number => {
@@ -95,7 +102,7 @@ export function GiftFinderForm({
     if (rangeMatch) {
       return {
         min: parseInt(rangeMatch[1], 10),
-        max: parseInt(rangeMatch[2], 10)
+        max: parseInt(rangeMatch[2], 10),
       };
     }
 
@@ -106,10 +113,12 @@ export function GiftFinderForm({
   // Auto-populate recipient age when age group is selected
   useEffect(() => {
     if (formData.age_group_key && affiliateLookup) {
-      const selectedAgeGroup = affiliateLookup.ageGroups.find(ag => ag.key === formData.age_group_key);
+      const selectedAgeGroup = affiliateLookup.ageGroups.find(
+        (ag) => ag.key === formData.age_group_key
+      );
       if (selectedAgeGroup) {
         const age = mapAgeGroupToAge(selectedAgeGroup.label);
-        setFormData(prev => ({ ...prev, recipient_age: age }));
+        setFormData((prev) => ({ ...prev, recipient_age: age }));
       }
     }
   }, [formData.age_group_key, affiliateLookup]);
@@ -117,10 +126,10 @@ export function GiftFinderForm({
   // Auto-populate recipient gender when gender is selected
   useEffect(() => {
     if (formData.gender_key && affiliateLookup) {
-      const selectedGender = affiliateLookup.genders.find(g => g.key === formData.gender_key);
+      const selectedGender = affiliateLookup.genders.find((g) => g.key === formData.gender_key);
       if (selectedGender) {
         const gender = mapGenderKeyToGender(selectedGender.label);
-        setFormData(prev => ({ ...prev, recipient_gender: gender }));
+        setFormData((prev) => ({ ...prev, recipient_gender: gender }));
       }
     }
   }, [formData.gender_key, affiliateLookup]);
@@ -128,45 +137,45 @@ export function GiftFinderForm({
   // Auto-populate budget when budget range is selected
   useEffect(() => {
     if (formData.budget_key && affiliateLookup) {
-      const selectedBudget = affiliateLookup.budgets.find(b => b.key === formData.budget_key);
+      const selectedBudget = affiliateLookup.budgets.find((b) => b.key === formData.budget_key);
       if (selectedBudget) {
         const { min, max } = mapBudgetKeyToRange(selectedBudget.label);
-        setFormData(prev => ({ ...prev, budget_min: min, budget_max: max }));
+        setFormData((prev) => ({ ...prev, budget_min: min, budget_max: max }));
       }
     }
   }, [formData.budget_key, affiliateLookup]);
 
   const handleFamilyMemberSelect = (memberId: string) => {
     if (!memberId) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         family_member_id: undefined,
         recipient_name: '',
         recipient_age: 8,
-        recipient_gender: 'Other'
+        recipient_gender: 'Other',
       }));
       setSelectedMemberRelationship(undefined);
       return;
     }
 
-    const member = familyMembers.find(m => m.id === memberId);
+    const member = familyMembers.find((m) => m.id === memberId);
     if (member) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         family_member_id: member.id,
         recipient_name: member.name,
         recipient_age: member.age || 8,
-        recipient_gender: member.gender || 'Other'
+        recipient_gender: member.gender || 'Other',
       }));
       setSelectedMemberRelationship(member.relationship);
     }
   };
 
   const handleBudgetPreset = (min: number, max: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       budget_min: min,
-      budget_max: max
+      budget_max: max,
     }));
   };
 
@@ -211,7 +220,7 @@ export function GiftFinderForm({
             gender: formData.recipient_gender,
             budgetMin: formData.budget_min,
             budgetMax: formData.budget_max,
-            relationship: selectedMemberRelationship
+            relationship: selectedMemberRelationship,
           });
 
           // Merge with any manually selected criteria from curated section
@@ -220,30 +229,38 @@ export function GiftFinderForm({
             relationship_key: matchedCriteria.relationship_key || formData.relationship_key,
             age_group_key: formData.age_group_key || matchedCriteria.age_group_key,
             gender_key: formData.gender_key || matchedCriteria.gender_key,
-            budget_key: formData.budget_key || matchedCriteria.budget_key
+            budget_key: formData.budget_key || matchedCriteria.budget_key,
           };
         } catch (error) {
           console.error('Error matching recipient to affiliate criteria:', error);
           // Fall back to manually selected criteria only
-          affiliateCriteria = formData.relationship_key || formData.age_group_key || formData.gender_key || formData.budget_key
+          affiliateCriteria =
+            formData.relationship_key ||
+            formData.age_group_key ||
+            formData.gender_key ||
+            formData.budget_key
+              ? {
+                  relationship_key: formData.relationship_key,
+                  age_group_key: formData.age_group_key,
+                  gender_key: formData.gender_key,
+                  budget_key: formData.budget_key,
+                }
+              : undefined;
+        }
+      } else {
+        // No recipient info - use only manually selected curated criteria
+        affiliateCriteria =
+          formData.relationship_key ||
+          formData.age_group_key ||
+          formData.gender_key ||
+          formData.budget_key
             ? {
                 relationship_key: formData.relationship_key,
                 age_group_key: formData.age_group_key,
                 gender_key: formData.gender_key,
-                budget_key: formData.budget_key
+                budget_key: formData.budget_key,
               }
             : undefined;
-        }
-      } else {
-        // No recipient info - use only manually selected curated criteria
-        affiliateCriteria = formData.relationship_key || formData.age_group_key || formData.gender_key || formData.budget_key
-          ? {
-              relationship_key: formData.relationship_key,
-              age_group_key: formData.age_group_key,
-              gender_key: formData.gender_key,
-              budget_key: formData.budget_key
-            }
-          : undefined;
       }
 
       onSearch(formData, affiliateCriteria);
@@ -262,17 +279,19 @@ export function GiftFinderForm({
       relationship_key: undefined,
       age_group_key: undefined,
       gender_key: undefined,
-      budget_key: undefined
+      budget_key: undefined,
     });
     setErrors({});
     setSelectedMemberRelationship(undefined);
   };
 
-  const upcomingEvents = events.filter(e => {
-    const eventDate = new Date(e.event_date);
-    const now = new Date();
-    return eventDate >= now;
-  }).slice(0, 10);
+  const upcomingEvents = events
+    .filter((e) => {
+      const eventDate = new Date(e.event_date);
+      const now = new Date();
+      return eventDate >= now;
+    })
+    .slice(0, 10);
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 space-y-6">
@@ -301,7 +320,7 @@ export function GiftFinderForm({
             className="w-full px-3 py-2 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
             <option value="">Select a family member...</option>
-            {familyMembers.map(member => (
+            {familyMembers.map((member) => (
               <option key={member.id} value={member.id}>
                 {member.name} {member.age ? `(Age ${member.age})` : ''}
               </option>
@@ -323,28 +342,37 @@ export function GiftFinderForm({
 
           {/* Show message if no options available */}
           {affiliateLookup.relationships.length === 0 &&
-           affiliateLookup.ageGroups.length === 0 &&
-           affiliateLookup.genders.length === 0 &&
-           affiliateLookup.budgets.length === 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-              No curated gift options are currently available. Please check back later or use the recipient information below.
-            </div>
-          )}
+            affiliateLookup.ageGroups.length === 0 &&
+            affiliateLookup.genders.length === 0 &&
+            affiliateLookup.budgets.length === 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                No curated gift options are currently available. Please check back later or use the
+                recipient information below.
+              </div>
+            )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Relationship Dropdown */}
             <div>
-              <label htmlFor="relationship" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="relationship"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Relationship
               </label>
               <select
                 id="relationship"
                 value={formData.relationship_key || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, relationship_key: e.target.value || undefined }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    relationship_key: e.target.value || undefined,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
               >
                 <option value="">Select relationship...</option>
-                {affiliateLookup.relationships.map(rel => (
+                {affiliateLookup.relationships.map((rel) => (
                   <option key={rel.key} value={rel.key}>
                     {rel.label}
                   </option>
@@ -360,11 +388,13 @@ export function GiftFinderForm({
               <select
                 id="age_group"
                 value={formData.age_group_key || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, age_group_key: e.target.value || undefined }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, age_group_key: e.target.value || undefined }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
               >
                 <option value="">Select age group...</option>
-                {affiliateLookup.ageGroups.map(age => (
+                {affiliateLookup.ageGroups.map((age) => (
                   <option key={age.key} value={age.key}>
                     {age.label}
                   </option>
@@ -374,17 +404,22 @@ export function GiftFinderForm({
 
             {/* Gender Dropdown */}
             <div>
-              <label htmlFor="affiliate_gender" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="affiliate_gender"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Gender
               </label>
               <select
                 id="affiliate_gender"
                 value={formData.gender_key || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, gender_key: e.target.value || undefined }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, gender_key: e.target.value || undefined }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
               >
                 <option value="">Select gender...</option>
-                {affiliateLookup.genders.map(gender => (
+                {affiliateLookup.genders.map((gender) => (
                   <option key={gender.key} value={gender.key}>
                     {gender.label}
                   </option>
@@ -394,17 +429,22 @@ export function GiftFinderForm({
 
             {/* Budget Dropdown */}
             <div>
-              <label htmlFor="affiliate_budget" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="affiliate_budget"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Budget Range
               </label>
               <select
                 id="affiliate_budget"
                 value={formData.budget_key || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, budget_key: e.target.value || undefined }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, budget_key: e.target.value || undefined }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
               >
                 <option value="">Select budget...</option>
-                {affiliateLookup.budgets.map(budget => (
+                {affiliateLookup.budgets.map((budget) => (
                   <option key={budget.key} value={budget.key}>
                     {budget.label}
                   </option>
@@ -425,14 +465,17 @@ export function GiftFinderForm({
 
           {/* Name */}
           <div>
-            <label htmlFor="recipient_name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="recipient_name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Recipient Name *
             </label>
             <input
               type="text"
               id="recipient_name"
               value={formData.recipient_name}
-              onChange={(e) => setFormData(prev => ({ ...prev, recipient_name: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, recipient_name: e.target.value }))}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                 errors.recipient_name ? 'border-red-500' : 'border-gray-300'
               }`}
@@ -453,7 +496,9 @@ export function GiftFinderForm({
               id="recipient_age"
               min="0"
               value={formData.recipient_age}
-              onChange={(e) => setFormData(prev => ({ ...prev, recipient_age: parseInt(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, recipient_age: parseInt(e.target.value) || 0 }))
+              }
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                 errors.recipient_age ? 'border-red-500' : 'border-gray-300'
               }`}
@@ -465,21 +510,26 @@ export function GiftFinderForm({
 
           {/* Gender */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Gender
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
             <div className="flex gap-4">
-              {(['Boy', 'Girl', 'Other'] as const).map(gender => (
+              {(['Boy', 'Girl', 'Other'] as const).map((gender) => (
                 <label key={gender} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
                     name="gender"
                     value={gender}
                     checked={formData.recipient_gender === gender}
-                    onChange={(e) => setFormData(prev => ({ ...prev, recipient_gender: e.target.value as 'Boy' | 'Girl' | 'Other' }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        recipient_gender: e.target.value as 'Boy' | 'Girl' | 'Other',
+                      }))
+                    }
                     className="w-4 h-4 text-purple-600 focus:ring-purple-500"
                   />
-                  <span className="text-sm text-gray-700">{gender === 'Other' ? 'Unisex' : gender}</span>
+                  <span className="text-sm text-gray-700">
+                    {gender === 'Other' ? 'Unisex' : gender}
+                  </span>
                 </label>
               ))}
             </div>
@@ -488,18 +538,23 @@ export function GiftFinderForm({
           {/* Event Link */}
           {upcomingEvents.length > 0 && (
             <div>
-              <label htmlFor="event_id" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+              <label
+                htmlFor="event_id"
+                className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"
+              >
                 <Calendar className="w-4 h-4" />
                 Link to Event (Optional)
               </label>
               <select
                 id="event_id"
                 value={formData.event_id || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, event_id: e.target.value || undefined }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, event_id: e.target.value || undefined }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 <option value="">No event</option>
-                {upcomingEvents.map(event => (
+                {upcomingEvents.map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.title} - {new Date(event.event_date).toLocaleDateString()}
                   </option>
@@ -525,8 +580,8 @@ export function GiftFinderForm({
               { label: '$10-25', min: 10, max: 25 },
               { label: '$25-50', min: 25, max: 50 },
               { label: '$50-100', min: 50, max: 100 },
-              { label: '$100+', min: 100, max: 500 }
-            ].map(preset => (
+              { label: '$100+', min: 100, max: 500 },
+            ].map((preset) => (
               <button
                 key={preset.label}
                 type="button"

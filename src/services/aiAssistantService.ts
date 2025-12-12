@@ -1,17 +1,55 @@
-import { supabase, Reminder, ShoppingItem, UUID, Task, Event as DbEvent, FamilyMember } from '../lib/supabase';
+import {
+  supabase,
+  Reminder,
+  ShoppingItem,
+  UUID,
+  Task,
+  Event as DbEvent,
+  FamilyMember,
+} from '../lib/supabase';
 import { openaiService } from './openai';
 import { ICalendarProvider, LocalCalendarProvider, CalendarEventInput } from './calendarProvider';
 import { calendarContextService } from './calendarContext';
 
 /** Central brain for "Sara" — routes natural language to concrete app actions. */
 export interface AIAction {
-  type: 'calendar' | 'reminder' | 'shopping' | 'shopping_query' | 'shopping_update' | 'shopping_delete' | 'task' | 'family' | 'family_query' | 'family_update' | 'family_delete' | 'chat';
+  type:
+    | 'calendar'
+    | 'reminder'
+    | 'shopping'
+    | 'shopping_query'
+    | 'shopping_update'
+    | 'shopping_delete'
+    | 'task'
+    | 'family'
+    | 'family_query'
+    | 'family_update'
+    | 'family_delete'
+    | 'chat';
   success: boolean;
   message: string;
   data?: unknown;
 }
 
-type IntentType = 'calendar' | 'calendar_query' | 'calendar_update' | 'calendar_delete' | 'reminder' | 'shopping' | 'shopping_query' | 'shopping_update' | 'shopping_delete' | 'task' | 'task_query' | 'task_update' | 'task_delete' | 'family' | 'family_query' | 'family_update' | 'family_delete' | 'chat';
+type IntentType =
+  | 'calendar'
+  | 'calendar_query'
+  | 'calendar_update'
+  | 'calendar_delete'
+  | 'reminder'
+  | 'shopping'
+  | 'shopping_query'
+  | 'shopping_update'
+  | 'shopping_delete'
+  | 'task'
+  | 'task_query'
+  | 'task_update'
+  | 'task_delete'
+  | 'family'
+  | 'family_query'
+  | 'family_update'
+  | 'family_delete'
+  | 'chat';
 
 interface IntentResult {
   type: IntentType;
@@ -22,11 +60,11 @@ interface IntentResult {
 function toISODate(input?: string | number | Date | unknown): string | null {
   if (!input) return null;
   const s = String(input).trim();
-  
+
   // Already ISO-like YYYY-MM-DD
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (m) return m[0];
-  
+
   // Basic MM/DD or M/D this year
   const m2 = s.match(/^(\d{1,2})[\/-](\d{1,2})$/);
   if (m2) {
@@ -35,7 +73,7 @@ function toISODate(input?: string | number | Date | unknown): string | null {
     const dd = String(Math.max(1, Math.min(31, parseInt(m2[2], 10)))).padStart(2, '0');
     return `${year}-${mm}-${dd}`;
   }
-  
+
   // Natural words "today" / "tomorrow"
   const lower = s.toLowerCase();
   if (lower === 'today') {
@@ -46,20 +84,20 @@ function toISODate(input?: string | number | Date | unknown): string | null {
     d.setDate(d.getDate() + 1);
     return d.toISOString().split('T')[0];
   }
-  
+
   // Try parsing Date(...) and format to YYYY-MM-DD
   const d = new Date(s);
   if (!Number.isNaN(d.getTime())) {
     return d.toISOString().split('T')[0];
   }
-  
+
   return null;
 }
 
 function toISOTime(input?: string | number | Date | unknown): string | null {
   if (!input) return null;
   const s = String(input).trim();
-  
+
   // "14:30" or "14"
   const m = s.match(/^(\d{2}):(\d{2})$/);
   if (m) {
@@ -67,7 +105,7 @@ function toISOTime(input?: string | number | Date | unknown): string | null {
     const mm = String(Math.max(0, Math.min(59, parseInt(m[2], 10)))).padStart(2, '0');
     return `${hh}:${mm}:00`;
   }
-  
+
   // "2pm", "2 pm", "2:30pm"
   const ampm = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
   if (ampm) {
@@ -80,7 +118,7 @@ function toISOTime(input?: string | number | Date | unknown): string | null {
     const mm = String(m2).padStart(2, '0');
     return `${hh}:${mm}:00`;
   }
-  
+
   // "14" or "14:30"
   const m2 = s.match(/^(\d{1,2})(?::(\d{2}))?$/);
   if (m2) {
@@ -88,12 +126,12 @@ function toISOTime(input?: string | number | Date | unknown): string | null {
     const mm2 = Math.max(0, Math.min(59, m2[2] ? parseInt(m2[2], 10) : 0));
     return `${String(h).padStart(2, '0')}:${String(mm2).padStart(2, '0')}:00`;
   }
-  
+
   const d = new Date(s);
   if (!Number.isNaN(d.getTime())) {
     return d.toISOString().split('T')[1]?.slice(0, 8) || null;
   }
-  
+
   return null;
 }
 
@@ -152,7 +190,7 @@ Examples:
   try {
     const response = await openaiService.chat([
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Today is ${today}. Classify: "${message}"` }
+      { role: 'user', content: `Today is ${today}. Classify: "${message}"` },
     ]);
 
     console.log('🤖 AI classification response:', response);
@@ -162,7 +200,10 @@ Examples:
     console.log('🎯 Parsed intent:', payload);
     return payload;
   } catch (e: unknown) {
-    console.error('❌ LLM classify failed, using fallback:', (e instanceof Error ? e.message : String(e)));
+    console.error(
+      '❌ LLM classify failed, using fallback:',
+      e instanceof Error ? e.message : String(e)
+    );
     return fallbackClassify(message);
   }
 }
@@ -170,15 +211,19 @@ Examples:
 /** Simpler fallback classifier so app still works without LLM. */
 function fallbackClassify(message: string): IntentResult {
   const lower = message.toLowerCase();
-  
+
   console.log('🔄 Using fallback classification for:', lower);
-  
+
   // Shopping patterns
-  if (/\b(add|put)\b.*\b(shopping|list)\b/.test(lower) || 
-      /\b(buy|get|need)\b.*\b(milk|bread|eggs|groceries)\b/.test(lower)) {
-    const itemMatch = lower.match(/(?:add|put|buy|get|need)\s+([^.!?]+?)(?:\s+(?:to|on|in)\s+(?:the\s+)?(?:shopping\s+)?list)?$/);
+  if (
+    /\b(add|put)\b.*\b(shopping|list)\b/.test(lower) ||
+    /\b(buy|get|need)\b.*\b(milk|bread|eggs|groceries)\b/.test(lower)
+  ) {
+    const itemMatch = lower.match(
+      /(?:add|put|buy|get|need)\s+([^.!?]+?)(?:\s+(?:to|on|in)\s+(?:the\s+)?(?:shopping\s+)?list)?$/
+    );
     const title = itemMatch?.[1]?.trim() || message;
-    
+
     // Determine category
     let category = 'other';
     if (/\b(milk|cheese|yogurt|butter)\b/.test(lower)) category = 'dairy';
@@ -187,40 +232,62 @@ function fallbackClassify(message: string): IntentResult {
     else if (/\b(bread|cake|muffin|bakery)\b/.test(lower)) category = 'bakery';
     else if (/\b(diaper|formula|baby|wipes)\b/.test(lower)) category = 'baby';
     else if (/\b(soap|detergent|cleaner|household)\b/.test(lower)) category = 'household';
-    
+
     return { type: 'shopping', details: { title, category } };
   }
-  
+
   // Reminder patterns
   if (/\bremind\s+me\b/.test(lower) || /\bset\s+(?:a\s+)?reminder\b/.test(lower)) {
-    const titleMatch = lower.match(/remind\s+me\s+to\s+([^.!?]+)|set\s+(?:a\s+)?reminder\s+(?:to\s+)?([^.!?]+)/);
+    const titleMatch = lower.match(
+      /remind\s+me\s+to\s+([^.!?]+)|set\s+(?:a\s+)?reminder\s+(?:to\s+)?([^.!?]+)/
+    );
     const title = titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
-    
-    const date = toISODate(lower.match(/\b(today|tomorrow|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?|\d{4}-\d{2}-\d{2})\b/)?.[0]);
-    const time = toISOTime(lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]);
-    
+
+    const date = toISODate(
+      lower.match(
+        /\b(today|tomorrow|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?|\d{4}-\d{2}-\d{2})\b/
+      )?.[0]
+    );
+    const time = toISOTime(
+      lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]
+    );
+
     return { type: 'reminder', details: { title, date, time } };
   }
-  
+
   // Task patterns
   if (/\b(task|todo|to\s+do|assign)\b/.test(lower) || /\bcreate\s+(?:a\s+)?task\b/.test(lower)) {
-    const titleMatch = lower.match(/(?:create|add|make)\s+(?:a\s+)?(?:new\s+)?task\s+(?:called|named)?\s*([^.!?]+)|^(.+)$/);
+    const titleMatch = lower.match(
+      /(?:create|add|make)\s+(?:a\s+)?(?:new\s+)?task\s+(?:called|named)?\s*([^.!?]+)|^(.+)$/
+    );
     const title = titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
-    
-    const date = toISODate(lower.match(/\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/)?.[0]);
-    const time = toISOTime(lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]);
-    
+
+    const date = toISODate(
+      lower.match(
+        /\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/
+      )?.[0]
+    );
+    const time = toISOTime(
+      lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]
+    );
+
     return { type: 'task', details: { title, date, time } };
   }
-  
+
   // Calendar patterns
   if (/\b(event|meeting|appointment|schedule)\b/.test(lower) || /\bon\s+\d/.test(lower)) {
-    const date = toISODate(lower.match(/\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/)?.[0]);
-    const time = toISOTime(lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]);
-    
+    const date = toISODate(
+      lower.match(
+        /\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/
+      )?.[0]
+    );
+    const time = toISOTime(
+      lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]
+    );
+
     return { type: 'calendar', details: { title: message, date, time } };
   }
-  
+
   console.log('🗣️ No specific pattern matched, treating as chat');
   return { type: 'chat', details: { query: message } };
 }
@@ -238,7 +305,11 @@ class AIAssistantService {
   }
 
   /** Entry point for a user's message */
-  async processUserMessage(message: string, userId: UUID, conversationHistory?: Array<{role: 'user' | 'assistant', content: string}>): Promise<AIAction> {
+  async processUserMessage(
+    message: string,
+    userId: UUID,
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<AIAction> {
     console.log('🎯 Processing user message:', message, 'for user:', userId);
 
     try {
@@ -282,14 +353,19 @@ class AIAssistantService {
         case 'family_delete':
           return this.handleFamilyDelete(intent.details || {}, userId);
         default:
-          return this.handleChatAction(intent.details || {}, message, calendarContext, conversationHistory);
+          return this.handleChatAction(
+            intent.details || {},
+            message,
+            calendarContext,
+            conversationHistory
+          );
       }
     } catch (err: unknown) {
       console.error('❌ processUserMessage error:', err instanceof Error ? err.message : err);
       return {
         type: 'chat',
         success: false,
-        message: 'I encountered an error processing your request. Please try again.'
+        message: 'I encountered an error processing your request. Please try again.',
       };
     }
   }
@@ -330,7 +406,10 @@ class AIAssistantService {
   }
 
   /** Calendar Creation */
-  private async handleCalendarAction(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleCalendarAction(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('📅 Creating calendar event with details:', details);
 
     const title = String(details.title ?? 'New event');
@@ -346,13 +425,18 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: false,
-        message: 'Please provide a date for the event (e.g., "today", "tomorrow", "2024-03-15")'
+        message: 'Please provide a date for the event (e.g., "today", "tomorrow", "2024-03-15")',
       };
     }
 
-    const conflictCheck = await calendarContextService.checkConflicts(userId, date, start_time, end_time);
+    const conflictCheck = await calendarContextService.checkConflicts(
+      userId,
+      date,
+      start_time,
+      end_time
+    );
     if (conflictCheck.hasConflict) {
-      const conflictNames = conflictCheck.conflictingEvents.map(e => e.title).join(', ');
+      const conflictNames = conflictCheck.conflictingEvents.map((e) => e.title).join(', ');
       let message = `⚠️ Schedule conflict detected! You already have: ${conflictNames} at that time.`;
       if (conflictCheck.suggestions.length > 0) {
         message += `\n\nSuggested alternative times: ${conflictCheck.suggestions.join(', ')}`;
@@ -361,7 +445,10 @@ class AIAssistantService {
         type: 'calendar',
         success: false,
         message,
-        data: { conflicts: conflictCheck.conflictingEvents, suggestions: conflictCheck.suggestions }
+        data: {
+          conflicts: conflictCheck.conflictingEvents,
+          suggestions: conflictCheck.suggestions,
+        },
       };
     }
 
@@ -385,29 +472,33 @@ class AIAssistantService {
 
       let timeMsg = '';
       if (start_time && end_time) {
-        timeMsg = ` from ${start_time.slice(0,5)} to ${end_time.slice(0,5)}`;
+        timeMsg = ` from ${start_time.slice(0, 5)} to ${end_time.slice(0, 5)}`;
       } else if (start_time) {
-        timeMsg = ` at ${start_time.slice(0,5)}`;
+        timeMsg = ` at ${start_time.slice(0, 5)}`;
       }
 
       return {
         type: 'calendar',
         success: true,
         message: `✅ Scheduled: ${title} on ${date}${timeMsg}`,
-        data: result
+        data: result,
       };
     } catch (error) {
       console.error('❌ Calendar creation error:', error);
       return {
         type: 'calendar',
         success: false,
-        message: `Failed to create event: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to create event: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Calendar Queries */
-  private async handleCalendarQuery(details: Record<string, unknown>, userId: UUID, context: any): Promise<AIAction> {
+  private async handleCalendarQuery(
+    details: Record<string, unknown>,
+    userId: UUID,
+    context: any
+  ): Promise<AIAction> {
     console.log('🔍 Querying calendar with details:', details);
 
     const queryType = String(details.query_type || 'today');
@@ -420,15 +511,17 @@ class AIAssistantService {
               type: 'calendar',
               success: true,
               message: 'You have no events scheduled for today. Your day is clear!',
-              data: { events: [] }
+              data: { events: [] },
             };
           }
-          const formatted = calendarContextService.formatEventsAsNaturalLanguage(context.todayEvents);
+          const formatted = calendarContextService.formatEventsAsNaturalLanguage(
+            context.todayEvents
+          );
           return {
             type: 'calendar',
             success: true,
             message: `Here's your schedule for today:\n${formatted}`,
-            data: { events: context.todayEvents }
+            data: { events: context.todayEvents },
           };
         }
 
@@ -438,15 +531,17 @@ class AIAssistantService {
               type: 'calendar',
               success: true,
               message: 'You have no upcoming events this week. Enjoy your free time!',
-              data: { events: [] }
+              data: { events: [] },
             };
           }
-          const formatted = calendarContextService.formatEventsAsNaturalLanguage(context.upcomingEvents);
+          const formatted = calendarContextService.formatEventsAsNaturalLanguage(
+            context.upcomingEvents
+          );
           return {
             type: 'calendar',
             success: true,
             message: `Here are your upcoming events:\n${formatted}`,
-            data: { events: context.upcomingEvents }
+            data: { events: context.upcomingEvents },
           };
         }
 
@@ -457,24 +552,26 @@ class AIAssistantService {
           if (availability.available) {
             let message = `You are available on ${date}.`;
             if (availability.freeSlots.length > 0) {
-              const slots = availability.freeSlots.map(slot =>
-                `${slot.start.slice(0, 5)} - ${slot.end.slice(0, 5)}`
-              ).join(', ');
+              const slots = availability.freeSlots
+                .map((slot) => `${slot.start.slice(0, 5)} - ${slot.end.slice(0, 5)}`)
+                .join(', ');
               message += ` Free time slots: ${slots}`;
             }
             return {
               type: 'calendar',
               success: true,
               message,
-              data: availability
+              data: availability,
             };
           } else {
-            const formatted = calendarContextService.formatEventsAsNaturalLanguage(availability.events);
+            const formatted = calendarContextService.formatEventsAsNaturalLanguage(
+              availability.events
+            );
             return {
               type: 'calendar',
               success: true,
               message: `You have events on ${date}:\n${formatted}`,
-              data: availability
+              data: availability,
             };
           }
         }
@@ -486,7 +583,7 @@ class AIAssistantService {
               type: 'calendar',
               success: true,
               message: 'You have no upcoming events scheduled.',
-              data: { event: null }
+              data: { event: null },
             };
           }
           const formatted = calendarContextService.formatEventsAsNaturalLanguage([nextEvent]);
@@ -494,7 +591,7 @@ class AIAssistantService {
             type: 'calendar',
             success: true,
             message: `Your next event is:\n${formatted}`,
-            data: { event: nextEvent }
+            data: { event: nextEvent },
           };
         }
 
@@ -504,7 +601,7 @@ class AIAssistantService {
             return {
               type: 'calendar',
               success: false,
-              message: 'Please provide a search term to find events.'
+              message: 'Please provide a search term to find events.',
             };
           }
           const events = await calendarContextService.searchEvents(userId, searchTerm);
@@ -513,7 +610,7 @@ class AIAssistantService {
               type: 'calendar',
               success: true,
               message: `No events found matching "${searchTerm}".`,
-              data: { events: [] }
+              data: { events: [] },
             };
           }
           const formatted = calendarContextService.formatEventsAsNaturalLanguage(events);
@@ -521,7 +618,7 @@ class AIAssistantService {
             type: 'calendar',
             success: true,
             message: `Found ${events.length} event${events.length > 1 ? 's' : ''} matching "${searchTerm}":\n${formatted}`,
-            data: { events }
+            data: { events },
           };
         }
 
@@ -529,7 +626,8 @@ class AIAssistantService {
           return {
             type: 'calendar',
             success: false,
-            message: 'I don\'t understand that calendar query. Try asking "What\'s on my calendar today?" or "Am I free tomorrow?"'
+            message:
+              'I don\'t understand that calendar query. Try asking "What\'s on my calendar today?" or "Am I free tomorrow?"',
           };
       }
     } catch (error) {
@@ -537,23 +635,26 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: false,
-        message: `Failed to query calendar: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to query calendar: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Calendar Updates */
-  private async handleCalendarUpdate(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleCalendarUpdate(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('✏️ Updating calendar event with details:', details);
 
     const searchTerm = String(details.search_term || '');
-    const updates = details.updates as Record<string, unknown> || {};
+    const updates = (details.updates as Record<string, unknown>) || {};
 
     if (!searchTerm) {
       return {
         type: 'calendar',
         success: false,
-        message: 'Please specify which event you want to update.'
+        message: 'Please specify which event you want to update.',
       };
     }
 
@@ -563,7 +664,7 @@ class AIAssistantService {
         return {
           type: 'calendar',
           success: false,
-          message: `No events found matching "${searchTerm}". Please be more specific.`
+          message: `No events found matching "${searchTerm}". Please be more specific.`,
         };
       }
 
@@ -573,7 +674,7 @@ class AIAssistantService {
           type: 'calendar',
           success: false,
           message: `Multiple events found matching "${searchTerm}". Please be more specific:\n${formatted}`,
-          data: { events }
+          data: { events },
         };
       }
 
@@ -607,7 +708,7 @@ class AIAssistantService {
         return {
           type: 'calendar',
           success: false,
-          message: 'No valid updates provided. What would you like to change?'
+          message: 'No valid updates provided. What would you like to change?',
         };
       }
 
@@ -624,12 +725,12 @@ class AIAssistantService {
         );
 
         if (conflictCheck.hasConflict) {
-          const conflictNames = conflictCheck.conflictingEvents.map(e => e.title).join(', ');
+          const conflictNames = conflictCheck.conflictingEvents.map((e) => e.title).join(', ');
           return {
             type: 'calendar',
             success: false,
             message: `⚠️ Cannot update: Schedule conflict with ${conflictNames}. Try a different time.`,
-            data: { conflicts: conflictCheck.conflictingEvents }
+            data: { conflicts: conflictCheck.conflictingEvents },
           };
         }
       }
@@ -647,20 +748,23 @@ class AIAssistantService {
         type: 'calendar',
         success: true,
         message: `✅ Updated "${event.title}" successfully!`,
-        data: { event: data }
+        data: { event: data },
       };
     } catch (error) {
       console.error('❌ Calendar update error:', error);
       return {
         type: 'calendar',
         success: false,
-        message: `Failed to update event: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to update event: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Calendar Deletion */
-  private async handleCalendarDelete(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleCalendarDelete(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('🗑️ Deleting calendar event with details:', details);
 
     const searchTerm = String(details.search_term || '');
@@ -670,7 +774,7 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: false,
-        message: 'Please specify which event you want to delete.'
+        message: 'Please specify which event you want to delete.',
       };
     }
 
@@ -679,7 +783,7 @@ class AIAssistantService {
 
       if (date) {
         const allEvents = await calendarContextService.searchEvents(userId, searchTerm);
-        events = allEvents.filter(e => e.event_date === date);
+        events = allEvents.filter((e) => e.event_date === date);
       } else {
         events = await calendarContextService.searchEvents(userId, searchTerm);
       }
@@ -688,7 +792,7 @@ class AIAssistantService {
         return {
           type: 'calendar',
           success: false,
-          message: `No events found matching "${searchTerm}".`
+          message: `No events found matching "${searchTerm}".`,
         };
       }
 
@@ -698,15 +802,12 @@ class AIAssistantService {
           type: 'calendar',
           success: false,
           message: `Multiple events found. Please be more specific about which event to delete:\n${formatted}`,
-          data: { events }
+          data: { events },
         };
       }
 
       const event = events[0];
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', event.id);
+      const { error } = await supabase.from('events').delete().eq('id', event.id);
 
       if (error) throw error;
 
@@ -714,74 +815,86 @@ class AIAssistantService {
         type: 'calendar',
         success: true,
         message: `✅ Deleted "${event.title}" from your calendar.`,
-        data: { event }
+        data: { event },
       };
     } catch (error) {
       console.error('❌ Calendar delete error:', error);
       return {
         type: 'calendar',
         success: false,
-        message: `Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Reminders */
-  private async handleReminderAction(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleReminderAction(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('⏰ Creating reminder with details:', details);
-    
+
     const title = String(details.title ?? 'Reminder');
     const date = toISODate(details.date);
     const time = toISOTime(details.time);
 
     if (!date) {
-      return { 
-        type: 'reminder', 
-        success: false, 
-        message: 'Please include a date for the reminder (e.g., "today", "tomorrow", "2024-03-15")' 
+      return {
+        type: 'reminder',
+        success: false,
+        message: 'Please include a date for the reminder (e.g., "today", "tomorrow", "2024-03-15")',
       };
     }
 
     try {
       const { data, error } = await supabase
         .from('reminders')
-        .insert([{ 
-          user_id: userId, 
-          title, 
-          reminder_date: date, 
-          reminder_time: time,
-          priority: 'medium',
-          completed: false
-        }])
+        .insert([
+          {
+            user_id: userId,
+            title,
+            reminder_date: date,
+            reminder_time: time,
+            priority: 'medium',
+            completed: false,
+          },
+        ])
         .select()
         .single();
 
       if (error) {
         console.error('❌ Reminder creation error:', error);
-        return { type: 'reminder', success: false, message: error.message || 'Failed to create reminder.' };
+        return {
+          type: 'reminder',
+          success: false,
+          message: error.message || 'Failed to create reminder.',
+        };
       }
 
       console.log('⏰ Reminder created successfully:', data);
-      return { 
-        type: 'reminder', 
-        success: true, 
-        message: `✅ Reminder set for ${date}${time ? ' at ' + time.slice(0,5) : ''}: ${title}`, 
-        data 
+      return {
+        type: 'reminder',
+        success: true,
+        message: `✅ Reminder set for ${date}${time ? ' at ' + time.slice(0, 5) : ''}: ${title}`,
+        data,
       };
     } catch (error) {
       console.error('❌ Reminder creation error:', error);
-      return { 
-        type: 'reminder', 
-        success: false, 
-        message: `Failed to create reminder: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      return {
+        type: 'reminder',
+        success: false,
+        message: `Failed to create reminder: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Shopping */
-  private async handleShoppingAction(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleShoppingAction(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('🛒 Adding shopping item with details:', details);
-    
+
     const title = String(details.title ?? 'item');
     const category = String(details.category ?? details.list ?? 'other');
     const quantity = coerceInt(details.quantity ?? 1, 1) ?? 1;
@@ -789,41 +902,50 @@ class AIAssistantService {
     try {
       const { data, error } = await supabase
         .from('shopping_lists')
-        .insert([{ 
-          user_id: userId, 
-          item: title, 
-          category, 
-          quantity,
-          completed: false,
-          urgent: false
-        }])
+        .insert([
+          {
+            user_id: userId,
+            item: title,
+            category,
+            quantity,
+            completed: false,
+            urgent: false,
+          },
+        ])
         .select()
         .single();
 
       if (error) {
         console.error('❌ Shopping item creation error:', error);
-        return { type: 'shopping', success: false, message: error.message || 'Failed to add to shopping list.' };
+        return {
+          type: 'shopping',
+          success: false,
+          message: error.message || 'Failed to add to shopping list.',
+        };
       }
 
       console.log('🛒 Shopping item created successfully:', data);
-      return { 
-        type: 'shopping', 
-        success: true, 
-        message: `✅ Added to shopping list: ${title}${quantity > 1 ? ` x${quantity}` : ''}`, 
-        data 
+      return {
+        type: 'shopping',
+        success: true,
+        message: `✅ Added to shopping list: ${title}${quantity > 1 ? ` x${quantity}` : ''}`,
+        data,
       };
     } catch (error) {
       console.error('❌ Shopping item creation error:', error);
-      return { 
-        type: 'shopping', 
-        success: false, 
-        message: `Failed to add to shopping list: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      return {
+        type: 'shopping',
+        success: false,
+        message: `Failed to add to shopping list: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Tasks */
-  private async handleTaskAction(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleTaskAction(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('✅ Creating task with details:', details);
 
     const title = String(details.title ?? 'New task');
@@ -831,7 +953,7 @@ class AIAssistantService {
     const due_date = toISODate(details.date);
     const due_time = toISOTime(details.time);
     const p = details.priority ? details.priority.toString().toLowerCase() : undefined;
-    const priority = (p === 'low' || p === 'medium' || p === 'high') ? p : 'medium';
+    const priority = p === 'low' || p === 'medium' || p === 'high' ? p : 'medium';
     const category = String(details.category ?? 'other');
     const points = coerceInt(details.points, 0) ?? 0;
     const notes = details.notes ? String(details.notes) : null;
@@ -853,23 +975,27 @@ class AIAssistantService {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .insert([{
-          user_id: userId,
-          title,
-          description,
-          due_date,
-          due_time,
-          priority,
-          status: 'pending',
-          category,
-          points,
-          notes,
-          assigned_to
-        }])
-        .select(`
+        .insert([
+          {
+            user_id: userId,
+            title,
+            description,
+            due_date,
+            due_time,
+            priority,
+            status: 'pending',
+            category,
+            points,
+            notes,
+            assigned_to,
+          },
+        ])
+        .select(
+          `
           *,
           assigned_family_member:family_members(id, name, age)
-        `)
+        `
+        )
         .single();
 
       if (error) {
@@ -889,14 +1015,14 @@ class AIAssistantService {
         type: 'task',
         success: true,
         message,
-        data
+        data,
       };
     } catch (error) {
       console.error('❌ Task creation error:', error);
       return {
         type: 'task',
         success: false,
-        message: `Failed to create task: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to create task: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -912,10 +1038,12 @@ class AIAssistantService {
     try {
       let query = supabase
         .from('tasks')
-        .select(`
+        .select(
+          `
           *,
           assigned_family_member:family_members(id, name, age)
-        `)
+        `
+        )
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -948,7 +1076,7 @@ class AIAssistantService {
           type: 'task',
           success: true,
           message: 'You have no tasks matching your criteria.',
-          data: { tasks: [] }
+          data: { tasks: [] },
         };
       }
 
@@ -956,7 +1084,8 @@ class AIAssistantService {
       tasks.forEach((task: any, i: number) => {
         message += `${i + 1}. ${task.title}`;
         if (task.status) message += ` (${task.status})`;
-        if (task.assigned_family_member) message += ` - assigned to ${task.assigned_family_member.name}`;
+        if (task.assigned_family_member)
+          message += ` - assigned to ${task.assigned_family_member.name}`;
         if (task.due_date) message += ` - due ${task.due_date}`;
         message += '\n';
       });
@@ -965,30 +1094,33 @@ class AIAssistantService {
         type: 'task',
         success: true,
         message,
-        data: { tasks }
+        data: { tasks },
       };
     } catch (error) {
       console.error('❌ Task query error:', error);
       return {
         type: 'task',
         success: false,
-        message: `Failed to query tasks: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to query tasks: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Task Update */
-  private async handleTaskUpdate(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleTaskUpdate(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('✏️ Updating task with details:', details);
 
     const searchTerm = String(details.search_term || '');
-    const updates = details.updates as Record<string, unknown> || {};
+    const updates = (details.updates as Record<string, unknown>) || {};
 
     if (!searchTerm) {
       return {
         type: 'task',
         success: false,
-        message: 'Please specify which task you want to update.'
+        message: 'Please specify which task you want to update.',
       };
     }
 
@@ -1005,7 +1137,7 @@ class AIAssistantService {
         return {
           type: 'task',
           success: false,
-          message: `No tasks found matching "${searchTerm}".`
+          message: `No tasks found matching "${searchTerm}".`,
         };
       }
 
@@ -1015,7 +1147,7 @@ class AIAssistantService {
           type: 'task',
           success: false,
           message: `Multiple tasks found matching "${searchTerm}": ${taskList}. Please be more specific.`,
-          data: { tasks }
+          data: { tasks },
         };
       }
 
@@ -1062,7 +1194,7 @@ class AIAssistantService {
         return {
           type: 'task',
           success: false,
-          message: 'No valid updates provided.'
+          message: 'No valid updates provided.',
         };
       }
 
@@ -1070,10 +1202,12 @@ class AIAssistantService {
         .from('tasks')
         .update(updatePayload)
         .eq('id', task.id)
-        .select(`
+        .select(
+          `
           *,
           assigned_family_member:family_members(id, name, age)
-        `)
+        `
+        )
         .single();
 
       if (updateError) throw updateError;
@@ -1082,20 +1216,23 @@ class AIAssistantService {
         type: 'task',
         success: true,
         message: `✅ Updated task "${task.title}" successfully!`,
-        data: { task: updatedTask }
+        data: { task: updatedTask },
       };
     } catch (error) {
       console.error('❌ Task update error:', error);
       return {
         type: 'task',
         success: false,
-        message: `Failed to update task: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to update task: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Task Delete */
-  private async handleTaskDelete(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleTaskDelete(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('🗑️ Deleting task with details:', details);
 
     const searchTerm = String(details.search_term || '');
@@ -1104,7 +1241,7 @@ class AIAssistantService {
       return {
         type: 'task',
         success: false,
-        message: 'Please specify which task you want to delete.'
+        message: 'Please specify which task you want to delete.',
       };
     }
 
@@ -1121,7 +1258,7 @@ class AIAssistantService {
         return {
           type: 'task',
           success: false,
-          message: `No tasks found matching "${searchTerm}".`
+          message: `No tasks found matching "${searchTerm}".`,
         };
       }
 
@@ -1131,15 +1268,12 @@ class AIAssistantService {
           type: 'task',
           success: false,
           message: `Multiple tasks found matching "${searchTerm}": ${taskList}. Please be more specific.`,
-          data: { tasks }
+          data: { tasks },
         };
       }
 
       const task = tasks[0];
-      const { error: deleteError } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', task.id);
+      const { error: deleteError } = await supabase.from('tasks').delete().eq('id', task.id);
 
       if (deleteError) throw deleteError;
 
@@ -1147,20 +1281,23 @@ class AIAssistantService {
         type: 'task',
         success: true,
         message: `✅ Deleted task "${task.title}" from your list.`,
-        data: { task }
+        data: { task },
       };
     } catch (error) {
       console.error('❌ Task delete error:', error);
       return {
         type: 'task',
         success: false,
-        message: `Failed to delete task: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to delete task: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Shopping Query */
-  private async handleShoppingQuery(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleShoppingQuery(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('🛒 Querying shopping list with details:', details);
 
     const queryType = String(details.query_type || 'all');
@@ -1191,8 +1328,9 @@ class AIAssistantService {
         return {
           type: 'shopping_query',
           success: true,
-          message: queryType === 'pending' ? 'Your shopping list is empty!' : 'No shopping items found.',
-          data: { items: [] }
+          message:
+            queryType === 'pending' ? 'Your shopping list is empty!' : 'No shopping items found.',
+          data: { items: [] },
         };
       }
 
@@ -1209,30 +1347,33 @@ class AIAssistantService {
         type: 'shopping_query',
         success: true,
         message,
-        data: { items }
+        data: { items },
       };
     } catch (error) {
       console.error('❌ Shopping query error:', error);
       return {
         type: 'shopping_query',
         success: false,
-        message: `Failed to query shopping list: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to query shopping list: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Shopping Update */
-  private async handleShoppingUpdate(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleShoppingUpdate(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('✏️ Updating shopping item with details:', details);
 
     const searchTerm = String(details.search_term || '');
-    const updates = details.updates as Record<string, unknown> || {};
+    const updates = (details.updates as Record<string, unknown>) || {};
 
     if (!searchTerm) {
       return {
         type: 'shopping_update',
         success: false,
-        message: 'Please specify which item you want to update.'
+        message: 'Please specify which item you want to update.',
       };
     }
 
@@ -1249,7 +1390,7 @@ class AIAssistantService {
         return {
           type: 'shopping_update',
           success: false,
-          message: `No shopping items found matching "${searchTerm}".`
+          message: `No shopping items found matching "${searchTerm}".`,
         };
       }
 
@@ -1259,7 +1400,7 @@ class AIAssistantService {
           type: 'shopping_update',
           success: false,
           message: `Multiple items found matching "${searchTerm}": ${itemList}. Please be more specific.`,
-          data: { items }
+          data: { items },
         };
       }
 
@@ -1276,7 +1417,7 @@ class AIAssistantService {
         return {
           type: 'shopping_update',
           success: false,
-          message: 'No valid updates provided.'
+          message: 'No valid updates provided.',
         };
       }
 
@@ -1293,20 +1434,23 @@ class AIAssistantService {
         type: 'shopping_update',
         success: true,
         message: `✅ Updated "${item.item}" successfully!`,
-        data: { item: updatedItem }
+        data: { item: updatedItem },
       };
     } catch (error) {
       console.error('❌ Shopping update error:', error);
       return {
         type: 'shopping_update',
         success: false,
-        message: `Failed to update item: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to update item: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Shopping Delete */
-  private async handleShoppingDelete(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleShoppingDelete(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('🗑️ Deleting shopping item with details:', details);
 
     const searchTerm = String(details.search_term || '');
@@ -1315,7 +1459,7 @@ class AIAssistantService {
       return {
         type: 'shopping_delete',
         success: false,
-        message: 'Please specify which item you want to delete.'
+        message: 'Please specify which item you want to delete.',
       };
     }
 
@@ -1332,7 +1476,7 @@ class AIAssistantService {
         return {
           type: 'shopping_delete',
           success: false,
-          message: `No shopping items found matching "${searchTerm}".`
+          message: `No shopping items found matching "${searchTerm}".`,
         };
       }
 
@@ -1342,7 +1486,7 @@ class AIAssistantService {
           type: 'shopping_delete',
           success: false,
           message: `Multiple items found matching "${searchTerm}": ${itemList}. Please be more specific.`,
-          data: { items }
+          data: { items },
         };
       }
 
@@ -1358,20 +1502,23 @@ class AIAssistantService {
         type: 'shopping_delete',
         success: true,
         message: `✅ Removed "${item.item}" from your shopping list.`,
-        data: { item }
+        data: { item },
       };
     } catch (error) {
       console.error('❌ Shopping delete error:', error);
       return {
         type: 'shopping_delete',
         success: false,
-        message: `Failed to delete item: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to delete item: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Family Member Creation */
-  private async handleFamilyAction(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleFamilyAction(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('👨‍👩‍👧‍👦 Creating family member with details:', details);
 
     const name = String(details.name ?? 'Family Member');
@@ -1383,26 +1530,32 @@ class AIAssistantService {
       return {
         type: 'family',
         success: false,
-        message: 'Please provide a name for the family member.'
+        message: 'Please provide a name for the family member.',
       };
     }
 
     try {
       const { data, error } = await supabase
         .from('family_members')
-        .insert([{
-          user_id: userId,
-          name,
-          age,
-          gender,
-          ...(relationship && { medical_notes: `Relationship: ${relationship}` })
-        }])
+        .insert([
+          {
+            user_id: userId,
+            name,
+            age,
+            gender,
+            ...(relationship && { medical_notes: `Relationship: ${relationship}` }),
+          },
+        ])
         .select()
         .single();
 
       if (error) {
         console.error('❌ Family member creation error:', error);
-        return { type: 'family', success: false, message: error.message || 'Failed to add family member.' };
+        return {
+          type: 'family',
+          success: false,
+          message: error.message || 'Failed to add family member.',
+        };
       }
 
       console.log('👨‍👩‍👧‍👦 Family member created successfully:', data);
@@ -1410,20 +1563,23 @@ class AIAssistantService {
         type: 'family',
         success: true,
         message: `✅ Added ${name}${age ? ` (age ${age})` : ''} to your family!`,
-        data
+        data,
       };
     } catch (error) {
       console.error('❌ Family member creation error:', error);
       return {
         type: 'family',
         success: false,
-        message: `Failed to add family member: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to add family member: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Family Query */
-  private async handleFamilyQuery(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleFamilyQuery(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('👨‍👩‍👧‍👦 Querying family members with details:', details);
 
     const queryType = String(details.query_type || 'all');
@@ -1448,8 +1604,9 @@ class AIAssistantService {
         return {
           type: 'family_query',
           success: true,
-          message: 'No family members found. You can add family members by saying "Add my daughter Emma age 8".',
-          data: { members: [] }
+          message:
+            'No family members found. You can add family members by saying "Add my daughter Emma age 8".',
+          data: { members: [] },
         };
       }
 
@@ -1467,30 +1624,33 @@ class AIAssistantService {
         type: 'family_query',
         success: true,
         message,
-        data: { members }
+        data: { members },
       };
     } catch (error) {
       console.error('❌ Family query error:', error);
       return {
         type: 'family_query',
         success: false,
-        message: `Failed to query family members: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to query family members: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Family Update */
-  private async handleFamilyUpdate(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleFamilyUpdate(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('✏️ Updating family member with details:', details);
 
     const searchTerm = String(details.search_term || '');
-    const updates = details.updates as Record<string, unknown> || {};
+    const updates = (details.updates as Record<string, unknown>) || {};
 
     if (!searchTerm) {
       return {
         type: 'family_update',
         success: false,
-        message: 'Please specify which family member you want to update.'
+        message: 'Please specify which family member you want to update.',
       };
     }
 
@@ -1507,7 +1667,7 @@ class AIAssistantService {
         return {
           type: 'family_update',
           success: false,
-          message: `No family members found matching "${searchTerm}".`
+          message: `No family members found matching "${searchTerm}".`,
         };
       }
 
@@ -1517,7 +1677,7 @@ class AIAssistantService {
           type: 'family_update',
           success: false,
           message: `Multiple family members found matching "${searchTerm}": ${memberList}. Please be more specific.`,
-          data: { members }
+          data: { members },
         };
       }
 
@@ -1531,8 +1691,10 @@ class AIAssistantService {
       if (updates.grade) updatePayload.grade = String(updates.grade);
       if (updates.allergies) {
         const allergiesList = Array.isArray(updates.allergies)
-          ? updates.allergies.map(a => String(a))
-          : String(updates.allergies).split(',').map(a => a.trim());
+          ? updates.allergies.map((a) => String(a))
+          : String(updates.allergies)
+              .split(',')
+              .map((a) => a.trim());
         updatePayload.allergies = allergiesList;
       }
       if (updates.medical_notes) updatePayload.medical_notes = String(updates.medical_notes);
@@ -1541,7 +1703,7 @@ class AIAssistantService {
         return {
           type: 'family_update',
           success: false,
-          message: 'No valid updates provided.'
+          message: 'No valid updates provided.',
         };
       }
 
@@ -1558,20 +1720,23 @@ class AIAssistantService {
         type: 'family_update',
         success: true,
         message: `✅ Updated ${member.name}'s information successfully!`,
-        data: { member: updatedMember }
+        data: { member: updatedMember },
       };
     } catch (error) {
       console.error('❌ Family update error:', error);
       return {
         type: 'family_update',
         success: false,
-        message: `Failed to update family member: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to update family member: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Family Delete */
-  private async handleFamilyDelete(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleFamilyDelete(
+    details: Record<string, unknown>,
+    userId: UUID
+  ): Promise<AIAction> {
     console.log('🗑️ Deleting family member with details:', details);
 
     const searchTerm = String(details.search_term || '');
@@ -1580,7 +1745,7 @@ class AIAssistantService {
       return {
         type: 'family_delete',
         success: false,
-        message: 'Please specify which family member you want to remove.'
+        message: 'Please specify which family member you want to remove.',
       };
     }
 
@@ -1597,7 +1762,7 @@ class AIAssistantService {
         return {
           type: 'family_delete',
           success: false,
-          message: `No family members found matching "${searchTerm}".`
+          message: `No family members found matching "${searchTerm}".`,
         };
       }
 
@@ -1607,7 +1772,7 @@ class AIAssistantService {
           type: 'family_delete',
           success: false,
           message: `Multiple family members found matching "${searchTerm}": ${memberList}. Please be more specific.`,
-          data: { members }
+          data: { members },
         };
       }
 
@@ -1623,27 +1788,34 @@ class AIAssistantService {
         type: 'family_delete',
         success: true,
         message: `✅ Removed ${member.name} from your family list.`,
-        data: { member }
+        data: { member },
       };
     } catch (error) {
       console.error('❌ Family delete error:', error);
       return {
         type: 'family_delete',
         success: false,
-        message: `Failed to remove family member: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to remove family member: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
 
   /** Chat - Handle general conversation */
-  private async handleChatAction(details: Record<string, unknown>, originalMessage: string, calendarContext?: any, conversationHistory?: Array<{role: 'user' | 'assistant', content: string}>): Promise<AIAction> {
+  private async handleChatAction(
+    details: Record<string, unknown>,
+    originalMessage: string,
+    calendarContext?: any,
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<AIAction> {
     console.log('💬 Handling chat message:', originalMessage);
     console.log('💬 Conversation history length:', conversationHistory?.length || 0);
 
     try {
-      const contextInfo = calendarContext ? `\n\nCurrent Calendar Context:\n${calendarContext.summary}` : '';
+      const contextInfo = calendarContext
+        ? `\n\nCurrent Calendar Context:\n${calendarContext.summary}`
+        : '';
 
-      const messages: Array<{role: 'system' | 'user' | 'assistant', content: string}> = [
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
         {
           role: 'system',
           content: `You are Sara, a helpful AI assistant for busy parents. You help with family scheduling, task management, shopping lists, family member management, reminders, and general parenting advice.${contextInfo}
@@ -1686,8 +1858,8 @@ OTHER:
 
 When answering questions, reference the calendar, task, shopping, and family context when relevant. If the user mentions planning something, check for conflicts proactively.
 
-IMPORTANT: Maintain conversation context. If the user refers to previous topics, tasks, people, or items mentioned earlier in the conversation, remember and reference them appropriately.`
-        }
+IMPORTANT: Maintain conversation context. If the user refers to previous topics, tasks, people, or items mentioned earlier in the conversation, remember and reference them appropriately.`,
+        },
       ];
 
       // Add conversation history if provided
@@ -1700,7 +1872,7 @@ IMPORTANT: Maintain conversation context. If the user refers to previous topics,
       // Add the current message
       messages.push({
         role: 'user',
-        content: originalMessage
+        content: originalMessage,
       });
 
       const response = await openaiService.chat(messages);
@@ -1709,15 +1881,16 @@ IMPORTANT: Maintain conversation context. If the user refers to previous topics,
         type: 'chat',
         success: true,
         message: response,
-        data: { query: originalMessage }
+        data: { query: originalMessage },
       };
     } catch (error) {
       console.error('❌ Chat response error:', error);
       return {
         type: 'chat',
         success: true,
-        message: "I'm here to help! You can ask me about your schedule, add items to your shopping list, set reminders, schedule events, or create tasks. What would you like to do?",
-        data: { query: originalMessage }
+        message:
+          "I'm here to help! You can ask me about your schedule, add items to your shopping list, set reminders, schedule events, or create tasks. What would you like to do?",
+        data: { query: originalMessage },
       };
     }
   }

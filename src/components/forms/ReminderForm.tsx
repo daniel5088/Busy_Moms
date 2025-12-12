@@ -11,12 +11,12 @@ interface ReminderFormProps {
   preselectedMember?: FamilyMember | null;
 }
 
-export function ReminderForm({ 
-  isOpen, 
-  onClose, 
-  onReminderCreated, 
+export function ReminderForm({
+  isOpen,
+  onClose,
+  onReminderCreated,
   editReminder,
-  preselectedMember 
+  preselectedMember,
 }: ReminderFormProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export function ReminderForm({
     priority: editReminder?.priority || 'medium',
     family_member_id: editReminder?.family_member_id || preselectedMember?.id || '',
     recurring: editReminder?.recurring || false,
-    recurring_pattern: editReminder?.recurring_pattern || ''
+    recurring_pattern: editReminder?.recurring_pattern || '',
   });
 
   // Load family members when form opens
@@ -50,19 +50,19 @@ export function ReminderForm({
         priority: editReminder.priority || 'medium',
         family_member_id: editReminder.family_member_id || '',
         recurring: editReminder.recurring || false,
-        recurring_pattern: editReminder.recurring_pattern || ''
+        recurring_pattern: editReminder.recurring_pattern || '',
       });
     } else if (preselectedMember) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        family_member_id: preselectedMember.id
+        family_member_id: preselectedMember.id,
       }));
     }
   }, [editReminder, preselectedMember]);
 
   const loadFamilyMembers = async () => {
     if (!user?.id) return;
-    
+
     try {
       const { data: members, error } = await supabase
         .from('family_members')
@@ -94,7 +94,7 @@ export function ReminderForm({
         recurring: formData.recurring,
         recurring_pattern: formData.recurring ? formData.recurring_pattern || null : null,
         user_id: user.id,
-        completed: false
+        completed: false,
       };
 
       let result;
@@ -106,11 +106,7 @@ export function ReminderForm({
           .select()
           .single();
       } else {
-        result = await supabase
-          .from('reminders')
-          .insert([reminderData])
-          .select()
-          .single();
+        result = await supabase.from('reminders').insert([reminderData]).select().single();
       }
 
       if (result.error) throw result.error;
@@ -125,7 +121,7 @@ export function ReminderForm({
         priority: 'medium',
         family_member_id: preselectedMember?.id || '',
         recurring: false,
-        recurring_pattern: ''
+        recurring_pattern: '',
       });
     } catch (error) {
       console.error('Error saving reminder:', error);
@@ -143,7 +139,9 @@ export function ReminderForm({
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
-              {editReminder ? 'Edit Reminder' : `Add Reminder${preselectedMember ? ` for ${preselectedMember.name}` : ''}`}
+              {editReminder
+                ? 'Edit Reminder'
+                : `Add Reminder${preselectedMember ? ` for ${preselectedMember.name}` : ''}`}
             </h2>
             <button
               onClick={onClose}
@@ -254,7 +252,9 @@ export function ReminderForm({
                   onChange={(e) => setFormData({ ...formData, recurring: e.target.checked })}
                   className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                 />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">Recurring reminder</span>
+                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  Recurring reminder
+                </span>
               </label>
 
               {formData.recurring && (

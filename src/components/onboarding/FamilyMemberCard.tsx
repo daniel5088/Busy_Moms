@@ -20,12 +20,7 @@ type Props = {
   onRemove?: () => void;
 };
 
-export default function FamilyMemberCard({
-  member,
-  usedColors,
-  onChange,
-  onRemove,
-}: Props) {
+export default function FamilyMemberCard({ member, usedColors, onChange, onRemove }: Props) {
   const isNameEmpty = !member.name || member.name.trim() === '';
   const showAgeField = member.relationship === 'Child';
 
@@ -136,14 +131,8 @@ export default function FamilyMemberCard({
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Choose Color
-          </label>
-          <ColorPicker
-            value={member.color}
-            usedColors={usedColors}
-            onChange={handleColorChange}
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-3">Choose Color</label>
+          <ColorPicker value={member.color} usedColors={usedColors} onChange={handleColorChange} />
         </div>
       </div>
 

@@ -38,7 +38,7 @@ export async function captureAndStoreGoogleTokens(session: Session): Promise<boo
       refreshToken: providerRefreshToken,
       expiresIn: session.expires_in || 3600,
       providerUserId: session.user.user_metadata?.provider_id || session.user.user_metadata?.sub,
-      scope: session.user.user_metadata?.iss
+      scope: session.user.user_metadata?.iss,
     };
 
     return await storeGoogleTokens(tokenInfo);
@@ -81,10 +81,10 @@ export async function storeGoogleTokens(tokenInfo: GoogleTokenInfo): Promise<boo
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-        'apikey': anonKey
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: anonKey,
       },
-      body: JSON.stringify(tokenInfo)
+      body: JSON.stringify(tokenInfo),
     });
 
     if (!response.ok) {
@@ -92,7 +92,9 @@ export async function storeGoogleTokens(tokenInfo: GoogleTokenInfo): Promise<boo
       let errorData;
 
       if (contentType && contentType.includes('application/json')) {
-        errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+        errorData = await response
+          .json()
+          .catch(() => ({ error: 'Failed to parse error response' }));
       } else {
         const errorText = await response.text();
         errorData = { error: `Server error: ${errorText || response.statusText}` };
@@ -101,13 +103,19 @@ export async function storeGoogleTokens(tokenInfo: GoogleTokenInfo): Promise<boo
       console.error(`❌ Failed to store tokens (HTTP ${response.status}):`, errorData);
 
       if (response.status === 500 && errorData.details?.includes('google_tokens')) {
-        console.error('💡 Database table issue detected. Verify google_tokens table exists and RLS policies are correct.');
+        console.error(
+          '💡 Database table issue detected. Verify google_tokens table exists and RLS policies are correct.'
+        );
       } else if (response.status === 500) {
         console.error('💡 Edge Function error. Check Supabase Edge Functions logs for details.');
-        console.error('💡 Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are configured in Edge Functions secrets.');
+        console.error(
+          '💡 Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are configured in Edge Functions secrets.'
+        );
       }
 
-      throw new Error(errorData.error || errorData.message || errorData.details || `HTTP ${response.status}`);
+      throw new Error(
+        errorData.error || errorData.message || errorData.details || `HTTP ${response.status}`
+      );
     }
 
     const result = await response.json();
@@ -118,8 +126,12 @@ export async function storeGoogleTokens(tokenInfo: GoogleTokenInfo): Promise<boo
     console.error('💡 Troubleshooting steps:');
     console.error('  1. Check that store-google-tokens Edge Function is deployed');
     console.error('  2. Verify google_tokens table exists in database');
-    console.error('  3. Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in Supabase Edge Functions secrets');
-    console.error('  4. Run diagnostics: fetch your Supabase URL + "/functions/v1/google-diagnostics")');
+    console.error(
+      '  3. Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in Supabase Edge Functions secrets'
+    );
+    console.error(
+      '  4. Run diagnostics: fetch your Supabase URL + "/functions/v1/google-diagnostics")'
+    );
     return false;
   }
 }
@@ -155,13 +167,13 @@ export async function checkGoogleTokensExist(userId: string): Promise<boolean> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-        'apikey': anonKey
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: anonKey,
       },
       body: JSON.stringify({
         action: 'isConnected',
-        userId
-      })
+        userId,
+      }),
     });
 
     if (!response.ok) {

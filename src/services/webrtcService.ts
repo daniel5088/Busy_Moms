@@ -28,30 +28,33 @@ export class WebRTCService {
   async initializePeerConnection(options: PeerConnectionOptions = {}): Promise<RTCPeerConnection> {
     try {
       // Get ephemeral token from our edge function
-      const tokenResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webrtc-token`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          userId: crypto.randomUUID(),
-          roomId: 'family-chat'
-        })
-      });
+      const tokenResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webrtc-token`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: crypto.randomUUID(),
+            roomId: 'family-chat',
+          }),
+        }
+      );
 
       if (!tokenResponse.ok) {
         throw new Error('Failed to get WebRTC token');
       }
 
       const tokenData = await tokenResponse.json();
-      
+
       // Create peer connection with ICE servers from token response
       const rtcConfig: RTCConfiguration = {
         iceServers: tokenData.iceServers || [
           { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ],
       };
 
       this.peerConnection = new RTCPeerConnection(rtcConfig);
@@ -94,7 +97,7 @@ export class WebRTCService {
         // In a real app, you'd send this to the remote peer via signaling server
         this.sendSignalingMessage({
           type: 'ice-candidate',
-          candidate: event.candidate
+          candidate: event.candidate,
         });
       }
     };
@@ -121,11 +124,11 @@ export class WebRTCService {
       // Get user media
       this.localStream = await navigator.mediaDevices.getUserMedia({
         audio: options.audio || false,
-        video: options.video || false
+        video: options.video || false,
       });
 
       // Add tracks to peer connection
-      this.localStream.getTracks().forEach(track => {
+      this.localStream.getTracks().forEach((track) => {
         if (this.peerConnection && this.localStream) {
           this.peerConnection.addTrack(track, this.localStream);
         }
@@ -142,7 +145,7 @@ export class WebRTCService {
     if (!this.peerConnection) return;
 
     this.dataChannel = this.peerConnection.createDataChannel('familyChat', {
-      ordered: true
+      ordered: true,
     });
 
     this.dataChannel.onopen = () => {
@@ -168,7 +171,7 @@ export class WebRTCService {
     try {
       const offer = await this.peerConnection.createOffer();
       await this.peerConnection.setLocalDescription(offer);
-      
+
       console.log('📤 Created offer');
       return offer;
     } catch (error) {
@@ -187,7 +190,7 @@ export class WebRTCService {
       await this.peerConnection.setRemoteDescription(offer);
       const answer = await this.peerConnection.createAnswer();
       await this.peerConnection.setLocalDescription(answer);
-      
+
       console.log('📥 Created answer');
       return answer;
     } catch (error) {
@@ -264,7 +267,7 @@ export class WebRTCService {
     // In a real implementation, you'd send this to your signaling server
     // For demo purposes, we'll just log it
     console.log('📡 Signaling message:', message);
-    
+
     // You could implement this using Supabase real-time subscriptions
     // or a WebSocket connection to your signaling server
   }
@@ -272,7 +275,7 @@ export class WebRTCService {
   // Clean up resources
   disconnect(): void {
     if (this.localStream) {
-      this.localStream.getTracks().forEach(track => track.stop());
+      this.localStream.getTracks().forEach((track) => track.stop());
       this.localStream = null;
     }
 
@@ -292,7 +295,11 @@ export class WebRTCService {
 
   // Check if WebRTC is supported
   static isSupported(): boolean {
-    return !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    return !!(
+      window.RTCPeerConnection &&
+      navigator.mediaDevices &&
+      navigator.mediaDevices.getUserMedia
+    );
   }
 
   // Get connection state
@@ -303,8 +310,5 @@ export class WebRTCService {
 
 // Singleton instance
 export const webrtcService = new WebRTCService({
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' }
-  ]
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }],
 });

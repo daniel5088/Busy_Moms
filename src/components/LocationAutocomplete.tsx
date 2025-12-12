@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 
 declare global {
   interface Window {
@@ -14,16 +14,11 @@ type PlaceSelection = {
 interface Props {
   value: string;
   onChange: (value: string) => void;
-  apiKey?: string;                    // ✅ key comes in as a prop
+  apiKey?: string; // ✅ key comes in as a prop
   onSelect?: (place: PlaceSelection) => void;
 }
 
-export function LocationAutocomplete({
-  value,
-  onChange,
-  apiKey,
-  onSelect,
-}: Props) {
+export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [predictions, setPredictions] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -32,11 +27,11 @@ export function LocationAutocomplete({
 
   // Load Google Maps script ONCE, using the apiKey prop
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     if (!apiKey) {
       console.warn(
-        "[LocationAutocomplete] No Google Maps API key provided. Autocomplete disabled."
+        '[LocationAutocomplete] No Google Maps API key provided. Autocomplete disabled.'
       );
       return;
     }
@@ -46,10 +41,10 @@ export function LocationAutocomplete({
       return;
     }
 
-    if (document.getElementById("google-maps-js")) return;
+    if (document.getElementById('google-maps-js')) return;
 
-    const script = document.createElement("script");
-    script.id = "google-maps-js";
+    const script = document.createElement('script');
+    script.id = 'google-maps-js';
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
     script.defer = true;
@@ -57,7 +52,7 @@ export function LocationAutocomplete({
       setLoaded(true);
     };
     script.onerror = () => {
-      console.error("Failed to load Google Maps script");
+      console.error('Failed to load Google Maps script');
     };
 
     document.head.appendChild(script);
@@ -70,8 +65,8 @@ export function LocationAutocomplete({
         setPredictions([]);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Fetch predictions with debounce
@@ -95,14 +90,12 @@ export function LocationAutocomplete({
       serviceRef.current.getPlacePredictions(
         { input: value },
         (results: any[] | null, status: string) => {
-          if (status !== "OK" || !results) {
+          if (status !== 'OK' || !results) {
             setPredictions([]);
             return;
           }
 
-          const unique = Array.from(
-            new Map(results.map((p) => [p.place_id, p])).values()
-          );
+          const unique = Array.from(new Map(results.map((p) => [p.place_id, p])).values());
           setPredictions(unique);
         }
       );
@@ -110,7 +103,7 @@ export function LocationAutocomplete({
   }, [value, loaded]);
 
   const handleSelect = (p: any) => {
-    const name = p.description || "";
+    const name = p.description || '';
 
     onChange(name);
     setPredictions([]);
@@ -129,7 +122,7 @@ export function LocationAutocomplete({
     if (onSelect) {
       onSelect({
         name: value,
-        placeId: "",
+        placeId: '',
       });
     }
   };

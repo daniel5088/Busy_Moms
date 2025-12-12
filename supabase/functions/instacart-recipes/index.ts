@@ -1,9 +1,9 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
 interface InstacartIngredient {
@@ -34,76 +34,77 @@ interface InstacartRecipeResponse {
 
 Deno.serve(async (req: Request) => {
   // 🔹 1) Get or generate a correlation ID for this request
-  const incomingId = req.headers.get("x-correlation-id");
+  const incomingId = req.headers.get('x-correlation-id');
   const correlationId = incomingId ?? crypto.randomUUID();
 
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 200,
       headers: {
         ...corsHeaders,
-        "x-correlation-id": correlationId,
+        'x-correlation-id': correlationId,
       },
     });
   }
 
   try {
-    const instacartApiKey = Deno.env.get("INSTACART_API_KEY");
+    const instacartApiKey = Deno.env.get('INSTACART_API_KEY');
     if (!instacartApiKey) {
       console.error(
         JSON.stringify({
-          level: "error",
-          msg: "INSTACART_API_KEY missing",
+          level: 'error',
+          msg: 'INSTACART_API_KEY missing',
           correlationId,
-        }),
+        })
       );
-      throw new Error("INSTACART_API_KEY environment variable is not set");
+      throw new Error('INSTACART_API_KEY environment variable is not set');
     }
 
     const { action, ...payload } = await req.json();
 
     // 🔹 Optional: simple ping route for Diagnostics
-    if (action === "ping") {
+    if (action === 'ping') {
       console.log(
         JSON.stringify({
-          level: "info",
-          msg: "instacart-recipes ping",
+          level: 'info',
+          msg: 'instacart-recipes ping',
           correlationId,
-        }),
+        })
       );
-      return new Response(
-        JSON.stringify({ ok: true, source: "instacart-recipes" }),
-        {
-          status: 200,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-            "x-correlation-id": correlationId,
-          },
+      return new Response(JSON.stringify({ ok: true, source: 'instacart-recipes' }), {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'x-correlation-id': correlationId,
         },
-      );
+      });
     }
 
     // Use development server for testing
-    const instacartBaseUrl = "https://connect.dev.instacart.tools";
+    const instacartBaseUrl = 'https://connect.dev.instacart.tools';
 
     switch (action) {
-      case "create_recipe_page": {
+      case 'create_recipe_page': {
         const recipeRequest: CreateRecipePageRequest = payload;
 
         // Validate required fields
-        if (!recipeRequest.title || !recipeRequest.ingredients || recipeRequest.ingredients.length === 0) {
+        if (
+          !recipeRequest.title ||
+          !recipeRequest.ingredients ||
+          recipeRequest.ingredients.length === 0
+        ) {
           return new Response(
-            JSON.stringify({ error: "Title and at least one ingredient are required" }),
+            JSON.stringify({ error: 'Title and at least one ingredient are required' }),
             {
               status: 400,
               headers: {
                 ...corsHeaders,
-                "Content-Type": "application/json",
-                "x-correlation-id": correlationId,
+                'Content-Type': 'application/json',
+                'x-correlation-id': correlationId,
               },
-            },
+            }
           );
         }
 
@@ -116,10 +117,12 @@ Deno.serve(async (req: Request) => {
           if (ing.display_text) ingredient.display_text = ing.display_text;
 
           if (ing.quantity && ing.unit) {
-            ingredient.measurements = [{
-              quantity: ing.quantity,
-              unit: ing.unit,
-            }];
+            ingredient.measurements = [
+              {
+                quantity: ing.quantity,
+                unit: ing.unit,
+              },
+            ];
           }
 
           if (ing.brand_filters && ing.brand_filters.length > 0) {
@@ -146,17 +149,19 @@ Deno.serve(async (req: Request) => {
         if (recipeRequest.servings) instacartPayload.servings = recipeRequest.servings;
         if (recipeRequest.cooking_time) instacartPayload.cooking_time = recipeRequest.cooking_time;
         if (recipeRequest.instructions) instacartPayload.instructions = recipeRequest.instructions;
-        if (recipeRequest.partner_linkback_url) instacartPayload.partner_linkback_url = recipeRequest.partner_linkback_url;
-        if (recipeRequest.enable_pantry_items !== undefined) instacartPayload.enable_pantry_items = recipeRequest.enable_pantry_items;
+        if (recipeRequest.partner_linkback_url)
+          instacartPayload.partner_linkback_url = recipeRequest.partner_linkback_url;
+        if (recipeRequest.enable_pantry_items !== undefined)
+          instacartPayload.enable_pantry_items = recipeRequest.enable_pantry_items;
         if (recipeRequest.expires_in) instacartPayload.expires_in = recipeRequest.expires_in;
 
         // Make request to Instacart API
         const response = await fetch(`${instacartBaseUrl}/idp/v1/products/recipe`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${instacartApiKey}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${instacartApiKey}`,
           },
           body: JSON.stringify(instacartPayload),
         });
@@ -166,16 +171,16 @@ Deno.serve(async (req: Request) => {
         if (!response.ok) {
           console.error(
             JSON.stringify({
-              level: "error",
-              msg: "Instacart API error",
+              level: 'error',
+              msg: 'Instacart API error',
               correlationId,
               status: response.status,
               details: responseData,
-            }),
+            })
           );
           return new Response(
             JSON.stringify({
-              error: "Failed to create Instacart recipe page",
+              error: 'Failed to create Instacart recipe page',
               details: responseData,
               status: response.status,
             }),
@@ -183,69 +188,66 @@ Deno.serve(async (req: Request) => {
               status: response.status,
               headers: {
                 ...corsHeaders,
-                "Content-Type": "application/json",
-                "x-correlation-id": correlationId,
+                'Content-Type': 'application/json',
+                'x-correlation-id': correlationId,
               },
-            },
+            }
           );
         }
 
         console.log(
           JSON.stringify({
-            level: "info",
-            msg: "Instacart recipe created",
+            level: 'info',
+            msg: 'Instacart recipe created',
             correlationId,
-          }),
+          })
         );
 
-        return new Response(
-          JSON.stringify(responseData as InstacartRecipeResponse),
-          {
-            status: 200,
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
-              "x-correlation-id": correlationId,
-            },
+        return new Response(JSON.stringify(responseData as InstacartRecipeResponse), {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'x-correlation-id': correlationId,
           },
-        );
+        });
       }
 
       default:
         return new Response(
-          JSON.stringify({ error: "Invalid action. Supported actions: create_recipe_page, ping" }),
+          JSON.stringify({ error: 'Invalid action. Supported actions: create_recipe_page, ping' }),
           {
             status: 400,
             headers: {
               ...corsHeaders,
-              "Content-Type": "application/json",
-              "x-correlation-id": correlationId,
+              'Content-Type': 'application/json',
+              'x-correlation-id': correlationId,
             },
-          },
+          }
         );
     }
   } catch (error) {
     console.error(
       JSON.stringify({
-        level: "error",
-        msg: "Edge function error",
+        level: 'error',
+        msg: 'Edge function error',
         correlationId,
         error: error instanceof Error ? error.message : String(error),
-      }),
+      })
     );
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "An unexpected error occurred",
+        error: error instanceof Error ? error.message : 'An unexpected error occurred',
       }),
       {
         status: 500,
         headers: {
           ...corsHeaders,
-          "Content-Type": "application/json",
-          "x-correlation-id": correlationId,
+          'Content-Type': 'application/json',
+          'x-correlation-id': correlationId,
         },
-      },
+      }
     );
   }
 });

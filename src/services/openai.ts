@@ -6,12 +6,14 @@ class OpenAIService {
     if (import.meta.env.VITE_OPENAI_API_KEY) {
       try {
         // Dynamic import to avoid build errors when OpenAI is not available
-        import('openai').then(({ default: OpenAI }) => {
-          this.openai = new OpenAI({
-            apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-            dangerouslyAllowBrowser: true
-          });
-        }).catch(console.error);
+        import('openai')
+          .then(({ default: OpenAI }) => {
+            this.openai = new OpenAI({
+              apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+              dangerouslyAllowBrowser: true,
+            });
+          })
+          .catch(console.error);
       } catch (error) {
         console.warn('OpenAI not available:', error);
       }
@@ -28,10 +30,13 @@ class OpenAIService {
         model: 'gpt-3.5-turbo',
         messages,
         max_tokens: 500,
-        temperature: 0.7
+        temperature: 0.7,
       });
 
-      return response.choices[0]?.message?.content || 'I apologize, but I cannot provide a response at the moment.';
+      return (
+        response.choices[0]?.message?.content ||
+        'I apologize, but I cannot provide a response at the moment.'
+      );
     } catch (error) {
       console.error('OpenAI chat error:', error);
       return this.getFallbackResponse(messages);
@@ -71,7 +76,7 @@ Return format:
         model: 'gpt-3.5-turbo',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 200,
-        temperature: 0.1
+        temperature: 0.1,
       });
 
       const content = response.choices[0]?.message?.content;
@@ -92,27 +97,27 @@ Return format:
 
   private getFallbackResponse(messages: Array<{ role: string; content: string }>): string {
     const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
-    
+
     if (lastMessage.includes('hello') || lastMessage.includes('hi')) {
       return "Hello! I'm your family assistant. I can help you manage events, tasks, shopping lists, and more. How can I assist you today?";
     }
-    
+
     if (lastMessage.includes('event') || lastMessage.includes('calendar')) {
-      return "I can help you manage your family events and calendar. You can add events, set reminders, and keep track of important dates.";
+      return 'I can help you manage your family events and calendar. You can add events, set reminders, and keep track of important dates.';
     }
-    
+
     if (lastMessage.includes('task') || lastMessage.includes('chore')) {
-      return "I can help you organize family tasks and chores. You can assign tasks to family members and track their completion.";
+      return 'I can help you organize family tasks and chores. You can assign tasks to family members and track their completion.';
     }
-    
+
     if (lastMessage.includes('shopping') || lastMessage.includes('grocery')) {
-      return "I can help you manage your shopping lists. Add items, organize by category, and keep track of what you need to buy.";
+      return 'I can help you manage your shopping lists. Add items, organize by category, and keep track of what you need to buy.';
     }
-    
+
     if (lastMessage.includes('contact')) {
       return "I can help you manage your family contacts including babysitters, doctors, teachers, and other important people in your family's life.";
     }
-    
+
     return "I'm here to help you manage your family's schedule, tasks, and daily activities. What would you like assistance with?";
   }
 
@@ -126,27 +131,35 @@ Return format:
     };
   } {
     const lower = message.toLowerCase();
-    
+
     // Look for event keywords
-    const eventKeywords = ['party', 'birthday', 'appointment', 'meeting', 'practice', 'game', 'event'];
-    const hasEventKeyword = eventKeywords.some(keyword => lower.includes(keyword));
-    
+    const eventKeywords = [
+      'party',
+      'birthday',
+      'appointment',
+      'meeting',
+      'practice',
+      'game',
+      'event',
+    ];
+    const hasEventKeyword = eventKeywords.some((keyword) => lower.includes(keyword));
+
     if (!hasEventKeyword) {
       return { isEvent: false };
     }
-    
+
     // Extract title (first sentence or up to date/time)
     const sentences = message.split(/[.!?]/);
     const title = sentences[0]?.trim() || message.substring(0, 50);
-    
+
     // Look for dates
     const datePatterns = [
       /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
       /\b(\d{1,2}\/\d{1,2}\/?\d{0,4})\b/,
       /\b(\d{1,2}-\d{1,2}-?\d{0,4})\b/,
-      /\b(today|tomorrow|next week)\b/i
+      /\b(today|tomorrow|next week)\b/i,
     ];
-    
+
     let date = '';
     for (const pattern of datePatterns) {
       const match = message.match(pattern);
@@ -155,19 +168,19 @@ Return format:
         break;
       }
     }
-    
+
     // Look for times
     const timePattern = /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}-\d{1,2}(?:\s*(?:am|pm))?)\b/i;
     const timeMatch = message.match(timePattern);
     const time = timeMatch?.[1] || '';
-    
+
     // Look for locations
     const locationPatterns = [
       /\bat\s+([^.!?]+?)(?:\s+on|\s+this|\s+next|$)/i,
       /\bin\s+([^.!?]+?)(?:\s+on|\s+this|\s+next|$)/i,
-      /\b(?:location|venue|place):\s*([^.!?]+)/i
+      /\b(?:location|venue|place):\s*([^.!?]+)/i,
     ];
-    
+
     let location = '';
     for (const pattern of locationPatterns) {
       const match = message.match(pattern);
@@ -176,15 +189,15 @@ Return format:
         break;
       }
     }
-    
+
     return {
       isEvent: true,
       eventDetails: {
         title: title || 'Event',
         date: date || undefined,
         time: time || undefined,
-        location: location || undefined
-      }
+        location: location || undefined,
+      },
     };
   }
 }

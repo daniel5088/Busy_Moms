@@ -1,9 +1,9 @@
-import { Recipe, RecipeIngredient } from '../lib/supabase'
-import { recipeService } from '../services/recipeService'
+import { Recipe, RecipeIngredient } from '../lib/supabase';
+import { recipeService } from '../services/recipeService';
 
 export interface SampleRecipe {
-  recipe: Omit<Recipe, 'id' | 'created_at' | 'updated_at'>
-  ingredients: Omit<RecipeIngredient, 'id' | 'recipe_id' | 'created_at'>[]
+  recipe: Omit<Recipe, 'id' | 'created_at' | 'updated_at'>;
+  ingredients: Omit<RecipeIngredient, 'id' | 'recipe_id' | 'created_at'>[];
 }
 
 export const sampleRecipes: SampleRecipe[] = [
@@ -12,7 +12,8 @@ export const sampleRecipes: SampleRecipe[] = [
       user_id: '',
       title: 'Classic Spaghetti Carbonara',
       author: 'Italian Kitchen',
-      description: 'A traditional Italian pasta dish made with eggs, cheese, pancetta, and black pepper. Simple yet incredibly delicious.',
+      description:
+        'A traditional Italian pasta dish made with eggs, cheese, pancetta, and black pepper. Simple yet incredibly delicious.',
       image_url: 'https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg',
       servings: 4,
       cooking_time_minutes: 25,
@@ -22,7 +23,7 @@ export const sampleRecipes: SampleRecipe[] = [
         'In a bowl, whisk together eggs, grated Parmesan cheese, and black pepper.',
         'Drain pasta, reserving 1 cup of pasta water. Add hot pasta to the skillet with pancetta.',
         'Remove from heat and quickly stir in the egg mixture, adding pasta water a little at a time until creamy.',
-        'Serve immediately with extra Parmesan and black pepper.'
+        'Serve immediately with extra Parmesan and black pepper.',
       ],
       source_url: null,
       instacart_recipe_url: null,
@@ -103,7 +104,8 @@ export const sampleRecipes: SampleRecipe[] = [
       user_id: '',
       title: 'Easy Chicken Stir-Fry',
       author: 'Quick Meals',
-      description: 'A healthy and colorful stir-fry packed with vegetables and tender chicken. Perfect for busy weeknights.',
+      description:
+        'A healthy and colorful stir-fry packed with vegetables and tender chicken. Perfect for busy weeknights.',
       image_url: 'https://images.pexels.com/photos/2338407/pexels-photo-2338407.jpeg',
       servings: 4,
       cooking_time_minutes: 20,
@@ -113,7 +115,7 @@ export const sampleRecipes: SampleRecipe[] = [
         'Add chicken and cook until golden brown, about 5 minutes. Remove and set aside.',
         'Add more oil if needed and stir-fry vegetables until tender-crisp, about 3-4 minutes.',
         'Return chicken to the pan and add soy sauce, garlic, and ginger. Toss to combine.',
-        'Serve hot over rice or noodles.'
+        'Serve hot over rice or noodles.',
       ],
       source_url: null,
       instacart_recipe_url: null,
@@ -211,34 +213,34 @@ export const sampleRecipes: SampleRecipe[] = [
       },
     ],
   },
-]
+];
 
 export async function createSampleRecipe(userId: string, recipeIndex: number = 0): Promise<void> {
   if (recipeIndex < 0 || recipeIndex >= sampleRecipes.length) {
-    throw new Error(`Recipe index ${recipeIndex} is out of range`)
+    throw new Error(`Recipe index ${recipeIndex} is out of range`);
   }
 
-  const sample = sampleRecipes[recipeIndex]
+  const sample = sampleRecipes[recipeIndex];
 
   const recipe = await recipeService.createRecipe({
     ...sample.recipe,
     user_id: userId,
-  })
+  });
 
   const ingredients = sample.ingredients.map((ing, index) => ({
     ...ing,
     recipe_id: recipe.id,
     display_order: index,
-  }))
+  }));
 
-  await recipeService.addIngredients(ingredients)
+  await recipeService.addIngredients(ingredients);
 
-  console.log(`Created sample recipe: ${recipe.title}`)
+  console.log(`Created sample recipe: ${recipe.title}`);
 }
 
 export async function createAllSampleRecipes(userId: string): Promise<void> {
   for (let i = 0; i < sampleRecipes.length; i++) {
-    await createSampleRecipe(userId, i)
+    await createSampleRecipe(userId, i);
   }
-  console.log(`Created ${sampleRecipes.length} sample recipes`)
+  console.log(`Created ${sampleRecipes.length} sample recipes`);
 }

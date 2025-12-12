@@ -1,80 +1,86 @@
-import React, { useState } from 'react'
-import { Heart, Mail, Lock, User, Chrome } from 'lucide-react'
-import { useAuth } from '../../hooks/useAuth'
-import { supabase } from '../../lib/supabase'
+import React, { useState } from 'react';
+import { Heart, Mail, Lock, User, Chrome } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 
 interface AuthFormProps {
-  onAuthSuccess: () => void
+  onAuthSuccess: () => void;
 }
 
 export function AuthForm({ onAuthSuccess }: AuthFormProps) {
-  const { signUp, signIn, signInWithGoogle } = useAuth()
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
+  const { signUp, signIn, signInWithGoogle } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    fullName: ''
-  })
+    fullName: '',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       if (isSignUp) {
-        const { data, error } = await signUp(formData.email, formData.password)
+        const { data, error } = await signUp(formData.email, formData.password);
         if (error) {
           if (error.message.includes('User already registered')) {
-            alert('This email is already registered. Please sign in instead, or use a different email to sign up.')
-            setIsSignUp(false) // Switch to sign-in mode
-            return
+            alert(
+              'This email is already registered. Please sign in instead, or use a different email to sign up.'
+            );
+            setIsSignUp(false); // Switch to sign-in mode
+            return;
           }
-          throw error
+          throw error;
         }
-        
+
         // Create profile after successful signup
         if (data.user) {
-          console.log('User created successfully, profile will be created during onboarding')
+          console.log('User created successfully, profile will be created during onboarding');
         }
-        
+
         // Don't switch to sign in, let them proceed to onboarding
         // For new signups, they'll go through onboarding
         // onAuthSuccess() will be called after onboarding is complete
       } else {
-        const { error } = await signIn(formData.email, formData.password)
-        if (error) throw error
-        
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) throw error;
+
         // For existing users signing in, go directly to dashboard
-        onAuthSuccess()
+        onAuthSuccess();
       }
     } catch (error: any) {
-      alert(error.message || 'An error occurred')
+      alert(error.message || 'An error occurred');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
     console.log('🔐 Google sign-in button clicked');
-    setGoogleLoading(true)
+    setGoogleLoading(true);
     try {
-      const { error } = await signInWithGoogle()
+      const { error } = await signInWithGoogle();
       if (error) {
-        console.error('Google sign-in error:', error)
-        alert(`Google sign-in failed: ${error.message}\n\nPlease check:\n1. Google OAuth is configured in Supabase\n2. This domain is added to authorized origins\n3. Redirect URI is set correctly`)
-        setGoogleLoading(false)
-        return
+        console.error('Google sign-in error:', error);
+        alert(
+          `Google sign-in failed: ${error.message}\n\nPlease check:\n1. Google OAuth is configured in Supabase\n2. This domain is added to authorized origins\n3. Redirect URI is set correctly`
+        );
+        setGoogleLoading(false);
+        return;
       }
       console.log('🚀 Google OAuth redirect initiated...');
       // OAuth redirect will handle the rest, loading state will be reset on page reload
     } catch (error: any) {
-      console.error('Google sign-in error:', error)
-      alert(`Google sign-in failed: ${error.message}\n\nThis might be a configuration issue. Please check your Supabase Google OAuth settings.`)
-      setGoogleLoading(false)
+      console.error('Google sign-in error:', error);
+      alert(
+        `Google sign-in failed: ${error.message}\n\nThis might be a configuration issue. Please check your Supabase Google OAuth settings.`
+      );
+      setGoogleLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-3 sm:p-4">
@@ -95,145 +101,149 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
 
         {/* Alvaro-landmarks: Main form content */}
         <main>
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-          {isSignUp && (
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            {isSignUp && (
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  <User className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                  placeholder="Your full name"
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                <User className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Full Name
+                <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                Email
               </label>
               <input
-                type="text"
+                type="email"
                 required
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                placeholder="Your full name"
+                placeholder="your@email.com"
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-              <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-              placeholder="your@email.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-              <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-              placeholder="Your password"
-              minLength={6}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
-          >
-            {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
-          </button>
-        </form>
-
-        {/* Google Sign-In */}
-        <div className="mt-4 sm:mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                placeholder="Your password"
+                minLength={6}
+              />
             </div>
-            <div className="relative flex justify-center text-xs sm:text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
+            >
+              {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+            </button>
+          </form>
+
+          {/* Google Sign-In */}
+          <div className="mt-4 sm:mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-xs sm:text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
             </div>
+
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading || loading}
+              className="w-full mt-3 sm:mt-4 flex items-center justify-center space-x-2 sm:space-x-3 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <Chrome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+              <span className="text-gray-700 font-medium text-sm sm:text-base">
+                {googleLoading
+                  ? 'Connecting...'
+                  : isSignUp
+                    ? 'Sign up with Google'
+                    : 'Sign in with Google'}
+              </span>
+            </button>
           </div>
-          
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={googleLoading || loading}
-            className="w-full mt-3 sm:mt-4 flex items-center justify-center space-x-2 sm:space-x-3 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            <Chrome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-            <span className="text-gray-700 font-medium text-sm sm:text-base">
-              {googleLoading ? 'Connecting...' : isSignUp ? 'Sign up with Google' : 'Sign in with Google'}
-            </span>
-          </button>
-        </div>
 
-        <div className="mt-4 sm:mt-6 text-center">
-          <button
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-purple-600 hover:underline text-sm sm:text-base"
-          >
-            {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
-          </button>
-        </div>
-
-        {/* Demo Account */}
-        <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg">
-          <p className="text-xs sm:text-sm text-blue-800 mb-2">Demo Account:</p>
-          <div className="text-xs text-blue-600 mb-2 sm:mb-3">
-            <p>Email: !demo@busymoms.app</p>
-            <p>Password: demo123456</p>
+          <div className="mt-4 sm:mt-6 text-center">
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-purple-600 hover:underline text-sm sm:text-base"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setFormData({ ...formData, email: 'demo@busymoms.app', password: 'demo123456' });
-            }}
-            className="px-2 py-1 sm:px-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
-          >
-            Use Demo Credentials
-          </button>
-        </div>
 
-        {/* Demo Bypass Button */}
-        <div className="mt-3 sm:mt-4">
-          <button
-            type="button"
-            onClick={onAuthSuccess}
-            className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-medium hover:shadow-lg transition-all text-sm sm:text-base"
-          >
-            🚀 Skip Sign-In (Demo Mode)
-          </button>
-          <p className="text-xs text-gray-500 text-center mt-2">
-            Bypass authentication for demonstration purposes
-          </p>
-        </div>
+          {/* Demo Account */}
+          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg">
+            <p className="text-xs sm:text-sm text-blue-800 mb-2">Demo Account:</p>
+            <div className="text-xs text-blue-600 mb-2 sm:mb-3">
+              <p>Email: !demo@busymoms.app</p>
+              <p>Password: demo123456</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({ ...formData, email: 'demo@busymoms.app', password: 'demo123456' });
+              }}
+              className="px-2 py-1 sm:px-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
+            >
+              Use Demo Credentials
+            </button>
+          </div>
 
-        {/* OAuth Diagnostics Link */}
-        <div className="mt-3 text-center space-y-1">
-          <a
-            href="?diagnostics=true"
-            className="block text-xs text-gray-500 hover:text-gray-700 underline"
-          >
-            OAuth Configuration Diagnostics
-          </a>
-          <a
-            href="?signout=true"
-            className="block text-xs text-gray-500 hover:text-gray-700 underline"
-          >
-            Clear Session & Sign Out
-          </a>
-        </div>
+          {/* Demo Bypass Button */}
+          <div className="mt-3 sm:mt-4">
+            <button
+              type="button"
+              onClick={onAuthSuccess}
+              className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-medium hover:shadow-lg transition-all text-sm sm:text-base"
+            >
+              🚀 Skip Sign-In (Demo Mode)
+            </button>
+            <p className="text-xs text-gray-500 text-center mt-2">
+              Bypass authentication for demonstration purposes
+            </p>
+          </div>
+
+          {/* OAuth Diagnostics Link */}
+          <div className="mt-3 text-center space-y-1">
+            <a
+              href="?diagnostics=true"
+              className="block text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              OAuth Configuration Diagnostics
+            </a>
+            <a
+              href="?signout=true"
+              className="block text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              Clear Session & Sign Out
+            </a>
+          </div>
         </main>
       </div>
     </div>
-  )
+  );
 }
