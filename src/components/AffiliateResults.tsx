@@ -25,9 +25,7 @@ export function AffiliateResults({ results, onLinkClick }: AffiliateResultsProps
       {/* Header */}
       <div className="flex items-center gap-2">
         <Sparkles className="w-5 h-5 text-pink-500" />
-        <h3 className="text-lg font-semibold text-gray-900">
-          Curated Gift Suggestions
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900">Curated Gift Suggestions</h3>
       </div>
 
       <p className="text-sm text-gray-600">
@@ -103,7 +101,8 @@ export function AffiliateResults({ results, onLinkClick }: AffiliateResultsProps
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
         <p className="font-medium mb-1">About These Suggestions</p>
         <p>
-          These are curated affiliate links to trusted retailers. We may earn a commission from purchases made through these links at no extra cost to you.
+          These are curated affiliate links to trusted retailers. We may earn a commission from
+          purchases made through these links at no extra cost to you.
         </p>
       </div>
     </div>

@@ -2,7 +2,9 @@ import { supabase, Affirmation, AffirmationSettings } from '../lib/supabase';
 
 export class AffirmationService {
   async generateAffirmation(forceRegenerate: boolean = false): Promise<Affirmation> {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       throw new Error('User not authenticated');
@@ -13,7 +15,7 @@ export class AffirmationService {
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -32,7 +34,9 @@ export class AffirmationService {
   }
 
   async getTodaysAffirmation(): Promise<Affirmation | null> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return null;
@@ -48,7 +52,7 @@ export class AffirmationService {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching today\'s affirmation:', error);
+      console.error("Error fetching today's affirmation:", error);
       return null;
     }
 
@@ -56,7 +60,9 @@ export class AffirmationService {
   }
 
   async getAffirmationHistory(limit: number = 30): Promise<Affirmation[]> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return [];
@@ -101,7 +107,9 @@ export class AffirmationService {
   }
 
   async getSettings(): Promise<AffirmationSettings | null> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return null;
@@ -126,7 +134,9 @@ export class AffirmationService {
   }
 
   async createDefaultSettings(): Promise<AffirmationSettings | null> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return null;
@@ -159,8 +169,12 @@ export class AffirmationService {
     return data;
   }
 
-  async updateSettings(settings: Partial<AffirmationSettings>): Promise<AffirmationSettings | null> {
-    const { data: { user } } = await supabase.auth.getUser();
+  async updateSettings(
+    settings: Partial<AffirmationSettings>
+  ): Promise<AffirmationSettings | null> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return null;

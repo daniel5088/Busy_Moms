@@ -1,5 +1,30 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Smartphone, MessageCircle, CreditCard, HelpCircle, LogOut, Database, CheckCircle, XCircle, Loader2, Plus, CreditCard as Edit, Volume2, Calendar, AlertTriangle, Sparkles, RefreshCw, Store, MapPin, Ruler, Moon, LayoutDashboard } from 'lucide-react';
+import {
+  User,
+  Bell,
+  Shield,
+  Smartphone,
+  MessageCircle,
+  CreditCard,
+  HelpCircle,
+  LogOut,
+  Database,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Plus,
+  CreditCard as Edit,
+  Volume2,
+  Calendar,
+  AlertTriangle,
+  Sparkles,
+  RefreshCw,
+  Store,
+  MapPin,
+  Ruler,
+  Moon,
+  LayoutDashboard,
+} from 'lucide-react';
 import { FamilyMemberForm } from './forms/FamilyMemberForm';
 import { ProfileForm } from './forms/ProfileForm';
 import { ConnectionTest } from './ConnectionTest';
@@ -29,7 +54,13 @@ interface SettingsProps {
   onNavigateToDashboardV4?: () => void;
 }
 
-export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, onNavigateToDashboardV3, onNavigateToDashboardV4 }: SettingsProps) {
+export function Settings({
+  darkMode,
+  toggleDarkMode,
+  onNavigateToDashboardV2,
+  onNavigateToDashboardV3,
+  onNavigateToDashboardV4,
+}: SettingsProps) {
   const { user, signOut } = useAuth();
   const { performSync } = useCalendarSync();
   const [showFamilyForm, setShowFamilyForm] = useState(false);
@@ -53,7 +84,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
     events: true,
     shopping: true,
     reminders: true,
-    whatsapp: false
+    whatsapp: false,
   });
 
   const checkGoogleConnection = React.useCallback(async () => {
@@ -162,7 +193,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
         loadFamilyMembers(),
         loadCurrentProfile(),
         checkGoogleConnection(),
-        loadMeasurementPreferences()
+        loadMeasurementPreferences(),
       ]);
     };
 
@@ -171,7 +202,13 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
     return () => {
       mounted = false;
     };
-  }, [user, loadFamilyMembers, loadCurrentProfile, checkGoogleConnection, loadMeasurementPreferences]);
+  }, [
+    user,
+    loadFamilyMembers,
+    loadCurrentProfile,
+    checkGoogleConnection,
+    loadMeasurementPreferences,
+  ]);
 
   // Listen for auth state changes to detect when Google Calendar is connected
   React.useEffect(() => {
@@ -208,33 +245,29 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
     }
 
     try {
-      const { error } = await supabase
-        .from('family_members')
-        .delete()
-        .eq('id', memberId);
+      const { error } = await supabase.from('family_members').delete().eq('id', memberId);
 
       if (error) {
         throw error;
       }
 
       // Remove from local state
-      setFamilyMembers(prev => prev.filter(member => member.id !== memberId));
+      setFamilyMembers((prev) => prev.filter((member) => member.id !== memberId));
     } catch (error) {
       console.error('Error deleting family member:', error);
       alert('Error deleting family member. Please try again.');
     }
   };
 
-
   const toggleNotification = (key: keyof typeof notifications) => {
-    setNotifications(prev => ({
+    setNotifications((prev) => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: !prev[key],
     }));
   };
 
   const handleFamilyMemberCreated = (newMember: FamilyMember) => {
-    setFamilyMembers(prev => [...prev, newMember]);
+    setFamilyMembers((prev) => [...prev, newMember]);
   };
 
   const handleProfileUpdated = (updatedProfile: Profile) => {
@@ -253,7 +286,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
     const googleCalendarSection = document.querySelector('[data-google-calendar-section]');
     if (googleCalendarSection) {
       googleCalendarSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const connectButton = googleCalendarSection.querySelector('[data-google-calendar-connect]') as HTMLButtonElement;
+      const connectButton = googleCalendarSection.querySelector(
+        '[data-google-calendar-connect]'
+      ) as HTMLButtonElement;
       if (connectButton) {
         setTimeout(() => {
           connectButton.click();
@@ -272,9 +307,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           description: 'Switch between light and dark themes',
           toggle: true,
           enabled: darkMode,
-          onClick: toggleDarkMode
-        }
-      ]
+          onClick: toggleDarkMode,
+        },
+      ],
     },
     //Alvaro-dashboardv2: Add Features section for experimental Dashboard V2
     //Alvaro-dashboardv3: Add Dashboard V3 to Features section
@@ -287,23 +322,23 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           title: 'Dashboard V2 (Experimental)',
           description: 'Try the new dashboard layout with improved organization',
           action: 'Try It',
-          onClick: onNavigateToDashboardV2
+          onClick: onNavigateToDashboardV2,
         },
         {
           icon: LayoutDashboard,
           title: 'Dashboard V3 (Minimal Prototype)',
           description: 'Assistant-first layout with quick actions grid and popup affirmation',
           action: 'Try It',
-          onClick: onNavigateToDashboardV3
+          onClick: onNavigateToDashboardV3,
         },
         {
           icon: LayoutDashboard,
           title: 'Dashboard V4 (Experimental)',
           description: 'Full-screen affirmation with side-by-side schedules and 6-action grid',
           action: 'Open',
-          onClick: onNavigateToDashboardV4
-        }
-      ]
+          onClick: onNavigateToDashboardV4,
+        },
+      ],
     },
     {
       title: 'Family Profile',
@@ -313,15 +348,15 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           title: 'Family Members',
           description: 'Manage your family members',
           action: 'Add',
-          showAddButton: false
+          showAddButton: false,
         },
         {
           icon: Shield,
           title: 'Privacy & Safety',
           description: 'Allergies, medical info, emergency contacts',
-          action: 'Manage'
-        }
-      ]
+          action: 'Manage',
+        },
+      ],
     },
     {
       title: 'System',
@@ -331,30 +366,30 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           title: 'Error Dashboard',
           description: 'Monitor and resolve application errors',
           action: 'View',
-          onClick: () => setShowErrorDashboard(true)
+          onClick: () => setShowErrorDashboard(true),
         },
         {
           icon: Database,
           title: 'Test Supabase Connection',
           description: 'Verify database connectivity',
           action: 'Test',
-          onClick: () => setShowConnectionTest(true)
+          onClick: () => setShowConnectionTest(true),
         },
         {
           icon: User,
           title: 'Test Authentication',
           description: 'Setup and test demo user login',
           action: 'Test',
-          onClick: () => setShowAuthTest(true)
+          onClick: () => setShowAuthTest(true),
         },
         {
           icon: Calendar,
           title: 'Test Google Calendar',
           description: 'Verify Google Calendar API integration',
           action: 'Test',
-          onClick: () => setShowGoogleCalendarTest(true)
-        }
-      ]
+          onClick: () => setShowGoogleCalendarTest(true),
+        },
+      ],
     },
     {
       title: 'Calendar',
@@ -365,9 +400,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           description: isGoogleConnected ? 'Connected and syncing' : 'Connect to sync your events',
           action: isGoogleConnected ? 'Connected' : 'Connect',
           isConnected: isGoogleConnected,
-          onClick: isGoogleConnected ? undefined : handleGoogleCalendarConnect
-        }
-      ]
+          onClick: isGoogleConnected ? undefined : handleGoogleCalendarConnect,
+        },
+      ],
     },
     {
       title: 'Location Services',
@@ -377,9 +412,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           title: 'Saved Addresses',
           description: 'Manage your home, work, and other locations',
           action: 'Manage',
-          onClick: () => setShowAddressManager(true)
-        }
-      ]
+          onClick: () => setShowAddressManager(true),
+        },
+      ],
     },
     {
       title: 'Measurement Preferences',
@@ -387,10 +422,12 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
         {
           icon: Ruler,
           title: 'Measurement System',
-          description: measurementPrefs ? `Using ${measurementPrefs.preferred_system === 'metric' ? 'Metric (g, ml, kg)' : 'Imperial (cups, lbs, oz)'}` : 'Loading...',
+          description: measurementPrefs
+            ? `Using ${measurementPrefs.preferred_system === 'metric' ? 'Metric (g, ml, kg)' : 'Imperial (cups, lbs, oz)'}`
+            : 'Loading...',
           toggle: true,
           enabled: measurementPrefs?.preferred_system === 'metric',
-          onClick: toggleMeasurementSystem
+          onClick: toggleMeasurementSystem,
         },
         {
           icon: RefreshCw,
@@ -398,9 +435,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           description: 'Automatically convert measurements to your preferred system',
           toggle: true,
           enabled: measurementPrefs?.auto_convert ?? true,
-          onClick: toggleAutoConvert
-        }
-      ]
+          onClick: toggleAutoConvert,
+        },
+      ],
     },
     {
       title: 'Integrations',
@@ -410,7 +447,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           title: 'Instacart Retailers',
           description: 'Search and manage your preferred retailers',
           action: 'Manage',
-          onClick: () => setShowRetailerSearch(true)
+          onClick: () => setShowRetailerSearch(true),
         },
         {
           icon: MessageCircle,
@@ -418,15 +455,15 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           description: 'Parse messages and images for events',
           toggle: true,
           enabled: notifications.whatsapp,
-          onClick: () => toggleNotification('whatsapp')
+          onClick: () => toggleNotification('whatsapp'),
         },
         {
           icon: Smartphone,
           title: 'Smartwatch',
           description: 'Apple Watch connected',
-          action: 'Paired'
-        }
-      ]
+          action: 'Paired',
+        },
+      ],
     },
     {
       title: 'Notifications',
@@ -437,23 +474,23 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           description: 'Personalized encouragement every day',
           action: 'Configure',
           //Alvaros - Dailyaffirmations: Dispatch event to open unified settings modal at App level
-          onClick: () => window.dispatchEvent(new CustomEvent('open-affirmations'))
+          onClick: () => window.dispatchEvent(new CustomEvent('open-affirmations')),
         },
         {
           icon: Bell,
           title: 'Event Reminders',
           description: 'Get notified about upcoming events',
           toggle: true,
-          enabled: notifications.events
+          enabled: notifications.events,
         },
         {
           icon: Bell,
           title: 'Shopping Alerts',
           description: 'Auto-reorder and list reminders',
           toggle: true,
-          enabled: notifications.shopping
-        }
-      ]
+          enabled: notifications.shopping,
+        },
+      ],
     },
     {
       title: 'Account',
@@ -462,16 +499,16 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           icon: CreditCard,
           title: 'Subscription',
           description: 'Premium Plan - $9.99/month',
-          action: 'Manage'
+          action: 'Manage',
         },
         {
           icon: HelpCircle,
           title: 'Help & Support',
           description: 'FAQs, contact support',
-          action: 'View'
-        }
-      ]
-    }
+          action: 'View',
+        },
+      ],
+    },
   ];
 
   // Alvaro - Developer-only System section visibility
@@ -479,7 +516,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
   const isDeveloper = user?.email?.endsWith('@bmaapp.com') ?? false;
 
   // Alvaro - Filter out System section for non-developers
-  const visibleSections = settingSections.filter(section => {
+  const visibleSections = settingSections.filter((section) => {
     if (section.title === 'System' && !isDeveloper) {
       return false;
     }
@@ -495,7 +532,13 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
             <User className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
           <div>
-            <h1 className="text-lg sm:text-2xl font-bold">{currentProfile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}</h1>
+            <h1 className="text-lg sm:text-2xl font-bold">
+              {currentProfile?.full_name ||
+                user?.user_metadata?.full_name ||
+                user?.user_metadata?.name ||
+                user?.email?.split('@')[0] ||
+                'User'}
+            </h1>
             <p className="text-sm sm:text-base text-rose-100">{user?.email}</p>
           </div>
           <button
@@ -506,7 +549,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
             <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
-        
+
         <div className="bg-white bg-opacity-10 rounded-xl p-3 sm:p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -523,7 +566,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
       <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
         {/* AI Personality Setting */}
         <div className="mb-4 sm:mb-6 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 border border-rose-200 dark:border-gray-600 rounded-xl p-3 sm:p-4">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-sm sm:text-base">AI Assistant Personality</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-sm sm:text-base">
+            AI Assistant Personality
+          </h3>
           <div className="grid grid-cols-3 gap-1 sm:gap-2">
             {['Friendly', 'Professional', 'Humorous'].map((personality) => (
               <button
@@ -545,21 +590,30 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
         <div className="space-y-6">
           {visibleSections.map((section, sectionIndex) => (
             <div key={sectionIndex}>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">{section.title}</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+                {section.title}
+              </h2>
               <div className="space-y-2">
                 {section.items.map((item, itemIndex) => (
-                  <div key={itemIndex} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all">
+                  <div
+                    key={itemIndex}
+                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all"
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 sm:space-x-3">
                         <div className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
                           <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600 dark:text-rose-300" />
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">{item.title}</h3>
-                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                            {item.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            {item.description}
+                          </p>
                         </div>
                       </div>
-                      
+
                       {item.toggle ? (
                         <button
                           onClick={() => {
@@ -577,9 +631,11 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
                             item.enabled ? 'bg-rose-500' : 'bg-gray-300'
                           }`}
                         >
-                          <div className={`w-4 h-4 sm:w-5 sm:h-5 bg-white rounded-full absolute top-0.5 transition-all shadow ${
-                            item.enabled ? 'right-0.5' : 'left-0.5'
-                          }`}></div>
+                          <div
+                            className={`w-4 h-4 sm:w-5 sm:h-5 bg-white rounded-full absolute top-0.5 transition-all shadow ${
+                              item.enabled ? 'right-0.5' : 'left-0.5'
+                            }`}
+                          ></div>
                         </button>
                       ) : (
                         <button
@@ -595,7 +651,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
                           {item.action}
                         </button>
                       )}
-                      
+
                       {item.showAddButton && (
                         <button
                           onClick={() => setShowFamilyForm(true)}
@@ -614,7 +670,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
 
         {/* Google Calendar Detailed Section */}
         <div className="mt-6" data-google-calendar-section>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Google Calendar Sync</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Google Calendar Sync
+          </h2>
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -622,7 +680,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
                   <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Google Calendar</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    Google Calendar
+                  </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {isGoogleConnected ? 'Connected and syncing' : 'Connect to sync your events'}
                   </p>
@@ -688,7 +748,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
         {/* Family Members List */}
         <div className="mt-4 sm:mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Family Members</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Family Members
+            </h2>
             <button
               onClick={() => setShowFamilyForm(true)}
               className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
@@ -696,26 +758,36 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
               <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
             </button>
           </div>
-          
+
           {loadingMembers ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-rose-500" />
-              <span className="ml-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">Loading family members...</span>
+              <span className="ml-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                Loading family members...
+              </span>
             </div>
           ) : familyMembers.length > 0 ? (
             <div className="space-y-3">
               {familyMembers.map((member) => (
-                <div key={member.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all">
+                <div
+                  key={member.id}
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 sm:space-x-4">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-semibold text-sm sm:text-lg">
-                          {member.name.split(' ').map(n => n[0]).join('')}
+                          {member.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
                         </span>
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 sm:space-x-3 mb-1 flex-wrap">
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">{member.name}</h3>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                            {member.name}
+                          </h3>
                           {member.relationship && (
                             <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm font-medium">
                               {member.relationship}
@@ -732,7 +804,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
                             </span>
                           )}
                         </div>
-                        
+
                         <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 space-y-1">
                           {member.school && (
                             <p>
@@ -742,7 +814,8 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
                           )}
                           {member.allergies && member.allergies.length > 0 && (
                             <p className="text-red-600 dark:text-red-400">
-                              <span className="font-medium">Allergies:</span> {member.allergies.join(', ')}
+                              <span className="font-medium">Allergies:</span>{' '}
+                              {member.allergies.join(', ')}
                             </p>
                           )}
                           {member.medical_notes && (
@@ -753,7 +826,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex space-x-1 sm:space-x-2 flex-col sm:flex-row">
                       <button
                         onClick={() => {
@@ -779,8 +852,12 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
           ) : (
             <div className="bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
               <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No family members yet</h3>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">Add your children and family members to get started</p>
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                No family members yet
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+                Add your children and family members to get started
+              </p>
               <button
                 onClick={() => setShowFamilyForm(true)}
                 className="px-4 sm:px-6 py-2 sm:py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors text-sm sm:text-base"
@@ -793,12 +870,18 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
 
         {/* Background Check History */}
         <div className="mt-4 sm:mt-6">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Background Check History</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+            Background Check History
+          </h2>
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">Maria Rodriguez</h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Completed March 10, 2025</p>
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                  Maria Rodriguez
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  Completed March 10, 2025
+                </p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
@@ -813,7 +896,7 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
         </div>
 
         {/* Sign Out */}
-        <button 
+        <button
           onClick={handleSignOut}
           className="w-full mt-6 sm:mt-8 py-2 sm:py-3 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-xl font-medium hover:bg-red-100 dark:hover:bg-red-800 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
         >
@@ -836,15 +919,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
         }}
       />
 
-      <ConnectionTest
-        isOpen={showConnectionTest}
-        onClose={() => setShowConnectionTest(false)}
-      />
+      <ConnectionTest isOpen={showConnectionTest} onClose={() => setShowConnectionTest(false)} />
 
-      <AuthTest
-        isOpen={showAuthTest}
-        onClose={() => setShowAuthTest(false)}
-      />
+      <AuthTest isOpen={showAuthTest} onClose={() => setShowAuthTest(false)} />
 
       <GoogleCalendarTest
         isOpen={showGoogleCalendarTest}
@@ -874,16 +951,15 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
 
       {/*Alvaros - Dailyaffirmations: Removed AffirmationSettings modal (now rendered at App level)*/}
 
-      <SyncSettings
-        isOpen={showSyncSettings}
-        onClose={() => setShowSyncSettings(false)}
-      />
+      <SyncSettings isOpen={showSyncSettings} onClose={() => setShowSyncSettings(false)} />
 
       {showRetailerSearch && user && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Manage Retailers</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Manage Retailers
+              </h2>
               <button
                 onClick={() => setShowRetailerSearch(false)}
                 className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -902,7 +978,9 @@ export function Settings({ darkMode, toggleDarkMode, onNavigateToDashboardV2, on
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Manage Addresses</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Manage Addresses
+              </h2>
               <button
                 onClick={() => setShowAddressManager(false)}
                 className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"

@@ -8,7 +8,11 @@ interface AffirmationNotificationProps {
   onView: () => void;
 }
 
-export function AffirmationNotification({ affirmation, onDismiss, onView }: AffirmationNotificationProps) {
+export function AffirmationNotification({
+  affirmation,
+  onDismiss,
+  onView,
+}: AffirmationNotificationProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {

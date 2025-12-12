@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Database, CheckCircle, XCircle, AlertCircle, Loader2, User, Mail, Lock, X } from 'lucide-react';
+import {
+  Database,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  User,
+  Mail,
+  Lock,
+  X,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 
@@ -25,15 +35,20 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
       { name: 'Create Demo User', status: 'idle' },
       { name: 'Test Login', status: 'idle' },
       { name: 'Create Profile', status: 'idle' },
-      { name: 'Test Database Access', status: 'idle' }
-    ]
+      { name: 'Test Database Access', status: 'idle' },
+    ],
   });
 
   const runAuthTest = async () => {
     setTesting(true);
-    setResults(prev => ({
+    setResults((prev) => ({
       overall: 'testing',
-      tests: prev.tests.map(test => ({ ...test, status: 'testing', message: undefined, details: undefined }))
+      tests: prev.tests.map((test) => ({
+        ...test,
+        status: 'testing',
+        message: undefined,
+        details: undefined,
+      })),
     }));
 
     const testResults = [...results.tests];
@@ -45,16 +60,19 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
       try {
         // First, try to sign out any existing user
         await signOut();
-        
+
         // Try to create the demo user
-        const { data: signUpData, error: signUpError } = await signUp('demo@busymoms.app', 'demo123456');
-        
+        const { data: signUpData, error: signUpError } = await signUp(
+          'demo@busymoms.app',
+          'demo123456'
+        );
+
         if (signUpError && signUpError.message.includes('already registered')) {
           testResults[0] = {
             name: 'Create Demo User',
             status: 'success',
             message: 'Demo user already exists',
-            details: 'User demo@busymoms.app is already registered'
+            details: 'User demo@busymoms.app is already registered',
           };
           console.log('✅ Demo user already exists');
         } else if (signUpError) {
@@ -64,7 +82,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
             name: 'Create Demo User',
             status: 'success',
             message: 'Demo user created successfully',
-            details: `User ID: ${signUpData.user?.id}`
+            details: `User ID: ${signUpData.user?.id}`,
           };
           console.log('✅ Demo user created');
         }
@@ -73,7 +91,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
           name: 'Create Demo User',
           status: 'error',
           message: 'Failed to create demo user',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ Demo user creation failed:', error.message);
@@ -82,8 +100,11 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
       // Test 2: Test Login
       console.log('🔍 Testing login...');
       try {
-        const { data: signInData, error: signInError } = await signIn('demo@busymoms.app', 'demo123456');
-        
+        const { data: signInData, error: signInError } = await signIn(
+          'demo@busymoms.app',
+          'demo123456'
+        );
+
         if (signInError) {
           throw signInError;
         }
@@ -92,7 +113,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
           name: 'Test Login',
           status: 'success',
           message: 'Login successful',
-          details: `Logged in as: ${signInData.user?.email}`
+          details: `Logged in as: ${signInData.user?.email}`,
         };
         console.log('✅ Login successful');
       } catch (error: any) {
@@ -100,7 +121,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
           name: 'Test Login',
           status: 'error',
           message: 'Login failed',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ Login failed:', error.message);
@@ -109,8 +130,10 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
       // Test 3: Create Profile
       console.log('🔍 Creating user profile...');
       try {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
+
         if (!currentUser) {
           throw new Error('No authenticated user found');
         }
@@ -127,21 +150,23 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
             name: 'Create Profile',
             status: 'success',
             message: 'Profile already exists',
-            details: `Profile for ${existingProfile.email}`
+            details: `Profile for ${existingProfile.email}`,
           };
           console.log('✅ Profile already exists');
         } else {
           // Create profile
           const { data: newProfile, error: profileError } = await supabase
             .from('profiles')
-            .insert([{
-              id: currentUser.id,
-              email: currentUser.email || 'demo@busymoms.app',
-              full_name: 'Demo User',
-              user_type: 'Mom',
-              onboarding_completed: true,
-              ai_personality: 'Friendly'
-            }])
+            .insert([
+              {
+                id: currentUser.id,
+                email: currentUser.email || 'demo@busymoms.app',
+                full_name: 'Demo User',
+                user_type: 'Mom',
+                onboarding_completed: true,
+                ai_personality: 'Friendly',
+              },
+            ])
             .select()
             .single();
 
@@ -153,7 +178,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
             name: 'Create Profile',
             status: 'success',
             message: 'Profile created successfully',
-            details: `Created profile for ${newProfile.email}`
+            details: `Created profile for ${newProfile.email}`,
           };
           console.log('✅ Profile created');
         }
@@ -162,7 +187,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
           name: 'Create Profile',
           status: 'error',
           message: 'Profile creation failed',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ Profile creation failed:', error.message);
@@ -171,8 +196,10 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
       // Test 4: Test Database Access
       console.log('🔍 Testing database access...');
       try {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
+
         if (!currentUser) {
           throw new Error('No authenticated user found');
         }
@@ -180,12 +207,14 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
         // Test creating a family member
         const { data: testMember, error: memberError } = await supabase
           .from('family_members')
-          .insert([{
-            user_id: currentUser.id,
-            name: 'Test Child',
-            age: 8,
-            gender: 'Other'
-          }])
+          .insert([
+            {
+              user_id: currentUser.id,
+              name: 'Test Child',
+              age: 8,
+              gender: 'Other',
+            },
+          ])
           .select()
           .single();
 
@@ -194,16 +223,13 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
         }
 
         // Clean up test data
-        await supabase
-          .from('family_members')
-          .delete()
-          .eq('id', testMember.id);
+        await supabase.from('family_members').delete().eq('id', testMember.id);
 
         testResults[3] = {
           name: 'Test Database Access',
           status: 'success',
           message: 'Database operations working',
-          details: 'Successfully created and deleted test family member'
+          details: 'Successfully created and deleted test family member',
         };
         console.log('✅ Database access working');
       } catch (error: any) {
@@ -211,12 +237,11 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
           name: 'Test Database Access',
           status: 'error',
           message: 'Database access failed',
-          details: error.message
+          details: error.message,
         };
         overallSuccess = false;
         console.log('❌ Database access failed:', error.message);
       }
-
     } catch (error: any) {
       console.error('❌ Auth test failed:', error);
       overallSuccess = false;
@@ -225,7 +250,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
     // Update final results
     setResults({
       overall: overallSuccess ? 'success' : 'error',
-      tests: testResults
+      tests: testResults,
     });
     setTesting(false);
 
@@ -305,7 +330,8 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
                   {results.overall === 'error' && 'Some authentication tests failed'}
                 </h3>
                 <p className="text-sm opacity-75">
-                  {results.overall === 'idle' && 'Click "Run Auth Test" to setup and test demo user'}
+                  {results.overall === 'idle' &&
+                    'Click "Run Auth Test" to setup and test demo user'}
                   {results.overall === 'testing' && 'Please wait while we test authentication'}
                   {results.overall === 'success' && 'Demo user is ready to use'}
                   {results.overall === 'error' && 'Check the details below to resolve issues'}
@@ -322,9 +348,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
                   {getStatusIcon(test.status)}
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{test.name}</h4>
-                    {test.message && (
-                      <p className="text-sm text-gray-600 mt-1">{test.message}</p>
-                    )}
+                    {test.message && <p className="text-sm text-gray-600 mt-1">{test.message}</p>}
                     {test.details && (
                       <p className="text-xs text-gray-500 mt-1 font-mono bg-gray-100 p-2 rounded">
                         {test.details}
@@ -346,7 +370,7 @@ export function AuthTest({ isOpen, onClose }: AuthTestProps) {
               <User className={`w-4 h-4 ${testing ? 'animate-pulse' : ''}`} />
               <span>{testing ? 'Testing...' : 'Run Auth Test'}</span>
             </button>
-            
+
             {user && (
               <button
                 onClick={signOut}

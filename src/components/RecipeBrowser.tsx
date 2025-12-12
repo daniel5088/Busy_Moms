@@ -1,79 +1,79 @@
-import React, { useState, useEffect } from 'react'
-import { Search, Clock, Users, ChefHat, Heart, Loader2, Plus, Globe, BookOpen } from 'lucide-react'
-import { Recipe } from '../lib/supabase'
-import { recipeService } from '../services/recipeService'
-import { useAuth } from '../hooks/useAuth'
-import { createAllSampleRecipes } from '../utils/sampleRecipes'
-import { themealdbService, SimplifiedRecipe } from '../services/themealdb'
+import React, { useState, useEffect } from 'react';
+import { Search, Clock, Users, ChefHat, Heart, Loader2, Plus, Globe, BookOpen } from 'lucide-react';
+import { Recipe } from '../lib/supabase';
+import { recipeService } from '../services/recipeService';
+import { useAuth } from '../hooks/useAuth';
+import { createAllSampleRecipes } from '../utils/sampleRecipes';
+import { themealdbService, SimplifiedRecipe } from '../services/themealdb';
 
 interface RecipeBrowserProps {
-  onRecipeSelect: (recipe: Recipe) => void
+  onRecipeSelect: (recipe: Recipe) => void;
 }
 
 export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
-  const { user } = useAuth()
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [savedRecipeIds, setSavedRecipeIds] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeView, setActiveView] = useState<'my-recipes' | 'saved' | 'discover'>('my-recipes')
-  const [maxCookingTime, setMaxCookingTime] = useState<number | undefined>()
-  const [minServings, setMinServings] = useState<number | undefined>()
-  const [addingSamples, setAddingSamples] = useState(false)
-  const [discoverRecipes, setDiscoverRecipes] = useState<SimplifiedRecipe[]>([])
-  const [importing, setImporting] = useState<string | null>(null)
-  const [categories, setCategories] = useState<string[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const { user } = useAuth();
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [savedRecipeIds, setSavedRecipeIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeView, setActiveView] = useState<'my-recipes' | 'saved' | 'discover'>('my-recipes');
+  const [maxCookingTime, setMaxCookingTime] = useState<number | undefined>();
+  const [minServings, setMinServings] = useState<number | undefined>();
+  const [addingSamples, setAddingSamples] = useState(false);
+  const [discoverRecipes, setDiscoverRecipes] = useState<SimplifiedRecipe[]>([]);
+  const [importing, setImporting] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   useEffect(() => {
     if (user) {
-      loadRecipes()
-      loadSavedRecipes()
+      loadRecipes();
+      loadSavedRecipes();
     }
-  }, [user, activeView])
+  }, [user, activeView]);
 
   useEffect(() => {
     if (activeView === 'discover') {
-      loadCategories()
+      loadCategories();
       if (!searchQuery && !selectedCategory) {
-        loadRandomRecipes()
+        loadRandomRecipes();
       }
     }
-  }, [activeView])
+  }, [activeView]);
 
   const loadRecipes = async () => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      setLoading(true)
+      setLoading(true);
       if (activeView === 'saved') {
-        const data = await recipeService.getSavedRecipes(user.id)
-        setRecipes(data)
+        const data = await recipeService.getSavedRecipes(user.id);
+        setRecipes(data);
       } else if (activeView === 'my-recipes') {
         const data = await recipeService.getRecipes(user.id, {
           search: searchQuery || undefined,
           maxCookingTime,
           minServings,
-        })
-        setRecipes(data)
+        });
+        setRecipes(data);
       } else if (activeView === 'discover') {
-        await loadDiscoverRecipes()
+        await loadDiscoverRecipes();
       }
     } catch (error) {
-      console.error('Error loading recipes:', error)
+      console.error('Error loading recipes:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const loadCategories = async () => {
     try {
-      const cats = await themealdbService.getCategories()
-      setCategories(cats)
+      const cats = await themealdbService.getCategories();
+      setCategories(cats);
     } catch (error) {
-      console.error('Error loading categories:', error)
+      console.error('Error loading categories:', error);
     }
-  }
+  };
 
   const loadRandomRecipes = async () => {
     try {
@@ -84,98 +84,98 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
         themealdbService.getRandomRecipe(),
         themealdbService.getRandomRecipe(),
         themealdbService.getRandomRecipe(),
-      ])
-      setDiscoverRecipes(recipes)
+      ]);
+      setDiscoverRecipes(recipes);
     } catch (error) {
-      console.error('Error loading random recipes:', error)
+      console.error('Error loading random recipes:', error);
     }
-  }
+  };
 
   const loadDiscoverRecipes = async () => {
     try {
       if (searchQuery) {
-        const results = await themealdbService.searchByName(searchQuery)
-        setDiscoverRecipes(results)
+        const results = await themealdbService.searchByName(searchQuery);
+        setDiscoverRecipes(results);
       } else if (selectedCategory) {
-        const results = await themealdbService.filterByCategory(selectedCategory)
-        setDiscoverRecipes(results)
+        const results = await themealdbService.filterByCategory(selectedCategory);
+        setDiscoverRecipes(results);
       } else {
-        await loadRandomRecipes()
+        await loadRandomRecipes();
       }
     } catch (error) {
-      console.error('Error loading discover recipes:', error)
-      setDiscoverRecipes([])
+      console.error('Error loading discover recipes:', error);
+      setDiscoverRecipes([]);
     }
-  }
+  };
 
   const loadSavedRecipes = async () => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      const saved = await recipeService.getSavedRecipes(user.id)
-      const ids = new Set(saved.map(r => r.id))
-      setSavedRecipeIds(ids)
+      const saved = await recipeService.getSavedRecipes(user.id);
+      const ids = new Set(saved.map((r) => r.id));
+      setSavedRecipeIds(ids);
     } catch (error) {
-      console.error('Error loading saved recipes:', error)
+      console.error('Error loading saved recipes:', error);
     }
-  }
+  };
 
   const handleSearch = () => {
-    loadRecipes()
-  }
+    loadRecipes();
+  };
 
   const handleSaveToggle = async (recipeId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!user) return
+    e.stopPropagation();
+    if (!user) return;
 
     try {
       if (savedRecipeIds.has(recipeId)) {
-        await recipeService.unsaveRecipe(user.id, recipeId)
-        setSavedRecipeIds(prev => {
-          const next = new Set(prev)
-          next.delete(recipeId)
-          return next
-        })
+        await recipeService.unsaveRecipe(user.id, recipeId);
+        setSavedRecipeIds((prev) => {
+          const next = new Set(prev);
+          next.delete(recipeId);
+          return next;
+        });
       } else {
-        await recipeService.saveRecipe(user.id, recipeId)
-        setSavedRecipeIds(prev => new Set(prev).add(recipeId))
+        await recipeService.saveRecipe(user.id, recipeId);
+        setSavedRecipeIds((prev) => new Set(prev).add(recipeId));
       }
     } catch (error) {
-      console.error('Error toggling recipe save:', error)
+      console.error('Error toggling recipe save:', error);
     }
-  }
+  };
 
   const handleAddSampleRecipes = async () => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      setAddingSamples(true)
-      await createAllSampleRecipes(user.id)
-      await loadRecipes()
-      alert('Sample recipes added successfully!')
+      setAddingSamples(true);
+      await createAllSampleRecipes(user.id);
+      await loadRecipes();
+      alert('Sample recipes added successfully!');
     } catch (error) {
-      console.error('Error adding sample recipes:', error)
-      alert('Failed to add sample recipes')
+      console.error('Error adding sample recipes:', error);
+      alert('Failed to add sample recipes');
     } finally {
-      setAddingSamples(false)
+      setAddingSamples(false);
     }
-  }
+  };
 
   const handleImportRecipe = async (themealdbRecipe: SimplifiedRecipe) => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      setImporting(themealdbRecipe.id)
-      await recipeService.importFromTheMealDB(user.id, themealdbRecipe)
-      alert(`"${themealdbRecipe.title}" imported successfully!`)
-      setActiveView('my-recipes')
+      setImporting(themealdbRecipe.id);
+      await recipeService.importFromTheMealDB(user.id, themealdbRecipe);
+      alert(`"${themealdbRecipe.title}" imported successfully!`);
+      setActiveView('my-recipes');
     } catch (error) {
-      console.error('Error importing recipe:', error)
-      alert('Failed to import recipe')
+      console.error('Error importing recipe:', error);
+      alert('Failed to import recipe');
     } finally {
-      setImporting(null)
+      setImporting(null);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -245,23 +245,25 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             <select
               value={selectedCategory}
               onChange={(e) => {
-                setSelectedCategory(e.target.value)
-                setSearchQuery('')
-                setTimeout(loadRecipes, 0)
+                setSelectedCategory(e.target.value);
+                setSearchQuery('');
+                setTimeout(loadRecipes, 0);
               }}
               className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
             >
               <option value="">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
             {(searchQuery || selectedCategory) && (
               <button
                 onClick={() => {
-                  setSearchQuery('')
-                  setSelectedCategory('')
-                  setTimeout(loadRecipes, 0)
+                  setSearchQuery('');
+                  setSelectedCategory('');
+                  setTimeout(loadRecipes, 0);
                 }}
                 className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
               >
@@ -298,8 +300,8 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             <select
               value={maxCookingTime || ''}
               onChange={(e) => {
-                setMaxCookingTime(e.target.value ? parseInt(e.target.value) : undefined)
-                setTimeout(loadRecipes, 0)
+                setMaxCookingTime(e.target.value ? parseInt(e.target.value) : undefined);
+                setTimeout(loadRecipes, 0);
               }}
               className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
             >
@@ -312,8 +314,8 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             <select
               value={minServings || ''}
               onChange={(e) => {
-                setMinServings(e.target.value ? parseInt(e.target.value) : undefined)
-                setTimeout(loadRecipes, 0)
+                setMinServings(e.target.value ? parseInt(e.target.value) : undefined);
+                setTimeout(loadRecipes, 0);
               }}
               className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
             >
@@ -460,9 +462,7 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
               )}
               <div className="p-4">
                 <h3 className="font-semibold text-gray-900 mb-2">{recipe.title}</h3>
-                {recipe.author && (
-                  <p className="text-sm text-gray-600 mb-2">By {recipe.author}</p>
-                )}
+                {recipe.author && <p className="text-sm text-gray-600 mb-2">By {recipe.author}</p>}
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
                   {recipe.cooking_time_minutes && (
                     <div className="flex items-center space-x-1">
@@ -483,5 +483,5 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -32,9 +32,9 @@ interface TokenResponse {
 }
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
 function generateEphemeralToken(userId: string, roomId: string): string {
@@ -42,14 +42,14 @@ function generateEphemeralToken(userId: string, roomId: string): string {
     userId,
     roomId,
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + (60 * 60)
+    exp: Math.floor(Date.now() / 1000) + 60 * 60,
   };
 
   return btoa(JSON.stringify(payload));
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 200,
       headers: corsHeaders,
@@ -59,31 +59,25 @@ Deno.serve(async (req: Request) => {
   try {
     console.log(`🚀 WebRTC token request - ${req.method} ${req.url}`);
 
-    if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Method not allowed" }),
-        {
-          status: 405,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-          },
-        }
-      );
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
     }
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
     }
 
     const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL')!;
@@ -100,19 +94,19 @@ Deno.serve(async (req: Request) => {
       },
     });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
     if (userError || !user) {
       console.error('❌ Authentication failed:', userError?.message);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
     }
 
     console.log('✅ Authenticated user:', user.id);
@@ -131,7 +125,7 @@ Deno.serve(async (req: Request) => {
     console.log('🔍 Processing WebRTC token request for user:', userId, 'room:', finalRoomId);
 
     const token = generateEphemeralToken(userId, finalRoomId);
-    const expiresAt = Date.now() + (60 * 60 * 1000);
+    const expiresAt = Date.now() + 60 * 60 * 1000;
 
     const iceServers: RTCIceServer[] = [
       { urls: 'stun:stun.l.google.com:19302' },
@@ -146,34 +140,30 @@ Deno.serve(async (req: Request) => {
       expiresAt,
       iceServers,
       userId,
-      roomId: finalRoomId
+      roomId: finalRoomId,
     };
 
     console.log(`✅ Generated WebRTC token for user ${userId} in room ${finalRoomId}`);
 
-    return new Response(
-      JSON.stringify(response),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
-      }
-    );
-
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
   } catch (error) {
     console.error('❌ WebRTC token generation error:', error);
 
     return new Response(
       JSON.stringify({
-        error: "Internal server error",
-        message: "An unexpected error occurred"
+        error: 'Internal server error',
+        message: 'An unexpected error occurred',
       }),
       {
         status: 500,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           ...corsHeaders,
         },
       }

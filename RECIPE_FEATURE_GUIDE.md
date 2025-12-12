@@ -7,6 +7,7 @@ Your app now includes a complete recipe browsing and shopping list integration p
 ## Features Implemented
 
 ### 1. Recipe Database
+
 - **Tables Created:**
   - `recipes` - Stores recipe information (title, author, description, image, servings, cooking time, instructions)
   - `recipe_ingredients` - Stores ingredients with Instacart-compliant fields (generic names, quantities, units, filters)
@@ -14,6 +15,7 @@ Your app now includes a complete recipe browsing and shopping list integration p
   - `shopping_lists.recipe_id` - New column linking shopping items back to source recipes
 
 ### 2. Instacart API Integration
+
 - **Edge Functions:**
   - `instacart-recipes` - Creates shoppable recipe pages
   - `instacart-shopping-list` - Creates shopping lists from items
@@ -25,6 +27,7 @@ Your app now includes a complete recipe browsing and shopping list integration p
   - Follows all Instacart Developer Platform guidelines
 
 ### 3. User Interface
+
 - **New "Recipes" tab** in Shopping section with ChefHat icon
 - **RecipeBrowser Component:**
   - Browse/Saved recipes view toggle
@@ -50,18 +53,21 @@ Your app now includes a complete recipe browsing and shopping list integration p
 
 1. Open your browser console on the app
 2. Import the sample recipe utility:
+
 ```javascript
-import { createAllSampleRecipes } from './src/utils/sampleRecipes'
+import { createAllSampleRecipes } from './src/utils/sampleRecipes';
 ```
 
 3. Get your user ID and create sample recipes:
+
 ```javascript
 // In your app, after logging in:
-const userId = 'your-user-id-here'
-await createAllSampleRecipes(userId)
+const userId = 'your-user-id-here';
+await createAllSampleRecipes(userId);
 ```
 
 This will create two sample recipes:
+
 - Classic Spaghetti Carbonara (25 min, 4 servings)
 - Easy Chicken Stir-Fry (20 min, 4 servings)
 
@@ -70,7 +76,7 @@ This will create two sample recipes:
 You can add recipes programmatically or build an admin interface. Here's how to add a recipe:
 
 ```javascript
-import { recipeService } from './src/services/recipeService'
+import { recipeService } from './src/services/recipeService';
 
 // Create the recipe
 const recipe = await recipeService.createRecipe({
@@ -81,19 +87,15 @@ const recipe = await recipeService.createRecipe({
   image_url: 'https://images.pexels.com/...',
   servings: 4,
   cooking_time_minutes: 30,
-  instructions: [
-    'Step 1: Do this',
-    'Step 2: Do that',
-    'Step 3: Enjoy!'
-  ],
-})
+  instructions: ['Step 1: Do this', 'Step 2: Do that', 'Step 3: Enjoy!'],
+});
 
 // Add ingredients
 await recipeService.addIngredients([
   {
     recipe_id: recipe.id,
-    name: 'chicken breast',  // Generic name for Instacart
-    display_text: 'Boneless Chicken Breast',  // User-friendly text
+    name: 'chicken breast', // Generic name for Instacart
+    display_text: 'Boneless Chicken Breast', // User-friendly text
     quantity: 1.5,
     unit: 'pounds',
     category: 'meat',
@@ -101,7 +103,7 @@ await recipeService.addIngredients([
     is_pantry_item: false,
   },
   // Add more ingredients...
-])
+]);
 ```
 
 ### Using the Instacart Integration
@@ -114,6 +116,7 @@ When a user clicks "View on Instacart" on a recipe:
 4. **Refresh:** URLs nearing expiration are automatically regenerated
 
 The generated Instacart page includes:
+
 - All recipe ingredients formatted for product matching
 - Adjustable servings from the modal
 - "You may already have" section for pantry items
@@ -138,6 +141,7 @@ The generated Instacart page includes:
 Your Instacart API credentials are stored securely:
 
 **Local Development (.env file):**
+
 ```
 INSTACART_API_KEY=keys.clx1bq0D2Okgk8P7zo2TLm22BRgWQmbKFv4obaB2fjM
 ```
@@ -160,7 +164,7 @@ Before launching to production users:
    - Update `instacart-recipes/index.ts`
    - Update `instacart-shopping-list/index.ts`
    ```typescript
-   const instacartBaseUrl = "https://connect.instacart.com"
+   const instacartBaseUrl = 'https://connect.instacart.com';
    ```
 5. **Redeploy both functions** after updating
 6. **Submit for Instacart approval** per their guidelines
@@ -181,16 +185,20 @@ Supabase DB      Edge Function → Instacart API
 ## Database Schema
 
 **recipes:**
+
 - Stores recipe metadata, instructions, Instacart URL cache
 
 **recipe_ingredients:**
+
 - Stores ingredients with Instacart-compliant naming
 - Includes brand_filters and health_filters (organic, gluten-free, etc.)
 
 **user_saved_recipes:**
+
 - Tracks which recipes each user has saved
 
 **shopping_lists.recipe_id:**
+
 - Links shopping items back to their source recipe
 
 ## File Structure
@@ -229,10 +237,12 @@ supabase/
 ## Support
 
 For Instacart API questions:
+
 - Documentation: https://docs.instacart.com/developer_platform_api/
 - Support: Enterprise Service Desk (per Instacart documentation)
 
 For implementation questions:
+
 - Review the inline code comments in all service and component files
 - Check the Supabase dashboard for database schema and data
 - Review Edge Function logs in Supabase dashboard

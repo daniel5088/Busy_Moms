@@ -24,15 +24,20 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
       { name: 'Basic Connection', status: 'idle' },
       { name: 'Authentication System', status: 'idle' },
       { name: 'Database Access', status: 'idle' },
-      { name: 'Table Permissions', status: 'idle' }
-    ]
+      { name: 'Table Permissions', status: 'idle' },
+    ],
   });
 
   const runConnectionTest = async () => {
     setTesting(true);
-    setResults(prev => ({
+    setResults((prev) => ({
       overall: 'testing',
-      tests: prev.tests.map(test => ({ ...test, status: 'testing', message: undefined, details: undefined }))
+      tests: prev.tests.map((test) => ({
+        ...test,
+        status: 'testing',
+        message: undefined,
+        details: undefined,
+      })),
     }));
 
     const testResults = [...results.tests];
@@ -43,13 +48,13 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
       console.log('🔍 Testing environment variables...');
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
+
       if (supabaseUrl && supabaseKey) {
         testResults[0] = {
           name: 'Environment Variables',
           status: 'success',
           message: 'All required environment variables are set',
-          details: `URL: ${supabaseUrl.substring(0, 30)}...`
+          details: `URL: ${supabaseUrl.substring(0, 30)}...`,
         };
         console.log('✅ Environment variables OK');
       } else {
@@ -57,7 +62,7 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
           name: 'Environment Variables',
           status: 'error',
           message: 'Missing required environment variables',
-          details: `URL: ${supabaseUrl ? 'Set' : 'Missing'}, Key: ${supabaseKey ? 'Set' : 'Missing'}`
+          details: `URL: ${supabaseUrl ? 'Set' : 'Missing'}, Key: ${supabaseKey ? 'Set' : 'Missing'}`,
         };
         overallSuccess = false;
         console.log('❌ Environment variables missing');
@@ -76,7 +81,7 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
             name: 'Basic Connection',
             status: 'success',
             message: 'Successfully connected to Supabase',
-            details: 'Database is reachable and responding'
+            details: 'Database is reachable and responding',
           };
           console.log('✅ Basic connection OK');
         } else {
@@ -87,7 +92,7 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
           name: 'Basic Connection',
           status: 'error',
           message: 'Failed to connect to Supabase',
-          details: error.message || 'Unknown connection error'
+          details: error.message || 'Unknown connection error',
         };
         overallSuccess = false;
         console.log('❌ Basic connection failed:', error.message);
@@ -96,13 +101,18 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
       // Test 3: Authentication System
       console.log('🔍 Testing authentication system...');
       try {
-        const { data: { session }, error: authError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error: authError,
+        } = await supabase.auth.getSession();
+
         testResults[2] = {
           name: 'Authentication System',
           status: 'success',
           message: 'Authentication system is working',
-          details: session ? `User authenticated: ${session.user.email}` : 'No active session (normal for demo mode)'
+          details: session
+            ? `User authenticated: ${session.user.email}`
+            : 'No active session (normal for demo mode)',
         };
         console.log('✅ Authentication system OK');
       } catch (error: any) {
@@ -110,7 +120,7 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
           name: 'Authentication System',
           status: 'error',
           message: 'Authentication system error',
-          details: error.message || 'Unknown auth error'
+          details: error.message || 'Unknown auth error',
         };
         overallSuccess = false;
         console.log('❌ Authentication system failed:', error.message);
@@ -129,7 +139,7 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
             name: 'Database Access',
             status: 'success',
             message: 'Database queries are working',
-            details: `Found ${profileTest?.length || 0} profile records`
+            details: `Found ${profileTest?.length || 0} profile records`,
           };
           console.log('✅ Database access OK');
         } else {
@@ -140,7 +150,7 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
           name: 'Database Access',
           status: 'error',
           message: 'Database query failed',
-          details: error.message || 'Unknown database error'
+          details: error.message || 'Unknown database error',
         };
         overallSuccess = false;
         console.log('❌ Database access failed:', error.message);
@@ -161,15 +171,15 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
           })
         );
 
-        const successfulTables = tableTests.filter(t => t.success);
-        const failedTables = tableTests.filter(t => !t.success);
+        const successfulTables = tableTests.filter((t) => t.success);
+        const failedTables = tableTests.filter((t) => !t.success);
 
         if (failedTables.length === 0) {
           testResults[4] = {
             name: 'Table Permissions',
             status: 'success',
             message: 'All table permissions are working',
-            details: `Accessible tables: ${successfulTables.map(t => t.table).join(', ')}`
+            details: `Accessible tables: ${successfulTables.map((t) => t.table).join(', ')}`,
           };
           console.log('✅ Table permissions OK');
         } else {
@@ -177,22 +187,24 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
             name: 'Table Permissions',
             status: 'error',
             message: `${failedTables.length} tables have permission issues`,
-            details: `Failed: ${failedTables.map(t => t.table).join(', ')}`
+            details: `Failed: ${failedTables.map((t) => t.table).join(', ')}`,
           };
           overallSuccess = false;
-          console.log('❌ Table permissions failed for:', failedTables.map(t => t.table));
+          console.log(
+            '❌ Table permissions failed for:',
+            failedTables.map((t) => t.table)
+          );
         }
       } catch (error: any) {
         testResults[4] = {
           name: 'Table Permissions',
           status: 'error',
           message: 'Failed to test table permissions',
-          details: error.message || 'Unknown permissions error'
+          details: error.message || 'Unknown permissions error',
         };
         overallSuccess = false;
         console.log('❌ Table permissions test failed:', error.message);
       }
-
     } catch (error: any) {
       console.error('❌ Connection test failed:', error);
       overallSuccess = false;
@@ -201,7 +213,7 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
     // Update final results
     setResults({
       overall: overallSuccess ? 'success' : 'error',
-      tests: testResults
+      tests: testResults,
     });
     setTesting(false);
 
@@ -251,7 +263,9 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
               <Database className="w-8 h-8 text-blue-500" />
               <div>
                 {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
-                <h2 id="connection-test-title" className="text-xl font-bold text-gray-900">Supabase Connection Test</h2>
+                <h2 id="connection-test-title" className="text-xl font-bold text-gray-900">
+                  Supabase Connection Test
+                </h2>
                 <p className="text-gray-600">Verify database connectivity and permissions</p>
               </div>
             </div>
@@ -275,7 +289,8 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
                   {results.overall === 'error' && 'Some tests failed'}
                 </h3>
                 <p className="text-sm opacity-75">
-                  {results.overall === 'idle' && 'Click "Run Test" to check your Supabase connection'}
+                  {results.overall === 'idle' &&
+                    'Click "Run Test" to check your Supabase connection'}
                   {results.overall === 'testing' && 'Please wait while we test your connection'}
                   {results.overall === 'success' && 'Your Supabase connection is working perfectly'}
                   {results.overall === 'error' && 'Check the details below to resolve issues'}
@@ -292,9 +307,7 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
                   {getStatusIcon(test.status)}
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{test.name}</h4>
-                    {test.message && (
-                      <p className="text-sm text-gray-600 mt-1">{test.message}</p>
-                    )}
+                    {test.message && <p className="text-sm text-gray-600 mt-1">{test.message}</p>}
                     {test.details && (
                       <p className="text-xs text-gray-500 mt-1 font-mono bg-gray-100 p-2 rounded">
                         {test.details}
@@ -312,13 +325,19 @@ export function ConnectionTest({ isOpen, onClose }: ConnectionTestProps) {
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>VITE_SUPABASE_URL:</span>
-                <span className={import.meta.env.VITE_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}>
+                <span
+                  className={import.meta.env.VITE_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}
+                >
                   {import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>VITE_SUPABASE_ANON_KEY:</span>
-                <span className={import.meta.env.VITE_SUPABASE_ANON_KEY ? 'text-green-600' : 'text-red-600'}>
+                <span
+                  className={
+                    import.meta.env.VITE_SUPABASE_ANON_KEY ? 'text-green-600' : 'text-red-600'
+                  }
+                >
                   {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}
                 </span>
               </div>

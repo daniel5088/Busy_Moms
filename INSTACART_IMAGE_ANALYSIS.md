@@ -3,6 +3,7 @@
 ## Current State
 
 ### What's Working
+
 1. **Recipe Images**: Recipe images display correctly in:
    - Recipe browser (RecipeBrowser.tsx)
    - Recipe detail modal (RecipeDetailModal.tsx)
@@ -16,14 +17,17 @@
 ### What's Missing
 
 #### 1. Product Images in Shopping List Items
+
 **Issue**: Individual shopping list items don't have product images when displayed in the cart.
 
 **Root Cause**:
+
 - The `shopping_lists` table doesn't have an `image_url` column
 - Instacart's Shopping List API (Products Link) doesn't return product images
 - The API only creates a shopping list URL, not individual product data with images
 
 **Current API Flow**:
+
 ```
 User items → Edge Function → Instacart API (products_link endpoint)
                            ↓
@@ -31,6 +35,7 @@ User items → Edge Function → Instacart API (products_link endpoint)
 ```
 
 **What's Stored**:
+
 ```json
 {
   "cart_url": "https://customers.dev.instacart.tools/store/shopping_lists/8527812",
@@ -41,7 +46,9 @@ User items → Edge Function → Instacart API (products_link endpoint)
 ```
 
 #### 2. Potential Logo Display Issue
+
 The Instacart logo badge might not be showing due to:
+
 - Dark mode styling (bg-opacity-10 might make it too faint)
 - Small size (h-4 w-auto)
 - Image path resolution
@@ -49,6 +56,7 @@ The Instacart logo badge might not be showing due to:
 ## Solutions
 
 ### Option 1: Add Product Image Column (Recommended)
+
 If you want product images for individual items:
 
 1. **Add image_url column** to shopping_lists table
@@ -58,6 +66,7 @@ If you want product images for individual items:
    - Store image URLs when items are created/updated
 
 ### Option 2: Improve Logo Visibility
+
 Enhance the existing Instacart logo badge:
 
 1. Increase logo size
@@ -66,11 +75,13 @@ Enhance the existing Instacart logo badge:
 4. Test dark mode display
 
 ### Option 3: Use Placeholder Images
+
 Add generic category-based placeholder images for items without product photos.
 
 ## Recommended Implementation
 
 ### Quick Fix: Improve Logo Display
+
 ```tsx
 {providerBadge && (
   <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-700`}>
@@ -93,13 +104,16 @@ Add generic category-based placeholder images for items without product photos.
 ```
 
 ### Advanced: Add Product Images
+
 Would require:
+
 1. Database migration to add `image_url` column
 2. New edge function endpoint to search products
 3. Image fetching during item creation
 4. UI updates to display product images
 
 ## Testing Checklist
+
 - [ ] Verify Instacart logo appears on items with provider_name='instacart'
 - [ ] Test logo visibility in light and dark modes
 - [ ] Check image loading on slow connections

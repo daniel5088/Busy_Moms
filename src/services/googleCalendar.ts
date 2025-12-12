@@ -45,7 +45,7 @@ export function mapLocalToGoogle(local: Event): Partial<GoogleCalendarEvent> {
     start: {},
     end: {},
     attendees: Array.isArray(local.participants)
-      ? local.participants.map(p => ({
+      ? local.participants.map((p) => ({
           email: p.includes('@') ? p : undefined,
           displayName: !p.includes('@') ? p : undefined,
         }))
@@ -145,13 +145,13 @@ class GoogleCalendarService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': anonKey
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: anonKey,
         },
         body: JSON.stringify({
           action: 'isConnected',
-          userId: user.id
-        })
+          userId: user.id,
+        }),
       });
 
       if (response.ok) {
@@ -174,8 +174,12 @@ class GoogleCalendarService {
         console.error(`❌ Google Calendar Edge Function error: ${errorMessage}`);
 
         if (response.status === 500 && errorMessage.includes('Google Calendar not configured')) {
-          console.error('💡 Setup Required: Google OAuth credentials (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET) are not configured');
-          console.error('💡 These must be set in Supabase Dashboard → Project Settings → Edge Functions → Secrets');
+          console.error(
+            '💡 Setup Required: Google OAuth credentials (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET) are not configured'
+          );
+          console.error(
+            '💡 These must be set in Supabase Dashboard → Project Settings → Edge Functions → Secrets'
+          );
           console.error(`💡 Run diagnostics to check setup: ${this.baseUrl}/google-diagnostics`);
         }
 
@@ -235,13 +239,13 @@ class GoogleCalendarService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': anonKey
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: anonKey,
         },
         body: JSON.stringify({
           action: 'isConnected',
-          userId
-        })
+          userId,
+        }),
       });
 
       if (!response.ok) {
@@ -252,7 +256,10 @@ class GoogleCalendarService {
       const data = await response.json();
       const connected = data.connected || false;
 
-      console.log(`🔍 Google Calendar connection status for user ${userId}:`, connected ? '✅ Connected' : '⭕ Not connected');
+      console.log(
+        `🔍 Google Calendar connection status for user ${userId}:`,
+        connected ? '✅ Connected' : '⭕ Not connected'
+      );
       return connected;
     } catch (error) {
       console.log('⚠️ Error checking Google Calendar connection:', error);
@@ -285,13 +292,13 @@ class GoogleCalendarService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': anonKey
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: anonKey,
         },
         body: JSON.stringify({
           action: 'disconnect',
-          userId
-        })
+          userId,
+        }),
       });
 
       if (!response.ok) {
@@ -324,10 +331,10 @@ class GoogleCalendarService {
     if (!this.available) {
       throw new Error(
         'Google Calendar service not available. ' +
-        'Possible causes: (1) Google OAuth credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) not configured in Supabase Edge Functions Secrets, ' +
-        '(2) Edge Functions not deployed or not responding, ' +
-        '(3) Network connectivity issues. ' +
-        `Run diagnostics: ${this.baseUrl}/google-diagnostics`
+          'Possible causes: (1) Google OAuth credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) not configured in Supabase Edge Functions Secrets, ' +
+          '(2) Edge Functions not deployed or not responding, ' +
+          '(3) Network connectivity issues. ' +
+          `Run diagnostics: ${this.baseUrl}/google-diagnostics`
       );
     }
 
@@ -356,14 +363,14 @@ class GoogleCalendarService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': anonKey
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: anonKey,
         },
         body: JSON.stringify({
           action,
           userId: user.id,
-          ...params
-        })
+          ...params,
+        }),
       });
 
       if (!response.ok) {
@@ -371,17 +378,23 @@ class GoogleCalendarService {
         const contentType = response.headers.get('content-type');
 
         if (contentType && contentType.includes('application/json')) {
-          errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+          errorData = await response
+            .json()
+            .catch(() => ({ error: 'Failed to parse error response' }));
         } else {
           const errorText = await response.text();
           errorData = { error: `Server error: ${errorText || response.statusText}` };
         }
 
-        const errorMessage = errorData.error || errorData.message || errorData.details || `API call failed with status ${response.status}`;
+        const errorMessage =
+          errorData.error ||
+          errorData.message ||
+          errorData.details ||
+          `API call failed with status ${response.status}`;
         console.error(`❌ API call failed (${action}):`, {
           status: response.status,
           statusText: response.statusText,
-          error: errorData
+          error: errorData,
         });
 
         throw new Error(errorMessage);
@@ -426,10 +439,13 @@ class GoogleCalendarService {
     }
   }
 
-  async updateEvent(eventId: string, event: Partial<GoogleCalendarEvent>): Promise<GoogleCalendarEvent> {
+  async updateEvent(
+    eventId: string,
+    event: Partial<GoogleCalendarEvent>
+  ): Promise<GoogleCalendarEvent> {
     try {
       const updatedEvent = await this.makeApiCall('updateEvent', { eventId, event });
-    return updatedEvent;
+      return updatedEvent;
     } catch (error) {
       console.error('❌ Failed to update event:', error);
       throw error;
@@ -447,9 +463,7 @@ class GoogleCalendarService {
 
     const result = await this.makeApiCall(
       hasId ? 'updateEvent' : 'insertEvent',
-      hasId
-        ? { eventId: (payload as any).id, event: payload }
-        : { event: payload }
+      hasId ? { eventId: (payload as any).id, event: payload } : { event: payload }
     );
 
     // Edge Function returns the event directly in current implementation

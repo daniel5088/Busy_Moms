@@ -82,7 +82,9 @@ export function InstacartButton({
         disabled:opacity-50
         disabled:cursor-not-allowed
         ${className}
-      `.replace(/\s+/g, ' ').trim()}
+      `
+        .replace(/\s+/g, ' ')
+        .trim()}
     >
       {loading ? (
         <>

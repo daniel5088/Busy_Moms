@@ -39,9 +39,7 @@ export function LoadingErrorState({
         <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
           <AlertCircle className="w-6 h-6 text-red-600" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Unable to Load Data
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Data</h3>
         <p className="text-gray-600 text-center mb-4 max-w-md">
           {errorMessage || error.message || 'An error occurred while loading the data.'}
         </p>
@@ -64,12 +62,8 @@ export function LoadingErrorState({
         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
           {emptyIcon || <Inbox className="w-6 h-6 text-gray-400" />}
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          No Data Yet
-        </h3>
-        <p className="text-gray-600 text-center max-w-md">
-          {emptyMessage}
-        </p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Yet</h3>
+        <p className="text-gray-600 text-center max-w-md">{emptyMessage}</p>
       </div>
     );
   }

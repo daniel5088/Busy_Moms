@@ -1,5 +1,17 @@
 import React from 'react';
-import { Calendar, ShoppingBag, MessageCircle, Clock, Heart, Gift, Users, LogOut, Smartphone, User, Sparkles } from 'lucide-react';
+import {
+  Calendar,
+  ShoppingBag,
+  MessageCircle,
+  Clock,
+  Heart,
+  Gift,
+  Users,
+  LogOut,
+  Smartphone,
+  User,
+  Sparkles,
+} from 'lucide-react';
 import { WhatsAppIntegration } from './WhatsAppIntegration';
 import { DailyAffirmations } from './DailyAffirmations';
 import { DashboardSkeleton } from './DashboardSkeleton';
@@ -33,7 +45,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
 
   // Load user profile
   React.useEffect(() => {
-    let mounted = true
+    let mounted = true;
 
     const loadProfile = async () => {
       if (!user?.id) return;
@@ -58,8 +70,8 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
     loadProfile();
 
     return () => {
-      mounted = false
-    }
+      mounted = false;
+    };
   }, [user]);
 
   // Helper function to format time for display
@@ -100,7 +112,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
 
         // Filter and sort today's events
         const todayEventsFiltered = (eventsData || [])
-          .filter(event => event.event_date === today)
+          .filter((event) => event.event_date === today)
           .sort((a, b) => {
             // Sort by start_time, putting all-day events (no start_time) first
             if (!a.start_time && !b.start_time) return 0;
@@ -138,7 +150,6 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
       if (!remindersError) {
         setReminders(remindersData || []);
       }
-
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -164,7 +175,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
 
       setTodayAffirmation(affirmation);
     } catch (error) {
-      console.error('Error loading today\'s affirmation:', error);
+      console.error("Error loading today's affirmation:", error);
     }
   };
 
@@ -189,7 +200,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
-      action: () => onNavigate('calendar')
+      action: () => onNavigate('calendar'),
     },
     {
       icon: ShoppingBag,
@@ -202,7 +213,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-amber-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('shopping')
+      action: () => onNavigateToSubScreen('shopping'),
     },
     {
       icon: Users,
@@ -215,7 +226,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-blue-100 dark:hover:bg-gray-700',
-      action: () => onNavigate('family')
+      action: () => onNavigate('family'),
     },
     {
       icon: MessageCircle,
@@ -228,8 +239,8 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-pink-100',
-      action: () => onVoiceChatOpen?.()
-    }
+      action: () => onVoiceChatOpen?.(),
+    },
   ];
 
   // Alvaros Skeletons
@@ -243,7 +254,15 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
       <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 text-white p-4 pb-6 dark:border-b dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Good Morning Awesome, {profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}!</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">
+              Good Morning Awesome,{' '}
+              {profile?.full_name ||
+                user?.user_metadata?.full_name ||
+                user?.user_metadata?.name ||
+                user?.email?.split('@')[0] ||
+                'User'}
+              !
+            </h1>
           </div>
           <div className="flex items-center space-x-3">
             <button
@@ -258,25 +277,25 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
             </div>
           </div>
         </div>
-        
+
         {/* Daily Summary */}
         <div className="bg-white bg-opacity-10 dark:bg-gray-900 dark:bg-opacity-50 rounded-xl p-3">
           <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
-            <button 
+            <button
               onClick={() => setShowEventsPopup(true)}
               className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
             >
               <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>{events.length} events</span>
             </button>
-            <button 
+            <button
               onClick={() => setShowTasksPopup(true)}
               className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
             >
               <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>{tasks.length} shopping list</span>
             </button>
-            <button 
+            <button
               onClick={() => setShowRemindersPopup(true)}
               className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
             >
@@ -328,8 +347,12 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                 <Sparkles className="w-5 h-5 text-rose-600 dark:text-rose-300" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Generating Your Daily Affirmation</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Creating personalized encouragement based on your schedule...</p>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                  Generating Your Daily Affirmation
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Creating personalized encouragement based on your schedule...
+                </p>
               </div>
             </div>
           </div>
@@ -338,7 +361,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
         {/* Quick Actions */}
         {/* Alvaros onlykeyboard - Redesigned with soft backgrounds, subtle borders, and refined interactions */}
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Quick Actions</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+            Quick Actions
+          </h2>
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {quickActions.map((action, index) => (
               <button
@@ -354,10 +379,14 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2`}
                 aria-label={`${action.title}: ${action.desc}`}
               >
-                <div className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}>
+                <div
+                  className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}
+                >
                   <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} />
                 </div>
-                <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base`}>{action.title}</h3>
+                <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base`}>
+                  {action.title}
+                </h3>
                 <p className={`text-xs sm:text-sm ${action.descColor}`}>{action.desc}</p>
               </button>
             ))}
@@ -366,7 +395,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
 
         {/* Today's Schedule */}
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Today's Schedule</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+            Today's Schedule
+          </h2>
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-rose-500"></div>
@@ -374,18 +405,28 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
           ) : todayEvents.length > 0 ? (
             <div className="space-y-3">
               {todayEvents.map((event) => (
-                <div key={event.id} className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onNavigate('calendar')}>
+                <div
+                  key={event.id}
+                  className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => onNavigate('calendar')}
+                >
                   <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
                       <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600 dark:text-rose-300" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">{event.title}</h3>
-                        <span className="text-xs sm:text-sm text-rose-600 font-medium">{formatEventTime(event.start_time)}</span>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                          {event.title}
+                        </h3>
+                        <span className="text-xs sm:text-sm text-rose-600 font-medium">
+                          {formatEventTime(event.start_time)}
+                        </span>
                       </div>
                       {event.location && (
-                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{event.location}</p>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                          {event.location}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -408,7 +449,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
 
         {/* Smart Reminders */}
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Smart Reminders</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+            Smart Reminders
+          </h2>
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-yellow-500"></div>
@@ -416,20 +459,29 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
           ) : reminders.length > 0 ? (
             <div className="space-y-2">
               {reminders.map((reminder) => (
-                <div key={reminder.id} className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer">
-                  <div className={`w-2 h-2 rounded-full ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}></div>
+                <div
+                  key={reminder.id}
+                  className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer"
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}
+                  ></div>
                   <div className="flex-1">
-                    <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200 font-medium">{reminder.title}</span>
+                    <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200 font-medium">
+                      {reminder.title}
+                    </span>
                     <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {new Date(reminder.reminder_date).toLocaleDateString('en-US', {
                         weekday: 'short',
                         month: 'short',
-                        day: 'numeric'
+                        day: 'numeric',
                       })}
                       {reminder.reminder_time && ` at ${formatEventTime(reminder.reminder_time)}`}
                     </div>
                     {reminder.description && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{reminder.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
+                        {reminder.description}
+                      </p>
                     )}
                   </div>
                   {reminder.priority === 'high' && (
@@ -444,7 +496,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 text-center">
               <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
               <p className="text-gray-500 dark:text-gray-400 mb-3">No upcoming reminders</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">Ask Sarah to set reminders for you!</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Ask Sarah to set reminders for you!
+              </p>
             </div>
           )}
         </div>
@@ -459,12 +513,18 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
               <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">Sarah - Your Voice Assistant</h3>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Talk to me anytime!</p>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                Sarah - Your Voice Assistant
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                Talk to me anytime!
+              </p>
             </div>
           </div>
           <div className="bg-white dark:bg-gray-900 p-3 sm:p-4 rounded-lg shadow-sm">
-            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">"Hey Sarah, what can you help me with today?"</p>
+            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
+              "Hey Sarah, what can you help me with today?"
+            </p>
             <div className="flex flex-wrap gap-1 sm:gap-2">
               <button
                 onClick={(e) => {
@@ -520,7 +580,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                   ✕
                 </button>
               </div>
-              
+
               {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-purple-500"></div>
@@ -529,13 +589,17 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                 <div className="space-y-3">
                   {events.map((event) => (
                     <div key={event.id} className="p-2 sm:p-3 bg-gray-50 rounded-lg">
-                      <h3 className="font-medium text-gray-900 text-sm sm:text-base">{event.title}</h3>
+                      <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+                        {event.title}
+                      </h3>
                       <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(event.event_date).toLocaleDateString()} 
+                        {new Date(event.event_date).toLocaleDateString()}
                         {event.start_time && ` at ${event.start_time}`}
                       </p>
                       {event.location && (
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{event.location}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          {event.location}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -562,7 +626,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                   ✕
                 </button>
               </div>
-              
+
               {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-500"></div>
@@ -572,7 +636,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                   {tasks.map((task) => (
                     <div key={task.id} className="p-2 sm:p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">{task.item}</h3>
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+                          {task.item}
+                        </h3>
                         {task.urgent && (
                           <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100 text-red-700 rounded-full text-xs">
                             Urgent
@@ -591,7 +657,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                         )}
                       </div>
                       {task.quantity && task.quantity > 1 && (
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Quantity: {task.quantity}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          Quantity: {task.quantity}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -628,7 +696,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                   {reminders.map((reminder) => (
                     <div key={reminder.id} className="p-2 sm:p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">{reminder.title}</h3>
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+                          {reminder.title}
+                        </h3>
                         {reminder.priority === 'high' && (
                           <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100 text-red-700 rounded-full text-xs">
                             High Priority
@@ -640,7 +710,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                         {reminder.reminder_time && ` at ${reminder.reminder_time}`}
                       </p>
                       {reminder.description && (
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{reminder.description}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          {reminder.description}
+                        </p>
                       )}
                     </div>
                   ))}

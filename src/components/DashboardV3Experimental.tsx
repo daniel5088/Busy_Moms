@@ -1,6 +1,15 @@
 //Alvaro-dashboardv3: Dashboard V3 minimal prototype - static content only
 import React, { useState } from 'react';
-import { Calendar, ShoppingBag, MessageCircle, Clock, Heart, Users, Sparkles, X } from 'lucide-react';
+import {
+  Calendar,
+  ShoppingBag,
+  MessageCircle,
+  Clock,
+  Heart,
+  Users,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import { SubScreen } from '../App';
 
 interface DashboardProps {
@@ -9,18 +18,23 @@ interface DashboardProps {
   onVoiceChatOpen?: () => void;
 }
 
-export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }: DashboardProps) {
+export function DashboardV3Experimental({
+  onNavigate,
+  onNavigateToSubScreen,
+  onVoiceChatOpen,
+}: DashboardProps) {
   //Alvaro-dashboardv3: State to control top-anchored affirmation popup
   const [showAffirmationPopup, setShowAffirmationPopup] = useState(true);
 
   // Mock affirmation text - static content for prototype
-  const mockAffirmation = "You are capable of amazing things today. Trust yourself and embrace every moment with confidence.";
+  const mockAffirmation =
+    'You are capable of amazing things today. Trust yourself and embrace every moment with confidence.';
 
   //Alvaro-dashboardv3: Mock stats data for prototype demonstration
   const mockStats = {
     events: 0,
     shoppingItems: 4,
-    reminders: 0
+    reminders: 0,
   };
 
   //Alvaro-dashboardv3: 3x2 Quick Actions grid with 4 real + 2 placeholder actions
@@ -37,7 +51,7 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
-      action: () => onNavigate('calendar')
+      action: () => onNavigate('calendar'),
     },
     {
       icon: ShoppingBag,
@@ -50,7 +64,7 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-amber-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('shopping')
+      action: () => onNavigateToSubScreen('shopping'),
     },
     {
       icon: Users,
@@ -63,7 +77,7 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-blue-100 dark:hover:bg-gray-700',
-      action: () => onNavigate('family')
+      action: () => onNavigate('family'),
     },
     // Row 2 - 1 real action + 2 placeholders
     {
@@ -77,7 +91,7 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-pink-100 dark:hover:bg-gray-700',
-      action: () => onVoiceChatOpen?.()
+      action: () => onVoiceChatOpen?.(),
     },
     {
       icon: Clock,
@@ -90,7 +104,7 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-500 dark:text-gray-400',
       descColor: 'text-gray-400 dark:text-gray-500',
       hoverBg: 'hover:bg-gray-100 dark:hover:bg-gray-750',
-      action: () => {} // Empty handler for placeholder
+      action: () => {}, // Empty handler for placeholder
     },
     {
       icon: Sparkles,
@@ -103,8 +117,8 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-500 dark:text-gray-400',
       descColor: 'text-gray-400 dark:text-gray-500',
       hoverBg: 'hover:bg-gray-100 dark:hover:bg-gray-750',
-      action: () => {} // Empty handler for placeholder
-    }
+      action: () => {}, // Empty handler for placeholder
+    },
   ];
 
   return (
@@ -205,12 +219,18 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
                 <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">Sarah - Your Voice Assistant</h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Talk to me anytime!</p>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                  Sarah - Your Voice Assistant
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  Talk to me anytime!
+                </p>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-900 p-3 sm:p-4 rounded-lg shadow-sm">
-              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">"Hey Sarah, what can you help me with today?"</p>
+              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
+                "Hey Sarah, what can you help me with today?"
+              </p>
               <div className="flex flex-wrap gap-1 sm:gap-2">
                 <button
                   onClick={(e) => {
@@ -245,7 +265,9 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
 
           {/* Quick Actions Grid - 3 columns × 2 rows */}
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Quick Actions</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+              Quick Actions
+            </h2>
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {quickActions.map((action, index) => (
                 <button
@@ -257,15 +279,15 @@ export function DashboardV3Experimental({ onNavigate, onNavigateToSubScreen, onV
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2`}
                   aria-label={`${action.title}: ${action.desc}`}
                 >
-                  <div className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}>
+                  <div
+                    className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}
+                  >
                     <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} />
                   </div>
                   <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base`}>
                     {action.title}
                   </h3>
-                  <p className={`text-xs sm:text-sm ${action.descColor}`}>
-                    {action.desc}
-                  </p>
+                  <p className={`text-xs sm:text-sm ${action.descColor}`}>{action.desc}</p>
                 </button>
               ))}
             </div>

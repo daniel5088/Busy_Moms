@@ -81,9 +81,7 @@ export function ErrorToast({
         className={`flex items-start space-x-3 p-4 rounded-xl border-2 shadow-lg ${styles[type]}`}
         role="alert"
       >
-        <div className={`flex-shrink-0 ${iconColors[type]}`}>
-          {icons[type]}
-        </div>
+        <div className={`flex-shrink-0 ${iconColors[type]}`}>{icons[type]}</div>
 
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">{message}</p>

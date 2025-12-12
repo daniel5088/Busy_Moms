@@ -42,13 +42,17 @@ interface AffirmationResponse {
 }
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
 function getCorrelationId(req: Request) {
-  return req.headers.get('x-correlation-id') || req.headers.get('X-Correlation-ID') || crypto.randomUUID();
+  return (
+    req.headers.get('x-correlation-id') ||
+    req.headers.get('X-Correlation-ID') ||
+    crypto.randomUUID()
+  );
 }
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -107,7 +111,7 @@ async function fetchWithRetry(
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     const correlationId = getCorrelationId(req);
     return new Response(null, {
       status: 200,
@@ -122,33 +126,27 @@ Deno.serve(async (req: Request) => {
     const correlationId = getCorrelationId(req);
     console.log(`🚀 Affirmation generation request - ${req.method} ${req.url}`, { correlationId });
 
-    if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Method not allowed" }),
-        {
-          status: 405,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL')!;
@@ -165,19 +163,19 @@ Deno.serve(async (req: Request) => {
       },
     });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     console.log('✅ Authenticated user:', user.id);
@@ -186,17 +184,14 @@ Deno.serve(async (req: Request) => {
 
     let targetDate = body.date || new Date().toISOString().split('T')[0];
     if (body.date && isNaN(Date.parse(body.date))) {
-      return new Response(
-        JSON.stringify({ error: "Invalid date format" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Invalid date format' }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     const forceRegenerate = body.forceRegenerate || false;
@@ -211,16 +206,13 @@ Deno.serve(async (req: Request) => {
 
       if (existingAffirmation) {
         console.log('📋 Found existing affirmation for date:', targetDate);
-        return new Response(
-          JSON.stringify(existingAffirmation),
-          {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json",
-              ...corsHeaders,
-            },
-          }
-        );
+        return new Response(JSON.stringify(existingAffirmation), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        });
       }
     }
 
@@ -231,17 +223,14 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (settings && !settings.enabled) {
-      return new Response(
-        JSON.stringify({ error: "Affirmations are disabled for this user" }),
-        {
-          status: 403,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Affirmations are disabled for this user' }), {
+        status: 403,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     console.log('🔍 Fetching user context data...');
@@ -262,7 +251,7 @@ Deno.serve(async (req: Request) => {
     const today = new Date().toISOString().split('T')[0];
     const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    const queries: Promise<{ key: string; data: any }> [] = [];
+    const queries: Promise<{ key: string; data: any }>[] = [];
 
     if (includeCalendar) {
       queries.push(
@@ -323,7 +312,7 @@ Deno.serve(async (req: Request) => {
     );
 
     const results = await Promise.all(queries);
-    results.forEach(result => {
+    results.forEach((result) => {
       contextData[result.key] = result.data;
     });
 
@@ -338,7 +327,7 @@ Deno.serve(async (req: Request) => {
     if (!openaiApiKey) {
       console.log('⚠️ OpenAI API key not configured, using fallback affirmation');
       const fallbackAffirmation = generateFallbackAffirmation(contextData);
-      
+
       const { data: newAffirmation, error: insertError } = await supabase
         .from('affirmations')
         .insert({
@@ -360,50 +349,44 @@ Deno.serve(async (req: Request) => {
         throw insertError;
       }
 
-      return new Response(
-        JSON.stringify(newAffirmation),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            'x-correlation-id': correlationId,
-          },
-        }
-      );
+      return new Response(JSON.stringify(newAffirmation), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
     }
 
     console.log('🤖 Generating affirmation with OpenAI...');
 
     const prompt = buildAffirmationPrompt(contextData);
 
-    const openaiResponse = await fetchWithRetry(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-          'x-correlation-id': correlationId,
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a compassionate AI assistant that generates personalized daily affirmations for busy parents. Create positive, uplifting affirmations that acknowledge their challenges and celebrate their strengths.',
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          max_tokens: 150,
-          temperature: 0.8,
-        }),
-      }
-    );
+    const openaiResponse = await fetchWithRetry('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+        'x-correlation-id': correlationId,
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a compassionate AI assistant that generates personalized daily affirmations for busy parents. Create positive, uplifting affirmations that acknowledge their challenges and celebrate their strengths.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        max_tokens: 150,
+        temperature: 0.8,
+      }),
+    });
 
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text();
@@ -413,8 +396,7 @@ Deno.serve(async (req: Request) => {
 
     const openaiData = await openaiResponse.json();
     const affirmationText =
-      openaiData.choices?.[0]?.message?.content?.trim() ||
-      generateFallbackAffirmation(contextData);
+      openaiData.choices?.[0]?.message?.content?.trim() || generateFallbackAffirmation(contextData);
 
     console.log('✅ Generated affirmation:', affirmationText.substring(0, 50) + '...');
 
@@ -454,30 +436,26 @@ Deno.serve(async (req: Request) => {
 
     console.log('✅ Affirmation saved to database');
 
-    return new Response(
-      JSON.stringify(newAffirmation),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-          'x-correlation-id': correlationId,
-        },
-      }
-    );
-
+    return new Response(JSON.stringify(newAffirmation), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+        'x-correlation-id': correlationId,
+      },
+    });
   } catch (error) {
     console.error('❌ Affirmation generation error:', error);
-    
+
     return new Response(
       JSON.stringify({
-        error: "Internal server error",
-        message: "An unexpected error occurred while generating affirmation"
+        error: 'Internal server error',
+        message: 'An unexpected error occurred while generating affirmation',
       }),
       {
         status: 500,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           ...corsHeaders,
         },
       }
@@ -489,11 +467,11 @@ function buildAffirmationPrompt(contextData: any): string {
   const userName = contextData.profile?.full_name || 'there';
   const userType = contextData.profile?.user_type || 'parent';
   const personality = contextData.profile?.ai_personality || 'Friendly';
-  
+
   let prompt = `Generate a personalized daily affirmation for ${userName}, a ${userType}.\n\n`;
-  
+
   prompt += `Personality: ${personality}\n\n`;
-  
+
   if (contextData.calendar.length > 0) {
     prompt += `Upcoming events:\n`;
     contextData.calendar.forEach((event: any) => {
@@ -501,7 +479,7 @@ function buildAffirmationPrompt(contextData: any): string {
     });
     prompt += `\n`;
   }
-  
+
   if (contextData.tasks.length > 0) {
     prompt += `Tasks to complete:\n`;
     contextData.tasks.slice(0, 5).forEach((task: any) => {
@@ -509,7 +487,7 @@ function buildAffirmationPrompt(contextData: any): string {
     });
     prompt += `\n`;
   }
-  
+
   if (contextData.family.length > 0) {
     prompt += `Family members:\n`;
     contextData.family.forEach((member: any) => {
@@ -519,18 +497,18 @@ function buildAffirmationPrompt(contextData: any): string {
     });
     prompt += `\n`;
   }
-  
+
   if (contextData.shopping.length > 0) {
     prompt += `Shopping needs: ${contextData.shopping.length} items on the list\n\n`;
   }
-  
+
   prompt += `Create a positive, encouraging affirmation (2-3 sentences max) that:\n`;
   prompt += `1. Acknowledges their current situation and responsibilities\n`;
   prompt += `2. Provides encouragement and validation\n`;
   prompt += `3. Inspires confidence for the day ahead\n`;
   prompt += `4. Uses a warm, ${personality.toLowerCase()} tone\n\n`;
   prompt += `Return ONLY the affirmation text, no quotes or extra formatting.`;
-  
+
   return prompt;
 }
 
@@ -539,19 +517,19 @@ function generateFallbackAffirmation(contextData: any): string {
     "You're doing an amazing job balancing everything. Today, give yourself credit for all the small wins that make a big difference in your family's life.",
     "Every moment you invest in your family matters. Trust yourself, take it one step at a time, and remember that you're exactly the parent your family needs.",
     "Your love and dedication shine through in everything you do. Today, embrace the chaos, celebrate the joy, and know that you're creating beautiful memories.",
-    "You are stronger than you know and more capable than you think. Today will bring its challenges, but you have everything you need to handle them with grace.",
-    "The care you show for your family is extraordinary. Today, remember to show that same kindness to yourself as you navigate your busy day.",
+    'You are stronger than you know and more capable than you think. Today will bring its challenges, but you have everything you need to handle them with grace.',
+    'The care you show for your family is extraordinary. Today, remember to show that same kindness to yourself as you navigate your busy day.',
   ];
-  
+
   const hasEvents = contextData.calendar.length > 0;
   const hasTasks = contextData.tasks.length > 0;
   const hasFamily = contextData.family.length > 0;
-  
+
   if (hasEvents && hasTasks) {
     return "You have a full schedule ahead, but you've handled busy days before and you'll handle this one too. Your ability to manage it all while keeping your family happy is remarkable. Trust yourself today.";
   } else if (hasFamily && contextData.family.length > 1) {
     return `Being there for ${contextData.family.length} family members takes incredible strength and love. You're doing a wonderful job, and your family is lucky to have you. Take pride in all you accomplish today.`;
   }
-  
+
   return affirmations[Math.floor(Math.random() * affirmations.length)];
 }

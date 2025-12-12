@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  KeyboardEvent,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState, KeyboardEvent } from 'react';
 import {
   Plus,
   MapPin,
@@ -66,9 +60,7 @@ const isMappableLocation = (loc?: string | null) => {
 
 const openInGoogleMaps = (location: string) => {
   if (!location) return;
-  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    location
-  )}`;
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 };
 
@@ -82,7 +74,8 @@ const openInAppleMaps = (location: string) => {
 export function Calendar() {
   const supabase = useSupabaseClient();
   const { user } = useAuth();
-  const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } = useCalendarSync();
+  const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
+    useCalendarSync();
 
   // Core state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -148,7 +141,7 @@ export function Calendar() {
         .eq('user_id', user.id);
 
       if (!mappingsErr && mappingsData) {
-        const googleIds = new Set(mappingsData.map(m => m.google_event_id));
+        const googleIds = new Set(mappingsData.map((m) => m.google_event_id));
         setSyncedGoogleEventIds(googleIds);
       }
     } catch (e) {
@@ -205,7 +198,7 @@ export function Calendar() {
       const events = await googleCalendarService.getEvents({
         timeMin,
         timeMax,
-        maxResults: 100
+        maxResults: 100,
       });
 
       setGoogleEvents(events);
@@ -219,11 +212,11 @@ export function Calendar() {
     if (!selectedDate) return { events: [] as DbEvent[], reminders: [] as any[] };
     const d = toLocalISODate(selectedDate);
 
-    const dayDbEvents = events.filter(ev => ev.event_date === d);
-    const dayReminders = reminders.filter(rem => rem.reminder_date === d);
+    const dayDbEvents = events.filter((ev) => ev.event_date === d);
+    const dayReminders = reminders.filter((rem) => rem.reminder_date === d);
 
     // Filter out Google events that are already synced to local DB
-    const dayGoogleEvents = googleEvents.filter(ev => {
+    const dayGoogleEvents = googleEvents.filter((ev) => {
       // Skip if this Google event is already in local database
       if (syncedGoogleEventIds.has(ev.id)) {
         return false;
@@ -237,7 +230,9 @@ export function Calendar() {
     const sorted = dayDbEvents.sort((a, b) => {
       const minutesKey = (it: DbEvent) => {
         if (it.start_time) {
-          const [h, m] = String(it.start_time).split(':').map((n: string) => parseInt(n, 10));
+          const [h, m] = String(it.start_time)
+            .split(':')
+            .map((n: string) => parseInt(n, 10));
           return (isNaN(h) ? 23 : h) * 60 + (isNaN(m) ? 59 : m);
         }
         return 24 * 60;
@@ -248,7 +243,9 @@ export function Calendar() {
     const sortedReminders = dayReminders.sort((a, b) => {
       const minutesKey = (it: any) => {
         if (it.reminder_time) {
-          const [h, m] = String(it.reminder_time).split(':').map((n: string) => parseInt(n, 10));
+          const [h, m] = String(it.reminder_time)
+            .split(':')
+            .map((n: string) => parseInt(n, 10));
           return (isNaN(h) ? 23 : h) * 60 + (isNaN(m) ? 59 : m);
         }
         return 24 * 60;
@@ -289,10 +286,10 @@ export function Calendar() {
 
   // --- Handlers --------------------------------------------------------------
   const goPrevMonth = useCallback(() => {
-    setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
+    setCurrentDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
   }, []);
   const goNextMonth = useCallback(() => {
-    setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1));
+    setCurrentDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
   }, []);
   const goToday = useCallback(() => {
     const now = new Date();
@@ -309,18 +306,21 @@ export function Calendar() {
     setShowEventForm(true);
   }, []);
 
-  const onKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      goPrevMonth();
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      goNextMonth();
-    } else if (e.key.toLowerCase() === 't') {
-      e.preventDefault();
-      goToday();
-    }
-  }, [goPrevMonth, goNextMonth, goToday]);
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goPrevMonth();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goNextMonth();
+      } else if (e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        goToday();
+      }
+    },
+    [goPrevMonth, goNextMonth, goToday]
+  );
 
   const handleEventSaved = useCallback(() => {
     setShowEventForm(false);
@@ -336,11 +336,11 @@ export function Calendar() {
   const dayEventsCount = useCallback(
     (day: Date) => {
       const d = toLocalISODate(day);
-      const eventCount = events.filter(ev => ev.event_date === d).length;
-      const reminderCount = reminders.filter(rem => rem.reminder_date === d).length;
+      const eventCount = events.filter((ev) => ev.event_date === d).length;
+      const reminderCount = reminders.filter((rem) => rem.reminder_date === d).length;
 
       // Only count Google events that are NOT already synced to local DB
-      const googleEventCount = googleEvents.filter(ev => {
+      const googleEventCount = googleEvents.filter((ev) => {
         if (syncedGoogleEventIds.has(ev.id)) return false;
 
         if (ev.start?.date) return ev.start.date === d;
@@ -360,7 +360,7 @@ export function Calendar() {
   if (loading) {
     return <CalendarSkeleton />;
   }
-  
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-24">
@@ -374,7 +374,7 @@ export function Calendar() {
                   weekday: 'long',
                   month: 'long',
                   day: 'numeric',
-                  year: 'numeric'
+                  year: 'numeric',
                 })}
               </p>
             </div>
@@ -382,24 +382,39 @@ export function Calendar() {
               <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-full">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
                 </svg>
-                <span className="text-sm font-medium text-green-700 dark:text-green-300">Google Connected</span>
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                  Google Connected
+                </span>
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
             {/* Calendar Grid - Left Side */}
             <div className="lg:col-span-2">
               <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
                 {/* Month Navigation */}
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{monthLabel}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    {monthLabel}
+                  </h2>
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={goToday}
@@ -430,7 +445,9 @@ export function Calendar() {
                     <div key={idx} className="text-center py-2">
                       <span
                         className={`text-sm font-semibold ${
-                          idx === 0 || idx === 6 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-600 dark:text-gray-400'
+                          idx === 0 || idx === 6
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : 'text-gray-600 dark:text-gray-400'
                         }`}
                       >
                         {day}
@@ -455,13 +472,14 @@ export function Calendar() {
                         className={`
                           relative aspect-square rounded-xl p-2 transition-all
                           flex flex-col items-center justify-center
-                          ${isSelected
-                            ? 'bg-rose-500 text-white shadow-lg scale-105'
-                            : isToday
-                            ? 'bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 font-bold border-2 border-rose-500 dark:border-rose-400'
-                            : inCurrentMonth
-                            ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            : 'text-gray-300 dark:text-gray-600'
+                          ${
+                            isSelected
+                              ? 'bg-rose-500 text-white shadow-lg scale-105'
+                              : isToday
+                                ? 'bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 font-bold border-2 border-rose-500 dark:border-rose-400'
+                                : inCurrentMonth
+                                  ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                  : 'text-gray-300 dark:text-gray-600'
                           }
                         `}
                       >
@@ -502,7 +520,9 @@ export function Calendar() {
                 </h3>
 
                 <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto">
-                  {itemsForSelectedDate.events.length === 0 && itemsForSelectedDate.reminders.length === 0 && (itemsForSelectedDate.googleEvents?.length || 0) === 0 ? (
+                  {itemsForSelectedDate.events.length === 0 &&
+                  itemsForSelectedDate.reminders.length === 0 &&
+                  (itemsForSelectedDate.googleEvents?.length || 0) === 0 ? (
                     <div className="text-center py-12">
                       <CalendarIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                       <p className="text-gray-500 dark:text-gray-400">No events for this day</p>
@@ -526,7 +546,9 @@ export function Calendar() {
                           className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
                         >
                           <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{ev.title}</h3>
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                              {ev.title}
+                            </h3>
                             <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
                               {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
                             </span>
@@ -548,22 +570,38 @@ export function Calendar() {
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center space-x-2 flex-1">
-                              <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">{ev.summary || 'Untitled Event'}</h3>
+                              <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
+                                {ev.summary || 'Untitled Event'}
+                              </h3>
                               <div className="flex items-center space-x-1 px-2 py-0.5 bg-white rounded-full border border-cyan-300">
                                 <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor">
-                                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                  <path
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                    fill="#4285F4"
+                                  />
+                                  <path
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                    fill="#34A853"
+                                  />
+                                  <path
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                    fill="#FBBC05"
+                                  />
+                                  <path
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                    fill="#EA4335"
+                                  />
                                 </svg>
                                 <span className="text-xs font-medium text-cyan-600">Google</span>
                               </div>
                             </div>
                             <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full font-medium ml-2">
                               {ev.start?.dateTime
-                                ? new Date(ev.start.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-                                : 'All day'
-                              }
+                                ? new Date(ev.start.dateTime).toLocaleTimeString([], {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                  })
+                                : 'All day'}
                             </span>
                           </div>
                           {ev.location && (
@@ -588,10 +626,14 @@ export function Calendar() {
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center space-x-2">
                               <Bell className="w-4 h-4 text-amber-600" />
-                              <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">{reminder.title}</h3>
+                              <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
+                                {reminder.title}
+                              </h3>
                             </div>
                             <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
-                              {reminder.reminder_time ? formatTimeRange(reminder.reminder_time, null) : 'All day'}
+                              {reminder.reminder_time
+                                ? formatTimeRange(reminder.reminder_time, null)
+                                : 'All day'}
                             </span>
                           </div>
                         </div>
@@ -612,7 +654,8 @@ export function Calendar() {
               >
                 <Bell className="w-5 h-5 text-orange-600" />
                 <span className="text-orange-700 font-semibold">
-                  Resolve {pendingConflicts.length} Sync Conflict{pendingConflicts.length !== 1 ? 's' : ''}
+                  Resolve {pendingConflicts.length} Sync Conflict
+                  {pendingConflicts.length !== 1 ? 's' : ''}
                 </span>
               </button>
             </div>
@@ -624,7 +667,9 @@ export function Calendar() {
           <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-2 sm:p-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-xl text-gray-900 dark:text-gray-100">Create Event</h4>
+                <h4 className="font-semibold text-xl text-gray-900 dark:text-gray-100">
+                  Create Event
+                </h4>
                 <button
                   onClick={() => setShowEventForm(false)}
                   className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -666,7 +711,9 @@ export function Calendar() {
                 {selectedEvent && (
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedEvent.title}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        {selectedEvent.title}
+                      </h3>
                       <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-rose-100 text-rose-700">
                         {selectedEvent.event_type}
                       </div>
@@ -681,17 +728,19 @@ export function Calendar() {
                       {(selectedEvent.start_time || selectedEvent.end_time) && (
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                           <Clock className="w-4 h-4" />
-                          <span>{formatTimeRange(selectedEvent.start_time, selectedEvent.end_time)}</span>
+                          <span>
+                            {formatTimeRange(selectedEvent.start_time, selectedEvent.end_time)}
+                          </span>
                         </div>
                       )}
-                      
+
                       {selectedEvent.location && (
                         <>
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <MapPin className="w-4 h-4" />
                             <span>{selectedEvent.location}</span>
                           </div>
-                      
+
                           {isMappableLocation(selectedEvent.location) && (
                             <div className="flex items-center gap-2 pt-1">
                               <button
@@ -759,7 +808,7 @@ export function Calendar() {
                                 .from('events')
                                 .delete()
                                 .eq('id', selectedEvent.id);
-                            
+
                               if (!error) {
                                 setShowEventDetails(false);
                                 setSelectedEvent(null);
@@ -793,13 +842,19 @@ export function Calendar() {
                 {selectedReminder && (
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedReminder.title}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        {selectedReminder.title}
+                      </h3>
                       <div className="flex items-center space-x-2">
-                        <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                          selectedReminder.priority === 'high' ? 'bg-red-100 text-red-700' :
-                          selectedReminder.priority === 'low' ? 'bg-green-100 text-green-700' :
-                          'bg-yellow-100 text-yellow-700'
-                        }`}>
+                        <div
+                          className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                            selectedReminder.priority === 'high'
+                              ? 'bg-red-100 text-red-700'
+                              : selectedReminder.priority === 'low'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                          }`}
+                        >
                           {selectedReminder.priority || 'medium'} priority
                         </div>
                         <div className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
@@ -836,7 +891,7 @@ export function Calendar() {
                               .from('reminders')
                               .update({ completed: true })
                               .eq('id', selectedReminder.id);
-                          
+
                             if (!error) {
                               setShowEventDetails(false);
                               setSelectedReminder(null);
@@ -858,7 +913,7 @@ export function Calendar() {
                                 .from('reminders')
                                 .delete()
                                 .eq('id', selectedReminder.id);
-                            
+
                               if (!error) {
                                 setShowEventDetails(false);
                                 setSelectedReminder(null);
@@ -908,7 +963,6 @@ export function Calendar() {
             onClose={() => setShowConflicts(false)}
           />
         )}
-
       </div>
     </>
   );

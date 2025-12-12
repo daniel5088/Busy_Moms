@@ -56,7 +56,9 @@ export function useCalendarSync() {
     if (lastSyncAttemptRef.current) {
       const timeSinceLastAttempt = Date.now() - lastSyncAttemptRef.current.getTime();
       if (timeSinceLastAttempt < 30000) {
-        console.log(`⏭️ Skipping sync - too soon (${Math.round(timeSinceLastAttempt / 1000)}s ago)`);
+        console.log(
+          `⏭️ Skipping sync - too soon (${Math.round(timeSinceLastAttempt / 1000)}s ago)`
+        );
         return;
       }
     }
@@ -98,59 +100,68 @@ export function useCalendarSync() {
   /**
    * Update sync preferences
    */
-  const updateSyncPreferences = useCallback(async (
-    updates: {
+  const updateSyncPreferences = useCallback(
+    async (updates: {
       sync_enabled?: boolean;
       sync_frequency_minutes?: number;
       sync_direction?: 'bidirectional' | 'google_to_local' | 'local_to_google';
-    }
-  ) => {
-    if (!user?.id) return false;
+    }) => {
+      if (!user?.id) return false;
 
-    const success = await calendarSyncService.updateUserSyncPreferences(user.id, updates);
+      const success = await calendarSyncService.updateUserSyncPreferences(user.id, updates);
 
-    if (success) {
-      if (updates.sync_enabled !== undefined) {
-        setSyncEnabled(updates.sync_enabled);
+      if (success) {
+        if (updates.sync_enabled !== undefined) {
+          setSyncEnabled(updates.sync_enabled);
+        }
+        if (updates.sync_frequency_minutes !== undefined) {
+          setSyncFrequencyMinutes(updates.sync_frequency_minutes);
+        }
       }
-      if (updates.sync_frequency_minutes !== undefined) {
-        setSyncFrequencyMinutes(updates.sync_frequency_minutes);
-      }
-    }
 
-    return success;
-  }, [user?.id]);
+      return success;
+    },
+    [user?.id]
+  );
 
   /**
    * Resolve a conflict
    */
-  const resolveConflict = useCallback(async (
-    conflictId: string,
-    resolution: 'keep_local' | 'keep_google' | 'merge'
-  ) => {
-    if (!user?.id) return false;
+  const resolveConflict = useCallback(
+    async (conflictId: string, resolution: 'keep_local' | 'keep_google' | 'merge') => {
+      if (!user?.id) return false;
 
-    const success = await calendarSyncService.resolveConflict(conflictId, resolution, user.id);
+      const success = await calendarSyncService.resolveConflict(conflictId, resolution, user.id);
 
-    if (success) {
-      // Remove from pending conflicts
-      setPendingConflicts(prev => prev.filter(c => c.id !== conflictId));
+      if (success) {
+        // Remove from pending conflicts
+        setPendingConflicts((prev) => prev.filter((c) => c.id !== conflictId));
 
-      // If resolution was chosen, apply it
-      const conflict = pendingConflicts.find(c => c.id === conflictId);
-      if (conflict) {
-        if (resolution === 'keep_google') {
-          // Update local event with Google data
-          await syncOrchestrator.syncSingleEvent(user.id, conflict.google_event_id, 'google_to_local');
-        } else if (resolution === 'keep_local' && conflict.local_event_id) {
-          // Update Google event with local data
-          await syncOrchestrator.syncSingleEvent(user.id, conflict.local_event_id, 'local_to_google');
+        // If resolution was chosen, apply it
+        const conflict = pendingConflicts.find((c) => c.id === conflictId);
+        if (conflict) {
+          if (resolution === 'keep_google') {
+            // Update local event with Google data
+            await syncOrchestrator.syncSingleEvent(
+              user.id,
+              conflict.google_event_id,
+              'google_to_local'
+            );
+          } else if (resolution === 'keep_local' && conflict.local_event_id) {
+            // Update Google event with local data
+            await syncOrchestrator.syncSingleEvent(
+              user.id,
+              conflict.local_event_id,
+              'local_to_google'
+            );
+          }
         }
       }
-    }
 
-    return success;
-  }, [user?.id, pendingConflicts]);
+      return success;
+    },
+    [user?.id, pendingConflicts]
+  );
 
   /**
    * Calculate next sync time
@@ -175,7 +186,8 @@ export function useCalendarSync() {
     // Don't sync if we just attempted (minimum 5 minutes between automatic syncs)
     if (lastSyncAttemptRef.current) {
       const timeSinceLastAttempt = Date.now() - lastSyncAttemptRef.current.getTime();
-      if (timeSinceLastAttempt < 300000) { // Wait at least 5 minutes between attempts
+      if (timeSinceLastAttempt < 300000) {
+        // Wait at least 5 minutes between attempts
         return false;
       }
     }

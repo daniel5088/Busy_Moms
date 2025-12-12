@@ -9,7 +9,13 @@ interface NavigationHeaderProps {
   actions?: React.ReactNode;
 }
 
-export function NavigationHeader({ title, subtitle, showBack, onBack, actions }: NavigationHeaderProps) {
+export function NavigationHeader({
+  title,
+  subtitle,
+  showBack,
+  onBack,
+  actions,
+}: NavigationHeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-3">
@@ -29,9 +35,7 @@ export function NavigationHeader({ title, subtitle, showBack, onBack, actions }:
               {subtitle && <p className="text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>}
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            {actions}
-          </div>
+          <div className="flex items-center space-x-2">{actions}</div>
         </div>
       </div>
     </header>

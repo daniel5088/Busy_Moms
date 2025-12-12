@@ -10,8 +10,11 @@ function toUtcISOString(input: string | Date): string {
   return new Date(ms - offsetMs).toISOString();
 }
 
-
-function buildUtcRangeFromLocal(event_date: string, start_time: string | null, end_time: string | null) {
+function buildUtcRangeFromLocal(
+  event_date: string,
+  start_time: string | null,
+  end_time: string | null
+) {
   if (start_time) {
     const startLocal = new Date(`${event_date}T${start_time}`);
     const startUtc = toUtcISOString(startLocal);
@@ -27,16 +30,14 @@ function buildUtcRangeFromLocal(event_date: string, start_time: string | null, e
     }
     return { startUtc, endUtc, allDay: false };
   } else {
-  
     const start = new Date(`${event_date}T00:00:00`);
-    const end = new Date(start); end.setDate(end.getDate() + 1);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
     return { startUtc: toUtcISOString(start), endUtc: toUtcISOString(end), allDay: true };
   }
 }
 
-
 function normalizeGoogleDateRange(ge: GoogleCalendarEvent) {
-
   if (ge.start?.date) {
     const start = new Date(`${ge.start.date}T00:00:00`);
     const endDate = ge.end?.date ?? ge.start.date; // Google returns exclusive end date for all-day
@@ -51,24 +52,24 @@ function normalizeGoogleDateRange(ge: GoogleCalendarEvent) {
   return { startUtc, endUtc, allDay: false };
 }
 
-
 function deterministicStringify(obj: Record<string, any>): string {
   const keys = Object.keys(obj).sort();
-  return `{${keys.map(k => `"${k}":${JSON.stringify(obj[k])}`).join(',')}}`;
+  return `{${keys.map((k) => `"${k}":${JSON.stringify(obj[k])}`).join(',')}}`;
 }
-
 
 function xxhash64(str: string): string {
-  let h1 = 0x9e3779b185ebca87n, h2 = 0xc2b2ae3d27d4eb4fn;
+  let h1 = 0x9e3779b185ebca87n,
+    h2 = 0xc2b2ae3d27d4eb4fn;
   for (let i = 0; i < str.length; i++) {
     const c = BigInt(str.charCodeAt(i));
-    h1 ^= c; h1 = (h1 * 0x100000001b3n) & ((1n<<64n)-1n);
-    h2 ^= (c<<13n); h2 = (h2 * 0x100000001b3n) & ((1n<<64n)-1n);
+    h1 ^= c;
+    h1 = (h1 * 0x100000001b3n) & ((1n << 64n) - 1n);
+    h2 ^= c << 13n;
+    h2 = (h2 * 0x100000001b3n) & ((1n << 64n) - 1n);
   }
-  const x = (h1 ^ (h2<<1n)) & ((1n<<64n)-1n);
+  const x = (h1 ^ (h2 << 1n)) & ((1n << 64n) - 1n);
   return x.toString(16).padStart(16, '0');
 }
-
 
 type NormalizedLocal = {
   title: string;
@@ -89,7 +90,6 @@ type NormalizedGoogle = {
   attendees: string[];
 };
 
-
 function normalizeLocalEvent(e: Event): NormalizedLocal {
   const { startUtc, endUtc } = buildUtcRangeFromLocal(e.event_date, e.start_time, e.end_time);
   return {
@@ -103,7 +103,6 @@ function normalizeLocalEvent(e: Event): NormalizedLocal {
   };
 }
 
-
 function normalizeGoogleEvent(g: GoogleCalendarEvent): NormalizedGoogle {
   const { startUtc, endUtc } = normalizeGoogleDateRange(g);
   return {
@@ -114,13 +113,12 @@ function normalizeGoogleEvent(g: GoogleCalendarEvent): NormalizedGoogle {
     location: (g.location ?? '') || '',
     attendees: Array.isArray(g.attendees)
       ? g.attendees
-          .map(a => (a.email || a.displayName || '').trim())
+          .map((a) => (a.email || a.displayName || '').trim())
           .filter(Boolean)
           .sort()
       : [],
   };
 }
-
 
 export interface SyncMapping {
   id: string;
@@ -236,7 +234,7 @@ export class CalendarSyncService {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return hash.toString(36);
@@ -273,7 +271,7 @@ export class CalendarSyncService {
       start_time,
       end_time,
       location: googleEvent.location || null,
-      participants: googleEvent.attendees?.map(a => a.email || a.displayName || '') || null,
+      participants: googleEvent.attendees?.map((a) => a.email || a.displayName || '') || null,
       event_type: 'other',
       source: 'google',
     };
@@ -317,7 +315,7 @@ export class CalendarSyncService {
 
     // Add attendees if any
     if (localEvent.participants && localEvent.participants.length > 0) {
-      googleEvent.attendees = localEvent.participants.map(p => ({
+      googleEvent.attendees = localEvent.participants.map((p) => ({
         email: p.includes('@') ? p : undefined,
         displayName: !p.includes('@') ? p : undefined,
       }));
@@ -346,14 +344,16 @@ export class CalendarSyncService {
         // Create default preferences
         const { data: newPrefs, error: insertError } = await supabase
           .from('user_sync_preferences')
-          .insert([{
-            user_id: userId,
-            sync_enabled: true,
-            sync_frequency_minutes: 15,
-            sync_direction: 'bidirectional',
-            auto_resolve_conflicts: false,
-            sync_calendar_ids: ['primary'],
-          }])
+          .insert([
+            {
+              user_id: userId,
+              sync_enabled: true,
+              sync_frequency_minutes: 15,
+              sync_direction: 'bidirectional',
+              auto_resolve_conflicts: false,
+              sync_calendar_ids: ['primary'],
+            },
+          ])
           .select()
           .single();
 
@@ -411,19 +411,21 @@ export class CalendarSyncService {
     try {
       const { data, error } = await supabase
         .from('calendar_sync_logs')
-        .insert([{
-          user_id: userId,
-          sync_operation: operation,
-          sync_direction: direction,
-          status: 'in_progress',
-          events_processed: 0,
-          events_created: 0,
-          events_updated: 0,
-          events_deleted: 0,
-          conflicts_detected: 0,
-          error_count: 0,
-          started_at: new Date().toISOString(),
-        }])
+        .insert([
+          {
+            user_id: userId,
+            sync_operation: operation,
+            sync_direction: direction,
+            status: 'in_progress',
+            events_processed: 0,
+            events_created: 0,
+            events_updated: 0,
+            events_deleted: 0,
+            conflicts_detected: 0,
+            error_count: 0,
+            started_at: new Date().toISOString(),
+          },
+        ])
         .select('id')
         .single();
 
@@ -442,15 +444,9 @@ export class CalendarSyncService {
   /**
    * Update a sync log entry
    */
-  async updateSyncLog(
-    logId: string,
-    updates: Partial<SyncLog>
-  ): Promise<boolean> {
+  async updateSyncLog(logId: string, updates: Partial<SyncLog>): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('calendar_sync_logs')
-        .update(updates)
-        .eq('id', logId);
+      const { error } = await supabase.from('calendar_sync_logs').update(updates).eq('id', logId);
 
       if (error) {
         console.error('Error updating sync log:', error);
@@ -513,7 +509,10 @@ export class CalendarSyncService {
   /**
    * Get sync mapping by Google event ID
    */
-  async getSyncMappingByGoogleId(userId: string, googleEventId: string): Promise<SyncMapping | null> {
+  async getSyncMappingByGoogleId(
+    userId: string,
+    googleEventId: string
+  ): Promise<SyncMapping | null> {
     try {
       const { data, error } = await supabase
         .from('calendar_sync_mappings')
@@ -539,14 +538,15 @@ export class CalendarSyncService {
    */
   async upsertSyncMapping(mapping: Partial<SyncMapping>): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('calendar_sync_mappings')
-        .upsert({
+      const { error } = await supabase.from('calendar_sync_mappings').upsert(
+        {
           ...mapping,
           updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id,google_event_id'
-        });
+        },
+        {
+          onConflict: 'user_id,google_event_id',
+        }
+      );
 
       if (error) {
         console.error('Error upserting sync mapping:', error);
@@ -591,11 +591,13 @@ export class CalendarSyncService {
     try {
       const { data, error } = await supabase
         .from('calendar_sync_conflicts')
-        .insert([{
-          ...conflict,
-          detected_at: new Date().toISOString(),
-          resolution_status: 'pending',
-        }])
+        .insert([
+          {
+            ...conflict,
+            detected_at: new Date().toISOString(),
+            resolution_status: 'pending',
+          },
+        ])
         .select('id')
         .single();
 

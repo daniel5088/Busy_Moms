@@ -52,10 +52,7 @@ export function QuickLinks() {
 
     // URL normalization - prepend https:// if no protocol
     let normalizedUrl = trimmedUrl;
-    if (
-      !normalizedUrl.startsWith('http://') &&
-      !normalizedUrl.startsWith('https://')
-    ) {
+    if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
       normalizedUrl = `https://${normalizedUrl}`;
     }
 
@@ -86,10 +83,7 @@ export function QuickLinks() {
 
   // Alvaro-quicklinks: Delete link handler
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('quick_links')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('quick_links').delete().eq('id', id);
 
     if (error) {
       console.error('Error deleting quick link:', error);

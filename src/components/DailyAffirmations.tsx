@@ -28,7 +28,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
       setAffirmations(history);
 
       const today = new Date().toISOString().split('T')[0];
-      const hasTodayAffirmation = history.some(a => a.generated_date === today);
+      const hasTodayAffirmation = history.some((a) => a.generated_date === today);
 
       if (!hasTodayAffirmation) {
         console.log('No affirmation for today, auto-generating...');
@@ -69,9 +69,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
     try {
       await affirmationService.toggleFavorite(affirmation.id, !affirmation.favorited);
       setAffirmations((prev) =>
-        prev.map((a) =>
-          a.id === affirmation.id ? { ...a, favorited: !a.favorited } : a
-        )
+        prev.map((a) => (a.id === affirmation.id ? { ...a, favorited: !a.favorited } : a))
       );
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -107,7 +105,9 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
             </div>
             <div>
               {/* Alvaro-landmarks: Dialog heading with id for aria-labelledby */}
-              <h2 id="daily-affirmations-title" className="text-2xl font-bold">Daily Affirmations</h2>
+              <h2 id="daily-affirmations-title" className="text-2xl font-bold">
+                Daily Affirmations
+              </h2>
               <p className="text-purple-100 text-sm">Your personalized encouragement</p>
             </div>
           </div>

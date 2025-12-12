@@ -11,9 +11,7 @@ export interface UserSettings {
  * Returns the user's preferred Instacart retailer id, or null if not set.
  * Ensures a row exists (auto-creates if missing).
  */
-export async function getPreferredRetailer(
-  userId: string
-): Promise<string | null> {
+export async function getPreferredRetailer(userId: string): Promise<string | null> {
   if (!userId) return null;
 
   try {
@@ -52,18 +50,16 @@ export async function setPreferredRetailer(
   if (!userId) return false;
 
   try {
-    const { error } = await supabase
-      .from('user_settings')
-      .upsert(
-        {
-          user_id: userId,
-          preferred_retailer: retailerId,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'user_id',
-        }
-      );
+    const { error } = await supabase.from('user_settings').upsert(
+      {
+        user_id: userId,
+        preferred_retailer: retailerId,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'user_id',
+      }
+    );
 
     if (error) {
       console.error('setPreferredRetailer error:', error);

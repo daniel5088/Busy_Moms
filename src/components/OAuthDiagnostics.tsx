@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Copy } from 'lucide-react';
-import { getOAuthRedirectUrl, getSupabaseAuthCallbackUrl, getGoogleOAuthScopes } from '../lib/auth-config';
+import {
+  getOAuthRedirectUrl,
+  getSupabaseAuthCallbackUrl,
+  getGoogleOAuthScopes,
+} from '../lib/auth-config';
 
 export function OAuthDiagnostics() {
   const [copied, setCopied] = useState<string | null>(null);
@@ -8,12 +12,14 @@ export function OAuthDiagnostics() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const hash = window.location.hash ? new URLSearchParams(window.location.hash.substring(1)) : null;
+    const hash = window.location.hash
+      ? new URLSearchParams(window.location.hash.substring(1))
+      : null;
 
     const allParams: Record<string, string> = {};
-    params.forEach((value, key) => allParams[`query.${key}`] = value);
+    params.forEach((value, key) => (allParams[`query.${key}`] = value));
     if (hash) {
-      hash.forEach((value, key) => allParams[`hash.${key}`] = value);
+      hash.forEach((value, key) => (allParams[`hash.${key}`] = value));
     }
 
     setUrlParams(allParams);
@@ -35,7 +41,7 @@ export function OAuthDiagnostics() {
     label,
     value,
     status = 'info',
-    copyable = true
+    copyable = true,
   }: {
     label: string;
     value: string;
@@ -46,7 +52,7 @@ export function OAuthDiagnostics() {
       success: <CheckCircle className="w-5 h-5 text-green-500" />,
       error: <XCircle className="w-5 h-5 text-red-500" />,
       warning: <AlertTriangle className="w-5 h-5 text-yellow-500" />,
-      info: <AlertTriangle className="w-5 h-5 text-blue-500" />
+      info: <AlertTriangle className="w-5 h-5 text-blue-500" />,
     };
 
     return (
@@ -69,9 +75,7 @@ export function OAuthDiagnostics() {
             </button>
           )}
         </div>
-        {copied === label && (
-          <span className="text-xs text-green-600 mt-1 block">Copied!</span>
-        )}
+        {copied === label && <span className="text-xs text-green-600 mt-1 block">Copied!</span>}
       </div>
     );
   };
@@ -106,11 +110,7 @@ export function OAuthDiagnostics() {
             <section>
               <h2 className="text-lg font-semibold mb-3">OAuth URLs</h2>
               <div className="space-y-2">
-                <ConfigItem
-                  label="Current App Origin"
-                  value={redirectUrl}
-                  status="success"
-                />
+                <ConfigItem label="Current App Origin" value={redirectUrl} status="success" />
                 <ConfigItem
                   label="Supabase OAuth Callback URL (Add to Google Cloud Console)"
                   value={callbackUrl}
@@ -127,7 +127,9 @@ export function OAuthDiagnostics() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <AlertTriangle className="w-5 h-5 text-blue-500" />
-                        <span className="font-medium text-sm text-gray-700">Requested Scopes (space-separated)</span>
+                        <span className="font-medium text-sm text-gray-700">
+                          Requested Scopes (space-separated)
+                        </span>
                       </div>
                     </div>
                     <button
@@ -138,7 +140,9 @@ export function OAuthDiagnostics() {
                       <Copy className="w-4 h-4 text-gray-500" />
                     </button>
                   </div>
-                  <code className="text-xs text-gray-600 block whitespace-pre-wrap break-all mb-3">{scopes}</code>
+                  <code className="text-xs text-gray-600 block whitespace-pre-wrap break-all mb-3">
+                    {scopes}
+                  </code>
                   {copied === 'Requested Scopes' && (
                     <span className="text-xs text-green-600 mt-1 block">Copied!</span>
                   )}
@@ -155,8 +159,8 @@ export function OAuthDiagnostics() {
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <p className="text-xs text-gray-500 italic">
-                      Note: These scopes are automatically included in the OAuth request.
-                      You don't need to configure them separately in Google Cloud Console.
+                      Note: These scopes are automatically included in the OAuth request. You don't
+                      need to configure them separately in Google Cloud Console.
                     </p>
                   </div>
                 </div>
@@ -183,7 +187,9 @@ export function OAuthDiagnostics() {
               <h2 className="text-lg font-semibold mb-3">Setup Checklist</h2>
               <div className="space-y-3">
                 <div className="p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2">1. Supabase Dashboard Configuration</h3>
+                  <h3 className="font-semibold text-blue-900 mb-2">
+                    1. Supabase Dashboard Configuration
+                  </h3>
                   <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
                     <li>Go to Authentication → Providers → Google</li>
                     <li>Enable Google provider</li>
@@ -194,12 +200,20 @@ export function OAuthDiagnostics() {
                 </div>
 
                 <div className="p-4 bg-purple-50 rounded-lg">
-                  <h3 className="font-semibold text-purple-900 mb-2">2. Google Cloud Console Configuration</h3>
+                  <h3 className="font-semibold text-purple-900 mb-2">
+                    2. Google Cloud Console Configuration
+                  </h3>
                   <ul className="list-disc list-inside text-sm text-purple-800 space-y-1">
                     <li>Go to APIs & Services → Credentials</li>
                     <li>Select your OAuth 2.0 Client ID (or create one)</li>
-                    <li>Add Authorized JavaScript origins: <code className="bg-white px-1">{redirectUrl}</code></li>
-                    <li>Add Authorized redirect URI: <code className="bg-white px-1">{callbackUrl}</code></li>
+                    <li>
+                      Add Authorized JavaScript origins:{' '}
+                      <code className="bg-white px-1">{redirectUrl}</code>
+                    </li>
+                    <li>
+                      Add Authorized redirect URI:{' '}
+                      <code className="bg-white px-1">{callbackUrl}</code>
+                    </li>
                     <li>Enable Google Calendar API in your project</li>
                     <li>Configure OAuth consent screen</li>
                   </ul>
@@ -219,16 +233,20 @@ export function OAuthDiagnostics() {
             </section>
 
             <section className="border-t pt-6">
-              <h2 className="text-lg font-semibold mb-3 text-red-600">Error: "Unable to exchange external code"</h2>
+              <h2 className="text-lg font-semibold mb-3 text-red-600">
+                Error: "Unable to exchange external code"
+              </h2>
               <div className="p-4 bg-red-50 border-2 border-red-200 rounded-lg">
                 <p className="text-sm text-red-900 mb-3 font-medium">
-                  This error means Supabase cannot exchange the Google authorization code for an access token.
-                  Here's how to fix it:
+                  This error means Supabase cannot exchange the Google authorization code for an
+                  access token. Here's how to fix it:
                 </p>
 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-red-900 text-sm mb-2">Step 1: Verify Client ID and Secret</h4>
+                    <h4 className="font-semibold text-red-900 text-sm mb-2">
+                      Step 1: Verify Client ID and Secret
+                    </h4>
                     <ul className="list-decimal list-inside text-sm text-red-800 space-y-1 ml-2">
                       <li>Copy Client ID from Google Cloud Console to plain text editor</li>
                       <li>Check for extra spaces or line breaks</li>
@@ -239,8 +257,12 @@ export function OAuthDiagnostics() {
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-red-900 text-sm mb-2">Step 2: Verify Redirect URI Matches Exactly</h4>
-                    <p className="text-sm text-red-800 mb-2">In Google Cloud Console, the redirect URI must be EXACTLY:</p>
+                    <h4 className="font-semibold text-red-900 text-sm mb-2">
+                      Step 2: Verify Redirect URI Matches Exactly
+                    </h4>
+                    <p className="text-sm text-red-800 mb-2">
+                      In Google Cloud Console, the redirect URI must be EXACTLY:
+                    </p>
                     <div className="bg-white p-2 rounded border border-red-300 mb-2">
                       <code className="text-xs text-red-900 break-all">{callbackUrl}</code>
                       <button
@@ -259,7 +281,9 @@ export function OAuthDiagnostics() {
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-red-900 text-sm mb-2">Step 3: Verify OAuth Client Type</h4>
+                    <h4 className="font-semibold text-red-900 text-sm mb-2">
+                      Step 3: Verify OAuth Client Type
+                    </h4>
                     <ul className="list-disc list-inside text-sm text-red-800 space-y-1 ml-2">
                       <li>Must be "Web application" type (not iOS, Android, or Desktop)</li>
                       <li>Check you're using the correct Google Cloud Project</li>
@@ -268,7 +292,9 @@ export function OAuthDiagnostics() {
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-red-900 text-sm mb-2">Step 4: Wait and Retry</h4>
+                    <h4 className="font-semibold text-red-900 text-sm mb-2">
+                      Step 4: Wait and Retry
+                    </h4>
                     <ul className="list-disc list-inside text-sm text-red-800 space-y-1 ml-2">
                       <li>Click Save in Supabase Dashboard</li>
                       <li>Wait 30-60 seconds for changes to propagate</li>
@@ -312,10 +338,7 @@ export function OAuthDiagnostics() {
         </div>
 
         <div className="text-center">
-          <a
-            href="/"
-            className="text-blue-600 hover:underline"
-          >
+          <a href="/" className="text-blue-600 hover:underline">
             Back to App
           </a>
         </div>

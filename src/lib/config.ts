@@ -50,7 +50,7 @@ export function getConfig(): AppConfig {
     const errorMessage = [
       'Environment configuration is invalid:',
       '',
-      ...validation.errors.map(e => `  - ${e}`),
+      ...validation.errors.map((e) => `  - ${e}`),
       '',
       'Please check your environment variables:',
       '',
@@ -71,7 +71,7 @@ export function getConfig(): AppConfig {
 
   if (validation.warnings.length > 0) {
     console.warn('Configuration warnings:');
-    validation.warnings.forEach(w => console.warn(`  - ${w}`));
+    validation.warnings.forEach((w) => console.warn(`  - ${w}`));
   }
 
   return {
@@ -91,11 +91,11 @@ export function logConfigStatus(): void {
     console.log('🔑 Supabase Key:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '✓ Set' : '✗ Missing');
   } else {
     console.error('❌ Configuration is invalid');
-    validation.errors.forEach(error => console.error(`  ❌ ${error}`));
+    validation.errors.forEach((error) => console.error(`  ❌ ${error}`));
   }
 
   if (validation.warnings.length > 0) {
-    validation.warnings.forEach(warning => console.warn(`  ⚠️  ${warning}`));
+    validation.warnings.forEach((warning) => console.warn(`  ⚠️  ${warning}`));
   }
 
   console.groupEnd();

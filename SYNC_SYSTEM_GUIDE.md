@@ -7,24 +7,28 @@ This system provides automatic bidirectional synchronization between your local 
 ## Features
 
 ### 1. Bidirectional Sync
+
 - Events sync from Google Calendar to local database
 - Events sync from local database to Google Calendar
 - Automatic change detection using hash-based fingerprinting
 - Configurable sync direction (bidirectional, one-way)
 
 ### 2. Conflict Detection & Resolution
+
 - Detects when events are modified in both places since last sync
 - Manual conflict resolution with side-by-side comparison
 - Options to keep local version, keep Google version, or skip
 - Visual diff showing what changed in each version
 
 ### 3. Periodic Automatic Sync
+
 - Configurable sync frequency (5 minutes to 4 hours)
 - Background sync timer checks every minute
 - Automatic sync disabled when conflicts are pending
 - Syncs only when changes are detected
 
 ### 4. Sync Monitoring & Control
+
 - Real-time sync status display
 - Last sync time and next scheduled sync
 - Sync statistics (events processed, created, updated)
@@ -36,7 +40,9 @@ This system provides automatic bidirectional synchronization between your local 
 ### Database Schema
 
 #### `calendar_sync_mappings`
+
 Links local events to Google Calendar events:
+
 - `local_event_id` - References events table
 - `google_event_id` - Google Calendar event ID
 - `local_hash` - Hash of local event data
@@ -45,7 +51,9 @@ Links local events to Google Calendar events:
 - `last_synced_at` - Timestamp of last successful sync
 
 #### `calendar_sync_conflicts`
+
 Stores detected conflicts for manual resolution:
+
 - `local_event_data` - JSON snapshot of local version
 - `google_event_data` - JSON snapshot of Google version
 - `conflict_type` - modification or deletion
@@ -53,7 +61,9 @@ Stores detected conflicts for manual resolution:
 - `resolution_choice` - keep_local, keep_google, or merge
 
 #### `calendar_sync_logs`
+
 Audit trail of all sync operations:
+
 - `sync_operation` - full_sync, event_create, etc.
 - `events_processed` - Count of events processed
 - `conflicts_detected` - Count of conflicts found
@@ -61,7 +71,9 @@ Audit trail of all sync operations:
 - `duration_ms` - Sync operation duration
 
 #### `user_sync_preferences`
+
 Per-user sync configuration:
+
 - `sync_enabled` - Enable/disable automatic sync
 - `sync_frequency_minutes` - How often to sync
 - `sync_direction` - bidirectional, google_to_local, or local_to_google
@@ -71,21 +83,27 @@ Per-user sync configuration:
 ### Services
 
 #### `calendarSync.ts`
+
 Core sync utilities:
+
 - `generateEventHash()` - Creates fingerprints for change detection
 - `googleEventToLocal()` - Converts Google Calendar format to local format
 - `localEventToGoogle()` - Converts local format to Google Calendar format
 - CRUD operations for mappings, conflicts, logs, and preferences
 
 #### `syncOrchestrator.ts`
+
 Manages the full sync workflow:
+
 - `performFullSync()` - Executes complete bidirectional sync
 - `syncGoogleToLocal()` - Syncs Google events to local database
 - `syncLocalToGoogle()` - Syncs local events to Google Calendar
 - `syncSingleEvent()` - Syncs individual event immediately
 
 #### `useCalendarSync.ts` (React Hook)
+
 Provides sync functionality to React components:
+
 - Periodic sync timer management
 - Sync state management (isSyncing, lastSyncResult, etc.)
 - Conflict management and resolution
@@ -94,7 +112,9 @@ Provides sync functionality to React components:
 ### UI Components
 
 #### `SyncStatus.tsx`
+
 Displays current sync status:
+
 - Last sync time (e.g., "5m ago")
 - Next scheduled sync (e.g., "in 10m")
 - Sync result with statistics
@@ -102,14 +122,18 @@ Displays current sync status:
 - Manual sync button
 
 #### `SyncSettings.tsx`
+
 Sync configuration modal:
+
 - Enable/disable automatic sync
 - Sync frequency selection
 - Sync direction choice (bidirectional, one-way)
 - Save preferences
 
 #### `ConflictResolutionModal.tsx`
+
 Conflict resolution interface:
+
 - Side-by-side comparison of conflicting versions
 - Shows local calendar version vs Google Calendar version
 - Displays modification timestamps
@@ -153,11 +177,13 @@ Conflict resolution interface:
 ### Hash-Based Change Detection
 
 Events are fingerprinted using a hash of their key fields:
+
 - Title, description, date, time
 - Location, participants
 - Event type
 
 When syncing:
+
 1. Calculate current hash
 2. Compare to stored hash from last sync
 3. If different, event was modified
@@ -290,10 +316,12 @@ When a conflict is detected:
 ### API Rate Limits
 
 Google Calendar API limits:
+
 - 1,000,000 queries per day
 - 10 queries per second per user
 
 The sync system:
+
 - Batches event updates
 - Uses delta sync when possible
 - Implements exponential backoff on errors
@@ -315,6 +343,7 @@ The sync system:
 ## Future Enhancements
 
 Potential improvements:
+
 - Bulk conflict resolution
 - Conflict auto-resolution rules
 - Sync specific calendar collections

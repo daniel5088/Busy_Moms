@@ -130,6 +130,7 @@ ORDER BY ordinal_position;
 ```
 
 Expected columns:
+
 - `user_id` (uuid, primary key)
 - `provider_user_id` (text)
 - `access_token` (text)
@@ -171,6 +172,7 @@ supabase functions list
 ```
 
 You should see:
+
 - `store-google-tokens`
 - `google-calendar`
 - `google-diagnostics`
@@ -187,12 +189,12 @@ Test your configuration using the diagnostics endpoint:
 
 ```javascript
 // Replace with your Supabase URL
-const supabaseUrl = "https://[YOUR_PROJECT_REF].supabase.co";
+const supabaseUrl = 'https://[YOUR_PROJECT_REF].supabase.co';
 
 fetch(`${supabaseUrl}/functions/v1/google-diagnostics`)
-  .then(r => r.json())
-  .then(data => console.log(JSON.stringify(data, null, 2)))
-  .catch(err => console.error("Diagnostics failed:", err));
+  .then((r) => r.json())
+  .then((data) => console.log(JSON.stringify(data, null, 2)))
+  .catch((err) => console.error('Diagnostics failed:', err));
 ```
 
 **Via cURL:**
@@ -206,14 +208,17 @@ curl https://[YOUR_PROJECT_REF].supabase.co/functions/v1/google-diagnostics | jq
 The diagnostics endpoint checks:
 
 ✅ **Pass**: All checks succeeded
+
 - Environment variables configured
 - Database connection works
 - Google OAuth credentials valid
 
 ⚠️ **Warning**: Some issues detected
+
 - Check the `details` object for specific problems
 
 ❌ **Fail**: Critical issues
+
 - Follow the `setup_instructions` in the response
 
 ### 4.3 Test OAuth Flow
@@ -234,6 +239,7 @@ The diagnostics endpoint checks:
      ```
 
 3. **Verify in Database**
+
    ```sql
    SELECT user_id, expiry_ts, created_at
    FROM google_tokens
@@ -252,16 +258,19 @@ The diagnostics endpoint checks:
 ### Issue: "Database error checking existing tokens"
 
 **Symptoms:**
+
 ```
 ❌ Error storing Google tokens: Database error checking existing tokens
 ```
 
 **Causes:**
+
 1. `google_tokens` table doesn't exist
 2. RLS policies blocking service role access
 3. Edge Functions missing `SUPABASE_SERVICE_ROLE_KEY`
 
 **Solutions:**
+
 1. Apply migration: `supabase db push`
 2. Check RLS policy allows service role:
    ```sql
@@ -274,16 +283,19 @@ The diagnostics endpoint checks:
 ### Issue: "Google Calendar not configured"
 
 **Symptoms:**
+
 ```
 ❌ Google Calendar Edge Function error: Google Calendar not configured
 Missing GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables
 ```
 
 **Causes:**
+
 1. Google OAuth secrets not set in Edge Functions
 2. Secrets set but functions not redeployed
 
 **Solutions:**
+
 1. Set secrets via Dashboard or CLI (see Step 2.2)
 2. Redeploy functions after setting secrets:
    ```bash
@@ -295,17 +307,20 @@ Missing GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables
 ### Issue: "Unable to exchange external code"
 
 **Symptoms:**
+
 ```
 OAuth error: server_error
 Unable to exchange external code
 ```
 
 **Causes:**
+
 1. Client ID/Secret mismatch between Supabase Auth and Google Cloud Console
 2. Extra spaces or newlines in credentials
 3. Redirect URI not authorized in Google Cloud Console
 
 **Solutions:**
+
 1. Verify credentials match exactly:
    - Supabase Dashboard → Authentication → Providers → Google
    - Google Cloud Console → Credentials
@@ -320,16 +335,19 @@ Unable to exchange external code
 ### Issue: "Google Calendar service not available"
 
 **Symptoms:**
+
 ```
 ❌ Failed to get events: Google Calendar service not available
 ```
 
 **Causes:**
+
 1. Edge Functions not deployed
 2. User not connected to Google Calendar
 3. Edge Functions configuration issues
 
 **Solutions:**
+
 1. Deploy functions: `supabase functions deploy`
 2. Connect Google Calendar from app settings
 3. Run diagnostics: `/functions/v1/google-diagnostics`
@@ -343,16 +361,19 @@ Unable to exchange external code
 ### Issue: Token refresh fails
 
 **Symptoms:**
+
 ```
 ❌ Token refresh failed: 400 invalid_grant
 ```
 
 **Causes:**
+
 1. Refresh token expired or revoked
 2. User revoked access from Google account
 3. Invalid Google OAuth credentials
 
 **Solutions:**
+
 1. Reconnect Google Calendar (user must re-authenticate)
 2. Check user's Google account security settings
 3. Verify credentials in diagnostics endpoint
@@ -497,7 +518,9 @@ For debugging, you can manually test token storage:
 
 ```javascript
 // Get current session
-const { data: { session } } = await supabase.auth.getSession();
+const {
+  data: { session },
+} = await supabase.auth.getSession();
 
 // Call store-google-tokens directly
 const response = await fetch(
@@ -506,15 +529,15 @@ const response = await fetch(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({
       userId: session.user.id,
       accessToken: session.provider_token,
       refreshToken: session.provider_refresh_token,
-      expiresIn: 3600
-    })
+      expiresIn: 3600,
+    }),
   }
 );
 

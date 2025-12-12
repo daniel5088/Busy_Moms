@@ -1,26 +1,26 @@
-import type { AddressValidationResult } from '../lib/supabase'
+import type { AddressValidationResult } from '../lib/supabase';
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 interface GoogleGeocodingResult {
-  formatted_address: string
+  formatted_address: string;
   geometry: {
     location: {
-      lat: number
-      lng: number
-    }
-  }
+      lat: number;
+      lng: number;
+    };
+  };
   address_components: Array<{
-    long_name: string
-    short_name: string
-    types: string[]
-  }>
+    long_name: string;
+    short_name: string;
+    types: string[];
+  }>;
 }
 
 interface GoogleGeocodingResponse {
-  results: GoogleGeocodingResult[]
-  status: string
-  error_message?: string
+  results: GoogleGeocodingResult[];
+  status: string;
+  error_message?: string;
 }
 
 export const addressValidationService = {
@@ -33,7 +33,7 @@ export const addressValidationService = {
     apartmentUnit?: string
   ): Promise<AddressValidationResult> {
     if (!GOOGLE_MAPS_API_KEY) {
-      console.warn('Google Maps API key not configured, skipping validation')
+      console.warn('Google Maps API key not configured, skipping validation');
       return {
         valid: true,
         formatted_address: this.formatAddressString(
@@ -44,8 +44,8 @@ export const addressValidationService = {
           postalCode,
           country
         ),
-        error_message: 'Validation skipped: API key not configured'
-      }
+        error_message: 'Validation skipped: API key not configured',
+      };
     }
 
     const addressString = this.formatAddressString(
@@ -55,53 +55,54 @@ export const addressValidationService = {
       stateProvince,
       postalCode,
       country
-    )
+    );
 
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
           addressString
         )}&key=${GOOGLE_MAPS_API_KEY}`
-      )
+      );
 
       if (!response.ok) {
-        throw new Error(`Geocoding API error: ${response.statusText}`)
+        throw new Error(`Geocoding API error: ${response.statusText}`);
       }
 
-      const data: GoogleGeocodingResponse = await response.json()
+      const data: GoogleGeocodingResponse = await response.json();
 
       if (data.status === 'OK' && data.results.length > 0) {
-        const result = data.results[0]
+        const result = data.results[0];
 
         return {
           valid: true,
           formatted_address: result.formatted_address,
           latitude: result.geometry.location.lat,
           longitude: result.geometry.location.lng,
-          suggestions: data.results.length > 1
-            ? data.results.slice(1, 3).map(r => r.formatted_address)
-            : undefined
-        }
+          suggestions:
+            data.results.length > 1
+              ? data.results.slice(1, 3).map((r) => r.formatted_address)
+              : undefined,
+        };
       } else if (data.status === 'ZERO_RESULTS') {
         return {
           valid: false,
           error_message: 'Address not found. Please check the details and try again.',
-          suggestions: []
-        }
+          suggestions: [],
+        };
       } else {
         return {
           valid: false,
           error_message: data.error_message || `Validation failed: ${data.status}`,
-          suggestions: []
-        }
+          suggestions: [],
+        };
       }
     } catch (error) {
-      console.error('Address validation error:', error)
+      console.error('Address validation error:', error);
       return {
         valid: true,
         formatted_address: addressString,
-        error_message: error instanceof Error ? error.message : 'Validation service unavailable'
-      }
+        error_message: error instanceof Error ? error.message : 'Validation service unavailable',
+      };
     }
   },
 
@@ -113,18 +114,18 @@ export const addressValidationService = {
     postalCode: string,
     country: string
   ): string {
-    const parts = [streetAddress]
+    const parts = [streetAddress];
 
     if (apartmentUnit) {
-      parts[0] = `${streetAddress} ${apartmentUnit}`
+      parts[0] = `${streetAddress} ${apartmentUnit}`;
     }
 
-    parts.push(city)
-    parts.push(stateProvince)
-    parts.push(postalCode)
-    parts.push(country)
+    parts.push(city);
+    parts.push(stateProvince);
+    parts.push(postalCode);
+    parts.push(country);
 
-    return parts.filter(Boolean).join(', ')
+    return parts.filter(Boolean).join(', ');
   },
 
   validatePostalCode(postalCode: string, country: string): boolean {
@@ -136,14 +137,14 @@ export const addressValidationService = {
       DE: /^\d{5}$/,
       FR: /^\d{5}$/,
       JP: /^\d{3}-?\d{4}$/,
-    }
+    };
 
-    const pattern = patterns[country]
+    const pattern = patterns[country];
     if (!pattern) {
-      return postalCode.length >= 3
+      return postalCode.length >= 3;
     }
 
-    return pattern.test(postalCode)
+    return pattern.test(postalCode);
   },
 
   getCountries(): Array<{ code: string; name: string }> {
@@ -158,7 +159,7 @@ export const addressValidationService = {
       { code: 'MX', name: 'Mexico' },
       { code: 'BR', name: 'Brazil' },
       { code: 'IN', name: 'India' },
-    ]
+    ];
   },
 
   getUSStates(): Array<{ code: string; name: string }> {
@@ -213,7 +214,7 @@ export const addressValidationService = {
       { code: 'WV', name: 'West Virginia' },
       { code: 'WI', name: 'Wisconsin' },
       { code: 'WY', name: 'Wyoming' },
-    ]
+    ];
   },
 
   getCanadianProvinces(): Array<{ code: string; name: string }> {
@@ -231,6 +232,6 @@ export const addressValidationService = {
       { code: 'NT', name: 'Northwest Territories' },
       { code: 'NU', name: 'Nunavut' },
       { code: 'YT', name: 'Yukon' },
-    ]
-  }
-}
+    ];
+  },
+};

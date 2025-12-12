@@ -1,191 +1,191 @@
-import React, { useState, useEffect } from 'react'
-import { Search, MapPin, Star, Trash2, Check, Loader2, Home } from 'lucide-react'
-import { instacartShoppingService } from '../services/instacartShoppingService'
-import { supabase } from '../lib/supabase'
-import type { Retailer, UserPreferredRetailer, Address } from '../lib/supabase'
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, Star, Trash2, Check, Loader2, Home } from 'lucide-react';
+import { instacartShoppingService } from '../services/instacartShoppingService';
+import { supabase } from '../lib/supabase';
+import type { Retailer, UserPreferredRetailer, Address } from '../lib/supabase';
 
 interface RetailerSearchProps {
-  userId: string
-  onRetailerSaved?: () => void
+  userId: string;
+  onRetailerSaved?: () => void;
 }
 
 export function RetailerSearch({ userId, onRetailerSaved }: RetailerSearchProps) {
-  const [postalCode, setPostalCode] = useState('')
-  const [countryCode, setCountryCode] = useState<'US' | 'CA'>('US')
-  const [searchResults, setSearchResults] = useState<Retailer[]>([])
-  const [preferredRetailers, setPreferredRetailers] = useState<UserPreferredRetailer[]>([])
-  const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('')
-  const [loading, setLoading] = useState(false)
-  const [loadingPreferred, setLoadingPreferred] = useState(true)
-  const [loadingAddresses, setLoadingAddresses] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [postalCode, setPostalCode] = useState('');
+  const [countryCode, setCountryCode] = useState<'US' | 'CA'>('US');
+  const [searchResults, setSearchResults] = useState<Retailer[]>([]);
+  const [preferredRetailers, setPreferredRetailers] = useState<UserPreferredRetailer[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [loadingPreferred, setLoadingPreferred] = useState(true);
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const loadPreferredRetailers = async () => {
     if (!userId) {
-      setLoadingPreferred(false)
-      return
+      setLoadingPreferred(false);
+      return;
     }
 
     try {
-      setLoadingPreferred(true)
-      const retailers = await instacartShoppingService.getPreferredRetailers(userId)
-      setPreferredRetailers(retailers)
+      setLoadingPreferred(true);
+      const retailers = await instacartShoppingService.getPreferredRetailers(userId);
+      setPreferredRetailers(retailers);
     } catch (err) {
-      console.error('Failed to load preferred retailers:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load your preferred retailers')
+      console.error('Failed to load preferred retailers:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load your preferred retailers');
     } finally {
-      setLoadingPreferred(false)
+      setLoadingPreferred(false);
     }
-  }
+  };
 
   const handleSearch = async () => {
     if (!postalCode.trim()) {
-      setError('Please enter a postal code')
-      return
+      setError('Please enter a postal code');
+      return;
     }
 
-    setLoading(true)
-    setError(null)
-    setSuccessMessage(null)
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
 
     try {
-      const response = await instacartShoppingService.getNearbyRetailers(postalCode, countryCode)
-      setSearchResults(response.retailers)
+      const response = await instacartShoppingService.getNearbyRetailers(postalCode, countryCode);
+      setSearchResults(response.retailers);
 
-      await loadPreferredRetailers()
+      await loadPreferredRetailers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search retailers')
-      setSearchResults([])
+      setError(err instanceof Error ? err.message : 'Failed to search retailers');
+      setSearchResults([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSaveRetailer = async (retailer: Retailer, isPrimary: boolean = false) => {
-    setError(null)
-    setSuccessMessage(null)
+    setError(null);
+    setSuccessMessage(null);
 
     try {
-      await instacartShoppingService.savePreferredRetailer(userId, retailer, isPrimary)
+      await instacartShoppingService.savePreferredRetailer(userId, retailer, isPrimary);
       const message = isPrimary
         ? `${retailer.name} is now your primary retailer!`
-        : `${retailer.name} added to your preferred retailers!`
-      setSuccessMessage(message)
-      await loadPreferredRetailers()
-      onRetailerSaved?.()
+        : `${retailer.name} added to your preferred retailers!`;
+      setSuccessMessage(message);
+      await loadPreferredRetailers();
+      onRetailerSaved?.();
 
       setTimeout(() => {
-        setSuccessMessage(null)
-      }, 5000)
+        setSuccessMessage(null);
+      }, 5000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to save retailer'
-      setError(errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save retailer';
+      setError(errorMessage);
 
       setTimeout(() => {
-        setError(null)
-      }, 5000)
+        setError(null);
+      }, 5000);
     }
-  }
+  };
 
   const handleSetPrimary = async (retailerId: string) => {
-    setError(null)
-    setSuccessMessage(null)
+    setError(null);
+    setSuccessMessage(null);
 
     try {
-      await instacartShoppingService.setPrimaryRetailer(userId, retailerId)
-      setSuccessMessage('Primary retailer updated!')
-      await loadPreferredRetailers()
-      onRetailerSaved?.()
+      await instacartShoppingService.setPrimaryRetailer(userId, retailerId);
+      setSuccessMessage('Primary retailer updated!');
+      await loadPreferredRetailers();
+      onRetailerSaved?.();
 
       setTimeout(() => {
-        setSuccessMessage(null)
-      }, 5000)
+        setSuccessMessage(null);
+      }, 5000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update primary retailer'
-      setError(errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update primary retailer';
+      setError(errorMessage);
 
       setTimeout(() => {
-        setError(null)
-      }, 5000)
+        setError(null);
+      }, 5000);
     }
-  }
+  };
 
   const handleRemoveRetailer = async (retailerId: string) => {
     if (!window.confirm('Are you sure you want to remove this retailer from your preferences?')) {
-      return
+      return;
     }
 
-    setError(null)
-    setSuccessMessage(null)
+    setError(null);
+    setSuccessMessage(null);
 
     try {
-      await instacartShoppingService.removePreferredRetailer(userId, retailerId)
-      setSuccessMessage('Retailer removed from your preferences')
-      await loadPreferredRetailers()
-      onRetailerSaved?.()
+      await instacartShoppingService.removePreferredRetailer(userId, retailerId);
+      setSuccessMessage('Retailer removed from your preferences');
+      await loadPreferredRetailers();
+      onRetailerSaved?.();
 
       setTimeout(() => {
-        setSuccessMessage(null)
-      }, 5000)
+        setSuccessMessage(null);
+      }, 5000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to remove retailer'
-      setError(errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to remove retailer';
+      setError(errorMessage);
 
       setTimeout(() => {
-        setError(null)
-      }, 5000)
+        setError(null);
+      }, 5000);
     }
-  }
+  };
 
   const loadSavedAddresses = async () => {
     if (!userId) {
-      setLoadingAddresses(false)
-      return
+      setLoadingAddresses(false);
+      return;
     }
 
     try {
-      setLoadingAddresses(true)
+      setLoadingAddresses(true);
       const { data, error } = await supabase
         .from('addresses')
         .select('*')
         .eq('user_id', userId)
-        .order('is_default', { ascending: false })
+        .order('is_default', { ascending: false });
 
-      if (error) throw error
-      setSavedAddresses(data || [])
+      if (error) throw error;
+      setSavedAddresses(data || []);
 
-      const defaultAddress = data?.find(addr => addr.is_default)
+      const defaultAddress = data?.find((addr) => addr.is_default);
       if (defaultAddress) {
-        setSelectedAddressId(defaultAddress.id)
-        setPostalCode(defaultAddress.postal_code)
-        setCountryCode(defaultAddress.country as 'US' | 'CA')
+        setSelectedAddressId(defaultAddress.id);
+        setPostalCode(defaultAddress.postal_code);
+        setCountryCode(defaultAddress.country as 'US' | 'CA');
       }
     } catch (err) {
-      console.error('Failed to load saved addresses:', err)
+      console.error('Failed to load saved addresses:', err);
     } finally {
-      setLoadingAddresses(false)
+      setLoadingAddresses(false);
     }
-  }
+  };
 
   const handleAddressSelect = (addressId: string) => {
-    const address = savedAddresses.find(a => a.id === addressId)
+    const address = savedAddresses.find((a) => a.id === addressId);
     if (address) {
-      setSelectedAddressId(addressId)
-      setPostalCode(address.postal_code)
-      setCountryCode(address.country as 'US' | 'CA')
+      setSelectedAddressId(addressId);
+      setPostalCode(address.postal_code);
+      setCountryCode(address.country as 'US' | 'CA');
     }
-  }
+  };
 
   const isRetailerSaved = (retailerKey: string) => {
-    return preferredRetailers.some(r => r.retailer_key === retailerKey)
-  }
+    return preferredRetailers.some((r) => r.retailer_key === retailerKey);
+  };
 
   React.useEffect(() => {
-    loadPreferredRetailers()
-    loadSavedAddresses()
-  }, [userId])
+    loadPreferredRetailers();
+    loadSavedAddresses();
+  }, [userId]);
 
   return (
     <div className="space-y-6">
@@ -210,7 +210,8 @@ export function RetailerSearch({ userId, onRetailerSaved }: RetailerSearchProps)
                 <option value="">Choose an address or enter manually below</option>
                 {savedAddresses.map((address) => (
                   <option key={address.id} value={address.id}>
-                    {address.display_name} - {address.city}, {address.state_province} {address.postal_code}
+                    {address.display_name} - {address.city}, {address.state_province}{' '}
+                    {address.postal_code}
                     {address.is_default ? ' (Default)' : ''}
                   </option>
                 ))}
@@ -221,7 +222,8 @@ export function RetailerSearch({ userId, onRetailerSaved }: RetailerSearchProps)
           {savedAddresses.length === 0 && !loadingAddresses && (
             <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
               <p className="text-sm text-orange-800">
-                <strong>Note:</strong> Add a saved address in Settings to quickly search retailers near you.
+                <strong>Note:</strong> Add a saved address in Settings to quickly search retailers
+                near you.
               </p>
             </div>
           )}
@@ -328,9 +330,7 @@ export function RetailerSearch({ userId, onRetailerSaved }: RetailerSearchProps)
         </div>
       ) : preferredRetailers.length > 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h4 className="text-md font-semibold text-gray-900 mb-4">
-            Your Preferred Retailers
-          </h4>
+          <h4 className="text-md font-semibold text-gray-900 mb-4">Your Preferred Retailers</h4>
           <div className="space-y-3">
             {preferredRetailers.map((retailer) => (
               <div
@@ -384,5 +384,5 @@ export function RetailerSearch({ userId, onRetailerSaved }: RetailerSearchProps)
         </div>
       ) : null}
     </div>
-  )
+  );
 }

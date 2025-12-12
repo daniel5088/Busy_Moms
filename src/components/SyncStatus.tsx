@@ -144,9 +144,7 @@ export function SyncStatus() {
         {lastSyncResult && (
           <div
             className={`flex items-start space-x-2 text-sm p-2 rounded-lg ${
-              lastSyncResult.success
-                ? 'bg-green-50 text-green-800'
-                : 'bg-red-50 text-red-800'
+              lastSyncResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
             }`}
           >
             {lastSyncResult.success ? (
@@ -160,9 +158,12 @@ export function SyncStatus() {
                   <p className="font-medium">Sync completed successfully</p>
                   <p className="text-xs mt-1">
                     {lastSyncResult.eventsProcessed} events processed,
-                    {lastSyncResult.eventsCreated > 0 && ` ${lastSyncResult.eventsCreated} created,`}
-                    {lastSyncResult.eventsUpdated > 0 && ` ${lastSyncResult.eventsUpdated} updated,`}
-                    {lastSyncResult.conflictsDetected > 0 && ` ${lastSyncResult.conflictsDetected} conflicts`}
+                    {lastSyncResult.eventsCreated > 0 &&
+                      ` ${lastSyncResult.eventsCreated} created,`}
+                    {lastSyncResult.eventsUpdated > 0 &&
+                      ` ${lastSyncResult.eventsUpdated} updated,`}
+                    {lastSyncResult.conflictsDetected > 0 &&
+                      ` ${lastSyncResult.conflictsDetected} conflicts`}
                   </p>
                 </div>
               ) : (

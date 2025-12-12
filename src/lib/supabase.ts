@@ -1,7 +1,7 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL as string
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+const url = import.meta.env.VITE_SUPABASE_URL as string;
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 export const supabase: SupabaseClient = createClient(url, anonKey, {
   auth: {
@@ -10,382 +10,392 @@ export const supabase: SupabaseClient = createClient(url, anonKey, {
     detectSessionInUrl: true,
   },
   db: { schema: 'public' },
-})
+});
 
 // ---- Shared App Types (unchanged) -------------------------------------------
-export type UUID = string
+export type UUID = string;
 
 export interface FamilyMember {
-  id: UUID
-  user_id: UUID
-  name: string
-  age?: number | null
-  gender?: 'Boy' | 'Girl' | 'Other' | null
-  relationship?: string | null
-  avatar_url?: string | null
-  allergies?: string[] | null
-  medical_notes?: string | null
-  school?: string | null
-  grade?: string | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  name: string;
+  age?: number | null;
+  gender?: 'Boy' | 'Girl' | 'Other' | null;
+  relationship?: string | null;
+  avatar_url?: string | null;
+  allergies?: string[] | null;
+  medical_notes?: string | null;
+  school?: string | null;
+  grade?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Event {
-  id: UUID
-  user_id: UUID
-  title: string
-  description?: string | null
-  event_date: string // YYYY-MM-DD
-  start_time?: string | null // HH:MM:SS
-  end_time?: string | null // HH:MM:SS
-  location?: string | null
-  participants?: string[] | null
-  event_type?: string | null
-  rsvp_required?: boolean | null
-  rsvp_status?: 'pending' | 'yes' | 'no' | 'maybe' | null
-  source?: 'whatsapp' | 'manual' | 'ai' | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  title: string;
+  description?: string | null;
+  event_date: string; // YYYY-MM-DD
+  start_time?: string | null; // HH:MM:SS
+  end_time?: string | null; // HH:MM:SS
+  location?: string | null;
+  participants?: string[] | null;
+  event_type?: string | null;
+  rsvp_required?: boolean | null;
+  rsvp_status?: 'pending' | 'yes' | 'no' | 'maybe' | null;
+  source?: 'whatsapp' | 'manual' | 'ai' | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Reminder {
-  id: UUID
-  user_id: UUID
-  title: string
-  description?: string | null
-  reminder_date?: string | null // YYYY-MM-DD
-  reminder_time?: string | null // HH:MM:SS
-  priority?: 'low' | 'medium' | 'high' | null
-  completed?: boolean | null
-  recurring?: boolean | null
-  recurring_pattern?: string | null
-  family_member_id?: UUID | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  title: string;
+  description?: string | null;
+  reminder_date?: string | null; // YYYY-MM-DD
+  reminder_time?: string | null; // HH:MM:SS
+  priority?: 'low' | 'medium' | 'high' | null;
+  completed?: boolean | null;
+  recurring?: boolean | null;
+  recurring_pattern?: string | null;
+  family_member_id?: UUID | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Task {
-  id: UUID
-  user_id: UUID
-  assigned_to?: UUID | null
-  title: string
-  description?: string | null
-  category?: string | null
-  priority?: 'low' | 'medium' | 'high' | null
-  status?: 'pending' | 'in_progress' | 'completed' | 'cancelled' | null
-  due_date?: string | null
-  due_time?: string | null
-  recurring?: boolean | null
-  recurring_pattern?: string | null
-  points?: number | null
-  notes?: string | null
-  completed_at?: string | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  assigned_to?: UUID | null;
+  title: string;
+  description?: string | null;
+  category?: string | null;
+  priority?: 'low' | 'medium' | 'high' | null;
+  status?: 'pending' | 'in_progress' | 'completed' | 'cancelled' | null;
+  due_date?: string | null;
+  due_time?: string | null;
+  recurring?: boolean | null;
+  recurring_pattern?: string | null;
+  points?: number | null;
+  notes?: string | null;
+  completed_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Contact {
-  id: UUID
-  user_id: UUID
-  name: string
-  role: string
-  phone?: string | null
-  email?: string | null
-  category?: string | null
-  rating?: number | null
-  notes?: string | null
-  verified?: boolean | null
-  background_check_date?: string | null
-  background_check_status?: string | null
-  available?: boolean | null
-  last_contact?: string | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  name: string;
+  role: string;
+  phone?: string | null;
+  email?: string | null;
+  category?: string | null;
+  rating?: number | null;
+  notes?: string | null;
+  verified?: boolean | null;
+  background_check_date?: string | null;
+  background_check_status?: string | null;
+  available?: boolean | null;
+  last_contact?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Profile {
-  id: UUID
-  email: string
-  full_name?: string | null
-  user_type?: 'Mom' | 'Dad' | 'Guardian' | 'Other' | null
-  onboarding_completed?: boolean | null
-  ai_personality?: 'Friendly' | 'Professional' | 'Humorous' | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  email: string;
+  full_name?: string | null;
+  user_type?: 'Mom' | 'Dad' | 'Guardian' | 'Other' | null;
+  onboarding_completed?: boolean | null;
+  ai_personality?: 'Friendly' | 'Professional' | 'Humorous' | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type ProviderName = 'instacart' | 'amazon' | 'manual' | null
-export type PurchaseStatus = 'not_sent' | 'in_cart' | 'purchased' | 'failed'
+export type ProviderName = 'instacart' | 'amazon' | 'manual' | null;
+export type PurchaseStatus = 'not_sent' | 'in_cart' | 'purchased' | 'failed';
 
 export interface ProviderMetadata {
-  cart_url?: string
-  timestamp?: string
-  sync_info?: Record<string, any>
-  [key: string]: any
+  cart_url?: string;
+  timestamp?: string;
+  sync_info?: Record<string, any>;
+  [key: string]: any;
 }
 
 export interface ShoppingItem {
-  id: UUID
-  user_id: UUID
-  item: string
-  quantity?: number | null
-  unit?: string | null
-  original_unit?: string | null
+  id: UUID;
+  user_id: UUID;
+  item: string;
+  quantity?: number | null;
+  unit?: string | null;
+  original_unit?: string | null;
   category?:
-    | 'dairy' | 'produce' | 'meat' | 'bakery' | 'baby' | 'beverages'
-    | 'frozen' | 'household' | 'snacks' | 'health' | 'pantry' | 'other'
-    | string | null
-  notes?: string | null
-  completed?: boolean | null
-  assigned_to?: UUID | null
-  recipe_id?: UUID | null
-  provider_name?: ProviderName
-  purchase_status?: PurchaseStatus
-  external_order_id?: string | null
-  provider_metadata?: ProviderMetadata | null
-  provider_synced_at?: string | null
-  urgent?: boolean | null
-  created_at?: string
-  updated_at?: string
+    | 'dairy'
+    | 'produce'
+    | 'meat'
+    | 'bakery'
+    | 'baby'
+    | 'beverages'
+    | 'frozen'
+    | 'household'
+    | 'snacks'
+    | 'health'
+    | 'pantry'
+    | 'other'
+    | string
+    | null;
+  notes?: string | null;
+  completed?: boolean | null;
+  assigned_to?: UUID | null;
+  recipe_id?: UUID | null;
+  provider_name?: ProviderName;
+  purchase_status?: PurchaseStatus;
+  external_order_id?: string | null;
+  provider_metadata?: ProviderMetadata | null;
+  provider_synced_at?: string | null;
+  urgent?: boolean | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Recipe {
-  id: UUID
-  user_id: UUID
-  title: string
-  author?: string | null
-  description?: string | null
-  image_url?: string | null
-  servings?: number | null
-  prep_time_minutes?: number | null
-  cooking_time_minutes?: number | null
-  instructions?: string[] | null
-  source_url?: string | null
-  instacart_recipe_url?: string | null
-  url_expires_at?: string | null
-  instacart_metadata?: Record<string, any> | null
-  external_id?: string | null
-  external_source?: string | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  title: string;
+  author?: string | null;
+  description?: string | null;
+  image_url?: string | null;
+  servings?: number | null;
+  prep_time_minutes?: number | null;
+  cooking_time_minutes?: number | null;
+  instructions?: string[] | null;
+  source_url?: string | null;
+  instacart_recipe_url?: string | null;
+  url_expires_at?: string | null;
+  instacart_metadata?: Record<string, any> | null;
+  external_id?: string | null;
+  external_source?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface RecipeIngredient {
-  id: UUID
-  recipe_id: UUID
-  name: string
-  display_text: string
-  quantity?: number | null
-  unit?: string | null
-  category?: string | null
-  display_order?: number | null
-  brand_filters?: string[] | null
-  health_filters?: string[] | null
-  is_pantry_item?: boolean | null
-  created_at?: string
+  id: UUID;
+  recipe_id: UUID;
+  name: string;
+  display_text: string;
+  quantity?: number | null;
+  unit?: string | null;
+  category?: string | null;
+  display_order?: number | null;
+  brand_filters?: string[] | null;
+  health_filters?: string[] | null;
+  is_pantry_item?: boolean | null;
+  created_at?: string;
 }
 
 export interface UserSavedRecipe {
-  id: UUID
-  user_id: UUID
-  recipe_id: UUID
-  saved_at?: string
+  id: UUID;
+  user_id: UUID;
+  recipe_id: UUID;
+  saved_at?: string;
 }
 
 export interface InstacartIngredient {
-  name: string
-  display_text?: string
-  quantity?: number
-  unit?: string
-  brand_filters?: string[]
-  health_filters?: string[]
+  name: string;
+  display_text?: string;
+  quantity?: number;
+  unit?: string;
+  brand_filters?: string[];
+  health_filters?: string[];
 }
 
 export interface InstacartRecipeRequest {
-  title: string
-  author?: string
-  image_url?: string
-  servings?: number
-  cooking_time?: number
-  instructions?: string[]
-  ingredients: InstacartIngredient[]
-  partner_linkback_url?: string
-  enable_pantry_items?: boolean
-  expires_in?: number
+  title: string;
+  author?: string;
+  image_url?: string;
+  servings?: number;
+  cooking_time?: number;
+  instructions?: string[];
+  ingredients: InstacartIngredient[];
+  partner_linkback_url?: string;
+  enable_pantry_items?: boolean;
+  expires_in?: number;
 }
 
 export interface InstacartRecipeResponse {
-  products_link_url: string
+  products_link_url: string;
 }
 
 export interface InstacartShoppingListItem {
-  name: string
-  quantity?: number
-  unit?: string
-  category?: string
+  name: string;
+  quantity?: number;
+  unit?: string;
+  category?: string;
 }
 
 export interface InstacartShoppingListRequest {
-  items: InstacartShoppingListItem[]
-  title?: string
+  items: InstacartShoppingListItem[];
+  title?: string;
 }
 
 export interface InstacartShoppingListResponse {
-  products_link_url: string
+  products_link_url: string;
 }
 
 export interface Retailer {
-  retailer_key: string
-  name: string
-  retailer_logo_url: string
+  retailer_key: string;
+  name: string;
+  retailer_logo_url: string;
 }
 
 export interface GetNearbyRetailersRequest {
-  postal_code: string
-  country_code: 'US' | 'CA'
+  postal_code: string;
+  country_code: 'US' | 'CA';
 }
 
 export interface GetNearbyRetailersResponse {
-  retailers: Retailer[]
+  retailers: Retailer[];
 }
 
 export interface UserPreferredRetailer {
-  id: UUID
-  user_id: UUID
-  retailer_key: string
-  retailer_name: string
-  retailer_logo_url?: string | null
-  is_primary?: boolean | null
-  display_order?: number | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  retailer_key: string;
+  retailer_name: string;
+  retailer_logo_url?: string | null;
+  is_primary?: boolean | null;
+  display_order?: number | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface RecipeFilter {
-  search?: string
-  author?: string
-  maxCookingTime?: number
-  minServings?: number
-  maxServings?: number
+  search?: string;
+  author?: string;
+  maxCookingTime?: number;
+  minServings?: number;
+  maxServings?: number;
 }
 
 export interface Affirmation {
-  id: UUID
-  user_id: UUID
-  affirmation_text: string
-  generated_date: string
+  id: UUID;
+  user_id: UUID;
+  affirmation_text: string;
+  generated_date: string;
   data_sources?: {
-    calendar?: boolean
-    tasks?: boolean
-    family?: boolean
-    shopping?: boolean
-    ai_generated?: boolean
-    fallback?: boolean
-  } | null
-  viewed?: boolean | null
-  favorited?: boolean | null
-  created_at?: string
-  updated_at?: string
+    calendar?: boolean;
+    tasks?: boolean;
+    family?: boolean;
+    shopping?: boolean;
+    ai_generated?: boolean;
+    fallback?: boolean;
+  } | null;
+  viewed?: boolean | null;
+  favorited?: boolean | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AffirmationSettings {
-  id: UUID
-  user_id: UUID
-  enabled?: boolean | null
-  frequency?: 'once_daily' | 'twice_daily' | 'custom' | null
-  preferred_time?: string | null
-  secondary_time?: string | null
-  timezone?: string | null
-  include_calendar?: boolean | null
-  include_tasks?: boolean | null
-  include_family?: boolean | null
-  include_shopping?: boolean | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  enabled?: boolean | null;
+  frequency?: 'once_daily' | 'twice_daily' | 'custom' | null;
+  preferred_time?: string | null;
+  secondary_time?: string | null;
+  timezone?: string | null;
+  include_calendar?: boolean | null;
+  include_tasks?: boolean | null;
+  include_family?: boolean | null;
+  include_shopping?: boolean | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type AddressType = 'home' | 'work' | 'other'
+export type AddressType = 'home' | 'work' | 'other';
 
 export interface Address {
-  id: UUID
-  user_id: UUID
-  address_type: AddressType
-  display_name: string
-  street_address: string
-  apartment_unit?: string | null
-  city: string
-  state_province: string
-  postal_code: string
-  country: string
-  is_default?: boolean | null
-  validated?: boolean | null
-  validation_metadata?: Record<string, any> | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  address_type: AddressType;
+  display_name: string;
+  street_address: string;
+  apartment_unit?: string | null;
+  city: string;
+  state_province: string;
+  postal_code: string;
+  country: string;
+  is_default?: boolean | null;
+  validated?: boolean | null;
+  validation_metadata?: Record<string, any> | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AddressValidationResult {
-  valid: boolean
-  formatted_address?: string
-  suggestions?: string[]
-  latitude?: number
-  longitude?: number
-  error_message?: string
+  valid: boolean;
+  formatted_address?: string;
+  suggestions?: string[];
+  latitude?: number;
+  longitude?: number;
+  error_message?: string;
 }
 
 export interface UserMeasurementPreferences {
-  id: UUID
-  user_id: UUID
-  preferred_system: 'metric' | 'imperial'
-  default_volume_unit?: string | null
-  default_weight_unit?: string | null
-  auto_convert?: boolean | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  preferred_system: 'metric' | 'imperial';
+  default_volume_unit?: string | null;
+  default_weight_unit?: string | null;
+  auto_convert?: boolean | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface MeasurementOverride {
-  id: UUID
-  user_id: UUID
-  recipe_ingredient_id?: UUID | null
-  shopping_list_id?: UUID | null
-  original_quantity?: number | null
-  original_unit?: string | null
-  override_quantity: number
-  override_unit: string
-  reason?: string | null
-  created_at?: string
-  updated_at?: string
+  id: UUID;
+  user_id: UUID;
+  recipe_ingredient_id?: UUID | null;
+  shopping_list_id?: UUID | null;
+  original_quantity?: number | null;
+  original_unit?: string | null;
+  override_quantity: number;
+  override_unit: string;
+  reason?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
-
 
 // ---- Affiliate Matrix Types -------------------------------------------
 
 export interface AffiliateMatrixItem {
-  Sheet_id: number
-  relationship_key?: string | null
-  relationship_label?: string | null
-  age_group_key?: string | null
-  age_group_label?: string | null
-  gender_key?: string | null
-  gender_label?: string | null
-  budget_key?: string | null
-  budget_label?: string | null
-  search_phrase?: string | null
-  affiliate_url?: string | null
+  Sheet_id: number;
+  relationship_key?: string | null;
+  relationship_label?: string | null;
+  age_group_key?: string | null;
+  age_group_label?: string | null;
+  gender_key?: string | null;
+  gender_label?: string | null;
+  budget_key?: string | null;
+  budget_label?: string | null;
+  search_phrase?: string | null;
+  affiliate_url?: string | null;
 }
 
 export interface AffiliateMatrixLookup {
-  relationships: Array<{ key: string; label: string }>
-  ageGroups: Array<{ key: string; label: string }>
-  genders: Array<{ key: string; label: string }>
-  budgets: Array<{ key: string; label: string }>
+  relationships: Array<{ key: string; label: string }>;
+  ageGroups: Array<{ key: string; label: string }>;
+  genders: Array<{ key: string; label: string }>;
+  budgets: Array<{ key: string; label: string }>;
 }
 
 export interface AffiliateSearchCriteria {
-  relationship_key?: string
-  age_group_key?: string
-  gender_key?: string
-  budget_key?: string
+  relationship_key?: string;
+  age_group_key?: string;
+  gender_key?: string;
+  budget_key?: string;
 }

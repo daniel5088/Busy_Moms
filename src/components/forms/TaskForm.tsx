@@ -1,19 +1,19 @@
-import React, { useState } from 'react'
-import { X, CheckSquare, User, Calendar, Clock, Star, Hash } from 'lucide-react'
-import { supabase, Task, FamilyMember } from '../../lib/supabase'
-import { useAuth } from '../../hooks/useAuth'
+import React, { useState } from 'react';
+import { X, CheckSquare, User, Calendar, Clock, Star, Hash } from 'lucide-react';
+import { supabase, Task, FamilyMember } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface TaskFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onTaskCreated: (task: Task) => void
-  editTask?: Task | null
+  isOpen: boolean;
+  onClose: () => void;
+  onTaskCreated: (task: Task) => void;
+  editTask?: Task | null;
 }
 
 export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormProps) {
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [formData, setFormData] = useState({
     title: editTask?.title || '',
     description: editTask?.description || '',
@@ -25,39 +25,39 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
     points: editTask?.points || 0,
     notes: editTask?.notes || '',
     recurring: editTask?.recurring || false,
-    recurring_pattern: editTask?.recurring_pattern || ''
-  })
+    recurring_pattern: editTask?.recurring_pattern || '',
+  });
 
   // Load family members when form opens
   React.useEffect(() => {
     if (isOpen && user) {
-      loadFamilyMembers()
+      loadFamilyMembers();
     }
-  }, [isOpen, user])
+  }, [isOpen, user]);
 
   const loadFamilyMembers = async () => {
-    if (!user?.id) return
-    
+    if (!user?.id) return;
+
     try {
       const { data: members, error } = await supabase
         .from('family_members')
         .select('*')
         .eq('user_id', user.id)
-        .order('name', { ascending: true })
+        .order('name', { ascending: true });
 
       if (!error) {
-        setFamilyMembers(members || [])
+        setFamilyMembers(members || []);
       }
     } catch (error) {
-      console.error('Error loading family members:', error)
+      console.error('Error loading family members:', error);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
+    e.preventDefault();
+    if (!user) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       const taskData = {
         title: formData.title,
@@ -72,35 +72,39 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         recurring: formData.recurring,
         recurring_pattern: formData.recurring ? formData.recurring_pattern || null : null,
         user_id: user.id,
-        status: 'pending' as const
-      }
+        status: 'pending' as const,
+      };
 
-      let result
+      let result;
       if (editTask) {
         result = await supabase
           .from('tasks')
           .update(taskData)
           .eq('id', editTask.id)
-          .select(`
+          .select(
+            `
             *,
             assigned_family_member:family_members(id, name, age)
-          `)
-          .single()
+          `
+          )
+          .single();
       } else {
         result = await supabase
           .from('tasks')
           .insert([taskData])
-          .select(`
+          .select(
+            `
             *,
             assigned_family_member:family_members(id, name, age)
-          `)
-          .single()
+          `
+          )
+          .single();
       }
 
-      if (result.error) throw result.error
+      if (result.error) throw result.error;
 
-      onTaskCreated(result.data)
-      onClose()
+      onTaskCreated(result.data);
+      onClose();
       setFormData({
         title: '',
         description: '',
@@ -112,17 +116,17 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         points: 0,
         notes: '',
         recurring: false,
-        recurring_pattern: ''
-      })
+        recurring_pattern: '',
+      });
     } catch (error) {
-      console.error('Error saving task:', error)
-      alert(`Error saving task: ${error.message || 'Please try again.'}`)
+      console.error('Error saving task:', error);
+      alert(`Error saving task: ${error.message || 'Please try again.'}`);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -264,7 +268,9 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
                 type="number"
                 min="0"
                 value={formData.points}
-                onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
+                onChange={(e) =>
+                  setFormData({ ...formData, points: parseInt(e.target.value) || 0 })
+                }
                 className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                 placeholder="Reward points for completing this task"
               />
@@ -291,7 +297,9 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
                   onChange={(e) => setFormData({ ...formData, recurring: e.target.checked })}
                   className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                 />
-                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">Recurring task</span>
+                <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  Recurring task
+                </span>
               </label>
 
               {formData.recurring && (
@@ -329,5 +337,5 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         </div>
       </div>
     </div>
-  )
+  );
 }

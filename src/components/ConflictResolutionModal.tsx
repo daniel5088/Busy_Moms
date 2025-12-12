@@ -1,5 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { X, AlertTriangle, Calendar, Clock, MapPin, Users, ChevronRight, GitMerge } from 'lucide-react';
+import {
+  X,
+  AlertTriangle,
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  ChevronRight,
+  GitMerge,
+} from 'lucide-react';
 import type { SyncConflict } from '../services/calendarSync';
 
 interface ConflictResolutionModalProps {
@@ -13,7 +22,11 @@ interface ConflictResolutionModalProps {
   onClose: () => void;
 }
 
-export function ConflictResolutionModal({ conflicts, onResolve, onClose }: ConflictResolutionModalProps) {
+export function ConflictResolutionModal({
+  conflicts,
+  onResolve,
+  onClose,
+}: ConflictResolutionModalProps) {
   const [selectedConflictIndex, setSelectedConflictIndex] = useState(0);
   const [resolving, setResolving] = useState(false);
 
@@ -35,9 +48,7 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
     setMergeDescription(initialDesc);
   }, [selectedConflictIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleResolve = async (
-    resolution: 'keep_local' | 'keep_google' | 'merge'
-  ) => {
+  const handleResolve = async (resolution: 'keep_local' | 'keep_google' | 'merge') => {
     setResolving(true);
     try {
       const merged =
@@ -107,7 +118,8 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
 
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4">
             <p className="text-sm text-orange-800">
-              This event was modified in both your local calendar and Google Calendar. Choose which version to keep or merge fields.
+              This event was modified in both your local calendar and Google Calendar. Choose which
+              version to keep or merge fields.
             </p>
           </div>
         </div>
@@ -123,14 +135,18 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Local Calendar</h3>
-                  <p className="text-xs text-gray-500">Modified: {formatDate(currentConflict.local_modified_at)}</p>
+                  <p className="text-xs text-gray-500">
+                    Modified: {formatDate(currentConflict.local_modified_at)}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-medium text-gray-600">Title</label>
-                  <p className="text-sm font-medium text-gray-900">{localData.title || 'Untitled'}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {localData.title || 'Untitled'}
+                  </p>
                 </div>
 
                 {localData.description !== undefined && (
@@ -193,14 +209,18 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Google Calendar</h3>
-                  <p className="text-xs text-gray-500">Modified: {formatDate(currentConflict.google_modified_at)}</p>
+                  <p className="text-xs text-gray-500">
+                    Modified: {formatDate(currentConflict.google_modified_at)}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-medium text-gray-600">Title</label>
-                  <p className="text-sm font-medium text-gray-900">{googleData.summary || 'Untitled'}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {googleData.summary || 'Untitled'}
+                  </p>
                 </div>
 
                 {googleData.description !== undefined && (
@@ -230,7 +250,10 @@ export function ConflictResolutionModal({ conflicts, onResolve, onClose }: Confl
                     <div className="flex items-center space-x-2 text-sm text-gray-700">
                       <Clock className="w-3 h-3" />
                       <span>
-                        {new Date(googleData.start.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                        {new Date(googleData.start.dateTime).toLocaleTimeString([], {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
                         {googleData.end?.dateTime &&
                           ` - ${new Date(googleData.end.dateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
                       </span>

@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { affiliateMatrixService } from '../services/affiliateMatrixService';
-import type { AffiliateMatrixLookup, AffiliateMatrixItem, AffiliateSearchCriteria } from '../lib/supabase';
+import type {
+  AffiliateMatrixLookup,
+  AffiliateMatrixItem,
+  AffiliateSearchCriteria,
+} from '../lib/supabase';
 
 interface UseAffiliateMatrixReturn {
   lookupValues: AffiliateMatrixLookup | null;
@@ -53,23 +57,26 @@ export function useAffiliateMatrix(): UseAffiliateMatrixReturn {
   }, []);
 
   // Search for affiliate links based on criteria
-  const searchAffiliateLinks = useCallback(async (criteria: AffiliateSearchCriteria): Promise<AffiliateMatrixItem[]> => {
-    try {
-      setLoading(true);
-      setError(null);
+  const searchAffiliateLinks = useCallback(
+    async (criteria: AffiliateSearchCriteria): Promise<AffiliateMatrixItem[]> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const results = await affiliateMatrixService.searchAffiliateLinks(criteria);
-      setAffiliateResults(results);
-      return results;
-    } catch (err) {
-      console.error('[useAffiliateMatrix] Error searching affiliate links:', err);
-      setError(err instanceof Error ? err.message : 'Failed to search for gifts');
-      setAffiliateResults([]);
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        const results = await affiliateMatrixService.searchAffiliateLinks(criteria);
+        setAffiliateResults(results);
+        return results;
+      } catch (err) {
+        console.error('[useAffiliateMatrix] Error searching affiliate links:', err);
+        setError(err instanceof Error ? err.message : 'Failed to search for gifts');
+        setAffiliateResults([]);
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Clear current results
   const clearResults = useCallback(() => {
@@ -83,6 +90,6 @@ export function useAffiliateMatrix(): UseAffiliateMatrixReturn {
     loading,
     error,
     searchAffiliateLinks,
-    clearResults
+    clearResults,
   };
 }

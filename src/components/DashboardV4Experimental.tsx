@@ -1,6 +1,20 @@
 //Alvaros - V4: Dashboard V4 Experimental - Full-screen affirmation overlay with side-by-side schedules and 6-action grid
 import React from 'react';
-import { Calendar, ShoppingBag, MessageCircle, Clock, Heart, Users, LogOut, Sparkles, X, BookOpen, Shield, ListTodo, Link } from 'lucide-react';
+import {
+  Calendar,
+  ShoppingBag,
+  MessageCircle,
+  Clock,
+  Heart,
+  Users,
+  LogOut,
+  Sparkles,
+  X,
+  BookOpen,
+  Shield,
+  ListTodo,
+  Link,
+} from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
 import { supabase, Profile, Event, ShoppingItem, Reminder, Affirmation } from '../lib/supabase';
@@ -16,7 +30,11 @@ interface DashboardProps {
   onVoiceChatOpen?: () => void;
 }
 
-export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }: DashboardProps) {
+export function DashboardV4Experimental({
+  onNavigate,
+  onNavigateToSubScreen,
+  onVoiceChatOpen,
+}: DashboardProps) {
   const { signOut } = useAuth();
   const { user } = useAuth();
   const [profile, setProfile] = React.useState<Profile | null>(null);
@@ -32,7 +50,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
   // Load user profile
   React.useEffect(() => {
-    let mounted = true
+    let mounted = true;
 
     const loadProfile = async () => {
       if (!user?.id) return;
@@ -57,8 +75,8 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
     loadProfile();
 
     return () => {
-      mounted = false
-    }
+      mounted = false;
+    };
   }, [user]);
 
   // Helper function to format time for display
@@ -77,7 +95,10 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
   };
 
   // Helper function to format time range for display
-  const formatEventTimeRange = (startTime: string | null | undefined, endTime: string | null | undefined): string => {
+  const formatEventTimeRange = (
+    startTime: string | null | undefined,
+    endTime: string | null | undefined
+  ): string => {
     if (!startTime) return 'All day';
     if (startTime && endTime) {
       return `${formatEventTime(startTime)} – ${formatEventTime(endTime)}`;
@@ -108,7 +129,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
         // Filter and sort today's events
         const todayEventsFiltered = (eventsData || [])
-          .filter(event => event.event_date === today)
+          .filter((event) => event.event_date === today)
           .sort((a, b) => {
             if (!a.start_time && !b.start_time) return 0;
             if (!a.start_time) return 1;
@@ -119,8 +140,9 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
         setTodayEvents(todayEventsFiltered);
 
         // Filter this week's events (excluding today)
-        const thisWeekEventsFiltered = (eventsData || [])
-          .filter(event => event.event_date !== today);
+        const thisWeekEventsFiltered = (eventsData || []).filter(
+          (event) => event.event_date !== today
+        );
 
         setThisWeekEvents(thisWeekEventsFiltered);
       }
@@ -151,7 +173,6 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       if (!remindersError) {
         setReminders(remindersData || []);
       }
-
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -188,7 +209,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
       setTodayAffirmation(affirmation);
     } catch (error) {
-      console.error('Error loading today\'s affirmation:', error);
+      console.error("Error loading today's affirmation:", error);
     }
   };
 
@@ -249,7 +270,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-amber-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('shopping')
+      action: () => onNavigateToSubScreen('shopping'),
     },
     {
       icon: Users,
@@ -262,7 +283,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-blue-100 dark:hover:bg-gray-700',
-      action: () => onNavigate('family')
+      action: () => onNavigate('family'),
     },
     {
       icon: ListTodo,
@@ -275,7 +296,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-green-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('tasks')
+      action: () => onNavigateToSubScreen('tasks'),
     },
     {
       icon: Link,
@@ -288,7 +309,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-purple-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('quick-links')
+      action: () => onNavigateToSubScreen('quick-links'),
     },
     {
       icon: Shield,
@@ -301,7 +322,7 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-500 dark:text-gray-400',
       descColor: 'text-gray-400 dark:text-gray-500',
       hoverBg: 'hover:bg-gray-100 dark:hover:bg-gray-750',
-      action: () => {}
+      action: () => {},
     },
     {
       icon: BookOpen,
@@ -314,8 +335,8 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('shopping')
-    }
+      action: () => onNavigateToSubScreen('shopping'),
+    },
   ];
 
   if (loading) {
@@ -355,9 +376,11 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
           aria-labelledby="affirmation-overlay-title"
         >
           {/* Affirmation Card */}
-          <div className={`relative w-full max-w-3xl overflow-hidden transition-all duration-200 ease-out ${
-            affirmationStage === 'closing' ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-          }`}>
+          <div
+            className={`relative w-full max-w-3xl overflow-hidden transition-all duration-200 ease-out ${
+              affirmationStage === 'closing' ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+            }`}
+          >
             {/* Content */}
             <div className="relative z-10 flex flex-col justify-between h-screen">
               {/* Top Section - Centered Text Block */}
@@ -372,9 +395,11 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                   </span>
                 </div>
 
-                <p className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-semibold italic my-8 px-4 ${
-                  affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
-                }`}>
+                <p
+                  className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-semibold italic my-8 px-4 ${
+                    affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
+                  }`}
+                >
                   {todayAffirmation.affirmation_text}
                 </p>
               </div>
@@ -408,7 +433,15 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
         <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 text-white p-4 pb-6 dark:border-b dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Good Morning, {profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}!</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">
+                Good Morning,{' '}
+                {profile?.full_name ||
+                  user?.user_metadata?.full_name ||
+                  user?.user_metadata?.name ||
+                  user?.email?.split('@')[0] ||
+                  'User'}
+                !
+              </h1>
             </div>
             <div className="flex items-center space-x-3">
               <button
@@ -432,21 +465,15 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
           {/* Mini Stats */}
           <div className="bg-white bg-opacity-10 dark:bg-gray-900 dark:bg-opacity-50 rounded-xl p-3">
             <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
-              <button
-                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
-              >
+              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{events.length} events</span>
               </button>
-              <button
-                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
-              >
+              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
                 <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{tasks.length} shopping list</span>
               </button>
-              <button
-                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
-              >
+              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
                 <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{reminders.length} reminders</span>
               </button>
@@ -463,7 +490,9 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 Today&apos;s Schedule
               </h2>
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-80 flex flex-col">
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4"> {/* //Alvaros - V4 */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
+                  {' '}
+                  {/* //Alvaros - V4 */}
                   {todayEvents.length > 0 ? (
                     <div className="space-y-3">
                       {todayEvents.map((event) => (
@@ -472,19 +501,29 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                           className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
                         >
-                          <div className="flex items-center space-x-1.5"> {/* //Alvaros - V4 */}
-                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0"> {/* //Alvaros - V4 */}
+                          <div className="flex items-center space-x-1.5">
+                            {' '}
+                            {/* //Alvaros - V4 */}
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
+                              {' '}
+                              {/* //Alvaros - V4 */}
                               <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
                             </div>
-                            <div className="flex-1 min-w-0 space-y-0.5"> {/* //Alvaros - V4 */}
+                            <div className="flex-1 min-w-0 space-y-0.5">
+                              {' '}
+                              {/* //Alvaros - V4 */}
                               <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">
                                 {formatEventTimeRange(event.start_time, event.end_time)}
                               </p>
-                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm"> {/* //Alvaros - V4 */}
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm">
+                                {' '}
+                                {/* //Alvaros - V4 */}
                                 {event.title}
                               </h3>
                               {event.location && (
-                                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"> {/* //Alvaros - V4 */}
+                                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                                  {' '}
+                                  {/* //Alvaros - V4 */}
                                   {event.location}
                                 </p>
                               )}
@@ -510,14 +549,16 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                 </div>
               </div>
             </div>
-          
+
             {/* This Week's Schedule */}
             <div className="w-1/2">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
                 This Week&apos;s Schedule
               </h2>
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-80 flex flex-col">
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4"> {/* //Alvaros - V4 */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
+                  {' '}
+                  {/* //Alvaros - V4 */}
                   {thisWeekEvents.length > 0 ? (
                     <div className="space-y-3">
                       {thisWeekEvents.map((event) => (
@@ -526,24 +567,35 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                           className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
                         >
-                          <div className="flex items-center space-x-1.5"> {/* //Alvaros - V4 */}
-                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0"> {/* //Alvaros - V4 */}
+                          <div className="flex items-center space-x-1.5">
+                            {' '}
+                            {/* //Alvaros - V4 */}
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
+                              {' '}
+                              {/* //Alvaros - V4 */}
                               <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
                             </div>
-                            <div className="flex-1 min-w-0 space-y-0.5"> {/* //Alvaros - V4 */}
+                            <div className="flex-1 min-w-0 space-y-0.5">
+                              {' '}
+                              {/* //Alvaros - V4 */}
                               <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">
                                 {new Date(event.event_date).toLocaleDateString('en-US', {
                                   weekday: 'short',
                                   month: 'short',
                                   day: 'numeric',
                                 })}
-                                {event.start_time && ` at ${formatEventTimeRange(event.start_time, event.end_time)}`}
+                                {event.start_time &&
+                                  ` at ${formatEventTimeRange(event.start_time, event.end_time)}`}
                               </p>
-                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm"> {/* //Alvaros - V4 */}
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm">
+                                {' '}
+                                {/* //Alvaros - V4 */}
                                 {event.title}
                               </h3>
                               {event.location && (
-                                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"> {/* //Alvaros - V4 */}
+                                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                                  {' '}
+                                  {/* //Alvaros - V4 */}
                                   {event.location}
                                 </p>
                               )}
@@ -573,7 +625,9 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
           {/* Quick Actions - 3x2 Grid */}
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Quick Actions</h2>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+              Quick Actions
+            </h2>
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {quickActions.map((action, index) => (
                 <button
@@ -589,10 +643,14 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2`}
                   aria-label={`${action.title}: ${action.desc}`}
                 >
-                  <div className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}>
+                  <div
+                    className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}
+                  >
                     <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} />
                   </div>
-                  <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base`}>{action.title}</h3>
+                  <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base`}>
+                    {action.title}
+                  </h3>
                   <p className={`text-xs sm:text-sm ${action.descColor}`}>{action.desc}</p>
                 </button>
               ))}
@@ -601,24 +659,35 @@ export function DashboardV4Experimental({ onNavigate, onNavigateToSubScreen, onV
 
           {/* Smart Reminders */}
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Smart Reminders</h2>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+              Smart Reminders
+            </h2>
             {reminders.length > 0 ? (
               <div className="space-y-2">
                 {reminders.map((reminder) => (
-                  <div key={reminder.id} className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer">
-                    <div className={`w-2 h-2 rounded-full ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}></div>
+                  <div
+                    key={reminder.id}
+                    className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer"
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}
+                    ></div>
                     <div className="flex-1">
-                      <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200 font-medium">{reminder.title}</span>
+                      <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200 font-medium">
+                        {reminder.title}
+                      </span>
                       <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {new Date(reminder.reminder_date).toLocaleDateString('en-US', {
                           weekday: 'short',
                           month: 'short',
-                          day: 'numeric'
+                          day: 'numeric',
                         })}
                         {reminder.reminder_time && ` at ${formatEventTime(reminder.reminder_time)}`}
                       </div>
                       {reminder.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{reminder.description}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
+                          {reminder.description}
+                        </p>
                       )}
                     </div>
                     {reminder.priority === 'high' && (

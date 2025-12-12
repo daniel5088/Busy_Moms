@@ -1,5 +1,9 @@
 import { supabase } from '../lib/supabase';
-import type { AffiliateMatrixItem, AffiliateMatrixLookup, AffiliateSearchCriteria } from '../lib/supabase';
+import type {
+  AffiliateMatrixItem,
+  AffiliateMatrixLookup,
+  AffiliateSearchCriteria,
+} from '../lib/supabase';
 
 class AffiliateMatrixService {
   private lookupCache: AffiliateMatrixLookup | null = null;
@@ -37,7 +41,10 @@ class AffiliateMatrixService {
   /**
    * Smart sort for age groups - numerical if possible, alphabetical as fallback
    */
-  private sortAgeGroups(a: { key: string; label: string }, b: { key: string; label: string }): number {
+  private sortAgeGroups(
+    a: { key: string; label: string },
+    b: { key: string; label: string }
+  ): number {
     const aValue = this.extractAgeValue(a.label);
     const bValue = this.extractAgeValue(b.label);
 
@@ -53,7 +60,10 @@ class AffiliateMatrixService {
   /**
    * Sort budget ranges by numerical value (low to high)
    */
-  private sortBudgetRanges(a: { key: string; label: string }, b: { key: string; label: string }): number {
+  private sortBudgetRanges(
+    a: { key: string; label: string },
+    b: { key: string; label: string }
+  ): number {
     const aValue = this.extractBudgetValue(a.label);
     const bValue = this.extractBudgetValue(b.label);
     return aValue - bValue;
@@ -65,7 +75,11 @@ class AffiliateMatrixService {
    */
   async getLookupValues(): Promise<AffiliateMatrixLookup> {
     // Return cached data if still valid
-    if (this.lookupCache && this.cacheTimestamp && Date.now() - this.cacheTimestamp < this.CACHE_DURATION) {
+    if (
+      this.lookupCache &&
+      this.cacheTimestamp &&
+      Date.now() - this.cacheTimestamp < this.CACHE_DURATION
+    ) {
       console.log('[affiliateMatrixService] Returning cached lookup values');
       return this.lookupCache;
     }
@@ -75,7 +89,9 @@ class AffiliateMatrixService {
     // Fetch all data to extract unique values (no restrictive filters)
     const { data, error } = await supabase
       .from('affiliate_matrix')
-      .select('relationship_key, relationship_label, age_group_key, age_group_label, gender_key, gender_label, budget_key, budget_label');
+      .select(
+        'relationship_key, relationship_label, age_group_key, age_group_label, gender_key, gender_label, budget_key, budget_label'
+      );
 
     if (error) {
       console.error('[affiliateMatrixService] Error fetching lookup values:', error);
@@ -91,7 +107,7 @@ class AffiliateMatrixService {
         relationships: [],
         ageGroups: [],
         genders: [],
-        budgets: []
+        budgets: [],
       };
       this.cacheTimestamp = Date.now();
       return this.lookupCache;
@@ -107,41 +123,43 @@ class AffiliateMatrixService {
       if (row.relationship_key && row.relationship_label) {
         relationshipMap.set(row.relationship_key, {
           key: row.relationship_key,
-          label: row.relationship_label
+          label: row.relationship_label,
         });
       }
       if (row.age_group_key && row.age_group_label) {
         ageGroupMap.set(row.age_group_key, {
           key: row.age_group_key,
-          label: row.age_group_label
+          label: row.age_group_label,
         });
       }
       if (row.gender_key && row.gender_label) {
         genderMap.set(row.gender_key, {
           key: row.gender_key,
-          label: row.gender_label
+          label: row.gender_label,
         });
       }
       if (row.budget_key && row.budget_label) {
         budgetMap.set(row.budget_key, {
           key: row.budget_key,
-          label: row.budget_label
+          label: row.budget_label,
         });
       }
     });
 
     this.lookupCache = {
-      relationships: Array.from(relationshipMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
+      relationships: Array.from(relationshipMap.values()).sort((a, b) =>
+        a.label.localeCompare(b.label)
+      ),
       ageGroups: Array.from(ageGroupMap.values()).sort((a, b) => this.sortAgeGroups(a, b)),
       genders: Array.from(genderMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
-      budgets: Array.from(budgetMap.values()).sort((a, b) => this.sortBudgetRanges(a, b))
+      budgets: Array.from(budgetMap.values()).sort((a, b) => this.sortBudgetRanges(a, b)),
     };
 
     console.log('[affiliateMatrixService] Extracted unique values:', {
       relationships: this.lookupCache.relationships.length,
       ageGroups: this.lookupCache.ageGroups.length,
       genders: this.lookupCache.genders.length,
-      budgets: this.lookupCache.budgets.length
+      budgets: this.lookupCache.budgets.length,
     });
 
     this.cacheTimestamp = Date.now();
@@ -154,10 +172,7 @@ class AffiliateMatrixService {
    * Returns matching rows from affiliate_matrix
    */
   async searchAffiliateLinks(criteria: AffiliateSearchCriteria): Promise<AffiliateMatrixItem[]> {
-    let query = supabase
-      .from('affiliate_matrix')
-      .select('*')
-      .not('affiliate_url', 'is', null);
+    let query = supabase.from('affiliate_matrix').select('*').not('affiliate_url', 'is', null);
 
     // Apply filters based on provided criteria
     if (criteria.relationship_key) {
@@ -264,15 +279,15 @@ class AffiliateMatrixService {
 
     // Direct mapping for common cases
     const directMap: Record<string, string> = {
-      'Boy': 'male',
-      'Girl': 'female',
-      'Other': 'other'
+      Boy: 'male',
+      Girl: 'female',
+      Other: 'other',
     };
 
     // Try direct mapping first
     if (directMap[gender]) {
       const directKey = directMap[gender];
-      const found = lookup.genders.find(g => g.key === directKey);
+      const found = lookup.genders.find((g) => g.key === directKey);
       if (found) {
         return found.key;
       }
@@ -280,9 +295,9 @@ class AffiliateMatrixService {
 
     // Fallback: search by label
     const genderMap: Record<string, string[]> = {
-      'Boy': ['boy', 'boys', 'male', 'him', 'he'],
-      'Girl': ['girl', 'girls', 'female', 'her', 'she'],
-      'Other': ['unisex', 'other', 'any', 'anyone', 'neutral', 'non-binary']
+      Boy: ['boy', 'boys', 'male', 'him', 'he'],
+      Girl: ['girl', 'girls', 'female', 'her', 'she'],
+      Other: ['unisex', 'other', 'any', 'anyone', 'neutral', 'non-binary'],
     };
 
     const searchTerms = genderMap[gender] || [];
@@ -366,7 +381,7 @@ class AffiliateMatrixService {
     const [ageGroupKey, genderKey, budgetKey] = await Promise.all([
       this.matchAgeToAgeGroup(recipient.age),
       this.matchGenderToGenderKey(recipient.gender),
-      this.matchBudgetToBudgetKey(recipient.budgetMin, recipient.budgetMax)
+      this.matchBudgetToBudgetKey(recipient.budgetMin, recipient.budgetMax),
     ]);
 
     // If relationship is "Spouse", use "for_him" or "for_her" as relationship_key
@@ -377,16 +392,14 @@ class AffiliateMatrixService {
       // Map Boy/Girl to "for_him"/"for_her" as relationship keys
       if (recipient.gender === 'Boy') {
         // Find "for him" relationship key
-        const forHim = lookup.relationships.find(r =>
-          r.label.toLowerCase().includes('for him') ||
-          r.key === 'for_him'
+        const forHim = lookup.relationships.find(
+          (r) => r.label.toLowerCase().includes('for him') || r.key === 'for_him'
         );
         relationshipKey = forHim?.key;
       } else if (recipient.gender === 'Girl') {
         // Find "for her" relationship key
-        const forHer = lookup.relationships.find(r =>
-          r.label.toLowerCase().includes('for her') ||
-          r.key === 'for_her'
+        const forHer = lookup.relationships.find(
+          (r) => r.label.toLowerCase().includes('for her') || r.key === 'for_her'
         );
         relationshipKey = forHer?.key;
       }
@@ -396,7 +409,7 @@ class AffiliateMatrixService {
       relationship_key: relationshipKey || undefined,
       age_group_key: ageGroupKey || undefined,
       gender_key: genderKey || undefined,
-      budget_key: budgetKey || undefined
+      budget_key: budgetKey || undefined,
     };
   }
 
