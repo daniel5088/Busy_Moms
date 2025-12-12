@@ -247,9 +247,9 @@ export function DashboardV4Experimental({
             }`}
           >
             {/* Content */}
-            <div className="relative z-10 flex flex-col h-screen">
-              {/* Top Section - Centered Text Block */}
-              <div className="flex-1 flex flex-col items-center justify-center text-center">
+            <div className="relative z-10 grid grid-rows-[1fr_auto_auto] h-full">
+              {/* Middle Row - Centered Text Block */}
+              <div className="flex flex-col items-center justify-center text-center">
                 <div className="flex items-center justify-center space-x-2 mb-6">
                   <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   <span
