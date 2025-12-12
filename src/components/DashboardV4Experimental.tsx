@@ -17,8 +17,11 @@ import {
 } from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
-import { supabase, Profile, Event, ShoppingItem, Reminder, Affirmation } from '../lib/supabase';
+import { useProfile } from '../hooks/useProfile';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { Affirmation } from '../lib/supabase';
 import { affirmationService } from '../services/affirmationService';
+import { formatEventTime, formatEventTimeRange } from '../utils/timeFormatters';
 
 import { SubScreen } from '../App';
 
@@ -35,154 +38,16 @@ export function DashboardV4Experimental({
   onNavigateToSubScreen,
   onVoiceChatOpen,
 }: DashboardProps) {
-  const { signOut } = useAuth();
-  const { user } = useAuth();
-  const [profile, setProfile] = React.useState<Profile | null>(null);
-  const [events, setEvents] = React.useState<Event[]>([]);
-  const [todayEvents, setTodayEvents] = React.useState<Event[]>([]);
-  const [thisWeekEvents, setThisWeekEvents] = React.useState<Event[]>([]);
-  const [tasks, setTasks] = React.useState<ShoppingItem[]>([]);
-  const [reminders, setReminders] = React.useState<Reminder[]>([]);
-  const [loading, setLoading] = React.useState(false);
+  const { signOut, user } = useAuth();
+  const { profile } = useProfile();
+  const { events, todayEvents, thisWeekEvents, tasks, reminders, loading } = useDashboardData();
+
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
   const [isAffirmationButtonGlowing, setIsAffirmationButtonGlowing] = React.useState(false);
 
-  // Load user profile
-  React.useEffect(() => {
-    let mounted = true;
-
-    const loadProfile = async () => {
-      if (!user?.id) return;
-
-      try {
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (mounted && !error && profileData) {
-          setProfile(profileData);
-        }
-      } catch (error: any) {
-        if (mounted) {
-          console.error('Error loading profile:', error);
-        }
-      }
-    };
-
-    loadProfile();
-
-    return () => {
-      mounted = false;
-    };
-  }, [user]);
-
-  // Helper function to format time for display
-  const formatEventTime = (timeString: string | null | undefined): string => {
-    if (!timeString) return 'All day';
-    try {
-      const [hours, minutes] = timeString.split(':');
-      const hour = parseInt(hours, 10);
-      const minute = parseInt(minutes, 10);
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-      return `${displayHour}:${String(minute).padStart(2, '0')} ${ampm}`;
-    } catch {
-      return timeString;
-    }
-  };
-
-  // Helper function to format time range for display
-  const formatEventTimeRange = (
-    startTime: string | null | undefined,
-    endTime: string | null | undefined
-  ): string => {
-    if (!startTime) return 'All day';
-    if (startTime && endTime) {
-      return `${formatEventTime(startTime)} – ${formatEventTime(endTime)}`;
-    }
-    return formatEventTime(startTime);
-  };
-
-  // Load events, tasks, and reminders
-  const loadDashboardData = async () => {
-    if (!user?.id) return;
-
-    setLoading(true);
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-      // Load upcoming events for next 7 days
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('event_date', today)
-        .lte('event_date', nextWeek)
-        .order('event_date', { ascending: true });
-
-      if (!eventsError) {
-        setEvents(eventsData || []);
-
-        // Filter and sort today's events
-        const todayEventsFiltered = (eventsData || [])
-          .filter((event) => event.event_date === today)
-          .sort((a, b) => {
-            if (!a.start_time && !b.start_time) return 0;
-            if (!a.start_time) return 1;
-            if (!b.start_time) return -1;
-            return a.start_time.localeCompare(b.start_time);
-          });
-
-        setTodayEvents(todayEventsFiltered);
-
-        // Filter this week's events (excluding today)
-        const thisWeekEventsFiltered = (eventsData || []).filter(
-          (event) => event.event_date !== today
-        );
-
-        setThisWeekEvents(thisWeekEventsFiltered);
-      }
-
-      // Load incomplete shopping items (tasks)
-      const { data: tasksData, error: tasksError } = await supabase
-        .from('shopping_lists')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('completed', false)
-        .order('created_at', { ascending: false });
-
-      if (!tasksError) {
-        setTasks(tasksData || []);
-      }
-
-      // Load upcoming reminders (next 7 days)
-      const { data: remindersData, error: remindersError } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('completed', false)
-        .gte('reminder_date', today)
-        .lte('reminder_date', nextWeek)
-        .order('reminder_date', { ascending: true })
-        .order('reminder_time', { ascending: true });
-
-      if (!remindersError) {
-        setReminders(remindersData || []);
-      }
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   React.useEffect(() => {
     if (user) {
-      loadDashboardData();
       loadTodayAffirmation();
     }
   }, [user]);

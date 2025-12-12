@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, MapPin, Users } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users } from 'lucide-react';
 import { supabase, Event } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { LocationAutocomplete } from '../LocationAutocomplete';
+import {
+  FormField,
+  TextInput,
+  TextArea,
+  SelectInput,
+  CheckboxInput,
+  FormButtons,
+  GridLayout,
+} from '../shared/FormFields';
 
 interface EventFormProps {
   defaultDate?: string;
@@ -110,101 +119,68 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-      <div>
-        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-          Event Title *
-        </label>
-        <input
-          type="text"
-          required
+      <FormField label="Event Title" required>
+        <TextInput
           value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          onChange={(value) => setFormData({ ...formData, title: value })}
           placeholder="Enter event title"
+          required
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-          Description
-        </label>
-        <textarea
+      <FormField label="Description">
+        <TextArea
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-          rows={2}
+          onChange={(value) => setFormData({ ...formData, description: value })}
           placeholder="Event description"
         />
-      </div>
+      </FormField>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-            Date *
-          </label>
-          <input
+      <GridLayout>
+        <FormField label="Date" icon={Calendar} required>
+          <TextInput
             type="date"
-            required
             value={formData.event_date}
-            onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-            className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+            onChange={(value) => setFormData({ ...formData, event_date: value })}
+            required
           />
-        </div>
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-            Event Type
-          </label>
-          <select
+        </FormField>
+        <FormField label="Event Type">
+          <SelectInput
             value={formData.event_type}
-            onChange={(e) => setFormData({ ...formData, event_type: e.target.value as any })}
-            className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-          >
-            <option value="sports">Sports</option>
-            <option value="party">Party</option>
-            <option value="meeting">Meeting</option>
-            <option value="medical">Medical</option>
-            <option value="school">School</option>
-            <option value="family">Family</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-      </div>
+            onChange={(value) => setFormData({ ...formData, event_type: value as any })}
+            options={[
+              { value: 'sports', label: 'Sports' },
+              { value: 'party', label: 'Party' },
+              { value: 'meeting', label: 'Meeting' },
+              { value: 'medical', label: 'Medical' },
+              { value: 'school', label: 'School' },
+              { value: 'family', label: 'Family' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+        </FormField>
+      </GridLayout>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-            <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-            Start Time
-          </label>
-          <input
+      <GridLayout>
+        <FormField label="Start Time" icon={Clock}>
+          <TextInput
             type="time"
             value={formData.start_time}
-            onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-            className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+            onChange={(value) => setFormData({ ...formData, start_time: value })}
           />
-        </div>
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-            <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-            End Time
-          </label>
-          <input
+        </FormField>
+        <FormField label="End Time" icon={Clock}>
+          <TextInput
             type="time"
             value={formData.end_time}
-            onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-            className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+            onChange={(value) => setFormData({ ...formData, end_time: value })}
           />
-        </div>
-      </div>
+        </FormField>
+      </GridLayout>
 
       {/* Location with Google Places autocomplete (with fallback handled inside the component) */}
-      <div>
-        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-          Location
-        </label>
-
+      <FormField label="Location" icon={MapPin}>
         <LocationAutocomplete
           value={formData.location}
           onChange={(value: string) => setFormData((prev) => ({ ...prev, location: value }))}
@@ -214,65 +190,43 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
             setFormData((prev) => ({ ...prev, location: name || prev.location }));
           }}
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-          <Users className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-          Participants
-        </label>
-        <input
-          type="text"
+      <FormField label="Participants" icon={Users}>
+        <TextInput
           value={formData.participants}
-          onChange={(e) => setFormData({ ...formData, participants: e.target.value })}
-          className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+          onChange={(value) => setFormData({ ...formData, participants: value })}
           placeholder="Emma, Tom (comma separated)"
         />
-      </div>
+      </FormField>
 
       <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-        <label className="flex items-center">
-          <input
-            type="checkbox"
-            checked={formData.rsvp_required}
-            onChange={(e) => setFormData({ ...formData, rsvp_required: e.target.checked })}
-            className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-          />
-          <span className="ml-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-            RSVP Required
-          </span>
-        </label>
+        <CheckboxInput
+          checked={formData.rsvp_required}
+          onChange={(checked) => setFormData({ ...formData, rsvp_required: checked })}
+          label="RSVP Required"
+        />
 
         {formData.rsvp_required && (
-          <select
+          <SelectInput
             value={formData.rsvp_status}
-            onChange={(e) => setFormData({ ...formData, rsvp_status: e.target.value as any })}
-            className="px-2 py-1 sm:px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="pending">Pending</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-            <option value="maybe">Maybe</option>
-          </select>
+            onChange={(value) => setFormData({ ...formData, rsvp_status: value as any })}
+            options={[
+              { value: 'pending', label: 'Pending' },
+              { value: 'yes', label: 'Yes' },
+              { value: 'no', label: 'No' },
+              { value: 'maybe', label: 'Maybe' },
+            ]}
+            className="px-2 py-1 sm:px-3 text-xs sm:text-sm"
+          />
         )}
       </div>
 
-      <div className="flex space-x-2 sm:space-x-3 pt-3 sm:pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm sm:text-base"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 px-3 py-2 sm:px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 text-sm sm:text-base"
-        >
-          {loading ? 'Saving...' : event ? 'Update Event' : 'Create Event'}
-        </button>
-      </div>
+      <FormButtons
+        onCancel={onCancel}
+        loading={loading}
+        submitLabel={event ? 'Update Event' : 'Create Event'}
+      />
     </form>
   );
 }
