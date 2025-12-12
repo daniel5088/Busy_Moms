@@ -328,6 +328,7 @@ export function Calendar() {
 
   const handleEventSaved = useCallback(() => {
     setShowEventForm(false);
+    setSelectedEvent(null);
     void loadEvents();
   }, [loadEvents]);
 
@@ -507,7 +508,10 @@ export function Calendar() {
 
                 {/* Add Event Button */}
                 <button
-                  onClick={() => setShowEventForm(true)}
+                  onClick={() => {
+                    setSelectedEvent(null);
+                    setShowEventForm(true);
+                  }}
                   className="w-full mt-6 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2"
                 >
                   <Plus className="w-5 h-5" />
@@ -531,7 +535,10 @@ export function Calendar() {
                       <CalendarIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                       <p className="text-gray-500 dark:text-gray-400">No events for this day</p>
                       <button
-                        onClick={() => setShowEventForm(true)}
+                        onClick={() => {
+                          setSelectedEvent(null);
+                          setShowEventForm(true);
+                        }}
                         className="mt-4 px-4 py-2 bg-rose-500 text-white rounded-xl text-sm font-medium hover:bg-rose-600 transition-colors"
                       >
                         Add Event
@@ -550,10 +557,10 @@ export function Calendar() {
                           className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
                         >
                           <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors break-words flex-1 pr-2">
                               {ev.title}
                             </h3>
-                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap flex-shrink-0">
                               {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
                             </span>
                           </div>
@@ -677,10 +684,13 @@ export function Calendar() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-semibold text-xl text-gray-900 dark:text-gray-100">
-                  Create Event
+                  {selectedEvent ? 'Edit Event' : 'Create Event'}
                 </h4>
                 <button
-                  onClick={() => setShowEventForm(false)}
+                  onClick={() => {
+                    setShowEventForm(false);
+                    setSelectedEvent(null);
+                  }}
                   className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   <X className="w-4 h-4" />
