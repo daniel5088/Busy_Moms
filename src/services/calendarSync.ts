@@ -243,7 +243,11 @@ export class CalendarSyncService {
   /**
    * Convert Google Calendar event to local event format
    */
-  googleEventToLocal(googleEvent: GoogleCalendarEvent, userId: string): Partial<Event> {
+  async googleEventToLocal(
+    googleEvent: GoogleCalendarEvent,
+    userId: string,
+    geocode: boolean = true
+  ): Promise<Partial<Event>> {
     // Extract date and time from Google Calendar event
     let event_date = '';
     let start_time = null;
@@ -263,6 +267,23 @@ export class CalendarSyncService {
       }
     }
 
+    // Geocode location if available and requested
+    let location_lat = null;
+    let location_lng = null;
+
+    if (geocode && googleEvent.location) {
+      try {
+        const { geocodeLocation } = await import('./geocoding');
+        const geocodeResult = await geocodeLocation(googleEvent.location);
+        if (geocodeResult) {
+          location_lat = geocodeResult.lat;
+          location_lng = geocodeResult.lng;
+        }
+      } catch (error) {
+        console.error('Error geocoding Google Calendar event location:', error);
+      }
+    }
+
     return {
       user_id: userId,
       title: googleEvent.summary || 'Untitled Event',
@@ -271,6 +292,8 @@ export class CalendarSyncService {
       start_time,
       end_time,
       location: googleEvent.location || null,
+      location_lat,
+      location_lng,
       participants: googleEvent.attendees?.map((a) => a.email || a.displayName || '') || null,
       event_type: 'other',
       source: 'google',

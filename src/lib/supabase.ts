@@ -40,6 +40,10 @@ export interface Event {
   start_time?: string | null; // HH:MM:SS
   end_time?: string | null; // HH:MM:SS
   location?: string | null;
+  location_lat?: number | null; // Geocoded latitude
+  location_lng?: number | null; // Geocoded longitude
+  travel_time_minutes?: number | null; // Cached travel time from default address
+  travel_time_updated_at?: string | null; // When travel time was last calculated
   participants?: string[] | null;
   event_type?: string | null;
   rsvp_required?: boolean | null;
