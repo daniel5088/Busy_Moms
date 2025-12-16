@@ -327,24 +327,7 @@ export function DashboardV4Experimental({
             </div>
           </div>
 
-          {/* Mini Stats */}
-          <div className="bg-white bg-opacity-10 dark:bg-gray-900 dark:bg-opacity-50 rounded-xl p-3">
-            <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
-              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
-                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{events.length} events</span>
-              </button>
-              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
-                <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{tasks.length} shopping list</span>
-              </button>
-              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
-                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{reminders.length} reminders</span>
-              </button>
-            </div>
-          </div>
-        </div>
+
 
         <div className="p-4 space-y-4 sm:p-6 sm:space-y-6">
           {/* Side-by-side Schedule Cards */}
