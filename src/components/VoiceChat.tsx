@@ -1,16 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Mic,
-  MicOff,
-  Phone,
-  PhoneOff,
-  Video,
-  VideoOff,
-  Volume2,
-  VolumeX,
-  Users,
-  X,
-} from 'lucide-react';
+import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff, Volume2, VolumeX, Users, X } from 'lucide-react';
 import { webrtcService } from '../services/webrtcService';
 import { useAuth } from '../hooks/useAuth';
 
@@ -28,7 +17,7 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
   const [isVideoEnabled, setIsVideoEnabled] = useState(false);
   const [connectionState, setConnectionState] = useState<RTCPeerConnectionState>('new');
   const [error, setError] = useState<string | null>(null);
-
+  
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -38,7 +27,7 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
     if (isOpen && user) {
       initializeConnection();
     }
-
+    
     return () => {
       if (isOpen) {
         cleanup();
@@ -48,10 +37,10 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
 
   const initializeConnection = async () => {
     if (!user) return;
-
+    
     setIsConnecting(true);
     setError(null);
-
+    
     try {
       // Check WebRTC support
       if (!webrtcService.constructor.isSupported()) {
@@ -62,7 +51,7 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
       await webrtcService.initializePeerConnection({
         audio: true,
         video: isVideoEnabled,
-        dataChannel: true,
+        dataChannel: true
       });
 
       // Set up event handlers
@@ -101,7 +90,7 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
   const toggleMute = () => {
     if (localStreamRef.current) {
       const audioTracks = localStreamRef.current.getAudioTracks();
-      audioTracks.forEach((track) => {
+      audioTracks.forEach(track => {
         track.enabled = isMuted;
       });
       setIsMuted(!isMuted);
@@ -114,24 +103,24 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
         // Turn off video
         if (localStreamRef.current) {
           const videoTracks = localStreamRef.current.getVideoTracks();
-          videoTracks.forEach((track) => track.stop());
+          videoTracks.forEach(track => track.stop());
         }
         setIsVideoEnabled(false);
       } else {
         // Turn on video
         const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
         const videoTrack = videoStream.getVideoTracks()[0];
-
+        
         if (localStreamRef.current && videoTrack) {
           localStreamRef.current.addTrack(videoTrack);
-
+          
           // Add to peer connection if connected
           const pc = webrtcService['peerConnection'];
           if (pc) {
             pc.addTrack(videoTrack, localStreamRef.current);
           }
         }
-
+        
         setIsVideoEnabled(true);
       }
     } catch (error) {
@@ -154,35 +143,24 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
 
   const getConnectionStatusColor = () => {
     switch (connectionState) {
-      case 'connected':
-        return 'text-green-600';
-      case 'connecting':
-        return 'text-yellow-600';
+      case 'connected': return 'text-green-600';
+      case 'connecting': return 'text-yellow-600';
       case 'disconnected':
       case 'failed':
-      case 'closed':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
+      case 'closed': return 'text-red-600';
+      default: return 'text-gray-600';
     }
   };
 
   const getConnectionStatusText = () => {
     switch (connectionState) {
-      case 'new':
-        return 'Initializing...';
-      case 'connecting':
-        return 'Connecting...';
-      case 'connected':
-        return 'Connected';
-      case 'disconnected':
-        return 'Disconnected';
-      case 'failed':
-        return 'Connection failed';
-      case 'closed':
-        return 'Connection closed';
-      default:
-        return 'Unknown';
+      case 'new': return 'Initializing...';
+      case 'connecting': return 'Connecting...';
+      case 'connected': return 'Connected';
+      case 'disconnected': return 'Disconnected';
+      case 'failed': return 'Connection failed';
+      case 'closed': return 'Connection closed';
+      default: return 'Unknown';
     }
   };
 
@@ -199,7 +177,9 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Family Voice Chat</h3>
-              <p className={`text-sm ${getConnectionStatusColor()}`}>{getConnectionStatusText()}</p>
+              <p className={`text-sm ${getConnectionStatusColor()}`}>
+                {getConnectionStatusText()}
+              </p>
             </div>
           </div>
           <button
@@ -220,7 +200,7 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
             className="w-full h-full object-cover"
             style={{ display: isConnected ? 'block' : 'none' }}
           />
-
+          
           {/* Local Video Preview */}
           <div className="absolute bottom-4 right-4 w-48 h-36 bg-gray-800 rounded-lg overflow-hidden">
             <video
@@ -277,8 +257,8 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
           <button
             onClick={toggleMute}
             className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-              isMuted
-                ? 'bg-red-500 text-white hover:bg-red-600'
+              isMuted 
+                ? 'bg-red-500 text-white hover:bg-red-600' 
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
             title={isMuted ? 'Unmute' : 'Mute'}
@@ -289,8 +269,8 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
           <button
             onClick={toggleVideo}
             className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-              isVideoEnabled
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
+              isVideoEnabled 
+                ? 'bg-blue-500 text-white hover:bg-blue-600' 
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
             title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
@@ -316,8 +296,7 @@ export function VoiceChat({ isOpen, onClose, roomId = 'family-chat' }: VoiceChat
         {!webrtcService.constructor.isSupported() && (
           <div className="p-4 bg-yellow-50 border-t border-yellow-200">
             <p className="text-sm text-yellow-800">
-              ⚠️ WebRTC is not supported in this browser. Please use a modern browser like Chrome,
-              Firefox, or Safari.
+              ⚠️ WebRTC is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.
             </p>
           </div>
         )}
