@@ -1,6 +1,8 @@
 // supabase/functions/instacart-shopping-list/index.ts
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 
+declare const Deno: any;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -8,23 +10,12 @@ const corsHeaders = {
     'Content-Type, Authorization, X-Client-Info, Apikey, x-correlation-id',
 };
 
-interface InstacartShoppingListItem {
-  name: string;
-  quantity?: number;
-  unit?: string;
-  category?: string;
-}
-
 interface CreateShoppingListRequest {
-  items: InstacartShoppingListItem[];
+  // Either a list of items...
+  items?: Array<{ name: string; quantity?: number; unit?: string }>;
+  // ...or a natural-language sentence:
+  shoppingSentence?: string;
   title?: string;
-  // Accept retailer_key from the client for preference tracking only.
-  // Do NOT forward retailer_key to Instacart Connect products_link.
-  retailer_key?: string;
-}
-
-interface InstacartShoppingListResponse {
-  products_link_url: string;
 }
 
 interface GetNearbyRetailersRequest {
@@ -85,22 +76,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // 🔹 Env switch
     const instacartEnv = Deno.env.get('INSTACART_ENV') || 'development';
     const instacartBaseUrl =
       instacartEnv === 'production'
         ? 'https://connect.instacart.com'
         : 'https://connect.dev.instacart.tools';
-
-    console.log(
-      JSON.stringify({
-        level: 'info',
-        msg: 'Instacart environment',
-        correlationId,
-        environment: instacartEnv,
-        baseUrl: instacartBaseUrl,
-      }),
-    );
 
     const body = await req.json();
     const action = body?.action;
@@ -119,34 +99,99 @@ Deno.serve(async (req: Request) => {
     }
 
     switch (action) {
+      /**
+       * create_shopping_list
+       *
+       * This now delegates to the instacart-agent MCP function to keep all
+       * MCP logic in a single place. You can still call this from your app
+       * if you have existing code that expects the old shape.
+       */
       case 'create_shopping_list': {
-        const listRequest: CreateShoppingListRequest = payload;
+        const reqBody: CreateShoppingListRequest = payload;
 
-        if (!listRequest.items || listRequest.items.length === 0) {
-          return json({ error: 'At least one item is required' }, 400, correlationId);
+        // If the caller passed a natural-language sentence, send that
+        if (reqBody.shoppingSentence && typeof reqBody.shoppingSentence === 'string') {
+          // Call the instacart-agent function with tool = create-shopping-list
+          const agentUrl = new URL(req.url);
+          // Replace current path with instacart-agent (works on Supabase Edge)
+          const instacartAgentUrl = agentUrl.href.replace(
+            /\/instacart-shopping-list(\/)?$/,
+            '/instacart-agent',
+          );
+
+          console.log(
+            JSON.stringify({
+              level: 'info',
+              msg: 'Delegating to instacart-agent (MCP)',
+              correlationId,
+              instacartAgentUrl,
+            }),
+          );
+
+          const res = await fetch(instacartAgentUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-correlation-id': correlationId,
+              Authorization: req.headers.get('Authorization') ?? '',
+              apikey: req.headers.get('apikey') ?? '',
+            },
+            body: JSON.stringify({
+              shoppingSentence: reqBody.shoppingSentence,
+              tool: 'create-shopping-list',
+            }),
+          });
+
+          const text = await res.text();
+          let data: any;
+          try {
+            data = text ? JSON.parse(text) : {};
+          } catch {
+            data = { raw: text };
+          }
+
+          if (!res.ok || data?.status === 'error') {
+            return json(
+              {
+                error: 'instacart-agent failed to create shopping list',
+                http_status: res.status,
+                details: data,
+              },
+              500,
+              correlationId,
+            );
+          }
+
+          // Pass through MCP agent response shape
+          return json(data, 200, correlationId);
         }
 
-        const line_items = listRequest.items.map((item) => {
-          const li: Record<string, unknown> = {
-            name: String(item.name ?? '').trim(),
-          };
+        // If they passed an explicit items array, keep the old Connect behavior.
+        const listItems = Array.isArray(reqBody.items) ? reqBody.items : [];
+        if (!listItems.length) {
+          return json(
+            {
+              error:
+                'Either shoppingSentence or a non-empty items array is required',
+            },
+            400,
+            correlationId,
+          );
+        }
 
-          if (!li.name) li.name = 'item';
-
+        const line_items = listItems.map((item) => {
+          const li: any = { name: String(item.name ?? '').trim() || 'item' };
           if (typeof item.quantity === 'number' && item.quantity > 0) {
             li.quantity = item.quantity;
           }
-
           if (typeof item.unit === 'string' && item.unit.trim().length > 0) {
             li.unit = item.unit.trim();
           }
-
           return li;
         });
 
-        // Build final payload for Instacart Connect products_link. Note: retailer_key is intentionally excluded.
-        const instacartPayload = {
-          title: listRequest.title || 'Shopping List',
+        const connectPayload = {
+          title: reqBody.title || 'Shopping List',
           line_items,
         };
 
@@ -155,10 +200,10 @@ Deno.serve(async (req: Request) => {
         console.log(
           JSON.stringify({
             level: 'info',
-            msg: 'Calling Instacart create_shopping_list',
+            msg: 'Calling Instacart Connect API: products_link (direct items)',
             correlationId,
             endpoint,
-            payload: instacartPayload,
+            payload: connectPayload,
           }),
         );
 
@@ -169,22 +214,11 @@ Deno.serve(async (req: Request) => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${instacartApiKey}`,
           },
-          body: JSON.stringify(instacartPayload),
+          body: JSON.stringify(connectPayload),
         });
 
         const contentType = response.headers.get('content-type');
         const responseText = await response.text();
-
-        console.log(
-          JSON.stringify({
-            level: 'info',
-            msg: 'Instacart create_shopping_list raw response',
-            correlationId,
-            status: response.status,
-            contentType,
-            responseText,
-          }),
-        );
 
         let responseData: any;
         try {
@@ -197,16 +231,6 @@ Deno.serve(async (req: Request) => {
         }
 
         if (!response.ok) {
-          console.error(
-            JSON.stringify({
-              level: 'error',
-              msg: 'Instacart API error (create_shopping_list)',
-              correlationId,
-              status: response.status,
-              endpoint,
-              details: responseData,
-            }),
-          );
           return json(
             {
               error: 'Failed to create Instacart shopping list',
@@ -218,20 +242,36 @@ Deno.serve(async (req: Request) => {
           );
         }
 
-        const link = (responseData as InstacartShoppingListResponse)
-          .products_link_url;
+        const link = responseData?.products_link_url || '';
+        if (!link) {
+          return json(
+            {
+              error: 'Connect API did not return shopping list URL',
+              details: responseData,
+            },
+            500,
+            correlationId,
+          );
+        }
 
         return json(
           {
             status: 'success',
             instacart_list_url: link,
             products_link_url: link,
+            shopping_list_url: link,
           },
           200,
           correlationId,
         );
       }
 
+      /**
+       * get_nearby_retailers
+       *
+       * This still uses the Connect REST API directly since MCP only provides
+       * recipe + shopping list tools.
+       */
       case 'get_nearby_retailers': {
         const retailerRequest: GetNearbyRetailersRequest = payload;
 
@@ -290,16 +330,6 @@ Deno.serve(async (req: Request) => {
         }
 
         if (!response.ok) {
-          console.error(
-            JSON.stringify({
-              level: 'error',
-              msg: 'Instacart Connect API error (retailers)',
-              correlationId,
-              status: response.status,
-              details: responseData,
-            }),
-          );
-
           return json(
             {
               error: 'Failed to get nearby retailers',
@@ -337,7 +367,8 @@ Deno.serve(async (req: Request) => {
 
     return json(
       {
-        error: error instanceof Error ? error.message : 'An unexpected error occurred',
+        error:
+          error instanceof Error ? error.message : 'An unexpected error occurred',
       },
       500,
       correlationId,
