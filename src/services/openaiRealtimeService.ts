@@ -1,5 +1,5 @@
 import { aiAssistantService } from './aiAssistantService';
-import { sendToInstacart } from './instacartAgentService';
+import { sendToInstacartSmart } from './instacartAgentService';
 import { supabase } from "../lib/supabase";
 
 // Fallback minimal speech types (safe for TS projects without full lib.dom)
@@ -106,6 +106,11 @@ export class OpenAIRealtimeService extends Emitter {
   async unmute() { if (this.micStream) this.micStream.getAudioTracks().forEach(t => (t.enabled = true)); }
   async interrupt() { this.buffer = []; }
 
+  /**
+   * Text messages from the UI.
+   * We intercept anything that looks like an Instacart request and route it
+   * to our Instacart agent instead of the Realtime model.
+   */
   sendMessage(text: string) {
     const lower = text.toLowerCase();
 
@@ -121,8 +126,10 @@ export class OpenAIRealtimeService extends Emitter {
       // Emit UI event so the chat bubble appears immediately
       this.emitUI({ type: "instacart.order.started", text });
 
-      sendToInstacart(text)
-        .then((result) => this.emitUI({ type: "instacart.order.result", data: result }))
+      sendToInstacartSmart(text)
+        .then((result) =>
+          this.emitUI({ type: "instacart.order.result", data: result })
+        )
         .catch((error) =>
           this.emitUI({
             type: "instacart.order.error",
@@ -610,9 +617,9 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   /**
+   * (Older helper – not used when calling sendToInstacartSmart directly)
    * Place an Instacart order by sending a natural-language shopping sentence
    * to the backend endpoint `/api/instacart-order`.
-   * Emits `instacart.order.result` on success and `instacart.order.error` on failure.
    */
   async placeInstacartOrder(shoppingSentence: string): Promise<any> {
     try {
@@ -658,10 +665,10 @@ export class OpenAIRealtimeService extends Emitter {
             
             this.emitUI({ type: 'instacart.order.started', text: transcript });
             
-            console.log('🛒 Calling sendToInstacart...');
+            console.log('🛒 Calling sendToInstacartSmart...');
             
             try {
-              const result = await sendToInstacart(transcript);
+              const result = await sendToInstacartSmart(transcript);
               console.log('🛒🛒🛒 INSTACART RESULT:', result);
               console.log('🛒 Result items:', result.items);
               console.log('🛒 Result status:', result.status);
@@ -722,8 +729,8 @@ export class OpenAIRealtimeService extends Emitter {
               // Cancel the AI response and handle Instacart instead
               this.emitUI({ type: 'instacart.order.started', text: transcript });
               
-              console.log('🛒 Calling sendToInstacart...');
-              sendToInstacart(transcript)
+              console.log('🛒 Calling sendToInstacartSmart...');
+              sendToInstacartSmart(transcript)
                 .then(result => {
                   console.log('🛒✅ Instacart success:', result);
                   this.emitUI({ type: 'instacart.order.result', data: result });
