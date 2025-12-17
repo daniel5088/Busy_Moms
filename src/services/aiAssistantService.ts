@@ -8,7 +8,13 @@ import {
   FamilyMember,
 } from '../lib/supabase';
 import { openaiService } from './openai';
-import { ICalendarProvider, LocalCalendarProvider, CalendarEventInput } from './calendarProvider';
+
+import { instacartShoppingService } from './instacartShoppingService';
+import {
+  ICalendarProvider,
+  LocalCalendarProvider,
+  CalendarEventInput,
+} from './calendarProvider';
 import { calendarContextService } from './calendarContext';
 
 /** Central brain for "Sara" — routes natural language to concrete app actions. */
@@ -69,8 +75,12 @@ function toISODate(input?: string | number | Date | unknown): string | null {
   const m2 = s.match(/^(\d{1,2})[\/-](\d{1,2})$/);
   if (m2) {
     const year = new Date().getFullYear();
-    const mm = String(Math.max(1, Math.min(12, parseInt(m2[1], 10)))).padStart(2, '0');
-    const dd = String(Math.max(1, Math.min(31, parseInt(m2[2], 10)))).padStart(2, '0');
+    const mm = String(
+      Math.max(1, Math.min(12, parseInt(m2[1], 10))),
+    ).padStart(2, '0');
+    const dd = String(
+      Math.max(1, Math.min(31, parseInt(m2[2], 10))),
+    ).padStart(2, '0');
     return `${year}-${mm}-${dd}`;
   }
 
@@ -98,11 +108,15 @@ function toISOTime(input?: string | number | Date | unknown): string | null {
   if (!input) return null;
   const s = String(input).trim();
 
-  // "14:30" or "14"
+  // "14:30"
   const m = s.match(/^(\d{2}):(\d{2})$/);
   if (m) {
-    const hh = String(Math.max(0, Math.min(23, parseInt(m[1], 10)))).padStart(2, '0');
-    const mm = String(Math.max(0, Math.min(59, parseInt(m[2], 10)))).padStart(2, '0');
+    const hh = String(
+      Math.max(0, Math.min(23, parseInt(m[1], 10))),
+    ).padStart(2, '0');
+    const mm = String(
+      Math.max(0, Math.min(59, parseInt(m[2], 10))),
+    ).padStart(2, '0');
     return `${hh}:${mm}:00`;
   }
 
@@ -110,7 +124,10 @@ function toISOTime(input?: string | number | Date | unknown): string | null {
   const ampm = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
   if (ampm) {
     let h = Math.max(1, Math.min(12, parseInt(ampm[1], 10)));
-    const m2 = Math.max(0, Math.min(59, ampm[2] ? parseInt(ampm[2], 10) : 0));
+    const m2 = Math.max(
+      0,
+      Math.min(59, ampm[2] ? parseInt(ampm[2], 10) : 0),
+    );
     const suffix = ampm[3].toLowerCase();
     if (suffix === 'pm' && h !== 12) h += 12;
     if (suffix === 'am' && h === 12) h = 0;
@@ -123,8 +140,14 @@ function toISOTime(input?: string | number | Date | unknown): string | null {
   const m2 = s.match(/^(\d{1,2})(?::(\d{2}))?$/);
   if (m2) {
     const h = Math.max(0, Math.min(23, parseInt(m2[1], 10)));
-    const mm2 = Math.max(0, Math.min(59, m2[2] ? parseInt(m2[2], 10) : 0));
-    return `${String(h).padStart(2, '0')}:${String(mm2).padStart(2, '0')}:00`;
+    const mm2 = Math.max(
+      0,
+      Math.min(59, m2[2] ? parseInt(m2[2], 10) : 0),
+    );
+    return `${String(h).padStart(2, '0')}:${String(mm2).padStart(
+      2,
+      '0',
+    )}:00`;
   }
 
   const d = new Date(s);
@@ -140,8 +163,143 @@ function coerceInt(n: unknown, fallback: number | null = null): number | null {
   return Number.isFinite(v) ? v : fallback;
 }
 
+/**
+ * Very simple parser for sentences like:
+ * "add chicken in my instacart"
+ * "add bread and milk to my instacart"
+ * "put apples, bananas, and milk in my cart"
+ */
+function extractItemsFromInstacartSentence(message: string): string[] {
+  const text = String(message || '').toLowerCase().trim();
+
+  // Look for verbs + items + "to/in my instacart/cart/shopping list"
+  const match = text.match(
+    /(?:add|put|send|buy|get|need|order|shop)\s+(.+?)(?:\s+(?:to|in|into)\s+(?:my\s+)?(instacart|cart|shopping\s+list)|[.!?]|$)/,
+  );
+
+  let raw = match?.[1] || '';
+
+  if (!raw) {
+    // Fallback: if they at least said "instacart", guess "everything after add/put/buy"
+    const simple = text.match(
+      /(?:add|put|send|buy|get|need|order|shop)\s+(.+)/,
+    );
+    raw = simple?.[1] || '';
+  }
+
+  if (!raw) return [];
+
+  // Split on commas and "and"
+  const pieces = raw
+    .split(/,| and /i)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  // Clean up tiny filler words
+  const cleaned = pieces.map((p) =>
+    p
+      .replace(/\b(some|a|an|the|my)\b/gi, '')
+      .trim(),
+  );
+
+  // Dedup, remove empties
+  return Array.from(new Set(cleaned.filter(Boolean)));
+}
+
+function getInstacartItemNames(result: any): string[] {
+  console.log('🔍 Processing Instacart result:', JSON.stringify(result, null, 2));
+
+  if (!result) {
+    console.log('❌ No result provided');
+    return [];
+  }
+
+  // Handle different possible response structures
+  let itemsArray: any[] = [];
+
+  if (Array.isArray(result.items)) {
+    itemsArray = result.items;
+  } else if (Array.isArray(result.data?.items)) {
+    itemsArray = result.data.items;
+  } else if (Array.isArray(result)) {
+    itemsArray = result;
+  } else {
+    console.log('❌ Could not find items array in result');
+    return [];
+  }
+  console.log('📦 Items array:', itemsArray);
+
+  const names = itemsArray
+    .map((it: any, index: number) => {
+      // If it's already a string, use it
+      if (typeof it === 'string') {
+        console.log(`✅ Item ${index}: direct string "${it}"`);
+        return it.trim();
+      }
+
+      // If it's null or undefined, skip it
+      if (!it || typeof it !== 'object') {
+        console.log(`⚠️ Item ${index}: invalid type`, typeof it);
+        return '';
+      }
+
+      // Try multiple possible field names for the item name
+      // Prioritize 'name' first since that's what Instacart uses
+      const possibleNames = [
+        it.name,
+        it.displayText,
+        it.display_text,
+        it.item,
+        it.label,
+        it.title,
+        it.product_name,
+        it.productName,
+        it.description,
+        it.text,
+        it.item_name,
+        it.itemName,
+      ];
+
+      // Find the first valid name
+      for (const name of possibleNames) {
+        if (typeof name === 'string' && name.trim()) {
+          console.log(`✅ Item ${index}: found name "${name}" in field`);
+          return name.trim();
+        }
+      }
+
+      // If we still don't have a name, log the entire object
+      console.warn(
+        `⚠️ Item ${index}: Could not extract name from:`,
+        JSON.stringify(it),
+      );
+      return '';
+    })
+    .filter((s: string) => {
+      if (!s) return false;
+      const lower = s.toLowerCase();
+      // Filter out [object Object] and similar issues
+      return (
+        lower !== '[object object]' &&
+        lower !== 'object object' &&
+        lower !== 'undefined' &&
+        lower !== 'null'
+      );
+    });
+
+  // Remove duplicates
+  const uniqueNames = Array.from(new Set(names));
+
+  console.log('✅ Final extracted item names:', uniqueNames);
+
+  return uniqueNames;
+}
+
 /** ---- AI parsing -------------------------------------------------------- */
-async function classifyMessage(message: string, calendarSummary: string): Promise<IntentResult> {
+async function classifyMessage(
+  message: string,
+  calendarSummary: string,
+): Promise<IntentResult> {
   const today = new Date().toISOString().split('T')[0];
 
   console.log('🤖 Classifying message:', message);
@@ -171,21 +329,7 @@ For task creation: {"type": "task", "details": {"title": "task name", "category"
 For task queries: {"type": "task_query", "details": {"query_type": "all|pending|in_progress|completed|search|assigned_to", "search_term": "keyword", "assigned_to": "person name"}}
 For task updates: {"type": "task_update", "details": {"search_term": "task to find", "updates": {"status": "pending|in_progress|completed|cancelled", "priority": "low|medium|high", "date": "new date"}}}
 For task deletion: {"type": "task_delete", "details": {"search_term": "task to delete"}}
-For chat: {"type": "chat", "details": {"query": "user question"}}
-
-Examples:
-"add milk to shopping list" -> {"type": "shopping", "details": {"title": "milk", "category": "dairy", "quantity": 1}}
-"what's on my shopping list" -> {"type": "shopping_query", "details": {"query_type": "all"}}
-"mark milk as bought" -> {"type": "shopping_update", "details": {"search_term": "milk", "updates": {"completed": true}}}
-"remove bread from shopping list" -> {"type": "shopping_delete", "details": {"search_term": "bread"}}
-"add my daughter Emma age 8" -> {"type": "family", "details": {"name": "Emma", "age": 8, "gender": "Girl"}}
-"who's in my family" -> {"type": "family_query", "details": {"query_type": "all"}}
-"update Emma's age to 9" -> {"type": "family_update", "details": {"search_term": "Emma", "updates": {"age": 9}}}
-"remind me to call mom tomorrow at 3pm" -> {"type": "reminder", "details": {"title": "call mom", "date": "tomorrow", "time": "15:00:00"}}
-"schedule dentist appointment next Friday" -> {"type": "calendar", "details": {"title": "dentist appointment", "date": "next Friday"}}
-"what's on my calendar today" -> {"type": "calendar_query", "details": {"query_type": "today"}}
-"create task to clean room" -> {"type": "task", "details": {"title": "clean room", "category": "chores"}}
-"what tasks do I have" -> {"type": "task_query", "details": {"query_type": "all"}}`;
+For chat: {"type": "chat", "details": {"query": "user question"}}`;
 
   try {
     const response = await openaiService.chat([
@@ -195,14 +339,13 @@ Examples:
 
     console.log('🤖 AI classification response:', response);
 
-    // Extract JSON from response
     const payload = JSON.parse(response) as IntentResult;
     console.log('🎯 Parsed intent:', payload);
     return payload;
   } catch (e: unknown) {
     console.error(
       '❌ LLM classify failed, using fallback:',
-      e instanceof Error ? e.message : String(e)
+      e instanceof Error ? e.message : String(e),
     );
     return fallbackClassify(message);
   }
@@ -220,18 +363,19 @@ function fallbackClassify(message: string): IntentResult {
     /\b(buy|get|need)\b.*\b(milk|bread|eggs|groceries)\b/.test(lower)
   ) {
     const itemMatch = lower.match(
-      /(?:add|put|buy|get|need)\s+([^.!?]+?)(?:\s+(?:to|on|in)\s+(?:the\s+)?(?:shopping\s+)?list)?$/
+      /(?:add|put|buy|get|need)\s+([^.!?]+?)(?:\s+(?:to|on|in)\s+(?:the\s+)?(?:shopping\s+)?list)?$/,
     );
     const title = itemMatch?.[1]?.trim() || message;
 
-    // Determine category
     let category = 'other';
     if (/\b(milk|cheese|yogurt|butter)\b/.test(lower)) category = 'dairy';
-    else if (/\b(apple|banana|carrot|lettuce|fruit|vegetable)\b/.test(lower)) category = 'produce';
+    else if (/\b(apple|banana|carrot|lettuce|fruit|vegetable)\b/.test(lower))
+      category = 'produce';
     else if (/\b(chicken|beef|fish|meat)\b/.test(lower)) category = 'meat';
     else if (/\b(bread|cake|muffin|bakery)\b/.test(lower)) category = 'bakery';
     else if (/\b(diaper|formula|baby|wipes)\b/.test(lower)) category = 'baby';
-    else if (/\b(soap|detergent|cleaner|household)\b/.test(lower)) category = 'household';
+    else if (/\b(soap|detergent|cleaner|household)\b/.test(lower))
+      category = 'household';
 
     return { type: 'shopping', details: { title, category } };
   }
@@ -239,36 +383,45 @@ function fallbackClassify(message: string): IntentResult {
   // Reminder patterns
   if (/\bremind\s+me\b/.test(lower) || /\bset\s+(?:a\s+)?reminder\b/.test(lower)) {
     const titleMatch = lower.match(
-      /remind\s+me\s+to\s+([^.!?]+)|set\s+(?:a\s+)?reminder\s+(?:to\s+)?([^.!?]+)/
+      /remind\s+me\s+to\s+([^.!?]+)|set\s+(?:a\s+)?reminder\s+(?:to\s+)?([^.!?]+)/,
     );
-    const title = titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
+    const title =
+      titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
 
     const date = toISODate(
       lower.match(
-        /\b(today|tomorrow|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?|\d{4}-\d{2}-\d{2})\b/
-      )?.[0]
+        /\b(today|tomorrow|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?|\d{4}-\d{2}-\d{2})\b/,
+      )?.[0],
     );
     const time = toISOTime(
-      lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]
+      lower.match(
+        /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/,
+      )?.[0],
     );
 
     return { type: 'reminder', details: { title, date, time } };
   }
 
   // Task patterns
-  if (/\b(task|todo|to\s+do|assign)\b/.test(lower) || /\bcreate\s+(?:a\s+)?task\b/.test(lower)) {
+  if (
+    /\b(task|todo|to\s+do|assign)\b/.test(lower) ||
+    /\bcreate\s+(?:a\s+)?task\b/.test(lower)
+  ) {
     const titleMatch = lower.match(
-      /(?:create|add|make)\s+(?:a\s+)?(?:new\s+)?task\s+(?:called|named)?\s*([^.!?]+)|^(.+)$/
+      /(?:create|add|make)\s+(?:a\s+)?(?:new\s+)?task\s+(?:called|named)?\s*([^.!?]+)|^(.+)$/,
     );
-    const title = titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
+    const title =
+      titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
 
     const date = toISODate(
       lower.match(
-        /\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/
-      )?.[0]
+        /\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/,
+      )?.[0],
     );
     const time = toISOTime(
-      lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]
+      lower.match(
+        /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/,
+      )?.[0],
     );
 
     return { type: 'task', details: { title, date, time } };
@@ -278,11 +431,13 @@ function fallbackClassify(message: string): IntentResult {
   if (/\b(event|meeting|appointment|schedule)\b/.test(lower) || /\bon\s+\d/.test(lower)) {
     const date = toISODate(
       lower.match(
-        /\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/
-      )?.[0]
+        /\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/,
+      )?.[0],
     );
     const time = toISOTime(
-      lower.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/)?.[0]
+      lower.match(
+        /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/,
+      )?.[0],
     );
 
     return { type: 'calendar', details: { title: message, date, time } };
@@ -304,24 +459,160 @@ class AIAssistantService {
     this.calendarProvider = provider;
   }
 
-  /** Entry point for a user's message */
+  /**
+   * Entry point for BOTH text and voice (voice just passes the transcript here).
+   */
   async processUserMessage(
     message: string,
     userId: UUID,
-    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   ): Promise<AIAction> {
     console.log('🎯 Processing user message:', message, 'for user:', userId);
 
+    // 🔹 Instacart Intercept (text + voice)
     try {
-      const calendarContext = await calendarContextService.getCalendarContext(userId);
-      const intent = await classifyMessage(message, calendarContext.summary);
-      console.log('🧠 Classified intent:', intent);
+      const lowerText = String(message || '').toLowerCase();
+
+      // Only intercept if they clearly want Instacart + an "add/shop" verb
+      const mentionsInstacart =
+        lowerText.includes('instacart') || lowerText.includes('my cart');
+      const hasActionVerb = /(add|put|send|buy|order|shop|get|need)\b/.test(
+        lowerText,
+      );
+
+      if (mentionsInstacart && hasActionVerb) {
+        console.log('🛒 Detected Instacart add-to-cart request:', message);
+
+        if (!userId) {
+          return {
+            type: 'shopping',
+            success: false,
+            message:
+              'Please sign in to connect your Instacart cart, then try again.',
+          };
+        }
+
+        // 1) Parse items from sentence
+        const extractedItems = extractItemsFromInstacartSentence(message);
+        console.log('🛒 Extracted Instacart items:', extractedItems);
+
+        if (extractedItems.length === 0) {
+          // Let the standard AI pipeline try to make sense of it
+          console.log(
+            '🛒 Instacart phrase detected but no items found – falling back to normal flow.',
+          );
+        } else {
+          try {
+            // 2) Insert into Busy Moms shopping_lists + create Instacart link
+            const result =
+              await instacartShoppingService.addItemsAndSendToInstacart(
+                userId,
+                extractedItems,
+              );
+
+            const url =
+              result.instacart_list_url || result.products_link_url || '';
+
+            // 3) Nice human-readable list of items
+            const labels = extractedItems;
+            let prettyItems = '';
+            if (labels.length === 1) {
+              prettyItems = labels[0];
+            } else if (labels.length === 2) {
+              prettyItems = `${labels[0]} and ${labels[1]}`;
+            } else {
+              const last = labels[labels.length - 1];
+              prettyItems = `${labels.slice(0, -1).join(', ')}, and ${last}`;
+            }
+
+            const replyLines: string[] = [];
+
+            if (url) {
+              replyLines.push(
+                `I added ${prettyItems} to your shopping list and created an Instacart list for you.`,
+              );
+              replyLines.push(`You can view and edit it here: ${url}`);
+            } else {
+              replyLines.push(
+                `I added ${prettyItems} to your shopping list. I couldn't get an Instacart link back, but your items are saved.`,
+              );
+            }
+
+            return {
+              type: 'shopping',
+              success: true,
+              message: replyLines.join('\n\n'),
+              data: {
+                ...result,
+                items: labels,
+              },
+            };
+          } catch (icError: any) {
+            console.error(
+              '❌ Instacart flow failed inside AI assistant:',
+              icError,
+            );
+            return {
+              type: 'shopping',
+              success: false,
+              message:
+                'I tried to add those items to your Instacart cart, but something went wrong. Please try again from the Shopping tab.',
+              data: {
+                error: icError?.message ?? String(icError),
+              },
+            };
+          }
+        }
+      }
+      // If it wasn't an Instacart add-to-cart request, fall through to normal AI pipeline
+    } catch (e) {
+      console.warn(
+        '⚠️ Instacart short-circuit check threw – falling back to normal flow:',
+        e,
+      );
+      // continue into the normal flow below
+    }
+
+    try {
+
+      // ---------------------------------------------------------
+      // Calendar context for smarter classification & answers
+      // (we support a few possible helper names to stay compatible
+      //  with your existing calendarContextService implementation).
+      // ---------------------------------------------------------
+      let calendarContext: any = {
+        summary: '',
+        todayEvents: [],
+        upcomingEvents: [],
+      };
+
+      try {
+        const svc: any = calendarContextService as any;
+        if (typeof svc.getContextForUser === 'function') {
+          calendarContext = await svc.getContextForUser(userId);
+        } else if (typeof svc.buildContext === 'function') {
+          calendarContext = await svc.buildContext(userId);
+        } else if (typeof svc.getContext === 'function') {
+          calendarContext = await svc.getContext(userId);
+        }
+      } catch (ctxErr) {
+        console.warn('⚠️ Failed to build calendar context, continuing:', ctxErr);
+      }
+
+      const calendarSummary = calendarContext?.summary ?? '';
+      const intent = await classifyMessage(message, calendarSummary);
+
+      console.log('🎯 Final parsed intent:', intent);
 
       switch (intent.type) {
         case 'calendar':
           return this.handleCalendarAction(intent.details || {}, userId);
         case 'calendar_query':
-          return this.handleCalendarQuery(intent.details || {}, userId, calendarContext);
+          return this.handleCalendarQuery(
+            intent.details || {},
+            userId,
+            calendarContext,
+          );
         case 'calendar_update':
           return this.handleCalendarUpdate(intent.details || {}, userId);
         case 'calendar_delete':
@@ -357,58 +648,95 @@ class AIAssistantService {
             intent.details || {},
             message,
             calendarContext,
-            conversationHistory
+            conversationHistory,
           );
       }
     } catch (err: unknown) {
-      console.error('❌ processUserMessage error:', err instanceof Error ? err.message : err);
+      console.error(
+        '❌ processUserMessage error:',
+        err instanceof Error ? err.message : err,
+      );
       return {
         type: 'chat',
         success: false,
-        message: 'I encountered an error processing your request. Please try again.',
+        message:
+          'I encountered an error processing your request. Please try again.',
       };
     }
   }
 
+  /**
+   * Voice mode helper – just call this from your voice pipeline
+   * with the recognized transcript and it will behave exactly
+   * like text (including Instacart + shopping list insertion).
+   */
+  async processVoiceMessage(
+    transcript: string,
+    userId: UUID,
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ): Promise<AIAction> {
+    return this.processUserMessage(transcript, userId, conversationHistory);
+  }
+
   /** Direct calendar event creation with structured data (for voice AI, etc.) */
-  async createCalendarEvent(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  async createCalendarEvent(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
     return this.handleCalendarAction(details, userId);
   }
 
   /** Direct calendar event update with structured data (for voice AI, etc.) */
-  async updateCalendarEvent(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  async updateCalendarEvent(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
     return this.handleCalendarUpdate(details, userId);
   }
 
   /** Direct calendar event deletion with structured data (for voice AI, etc.) */
-  async deleteCalendarEvent(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  async deleteCalendarEvent(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
     return this.handleCalendarDelete(details, userId);
   }
 
   /** Direct task creation with structured data (for voice AI, etc.) */
-  async createTask(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  async createTask(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
     return this.handleTaskAction(details, userId);
   }
 
   /** Direct task query with structured data (for voice AI, etc.) */
-  async queryTasks(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  async queryTasks(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
     return this.handleTaskQuery(details, userId);
   }
 
   /** Direct task update with structured data (for voice AI, etc.) */
-  async updateTask(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  async updateTask(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
     return this.handleTaskUpdate(details, userId);
   }
 
   /** Direct task deletion with structured data (for voice AI, etc.) */
-  async deleteTask(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  async deleteTask(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
     return this.handleTaskDelete(details, userId);
   }
-
   /** Calendar Creation */
   private async handleCalendarAction(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('📅 Creating calendar event with details:', details);
 
@@ -425,7 +753,8 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: false,
-        message: 'Please provide a date for the event (e.g., "today", "tomorrow", "2024-03-15")',
+        message:
+          'Please provide a date for the event (e.g., "today", "tomorrow", "2024-03-15")',
       };
     }
 
@@ -433,13 +762,17 @@ class AIAssistantService {
       userId,
       date,
       start_time,
-      end_time
+      end_time,
     );
     if (conflictCheck.hasConflict) {
-      const conflictNames = conflictCheck.conflictingEvents.map((e) => e.title).join(', ');
+      const conflictNames = conflictCheck.conflictingEvents
+        .map((e: any) => e.title)
+        .join(', ');
       let message = `⚠️ Schedule conflict detected! You already have: ${conflictNames} at that time.`;
       if (conflictCheck.suggestions.length > 0) {
-        message += `\n\nSuggested alternative times: ${conflictCheck.suggestions.join(', ')}`;
+        message += `\n\nSuggested alternative times: ${conflictCheck.suggestions.join(
+          ', ',
+        )}`;
       }
       return {
         type: 'calendar',
@@ -467,7 +800,11 @@ class AIAssistantService {
       console.log('📅 Calendar event created successfully:', result);
 
       if (!result?.id && !result?.externalId) {
-        return { type: 'calendar', success: false, message: 'Failed to create calendar event.' };
+        return {
+          type: 'calendar',
+          success: false,
+          message: 'Failed to create calendar event.',
+        };
       }
 
       let timeMsg = '';
@@ -488,7 +825,9 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: false,
-        message: `Failed to create event: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to create event: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -497,7 +836,7 @@ class AIAssistantService {
   private async handleCalendarQuery(
     details: Record<string, unknown>,
     userId: UUID,
-    context: any
+    context: any,
   ): Promise<AIAction> {
     console.log('🔍 Querying calendar with details:', details);
 
@@ -510,13 +849,15 @@ class AIAssistantService {
             return {
               type: 'calendar',
               success: true,
-              message: 'You have no events scheduled for today. Your day is clear!',
+              message:
+                'You have no events scheduled for today. Your day is clear!',
               data: { events: [] },
             };
           }
-          const formatted = calendarContextService.formatEventsAsNaturalLanguage(
-            context.todayEvents
-          );
+          const formatted =
+            calendarContextService.formatEventsAsNaturalLanguage(
+              context.todayEvents,
+            );
           return {
             type: 'calendar',
             success: true,
@@ -530,13 +871,15 @@ class AIAssistantService {
             return {
               type: 'calendar',
               success: true,
-              message: 'You have no upcoming events this week. Enjoy your free time!',
+              message:
+                'You have no upcoming events this week. Enjoy your free time!',
               data: { events: [] },
             };
           }
-          const formatted = calendarContextService.formatEventsAsNaturalLanguage(
-            context.upcomingEvents
-          );
+          const formatted =
+            calendarContextService.formatEventsAsNaturalLanguage(
+              context.upcomingEvents,
+            );
           return {
             type: 'calendar',
             success: true,
@@ -546,14 +889,22 @@ class AIAssistantService {
         }
 
         case 'availability': {
-          const date = toISODate(details.date) || new Date().toISOString().split('T')[0];
-          const availability = await calendarContextService.checkAvailability(userId, { date });
+          const date =
+            toISODate(details.date) ||
+            new Date().toISOString().split('T')[0];
+          const availability = await calendarContextService.checkAvailability(
+            userId,
+            { date },
+          );
 
           if (availability.available) {
             let message = `You are available on ${date}.`;
             if (availability.freeSlots.length > 0) {
               const slots = availability.freeSlots
-                .map((slot) => `${slot.start.slice(0, 5)} - ${slot.end.slice(0, 5)}`)
+                .map(
+                  (slot: any) =>
+                    `${slot.start.slice(0, 5)} - ${slot.end.slice(0, 5)}`,
+                )
                 .join(', ');
               message += ` Free time slots: ${slots}`;
             }
@@ -564,9 +915,10 @@ class AIAssistantService {
               data: availability,
             };
           } else {
-            const formatted = calendarContextService.formatEventsAsNaturalLanguage(
-              availability.events
-            );
+            const formatted =
+              calendarContextService.formatEventsAsNaturalLanguage(
+                availability.events,
+              );
             return {
               type: 'calendar',
               success: true,
@@ -586,7 +938,10 @@ class AIAssistantService {
               data: { event: null },
             };
           }
-          const formatted = calendarContextService.formatEventsAsNaturalLanguage([nextEvent]);
+          const formatted =
+            calendarContextService.formatEventsAsNaturalLanguage([
+              nextEvent,
+            ]);
           return {
             type: 'calendar',
             success: true,
@@ -604,7 +959,10 @@ class AIAssistantService {
               message: 'Please provide a search term to find events.',
             };
           }
-          const events = await calendarContextService.searchEvents(userId, searchTerm);
+          const events = await calendarContextService.searchEvents(
+            userId,
+            searchTerm,
+          );
           if (events.length === 0) {
             return {
               type: 'calendar',
@@ -613,11 +971,14 @@ class AIAssistantService {
               data: { events: [] },
             };
           }
-          const formatted = calendarContextService.formatEventsAsNaturalLanguage(events);
+          const formatted =
+            calendarContextService.formatEventsAsNaturalLanguage(events);
           return {
             type: 'calendar',
             success: true,
-            message: `Found ${events.length} event${events.length > 1 ? 's' : ''} matching "${searchTerm}":\n${formatted}`,
+            message: `Found ${events.length} event${
+              events.length > 1 ? 's' : ''
+            } matching "${searchTerm}":\n${formatted}`,
             data: { events },
           };
         }
@@ -635,7 +996,9 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: false,
-        message: `Failed to query calendar: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to query calendar: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -643,7 +1006,7 @@ class AIAssistantService {
   /** Calendar Updates */
   private async handleCalendarUpdate(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('✏️ Updating calendar event with details:', details);
 
@@ -659,7 +1022,10 @@ class AIAssistantService {
     }
 
     try {
-      const events = await calendarContextService.searchEvents(userId, searchTerm);
+      const events = await calendarContextService.searchEvents(
+        userId,
+        searchTerm,
+      );
       if (events.length === 0) {
         return {
           type: 'calendar',
@@ -669,7 +1035,8 @@ class AIAssistantService {
       }
 
       if (events.length > 1) {
-        const formatted = calendarContextService.formatEventsAsNaturalLanguage(events);
+        const formatted =
+          calendarContextService.formatEventsAsNaturalLanguage(events);
         return {
           type: 'calendar',
           success: false,
@@ -713,19 +1080,23 @@ class AIAssistantService {
       }
 
       if (updatePayload.event_date || updatePayload.start_time || updatePayload.end_time) {
-        const checkDate = updatePayload.event_date || event.event_date;
-        const checkTime = updatePayload.start_time || event.start_time;
-        const checkEndTime = updatePayload.end_time || event.end_time;
+        const checkDate = updatePayload.event_date || (event as any).event_date;
+        const checkTime =
+          updatePayload.start_time || (event as any).start_time;
+        const checkEndTime =
+          updatePayload.end_time || (event as any).end_time;
         const conflictCheck = await calendarContextService.checkConflicts(
           userId,
           checkDate,
           checkTime,
           checkEndTime,
-          event.id
+          (event as any).id,
         );
 
         if (conflictCheck.hasConflict) {
-          const conflictNames = conflictCheck.conflictingEvents.map((e) => e.title).join(', ');
+          const conflictNames = conflictCheck.conflictingEvents
+            .map((e: any) => e.title)
+            .join(', ');
           return {
             type: 'calendar',
             success: false,
@@ -738,7 +1109,7 @@ class AIAssistantService {
       const { data, error } = await supabase
         .from('events')
         .update(updatePayload)
-        .eq('id', event.id)
+        .eq('id', (event as any).id)
         .select()
         .single();
 
@@ -747,7 +1118,7 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: true,
-        message: `✅ Updated "${event.title}" successfully!`,
+        message: `✅ Updated "${(event as any).title}" successfully!`,
         data: { event: data },
       };
     } catch (error) {
@@ -755,7 +1126,9 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: false,
-        message: `Failed to update event: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to update event: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -763,7 +1136,7 @@ class AIAssistantService {
   /** Calendar Deletion */
   private async handleCalendarDelete(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('🗑️ Deleting calendar event with details:', details);
 
@@ -782,8 +1155,11 @@ class AIAssistantService {
       let events: DbEvent[];
 
       if (date) {
-        const allEvents = await calendarContextService.searchEvents(userId, searchTerm);
-        events = allEvents.filter((e) => e.event_date === date);
+        const allEvents = await calendarContextService.searchEvents(
+          userId,
+          searchTerm,
+        );
+        events = allEvents.filter((e: any) => e.event_date === date);
       } else {
         events = await calendarContextService.searchEvents(userId, searchTerm);
       }
@@ -797,7 +1173,8 @@ class AIAssistantService {
       }
 
       if (events.length > 1) {
-        const formatted = calendarContextService.formatEventsAsNaturalLanguage(events);
+        const formatted =
+          calendarContextService.formatEventsAsNaturalLanguage(events);
         return {
           type: 'calendar',
           success: false,
@@ -807,14 +1184,17 @@ class AIAssistantService {
       }
 
       const event = events[0];
-      const { error } = await supabase.from('events').delete().eq('id', event.id);
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', (event as any).id);
 
       if (error) throw error;
 
       return {
         type: 'calendar',
         success: true,
-        message: `✅ Deleted "${event.title}" from your calendar.`,
+        message: `✅ Deleted "${(event as any).title}" from your calendar.`,
         data: { event },
       };
     } catch (error) {
@@ -822,7 +1202,9 @@ class AIAssistantService {
       return {
         type: 'calendar',
         success: false,
-        message: `Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to delete event: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -830,7 +1212,7 @@ class AIAssistantService {
   /** Reminders */
   private async handleReminderAction(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('⏰ Creating reminder with details:', details);
 
@@ -842,7 +1224,8 @@ class AIAssistantService {
       return {
         type: 'reminder',
         success: false,
-        message: 'Please include a date for the reminder (e.g., "today", "tomorrow", "2024-03-15")',
+        message:
+          'Please include a date for the reminder (e.g., "today", "tomorrow", "2024-03-15")',
       };
     }
 
@@ -875,7 +1258,9 @@ class AIAssistantService {
       return {
         type: 'reminder',
         success: true,
-        message: `✅ Reminder set for ${date}${time ? ' at ' + time.slice(0, 5) : ''}: ${title}`,
+        message: `✅ Reminder set for ${date}${
+          time ? ' at ' + time.slice(0, 5) : ''
+        }: ${title}`,
         data,
       };
     } catch (error) {
@@ -883,7 +1268,9 @@ class AIAssistantService {
       return {
         type: 'reminder',
         success: false,
-        message: `Failed to create reminder: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to create reminder: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -891,7 +1278,7 @@ class AIAssistantService {
   /** Shopping */
   private async handleShoppingAction(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('🛒 Adding shopping item with details:', details);
 
@@ -928,7 +1315,9 @@ class AIAssistantService {
       return {
         type: 'shopping',
         success: true,
-        message: `✅ Added to shopping list: ${title}${quantity > 1 ? ` x${quantity}` : ''}`,
+        message: `✅ Added to shopping list: ${title}${
+          quantity > 1 ? ` x${quantity}` : ''
+        }`,
         data,
       };
     } catch (error) {
@@ -936,7 +1325,9 @@ class AIAssistantService {
       return {
         type: 'shopping',
         success: false,
-        message: `Failed to add to shopping list: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to add to shopping list: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -944,21 +1335,26 @@ class AIAssistantService {
   /** Tasks */
   private async handleTaskAction(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('✅ Creating task with details:', details);
 
     const title = String(details.title ?? 'New task');
-    const description = details.description ? String(details.description) : null;
+    const description = details.description
+      ? String(details.description)
+      : null;
     const due_date = toISODate(details.date);
     const due_time = toISOTime(details.time);
-    const p = details.priority ? details.priority.toString().toLowerCase() : undefined;
-    const priority = p === 'low' || p === 'medium' || p === 'high' ? p : 'medium';
+    const p = details.priority
+      ? details.priority.toString().toLowerCase()
+      : undefined;
+    const priority =
+      p === 'low' || p === 'medium' || p === 'high' ? p : 'medium';
     const category = String(details.category ?? 'other');
     const points = coerceInt(details.points, 0) ?? 0;
     const notes = details.notes ? String(details.notes) : null;
 
-    let assigned_to = null;
+    let assigned_to: string | null = null;
     if (details.assigned_to) {
       const memberName = String(details.assigned_to).toLowerCase();
       const { data: members } = await supabase
@@ -994,13 +1390,17 @@ class AIAssistantService {
           `
           *,
           assigned_family_member:family_members(id, name, age)
-        `
+        `,
         )
         .single();
 
       if (error) {
         console.error('❌ Task creation error:', error);
-        return { type: 'task', success: false, message: error.message || 'Failed to create task.' };
+        return {
+          type: 'task',
+          success: false,
+          message: error.message || 'Failed to create task.',
+        };
       }
 
       console.log('✅ Task created successfully:', data);
@@ -1022,18 +1422,25 @@ class AIAssistantService {
       return {
         type: 'task',
         success: false,
-        message: `Failed to create task: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to create task: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
 
   /** Task Query */
-  private async handleTaskQuery(details: Record<string, unknown>, userId: UUID): Promise<AIAction> {
+  private async handleTaskQuery(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
     console.log('📋 Querying tasks with details:', details);
 
     const queryType = String(details.query_type || 'all');
     const searchTerm = details.search_term ? String(details.search_term) : null;
-    const assignedTo = details.assigned_to ? String(details.assigned_to) : null;
+    const assignedTo = details.assigned_to
+      ? String(details.assigned_to)
+      : null;
 
     try {
       let query = supabase
@@ -1042,12 +1449,16 @@ class AIAssistantService {
           `
           *,
           assigned_family_member:family_members(id, name, age)
-        `
+        `,
         )
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (queryType !== 'all' && queryType !== 'search' && queryType !== 'assigned_to') {
+      if (
+        queryType !== 'all' &&
+        queryType !== 'search' &&
+        queryType !== 'assigned_to'
+      ) {
         query = query.eq('status', queryType);
       }
 
@@ -1080,7 +1491,9 @@ class AIAssistantService {
         };
       }
 
-      let message = `You have ${tasks.length} task${tasks.length > 1 ? 's' : ''}:\n`;
+      let message = `You have ${tasks.length} task${
+        tasks.length > 1 ? 's' : ''
+      }:\n`;
       tasks.forEach((task: any, i: number) => {
         message += `${i + 1}. ${task.title}`;
         if (task.status) message += ` (${task.status})`;
@@ -1101,7 +1514,9 @@ class AIAssistantService {
       return {
         type: 'task',
         success: false,
-        message: `Failed to query tasks: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to query tasks: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1109,7 +1524,7 @@ class AIAssistantService {
   /** Task Update */
   private async handleTaskUpdate(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('✏️ Updating task with details:', details);
 
@@ -1155,9 +1570,12 @@ class AIAssistantService {
       const updatePayload: any = { updated_at: new Date().toISOString() };
 
       if (updates.title) updatePayload.title = String(updates.title);
-      if (updates.description) updatePayload.description = String(updates.description);
-      if (updates.category) updatePayload.category = String(updates.category);
-      if (updates.priority) updatePayload.priority = String(updates.priority);
+      if (updates.description)
+        updatePayload.description = String(updates.description);
+      if (updates.category)
+        updatePayload.category = String(updates.category);
+      if (updates.priority)
+        updatePayload.priority = String(updates.priority);
       if (updates.status) {
         updatePayload.status = String(updates.status);
         if (updatePayload.status === 'completed') {
@@ -1165,7 +1583,8 @@ class AIAssistantService {
         }
       }
       if (updates.notes) updatePayload.notes = String(updates.notes);
-      if (updates.points !== undefined) updatePayload.points = coerceInt(updates.points, 0);
+      if (updates.points !== undefined)
+        updatePayload.points = coerceInt(updates.points, 0);
 
       if (updates.date || updates.due_date) {
         const newDate = toISODate(updates.date || updates.due_date);
@@ -1201,12 +1620,12 @@ class AIAssistantService {
       const { data: updatedTask, error: updateError } = await supabase
         .from('tasks')
         .update(updatePayload)
-        .eq('id', task.id)
+        .eq('id', (task as any).id)
         .select(
           `
           *,
           assigned_family_member:family_members(id, name, age)
-        `
+        `,
         )
         .single();
 
@@ -1215,7 +1634,7 @@ class AIAssistantService {
       return {
         type: 'task',
         success: true,
-        message: `✅ Updated task "${task.title}" successfully!`,
+        message: `✅ Updated task "${(task as any).title}" successfully!`,
         data: { task: updatedTask },
       };
     } catch (error) {
@@ -1223,7 +1642,9 @@ class AIAssistantService {
       return {
         type: 'task',
         success: false,
-        message: `Failed to update task: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to update task: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1231,7 +1652,7 @@ class AIAssistantService {
   /** Task Delete */
   private async handleTaskDelete(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('🗑️ Deleting task with details:', details);
 
@@ -1273,14 +1694,17 @@ class AIAssistantService {
       }
 
       const task = tasks[0];
-      const { error: deleteError } = await supabase.from('tasks').delete().eq('id', task.id);
+      const { error: deleteError } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', (task as any).id);
 
       if (deleteError) throw deleteError;
 
       return {
         type: 'task',
         success: true,
-        message: `✅ Deleted task "${task.title}" from your list.`,
+        message: `✅ Deleted task "${(task as any).title}" from your list.`,
         data: { task },
       };
     } catch (error) {
@@ -1288,7 +1712,9 @@ class AIAssistantService {
       return {
         type: 'task',
         success: false,
-        message: `Failed to delete task: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to delete task: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1296,7 +1722,7 @@ class AIAssistantService {
   /** Shopping Query */
   private async handleShoppingQuery(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('🛒 Querying shopping list with details:', details);
 
@@ -1329,12 +1755,16 @@ class AIAssistantService {
           type: 'shopping_query',
           success: true,
           message:
-            queryType === 'pending' ? 'Your shopping list is empty!' : 'No shopping items found.',
+            queryType === 'pending'
+              ? 'Your shopping list is empty!'
+              : 'No shopping items found.',
           data: { items: [] },
         };
       }
 
-      let message = `You have ${items.length} item${items.length > 1 ? 's' : ''} on your shopping list:\n`;
+      let message = `You have ${items.length} item${
+        items.length > 1 ? 's' : ''
+      } on your shopping list:\n`;
       items.forEach((item: any, i: number) => {
         message += `${i + 1}. ${item.item}`;
         if (item.quantity > 1) message += ` (x${item.quantity})`;
@@ -1354,7 +1784,9 @@ class AIAssistantService {
       return {
         type: 'shopping_query',
         success: false,
-        message: `Failed to query shopping list: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to query shopping list: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1362,7 +1794,7 @@ class AIAssistantService {
   /** Shopping Update */
   private async handleShoppingUpdate(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('✏️ Updating shopping item with details:', details);
 
@@ -1407,9 +1839,12 @@ class AIAssistantService {
       const item = items[0];
       const updatePayload: any = {};
 
-      if (updates.completed !== undefined) updatePayload.completed = Boolean(updates.completed);
-      if (updates.quantity !== undefined) updatePayload.quantity = coerceInt(updates.quantity, 1);
-      if (updates.urgent !== undefined) updatePayload.urgent = Boolean(updates.urgent);
+      if (updates.completed !== undefined)
+        updatePayload.completed = Boolean(updates.completed);
+      if (updates.quantity !== undefined)
+        updatePayload.quantity = coerceInt(updates.quantity, 1);
+      if (updates.urgent !== undefined)
+        updatePayload.urgent = Boolean(updates.urgent);
       if (updates.category) updatePayload.category = String(updates.category);
       if (updates.notes) updatePayload.notes = String(updates.notes);
 
@@ -1424,7 +1859,7 @@ class AIAssistantService {
       const { data: updatedItem, error: updateError } = await supabase
         .from('shopping_lists')
         .update(updatePayload)
-        .eq('id', item.id)
+        .eq('id', (item as any).id)
         .select()
         .single();
 
@@ -1433,7 +1868,7 @@ class AIAssistantService {
       return {
         type: 'shopping_update',
         success: true,
-        message: `✅ Updated "${item.item}" successfully!`,
+        message: `✅ Updated "${(item as any).item}" successfully!`,
         data: { item: updatedItem },
       };
     } catch (error) {
@@ -1441,7 +1876,9 @@ class AIAssistantService {
       return {
         type: 'shopping_update',
         success: false,
-        message: `Failed to update item: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to update item: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1449,7 +1886,7 @@ class AIAssistantService {
   /** Shopping Delete */
   private async handleShoppingDelete(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('🗑️ Deleting shopping item with details:', details);
 
@@ -1494,14 +1931,14 @@ class AIAssistantService {
       const { error: deleteError } = await supabase
         .from('shopping_lists')
         .delete()
-        .eq('id', item.id);
+        .eq('id', (item as any).id);
 
       if (deleteError) throw deleteError;
 
       return {
         type: 'shopping_delete',
         success: true,
-        message: `✅ Removed "${item.item}" from your shopping list.`,
+        message: `✅ Removed "${(item as any).item}" from your shopping list.`,
         data: { item },
       };
     } catch (error) {
@@ -1509,7 +1946,9 @@ class AIAssistantService {
       return {
         type: 'shopping_delete',
         success: false,
-        message: `Failed to delete item: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to delete item: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1517,14 +1956,16 @@ class AIAssistantService {
   /** Family Member Creation */
   private async handleFamilyAction(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('👨‍👩‍👧‍👦 Creating family member with details:', details);
 
     const name = String(details.name ?? 'Family Member');
     const age = coerceInt(details.age, null);
     const gender = details.gender ? String(details.gender) : 'Other';
-    const relationship = details.relationship ? String(details.relationship) : null;
+    const relationship = details.relationship
+      ? String(details.relationship)
+      : null;
 
     if (!name || name === 'Family Member') {
       return {
@@ -1543,7 +1984,9 @@ class AIAssistantService {
             name,
             age,
             gender,
-            ...(relationship && { medical_notes: `Relationship: ${relationship}` }),
+            ...(relationship && {
+              medical_notes: `Relationship: ${relationship}`,
+            }),
           },
         ])
         .select()
@@ -1570,7 +2013,9 @@ class AIAssistantService {
       return {
         type: 'family',
         success: false,
-        message: `Failed to add family member: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to add family member: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1578,7 +2023,7 @@ class AIAssistantService {
   /** Family Query */
   private async handleFamilyQuery(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('👨‍👩‍👧‍👦 Querying family members with details:', details);
 
@@ -1610,11 +2055,14 @@ class AIAssistantService {
         };
       }
 
-      let message = `You have ${members.length} family member${members.length > 1 ? 's' : ''}:\n`;
+      let message = `You have ${members.length} family member${
+        members.length > 1 ? 's' : ''
+      }:\n`;
       members.forEach((member: any, i: number) => {
         message += `${i + 1}. ${member.name}`;
         if (member.age) message += ` (age ${member.age})`;
-        if (member.gender && member.gender !== 'Other') message += ` - ${member.gender}`;
+        if (member.gender && member.gender !== 'Other')
+          message += ` - ${member.gender}`;
         if (member.school) message += ` - ${member.school}`;
         if (member.grade) message += ` (${member.grade})`;
         message += '\n';
@@ -1631,7 +2079,9 @@ class AIAssistantService {
       return {
         type: 'family_query',
         success: false,
-        message: `Failed to query family members: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to query family members: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1639,7 +2089,7 @@ class AIAssistantService {
   /** Family Update */
   private async handleFamilyUpdate(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('✏️ Updating family member with details:', details);
 
@@ -1685,7 +2135,8 @@ class AIAssistantService {
       const updatePayload: any = { updated_at: new Date().toISOString() };
 
       if (updates.name) updatePayload.name = String(updates.name);
-      if (updates.age !== undefined) updatePayload.age = coerceInt(updates.age, null);
+      if (updates.age !== undefined)
+        updatePayload.age = coerceInt(updates.age, null);
       if (updates.gender) updatePayload.gender = String(updates.gender);
       if (updates.school) updatePayload.school = String(updates.school);
       if (updates.grade) updatePayload.grade = String(updates.grade);
@@ -1697,7 +2148,8 @@ class AIAssistantService {
               .map((a) => a.trim());
         updatePayload.allergies = allergiesList;
       }
-      if (updates.medical_notes) updatePayload.medical_notes = String(updates.medical_notes);
+      if (updates.medical_notes)
+        updatePayload.medical_notes = String(updates.medical_notes);
 
       if (Object.keys(updatePayload).length === 1) {
         return {
@@ -1710,7 +2162,7 @@ class AIAssistantService {
       const { data: updatedMember, error: updateError } = await supabase
         .from('family_members')
         .update(updatePayload)
-        .eq('id', member.id)
+        .eq('id', (member as any).id)
         .select()
         .single();
 
@@ -1719,7 +2171,7 @@ class AIAssistantService {
       return {
         type: 'family_update',
         success: true,
-        message: `✅ Updated ${member.name}'s information successfully!`,
+        message: `✅ Updated ${(member as any).name}'s information successfully!`,
         data: { member: updatedMember },
       };
     } catch (error) {
@@ -1727,7 +2179,9 @@ class AIAssistantService {
       return {
         type: 'family_update',
         success: false,
-        message: `Failed to update family member: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to update family member: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1735,7 +2189,7 @@ class AIAssistantService {
   /** Family Delete */
   private async handleFamilyDelete(
     details: Record<string, unknown>,
-    userId: UUID
+    userId: UUID,
   ): Promise<AIAction> {
     console.log('🗑️ Deleting family member with details:', details);
 
@@ -1780,14 +2234,14 @@ class AIAssistantService {
       const { error: deleteError } = await supabase
         .from('family_members')
         .delete()
-        .eq('id', member.id);
+        .eq('id', (member as any).id);
 
       if (deleteError) throw deleteError;
 
       return {
         type: 'family_delete',
         success: true,
-        message: `✅ Removed ${member.name} from your family list.`,
+        message: `✅ Removed ${(member as any).name} from your family list.`,
         data: { member },
       };
     } catch (error) {
@@ -1795,7 +2249,9 @@ class AIAssistantService {
       return {
         type: 'family_delete',
         success: false,
-        message: `Failed to remove family member: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to remove family member: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       };
     }
   }
@@ -1805,17 +2261,23 @@ class AIAssistantService {
     details: Record<string, unknown>,
     originalMessage: string,
     calendarContext?: any,
-    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+    conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   ): Promise<AIAction> {
     console.log('💬 Handling chat message:', originalMessage);
-    console.log('💬 Conversation history length:', conversationHistory?.length || 0);
+    console.log(
+      '💬 Conversation history length:',
+      conversationHistory?.length || 0,
+    );
 
     try {
       const contextInfo = calendarContext
         ? `\n\nCurrent Calendar Context:\n${calendarContext.summary}`
         : '';
 
-      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+      const messages: Array<{
+        role: 'system' | 'user' | 'assistant';
+        content: string;
+      }> = [
         {
           role: 'system',
           content: `You are Sara, a helpful AI assistant for busy parents. You help with family scheduling, task management, shopping lists, family member management, reminders, and general parenting advice.${contextInfo}
@@ -1862,14 +2324,11 @@ IMPORTANT: Maintain conversation context. If the user refers to previous topics,
         },
       ];
 
-      // Add conversation history if provided
       if (conversationHistory && conversationHistory.length > 0) {
-        // Include the last 10 messages to keep context manageable
         const recentHistory = conversationHistory.slice(-10);
         messages.push(...recentHistory);
       }
 
-      // Add the current message
       messages.push({
         role: 'user',
         content: originalMessage,
