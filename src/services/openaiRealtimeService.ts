@@ -1,16 +1,11 @@
 import { aiAssistantService } from './aiAssistantService';
-import { supabase } from '../lib/supabase';
+import { sendToInstacart } from './instacartAgentService';
+import { supabase } from "../lib/supabase";
 
 // Fallback minimal speech types (safe for TS projects without full lib.dom)
-interface MinimalSpeechResult {
-  transcript: string;
-}
-interface MinimalSpeechEvent {
-  results?: Array<Array<MinimalSpeechResult>>;
-}
-interface MinimalSpeechErrorEvent {
-  error?: string;
-}
+interface MinimalSpeechResult { transcript: string }
+interface MinimalSpeechEvent { results?: Array<Array<MinimalSpeechResult>> }
+interface MinimalSpeechErrorEvent { error?: string }
 interface MinimalSpeechRecognition {
   continuous: boolean;
   interimResults: boolean;
@@ -22,16 +17,13 @@ interface MinimalSpeechRecognition {
   stop: () => void;
 }
 type SpeechRecognitionCtor = new () => MinimalSpeechRecognition;
-type WindowSpeech = {
-  SpeechRecognition?: SpeechRecognitionCtor;
-  webkitSpeechRecognition?: SpeechRecognitionCtor;
-};
+type WindowSpeech = { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor };
 
 export interface OpenAIRealtimeConfig {
   model: string;
   wakeWord?: string; // e.g. "hey sara"
   vadThreshold?: number; // amplitude gate
-  voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
+  voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' | 'verse' | 'sage' | 'coral' | 'cove' | 'cedar';
   instructions?: string;
 }
 
@@ -49,10 +41,7 @@ class Emitter {
   }
   off(type: string, fn: (ev: RealtimeEvent) => void) {
     const arr = this.listeners.get(type) || [];
-    this.listeners.set(
-      type,
-      arr.filter((f) => f !== fn)
-    );
+    this.listeners.set(type, arr.filter(f => f !== fn));
   }
   emit(ev: RealtimeEvent) {
     const arr = this.listeners.get(ev.type) || [];
@@ -79,6 +68,9 @@ export class OpenAIRealtimeService extends Emitter {
   private lastTokenFetchError?: string;
   private sessionConfigured = false;
   private pendingFunctionCalls = new Map<string, any>();
+  private lastUserTranscript: string = '';
+  private lastUserAudio: string = '';
+  private audioTranscriptBuffer: string = '';
 
   // Callbacks required by UI
   private onEventCb?: (event: RealtimeEvent) => void;
@@ -92,28 +84,14 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   // == Public API expected by UI ==
-  onEvent(cb: (event: RealtimeEvent) => void) {
-    this.onEventCb = cb;
-  }
-  offEvent(_cb?: (event: RealtimeEvent) => void) {
-    this.onEventCb = undefined;
-  } // single-subscriber is fine here
-  onConnectionStateChange(cb: (state: RTCPeerConnectionState) => void) {
-    this.onConnStateCb = cb;
-  }
-  onWakeWordDetected(cb: () => void) {
-    this.onWakeWordDetectedCb = cb;
-  }
+  onEvent(cb: (event: RealtimeEvent) => void) { this.onEventCb = cb; }
+  offEvent(_cb?: (event: RealtimeEvent) => void) { this.onEventCb = undefined; } // single-subscriber is fine here
+  onConnectionStateChange(cb: (state: RTCPeerConnectionState) => void) { this.onConnStateCb = cb; }
+  onWakeWordDetected(cb: () => void) { this.onWakeWordDetectedCb = cb; }
 
-  isSupported(): boolean {
-    return typeof RTCPeerConnection !== 'undefined';
-  }
-  isConnected(): boolean {
-    return this.connected;
-  }
-  getAudioElement(): HTMLAudioElement | undefined {
-    return this.audioEl;
-  }
+  isSupported(): boolean { return typeof RTCPeerConnection !== 'undefined'; }
+  isConnected(): boolean { return this.connected; }
+  getAudioElement(): HTMLAudioElement | undefined { return this.audioEl; }
 
   async initialize(userId: string) {
     this.currentUserId = userId;
@@ -121,52 +99,72 @@ export class OpenAIRealtimeService extends Emitter {
     await this.startWakeWordDetection();
   }
 
-  async startConversation() {
-    await this.startRecording();
-  }
-  async stopConversation() {
-    this.stopRecording();
-  }
-  async disconnect() {
-    await this.disconnectRealtime();
-  }
-  async mute() {
-    if (this.micStream) this.micStream.getAudioTracks().forEach((t) => (t.enabled = false));
-  }
-  async unmute() {
-    if (this.micStream) this.micStream.getAudioTracks().forEach((t) => (t.enabled = true));
-  }
-  async interrupt() {
-    this.buffer = [];
-  }
+  async startConversation() { await this.startRecording(); }
+  async stopConversation() { this.stopRecording(); }
+  async disconnect() { await this.disconnectRealtime(); }
+  async mute() { if (this.micStream) this.micStream.getAudioTracks().forEach(t => (t.enabled = false)); }
+  async unmute() { if (this.micStream) this.micStream.getAudioTracks().forEach(t => (t.enabled = true)); }
+  async interrupt() { this.buffer = []; }
 
   sendMessage(text: string) {
-    if (!this.dc || this.dc.readyState !== 'open') {
-      console.error('❌ Data channel not ready');
+    const lower = text.toLowerCase();
+
+    // 🛒 Detect Instacart request BEFORE sending anything to Realtime model
+    if (
+      lower.includes("instacart") ||
+      lower.includes("add to cart") ||
+      lower.includes("shopping list") ||
+      lower.includes("grocery")
+    ) {
+      console.log("🛒 Instacart text detected:", text);
+
+      // Emit UI event so the chat bubble appears immediately
+      this.emitUI({ type: "instacart.order.started", text });
+
+      sendToInstacart(text)
+        .then((result) => this.emitUI({ type: "instacart.order.result", data: result }))
+        .catch((error) =>
+          this.emitUI({
+            type: "instacart.order.error",
+            error: error?.message ?? String(error),
+          })
+        );
+
+      // ❗ DO NOT send this to the AI assistant (Sara)
       return;
     }
-    console.log('📤 Sending text message:', text);
+
+    // 🧠 Non-Instacart messages go to Sara normally
+    if (!this.dc || this.dc.readyState !== "open") {
+      console.error("❌ Data channel not ready");
+      return;
+    }
+
+    console.log("📤 Sending text message:", text);
+
     const event = {
-      type: 'conversation.item.create',
+      type: "conversation.item.create",
       item: {
-        type: 'message',
-        role: 'user',
-        content: [{ type: 'input_text', text }],
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text }],
       },
     };
+
     this.dc.send(JSON.stringify(event));
-    this.dc.send(JSON.stringify({ type: 'response.create' }));
+    this.dc.send(JSON.stringify({ type: "response.create" }));
   }
 
   // == Internals ==
   private emitUI(event: RealtimeEvent) {
+    console.log('📢📢📢 EMITTING EVENT:', event.type);
+    if (event.type.includes('instacart')) {
+      console.log('📢 Instacart event details:', event);
+    }
     this.onEventCb?.(event);
     this.emit(event);
   }
-  private emitConn(state: RTCPeerConnectionState) {
-    this.onConnStateCb?.(state);
-    this.emitUI({ type: 'connection.state', state });
-  }
+  private emitConn(state: RTCPeerConnectionState) { this.onConnStateCb?.(state); this.emitUI({ type: 'connection.state', state }); }
 
   private getFunctionTools() {
     return [
@@ -178,28 +176,14 @@ export class OpenAIRealtimeService extends Emitter {
           type: 'object',
           properties: {
             title: { type: 'string', description: 'The title/name of the event' },
-            date: {
-              type: 'string',
-              description:
-                'The date in YYYY-MM-DD format or natural language like "today", "tomorrow"',
-            },
-            start_time: {
-              type: 'string',
-              description: 'The start time in HH:MM format or natural language like "2pm", "14:30"',
-            },
-            end_time: {
-              type: 'string',
-              description: 'The end time in HH:MM format or natural language like "3pm", "15:30"',
-            },
+            date: { type: 'string', description: 'The date in YYYY-MM-DD format or natural language like "today", "tomorrow"' },
+            start_time: { type: 'string', description: 'The start time in HH:MM format or natural language like "2pm", "14:30"' },
+            end_time: { type: 'string', description: 'The end time in HH:MM format or natural language like "3pm", "15:30"' },
             location: { type: 'string', description: 'The location of the event' },
-            participants: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'List of participants',
-            },
+            participants: { type: 'array', items: { type: 'string' }, description: 'List of participants' }
           },
-          required: ['title', 'date'],
-        },
+          required: ['title', 'date']
+        }
       },
       {
         type: 'function',
@@ -211,17 +195,13 @@ export class OpenAIRealtimeService extends Emitter {
             query_type: {
               type: 'string',
               enum: ['today', 'week', 'availability', 'search', 'next'],
-              description:
-                "Type of query: today (today's events), week (upcoming events), availability (check if free), search (find specific events), next (next upcoming event)",
+              description: 'Type of query: today (today\'s events), week (upcoming events), availability (check if free), search (find specific events), next (next upcoming event)'
             },
             date: { type: 'string', description: 'Date to check (for availability queries)' },
-            search_term: {
-              type: 'string',
-              description: 'Search term to find events (for search queries)',
-            },
+            search_term: { type: 'string', description: 'Search term to find events (for search queries)' }
           },
-          required: ['query_type'],
-        },
+          required: ['query_type']
+        }
       },
       {
         type: 'function',
@@ -238,12 +218,12 @@ export class OpenAIRealtimeService extends Emitter {
                 start_time: { type: 'string', description: 'New start time' },
                 end_time: { type: 'string', description: 'New end time' },
                 location: { type: 'string', description: 'New location' },
-                title: { type: 'string', description: 'New title' },
-              },
-            },
+                title: { type: 'string', description: 'New title' }
+              }
+            }
           },
-          required: ['search_term', 'updates'],
-        },
+          required: ['search_term', 'updates']
+        }
       },
       {
         type: 'function',
@@ -253,13 +233,10 @@ export class OpenAIRealtimeService extends Emitter {
           type: 'object',
           properties: {
             search_term: { type: 'string', description: 'Term to find the event to delete' },
-            date: {
-              type: 'string',
-              description: 'Date of the event (optional, helps narrow down)',
-            },
+            date: { type: 'string', description: 'Date of the event (optional, helps narrow down)' }
           },
-          required: ['search_term'],
-        },
+          required: ['search_term']
+        }
       },
       {
         type: 'function',
@@ -270,10 +247,10 @@ export class OpenAIRealtimeService extends Emitter {
           properties: {
             title: { type: 'string', description: 'What to be reminded about' },
             date: { type: 'string', description: 'Date for the reminder' },
-            time: { type: 'string', description: 'Time for the reminder' },
+            time: { type: 'string', description: 'Time for the reminder' }
           },
-          required: ['title', 'date'],
-        },
+          required: ['title', 'date']
+        }
       },
       {
         type: 'function',
@@ -286,12 +263,12 @@ export class OpenAIRealtimeService extends Emitter {
             category: {
               type: 'string',
               enum: ['dairy', 'produce', 'meat', 'bakery', 'baby', 'household', 'other'],
-              description: 'Category of the item',
+              description: 'Category of the item'
             },
-            quantity: { type: 'number', description: 'How many to buy' },
+            quantity: { type: 'number', description: 'How many to buy' }
           },
-          required: ['title'],
-        },
+          required: ['title']
+        }
       },
       {
         type: 'function',
@@ -305,68 +282,39 @@ export class OpenAIRealtimeService extends Emitter {
             category: {
               type: 'string',
               enum: ['chores', 'homework', 'sports', 'music', 'health', 'social', 'other'],
-              description: 'Category of the task',
+              description: 'Category of the task'
             },
             priority: {
               type: 'string',
               enum: ['low', 'medium', 'high'],
-              description: 'Priority level of the task',
+              description: 'Priority level of the task'
             },
-            assigned_to: {
-              type: 'string',
-              description: 'Name of family member to assign this task to',
-            },
-            due_date: {
-              type: 'string',
-              description:
-                'Due date in YYYY-MM-DD format or natural language like "today", "tomorrow"',
-            },
-            due_time: {
-              type: 'string',
-              description: 'Due time in HH:MM format or natural language like "2pm", "14:30"',
-            },
-            points: {
-              type: 'number',
-              description: 'Points awarded for completing this task (for gamification)',
-            },
-            notes: { type: 'string', description: 'Additional notes or instructions for the task' },
+            assigned_to: { type: 'string', description: 'Name of family member to assign this task to' },
+            due_date: { type: 'string', description: 'Due date in YYYY-MM-DD format or natural language like "today", "tomorrow"' },
+            due_time: { type: 'string', description: 'Due time in HH:MM format or natural language like "2pm", "14:30"' },
+            points: { type: 'number', description: 'Points awarded for completing this task (for gamification)' },
+            notes: { type: 'string', description: 'Additional notes or instructions for the task' }
           },
-          required: ['title'],
-        },
+          required: ['title']
+        }
       },
       {
         type: 'function',
         name: 'query_tasks',
-        description:
-          'Query and list tasks, optionally filtered by status, assigned member, or search term',
+        description: 'Query and list tasks, optionally filtered by status, assigned member, or search term',
         parameters: {
           type: 'object',
           properties: {
             query_type: {
               type: 'string',
-              enum: [
-                'all',
-                'pending',
-                'in_progress',
-                'completed',
-                'cancelled',
-                'search',
-                'assigned_to',
-              ],
-              description:
-                'Type of query: all (all tasks), pending (pending tasks), in_progress (in progress tasks), completed (completed tasks), cancelled (cancelled tasks), search (search by term), assigned_to (filter by assigned member)',
+              enum: ['all', 'pending', 'in_progress', 'completed', 'cancelled', 'search', 'assigned_to'],
+              description: 'Type of query: all (all tasks), pending (pending tasks), in_progress (in progress tasks), completed (completed tasks), cancelled (cancelled tasks), search (search by term), assigned_to (filter by assigned member)'
             },
-            search_term: {
-              type: 'string',
-              description: 'Search term to find specific tasks (for search queries)',
-            },
-            assigned_to: {
-              type: 'string',
-              description: 'Name of family member to filter tasks by (for assigned_to queries)',
-            },
+            search_term: { type: 'string', description: 'Search term to find specific tasks (for search queries)' },
+            assigned_to: { type: 'string', description: 'Name of family member to filter tasks by (for assigned_to queries)' }
           },
-          required: ['query_type'],
-        },
+          required: ['query_type']
+        }
       },
       {
         type: 'function',
@@ -375,43 +323,25 @@ export class OpenAIRealtimeService extends Emitter {
         parameters: {
           type: 'object',
           properties: {
-            search_term: {
-              type: 'string',
-              description: 'Term to find the task to update (task title or part of it)',
-            },
+            search_term: { type: 'string', description: 'Term to find the task to update (task title or part of it)' },
             updates: {
               type: 'object',
               properties: {
                 title: { type: 'string', description: 'New title' },
                 description: { type: 'string', description: 'New description' },
-                category: {
-                  type: 'string',
-                  enum: ['chores', 'homework', 'sports', 'music', 'health', 'social', 'other'],
-                  description: 'New category',
-                },
-                priority: {
-                  type: 'string',
-                  enum: ['low', 'medium', 'high'],
-                  description: 'New priority',
-                },
-                status: {
-                  type: 'string',
-                  enum: ['pending', 'in_progress', 'completed', 'cancelled'],
-                  description: 'New status',
-                },
-                assigned_to: {
-                  type: 'string',
-                  description: 'Name of family member to reassign to',
-                },
+                category: { type: 'string', enum: ['chores', 'homework', 'sports', 'music', 'health', 'social', 'other'], description: 'New category' },
+                priority: { type: 'string', enum: ['low', 'medium', 'high'], description: 'New priority' },
+                status: { type: 'string', enum: ['pending', 'in_progress', 'completed', 'cancelled'], description: 'New status' },
+                assigned_to: { type: 'string', description: 'Name of family member to reassign to' },
                 due_date: { type: 'string', description: 'New due date' },
                 due_time: { type: 'string', description: 'New due time' },
                 points: { type: 'number', description: 'New points value' },
-                notes: { type: 'string', description: 'New notes' },
-              },
-            },
+                notes: { type: 'string', description: 'New notes' }
+              }
+            }
           },
-          required: ['search_term', 'updates'],
-        },
+          required: ['search_term', 'updates']
+        }
       },
       {
         type: 'function',
@@ -420,13 +350,10 @@ export class OpenAIRealtimeService extends Emitter {
         parameters: {
           type: 'object',
           properties: {
-            search_term: {
-              type: 'string',
-              description: 'Term to find the task to complete (task title or part of it)',
-            },
+            search_term: { type: 'string', description: 'Term to find the task to complete (task title or part of it)' }
           },
-          required: ['search_term'],
-        },
+          required: ['search_term']
+        }
       },
       {
         type: 'function',
@@ -435,14 +362,11 @@ export class OpenAIRealtimeService extends Emitter {
         parameters: {
           type: 'object',
           properties: {
-            search_term: {
-              type: 'string',
-              description: 'Term to find the task to delete (task title or part of it)',
-            },
+            search_term: { type: 'string', description: 'Term to find the task to delete (task title or part of it)' }
           },
-          required: ['search_term'],
-        },
-      },
+          required: ['search_term']
+        }
+      }
     ];
   }
 
@@ -460,19 +384,19 @@ export class OpenAIRealtimeService extends Emitter {
         input_audio_format: 'pcm16',
         output_audio_format: 'pcm16',
         input_audio_transcription: {
-          model: 'whisper-1',
+          model: 'whisper-1'
         },
         turn_detection: {
           type: 'server_vad',
           threshold: 0.5,
           prefix_padding_ms: 300,
-          silence_duration_ms: 500,
+          silence_duration_ms: 500
         },
         tools: this.getFunctionTools(),
         tool_choice: 'auto',
         temperature: 0.8,
-        max_response_output_tokens: 4096,
-      },
+        max_response_output_tokens: 4096
+      }
     };
 
     this.dc.send(JSON.stringify(sessionConfig));
@@ -491,21 +415,21 @@ export class OpenAIRealtimeService extends Emitter {
         `${FUNCTIONS_BASE}/realtime-token`,
         `${FUNCTIONS_BASE}/functions/v1/openai-token`,
         `${FUNCTIONS_BASE}/functions/v1/webrtc-token`,
-        `${FUNCTIONS_BASE}/functions/v1/realtime-token`
+        `${FUNCTIONS_BASE}/functions/v1/realtime-token`,
       );
     }
     if (SUPABASE_URL) {
       urls.push(
         `${SUPABASE_URL}/functions/v1/openai-token`,
         `${SUPABASE_URL}/functions/v1/webrtc-token`,
-        `${SUPABASE_URL}/functions/v1/realtime-token`
+        `${SUPABASE_URL}/functions/v1/realtime-token`,
       );
     }
     // Netlify Functions convention
     urls.push(
       '/.netlify/functions/openai-token',
       '/.netlify/functions/webrtc-token',
-      '/.netlify/functions/realtime-token'
+      '/.netlify/functions/realtime-token',
     );
     // Local fallbacks (dev proxy, custom API, etc.)
     urls.push(
@@ -524,13 +448,9 @@ export class OpenAIRealtimeService extends Emitter {
     const candidates = this.buildTokenUrlCandidates();
     const authHeader: Record<string, string> = {};
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) authHeader.Authorization = `Bearer ${session.access_token}`;
-    } catch {
-      /* optional; ignore */
-    }
+    } catch { /* optional; ignore */ }
 
     const tried: string[] = [];
     for (const url of candidates) {
@@ -572,28 +492,20 @@ export class OpenAIRealtimeService extends Emitter {
     const wake = (this.config.wakeWord || 'hey sara').toLowerCase();
 
     this.wakeWordRecognition.onresult = (event: MinimalSpeechEvent) => {
-      const results =
-        (event as unknown as { results?: Array<Array<{ transcript: string }>> }).results || [];
+      const results = (event as unknown as { results?: Array<Array<{ transcript: string }>> }).results || [];
       for (const result of results) {
         const transcript = (result?.[0]?.transcript || '').toLowerCase();
         if (transcript.includes(wake)) {
           this.onWakeWordDetectedCb?.();
-          this.startRecording().catch((e) => {
-            this.emitUI({
-              type: 'assistant.error',
-              message: e instanceof Error ? e.message : String(e),
-            });
+          this.startRecording().catch(e => {
+            this.emitUI({ type: 'assistant.error', message: e instanceof Error ? e.message : String(e) });
           });
           break;
         }
       }
     };
-    this.wakeWordRecognition.onerror = () => {
-      /* ignore */
-    };
-    this.wakeWordRecognition.onend = () => {
-      if (this.isListeningForWakeWordFlag) this.startWakeWordDetection();
-    };
+    this.wakeWordRecognition.onerror = () => { /* ignore */ };
+    this.wakeWordRecognition.onend = () => { if (this.isListeningForWakeWordFlag) this.startWakeWordDetection(); };
     this.wakeWordRecognition.start();
     this.isListeningForWakeWordFlag = true;
   }
@@ -618,17 +530,14 @@ export class OpenAIRealtimeService extends Emitter {
     if (this.pc) return;
 
     // Acquire ephemeral key from your backend (Edge Function/Server), trying multiple candidates.
-    const tokenJson = await this.fetchJsonFirst({
-      userId: this.currentUserId || 'anonymous',
-      roomId: 'default',
-    });
+    const tokenJson = await this.fetchJsonFirst({ userId: this.currentUserId || 'anonymous', roomId: 'default' });
     const EPHEMERAL_KEY = this.extractEphemeralKey(tokenJson);
     if (!EPHEMERAL_KEY) throw new Error('Token endpoint JSON missing client_secret.value/token');
 
     this.pc = new RTCPeerConnection();
     this.pc.onconnectionstatechange = () => {
       const s = this.pc!.connectionState;
-      this.connected = s === 'connected';
+      this.connected = (s === 'connected');
       this.emitConn(s);
     };
 
@@ -640,9 +549,7 @@ export class OpenAIRealtimeService extends Emitter {
     const audioEl = document.createElement('audio');
     audioEl.autoplay = true;
     this.audioEl = audioEl;
-    this.pc.ontrack = (e) => {
-      this.audioEl!.srcObject = e.streams[0];
-    };
+    this.pc.ontrack = (e) => { this.audioEl!.srcObject = e.streams[0]; };
 
     // Data channel
     this.dc = this.pc.createDataChannel('oai-events');
@@ -666,17 +573,14 @@ export class OpenAIRealtimeService extends Emitter {
     await this.pc.setLocalDescription(offer);
 
     if (!offer.sdp) throw new Error('Failed to create SDP offer.');
-    const resp = await fetch(
-      `${RTC_URL || 'https://api.openai.com/v1/realtime'}?model=${this.config.model}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${EPHEMERAL_KEY}`,
-          'Content-Type': 'application/sdp',
-        },
-        body: offer.sdp,
-      }
-    );
+    const resp = await fetch(`${(RTC_URL || 'https://api.openai.com/v1/realtime')}?model=${this.config.model}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${EPHEMERAL_KEY}`,
+        'Content-Type': 'application/sdp',
+      },
+      body: offer.sdp,
+    });
     if (!resp.ok) throw new Error(`Realtime connect failed: ${resp.status} ${resp.statusText}`);
 
     await this.pc.setRemoteDescription({ type: 'answer', sdp: await resp.text() });
@@ -701,10 +605,30 @@ export class OpenAIRealtimeService extends Emitter {
       const result = await aiAssistantService.processUserMessage(message, this.currentUserId!);
       this.emitUI({ type: 'assistant.action', data: result });
     } catch (e: unknown) {
-      this.emitUI({
-        type: 'assistant.error',
-        message: (e instanceof Error ? e.message : String(e)) || 'Action failed',
+      this.emitUI({ type: 'assistant.error', message: (e instanceof Error ? e.message : String(e)) || 'Action failed' });
+    }
+  }
+
+  /**
+   * Place an Instacart order by sending a natural-language shopping sentence
+   * to the backend endpoint `/api/instacart-order`.
+   * Emits `instacart.order.result` on success and `instacart.order.error` on failure.
+   */
+  async placeInstacartOrder(shoppingSentence: string): Promise<any> {
+    try {
+      const res = await fetch('/api/instacart-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shoppingSentence }),
       });
+
+      const data = await res.json();
+      this.emitUI({ type: 'instacart.order.result', data });
+      return data;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      this.emitUI({ type: 'instacart.order.error', error: msg });
+      throw e;
     }
   }
 
@@ -715,16 +639,116 @@ export class OpenAIRealtimeService extends Emitter {
         console.log('✅ Session ready:', event.type);
         break;
 
-      case 'conversation.item.created':
-        console.log('💬 Conversation item:', event.item);
+      case 'conversation.item.input_audio_transcription.completed': {
+        console.log('🎤🎤🎤 AUDIO TRANSCRIPTION COMPLETED');
+        const transcript = (event as any).transcript || '';
+        console.log('🎤 Transcript:', transcript);
+        
+        // Store for debugging
+        this.lastUserTranscript = transcript;
+        
+        if (transcript) {
+          const lower = transcript.toLowerCase();
+          console.log('🎤 Checking for Instacart keywords in:', lower);
+          
+          // Simple keyword-based trigger for Instacart flows
+          if (lower.includes('instacart') || lower.includes('shopping list') || lower.includes('grocery') || lower.includes('add to cart')) {
+            console.log('🛒🛒🛒 INSTACART DETECTED IN TRANSCRIPT!');
+            console.log('🛒 Full transcript:', transcript);
+            
+            this.emitUI({ type: 'instacart.order.started', text: transcript });
+            
+            console.log('🛒 Calling sendToInstacart...');
+            
+            try {
+              const result = await sendToInstacart(transcript);
+              console.log('🛒🛒🛒 INSTACART RESULT:', result);
+              console.log('🛒 Result items:', result.items);
+              console.log('🛒 Result status:', result.status);
+              console.log('🛒 Emitting instacart.order.result event');
+              this.emitUI({ type: 'instacart.order.result', data: result });
+              console.log('🛒✅ Event emitted successfully');
+            } catch (e: any) {
+              console.error('❌❌❌ INSTACART ERROR:', e);
+              this.emitUI({ type: 'instacart.order.error', error: e?.message ?? String(e) });
+            }
+          } else {
+            console.log('🎤 No Instacart keywords found in transcript');
+          }
+        } else {
+          console.log('🎤 No transcript data available');
+        }
         break;
+      }
+
+      case 'conversation.item.created': {
+        const item = (event as any).item;
+        console.log('💬💬💬 CONVERSATION ITEM CREATED');
+        console.log('💬 Item role:', item?.role);
+        
+        // When user message is created, check if we should intercept for Instacart
+        if (item?.role === 'user') {
+          console.log('👤 User message created, checking content...');
+          
+          // Try to get text from various possible locations
+          let transcript = '';
+          
+          if (item.content) {
+            if (Array.isArray(item.content)) {
+              for (const c of item.content) {
+                if (c?.type === 'input_audio' && c?.transcript) {
+                  transcript = c.transcript;
+                  console.log('👤 Found input_audio transcript:', transcript);
+                }
+                if (c?.type === 'input_text' && c?.text) {
+                  transcript = c.text;
+                  console.log('👤 Found input_text:', transcript);
+                }
+              }
+            } else if (typeof item.content === 'string') {
+              transcript = item.content;
+              console.log('👤 Found string content:', transcript);
+            }
+          }
+          
+          console.log('👤 User transcript:', transcript);
+          
+          if (transcript) {
+            const lower = transcript.toLowerCase();
+            if (lower.includes('instacart') || lower.includes('shopping') || lower.includes('grocery') || lower.includes('add to cart')) {
+              console.log('🛒🛒🛒 INSTACART DETECTED IN USER MESSAGE!');
+              console.log('🛒 Transcript:', transcript);
+              
+              // Cancel the AI response and handle Instacart instead
+              this.emitUI({ type: 'instacart.order.started', text: transcript });
+              
+              console.log('🛒 Calling sendToInstacart...');
+              sendToInstacart(transcript)
+                .then(result => {
+                  console.log('🛒✅ Instacart success:', result);
+                  this.emitUI({ type: 'instacart.order.result', data: result });
+                })
+                .catch(e => {
+                  console.error('🛒❌ Instacart failed:', e);
+                  this.emitUI({ type: 'instacart.order.error', error: e?.message ?? String(e) });
+                });
+              
+              // Try to cancel the pending response
+              if (this.dc && this.dc.readyState === 'open') {
+                console.log('🛒 Sending response.cancel to OpenAI');
+                this.dc.send(JSON.stringify({ type: 'response.cancel' }));
+              }
+            } else {
+              console.log('💬 No Instacart keywords found');
+            }
+          }
+        }
+        break;
+      }
 
       case 'response.function_call_arguments.delta':
         if (event.call_id) {
-          const existing = this.pendingFunctionCalls.get(event.call_id) || {
-            name: event.name,
-            arguments: '',
-          };
+          const existing = this.pendingFunctionCalls.get(event.call_id) || { name: event.name, arguments: '' };
           existing.arguments += event.delta || '';
           this.pendingFunctionCalls.set(event.call_id, existing);
         }
@@ -734,11 +758,7 @@ export class OpenAIRealtimeService extends Emitter {
         if (event.call_id) {
           const call = this.pendingFunctionCalls.get(event.call_id);
           if (call) {
-            await this.executeFunctionCall(
-              event.call_id,
-              call.name || event.name,
-              call.arguments || event.arguments
-            );
+            await this.executeFunctionCall(event.call_id, call.name || event.name, call.arguments || event.arguments);
             this.pendingFunctionCalls.delete(event.call_id);
           }
         }
@@ -805,7 +825,7 @@ export class OpenAIRealtimeService extends Emitter {
       console.error('❌ Function execution error:', e);
       this.sendFunctionResult(callId, {
         success: false,
-        message: `Error: ${e instanceof Error ? e.message : String(e)}`,
+        message: `Error: ${e instanceof Error ? e.message : String(e)}`
       });
     }
   }
@@ -822,8 +842,8 @@ export class OpenAIRealtimeService extends Emitter {
       item: {
         type: 'function_call_output',
         call_id: callId,
-        output: outputMessage,
-      },
+        output: outputMessage
+      }
     };
 
     this.dc.send(JSON.stringify(event));
@@ -839,7 +859,7 @@ export class OpenAIRealtimeService extends Emitter {
       start_time: args.start_time || args.time,
       end_time: args.end_time,
       location: args.location,
-      participants: args.participants,
+      participants: args.participants
     };
 
     return await aiAssistantService.createCalendarEvent(details, this.currentUserId!);
@@ -872,7 +892,7 @@ export class OpenAIRealtimeService extends Emitter {
 
     const details: Record<string, unknown> = {
       search_term: args.search_term,
-      updates: args.updates || {},
+      updates: args.updates || {}
     };
 
     return await aiAssistantService.updateCalendarEvent(details, this.currentUserId!);
@@ -883,7 +903,7 @@ export class OpenAIRealtimeService extends Emitter {
 
     const details: Record<string, unknown> = {
       search_term: args.search_term,
-      date: args.date,
+      date: args.date
     };
 
     return await aiAssistantService.deleteCalendarEvent(details, this.currentUserId!);
@@ -911,7 +931,7 @@ export class OpenAIRealtimeService extends Emitter {
       date: args.due_date,
       time: args.due_time,
       points: args.points,
-      notes: args.notes,
+      notes: args.notes
     };
 
     return await aiAssistantService.createTask(details, this.currentUserId!);
@@ -923,7 +943,7 @@ export class OpenAIRealtimeService extends Emitter {
     const details: Record<string, unknown> = {
       query_type: args.query_type,
       search_term: args.search_term,
-      assigned_to: args.assigned_to,
+      assigned_to: args.assigned_to
     };
 
     return await aiAssistantService.queryTasks(details, this.currentUserId!);
@@ -934,7 +954,7 @@ export class OpenAIRealtimeService extends Emitter {
 
     const details: Record<string, unknown> = {
       search_term: args.search_term,
-      updates: args.updates || {},
+      updates: args.updates || {}
     };
 
     return await aiAssistantService.updateTask(details, this.currentUserId!);
@@ -945,7 +965,7 @@ export class OpenAIRealtimeService extends Emitter {
 
     const details: Record<string, unknown> = {
       search_term: args.search_term,
-      updates: { status: 'completed' },
+      updates: { status: 'completed' }
     };
 
     return await aiAssistantService.updateTask(details, this.currentUserId!);
@@ -955,7 +975,7 @@ export class OpenAIRealtimeService extends Emitter {
     console.log('🗑️ Voice AI deleting task with args:', args);
 
     const details: Record<string, unknown> = {
-      search_term: args.search_term,
+      search_term: args.search_term
     };
 
     return await aiAssistantService.deleteTask(details, this.currentUserId!);
@@ -966,7 +986,7 @@ export const openaiRealtimeService = new OpenAIRealtimeService({
   model: 'gpt-4o-realtime-preview',
   wakeWord: 'hey sara',
   vadThreshold: 0.03,
-  voice: 'nova',
+  voice: 'shimmer',
   instructions: `You are Sara, a helpful AI assistant for busy parents embedded in a family organizer app.
 
 You have full access to the user's calendar, tasks, shopping lists, and reminders. You can:
@@ -993,7 +1013,7 @@ OTHER FEATURES:
 - Add items to shopping lists with categories
 - Provide parenting advice and support
 
-SPEAKING STYLE: Speak at a brisk, natural conversational pace - not too slow or overly deliberate. Keep responses concise and to the point for voice interaction. Always check for schedule conflicts when creating events and proactively warn users. Use a warm, supportive tone while maintaining an efficient, natural speaking rhythm.`,
+SPEAKING STYLE: Speak at a brisk, natural conversational pace - not too slow or overly deliberate. Keep responses concise and to the point for voice interaction. Always check for schedule conflicts when creating events and proactively warn users. Use a warm, supportive tone while maintaining an efficient, natural speaking rhythm.`
 });
 
 export default openaiRealtimeService;
