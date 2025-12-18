@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { openaiRealtimeService, RealtimeEvent } from '../services/openaiRealtimeService';
 import { aiAssistantService } from '../services/aiAssistantService';
-import { sendToInstacartSmart } from '../services/instacartAgentService';
+import { sendToInstacart } from '../services/instacartAgentService';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useRetailerSelection } from '../hooks/useRetailerSelection';
@@ -398,7 +398,7 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
         lower.includes('grocery')
       ) {
         try {
-          const result = await sendToInstacartSmart(trimmed, selectedRetailer);
+          const result = await sendToInstacart(trimmed, selectedRetailer);
 
           if (result.status === 'success') {
             const itemNames = result.items && result.items.length
