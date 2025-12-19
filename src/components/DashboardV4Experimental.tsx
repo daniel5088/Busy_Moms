@@ -299,7 +299,7 @@ export function DashboardV4Experimental({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold">
-                Good Morning,{' '}
+                Hello,{' '}
                 {profile?.full_name ||
                   user?.user_metadata?.full_name ||
                   user?.user_metadata?.name ||
@@ -352,7 +352,7 @@ export function DashboardV4Experimental({
             {/* Today's Schedule */}
             <div className="w-1/2">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
-                Today&apos;s Schedule
+                Daily Schedule
               </h2>
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-80 flex flex-col">
                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
@@ -418,7 +418,7 @@ export function DashboardV4Experimental({
             {/* This Week's Schedule */}
             <div className="w-1/2">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
-                This Week&apos;s Schedule
+                Weekly Schedule
               </h2>
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-80 flex flex-col">
                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
