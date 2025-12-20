@@ -14,6 +14,9 @@ import {
   Shield,
   ListTodo,
   Link,
+  Loader2,
+  Settings,
+  RefreshCw,
 } from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
@@ -45,6 +48,9 @@ export function DashboardV4Experimental({
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
   const [isAffirmationButtonGlowing, setIsAffirmationButtonGlowing] = React.useState(false);
+  const [affirmationLoading, setAffirmationLoading] = React.useState(false);
+  const [affirmationError, setAffirmationError] = React.useState<string | null>(null);
+  const [affirmationsDisabled, setAffirmationsDisabled] = React.useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -64,6 +70,10 @@ export function DashboardV4Experimental({
   }, [affirmationStage]);
 
   const loadTodayAffirmation = async () => {
+    setAffirmationLoading(true);
+    setAffirmationError(null);
+    setAffirmationsDisabled(false);
+
     try {
       let affirmation = await affirmationService.getTodaysAffirmation();
 
@@ -73,8 +83,18 @@ export function DashboardV4Experimental({
       }
 
       setTodayAffirmation(affirmation);
-    } catch (error) {
+      setAffirmationError(null);
+    } catch (error: any) {
       console.error("Error loading today's affirmation:", error);
+
+      if (error?.message?.includes('disabled') || error?.message?.includes('403')) {
+        setAffirmationsDisabled(true);
+        setAffirmationError(null);
+      } else {
+        setAffirmationError(error?.message || 'Unable to load affirmation');
+      }
+    } finally {
+      setAffirmationLoading(false);
     }
   };
 
@@ -233,7 +253,7 @@ export function DashboardV4Experimental({
       )}
 
       {/* Content Stage - Full affirmation card */}
-      {(affirmationStage === 'content' || affirmationStage === 'closing') && todayAffirmation && (
+      {(affirmationStage === 'content' || affirmationStage === 'closing') && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-in fade-in duration-300"
           role="dialog"
@@ -247,46 +267,147 @@ export function DashboardV4Experimental({
             }`}
           >
             {/* Content */}
-            <div className="relative z-10 grid grid-rows-[1fr_auto_auto] h-full">
+            <div className="relative z-10 grid grid-rows-[1fr_auto_auto] h-full min-h-[400px]">
               {/* Middle Row - Centered Text Block */}
-              <div className="flex flex-col items-center justify-center text-center">
+              <div className="flex flex-col items-center justify-center text-center px-4">
                 <div className="flex items-center justify-center space-x-2 mb-6">
                   <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   <span
                     id="affirmation-overlay-title"
                     className="text-white font-semibold text-base sm:text-lg"
                   >
-                    Today's Affirmation
+                    Daily Affirmations
                   </span>
                 </div>
 
-                <p
-                  className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-semibold italic my-8 px-4 ${
-                    affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
-                  }`}
-                >
-                  {todayAffirmation.affirmation_text}
-                </p>
+                {/* Loading State */}
+                {affirmationLoading && (
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <Loader2 className="w-12 h-12 text-white animate-spin" />
+                    <p className="text-white/90 text-base">Loading your daily affirmation...</p>
+                  </div>
+                )}
+
+                {/* Success State - Show Affirmation */}
+                {!affirmationLoading && todayAffirmation && (
+                  <p
+                    className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-semibold italic my-8 ${
+                      affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
+                    }`}
+                  >
+                    {todayAffirmation.affirmation_text}
+                  </p>
+                )}
+
+                {/* Disabled State */}
+                {!affirmationLoading && !todayAffirmation && affirmationsDisabled && (
+                  <div className="flex flex-col items-center justify-center space-y-4 max-w-md">
+                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                      <Settings className="w-8 h-8 text-white" />
+                    </div>
+                    <p className="text-white/90 text-base leading-relaxed">
+                      Daily affirmations are currently off. You can turn them on and configure them
+                      in Settings.
+                    </p>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {!affirmationLoading &&
+                  !todayAffirmation &&
+                  !affirmationsDisabled &&
+                  affirmationError && (
+                    <div className="flex flex-col items-center justify-center space-y-4 max-w-md">
+                      <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                        <X className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="text-white/90 text-base leading-relaxed">
+                        We couldn't load your affirmation right now. Please try again.
+                      </p>
+                    </div>
+                  )}
               </div>
 
               {/* Bottom Section - Button Area */}
               <div className="pb-12 flex flex-col items-center space-y-3">
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-rose-400"
-                  aria-label="Affirmation settings"
-                >
-                  Affirmation settings
-                </button>
+                {/* Show different buttons based on state */}
+                {!affirmationLoading && todayAffirmation && (
+                  <>
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-rose-400"
+                      aria-label="Affirmation settings"
+                    >
+                      Affirmation settings
+                    </button>
 
-                <button
-                  onClick={handleCloseAffirmation}
-                  className="px-8 py-4 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
-                  aria-label="Close affirmation"
-                >
-                  <X className="w-5 h-5" />
-                  <span>Close</span>
-                </button>
+                    <button
+                      onClick={handleCloseAffirmation}
+                      className="px-8 py-4 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+                      aria-label="Close affirmation"
+                    >
+                      <X className="w-5 h-5" />
+                      <span>Close</span>
+                    </button>
+                  </>
+                )}
+
+                {!affirmationLoading && affirmationsDisabled && (
+                  <>
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
+                      className="px-6 py-3 bg-white/90 hover:bg-white rounded-xl text-rose-500 text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+                      aria-label="Go to settings"
+                    >
+                      <Settings className="w-5 h-5" />
+                      <span>Go to Settings</span>
+                    </button>
+
+                    <button
+                      onClick={handleCloseAffirmation}
+                      className="px-8 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+                      aria-label="Close"
+                    >
+                      <X className="w-5 h-5" />
+                      <span>Close</span>
+                    </button>
+                  </>
+                )}
+
+                {!affirmationLoading && affirmationError && !affirmationsDisabled && (
+                  <>
+                    <button
+                      onClick={() => {
+                        loadTodayAffirmation();
+                      }}
+                      className="px-6 py-3 bg-white/90 hover:bg-white rounded-xl text-rose-500 text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+                      aria-label="Try again"
+                    >
+                      <RefreshCw className="w-5 h-5" />
+                      <span>Try Again</span>
+                    </button>
+
+                    <button
+                      onClick={handleCloseAffirmation}
+                      className="px-8 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+                      aria-label="Close"
+                    >
+                      <X className="w-5 h-5" />
+                      <span>Close</span>
+                    </button>
+                  </>
+                )}
+
+                {affirmationLoading && (
+                  <button
+                    onClick={handleCloseAffirmation}
+                    className="px-8 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+                    aria-label="Close"
+                  >
+                    <X className="w-5 h-5" />
+                    <span>Close</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
