@@ -3,9 +3,11 @@ import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vite
 
 // Mock data
 const mockUser = { id: 'test-user-id' };
+// Set expires_at to 1 hour from now to avoid triggering refresh
 const mockSession = {
   access_token: 'test-access-token',
   user: mockUser,
+  expires_at: Math.floor(Date.now() / 1000) + 3600,
 };
 
 // ---- Mock Supabase client ----
@@ -13,12 +15,14 @@ const mockSession = {
 const mockFrom = vi.fn();
 const mockGetSession = vi.fn();
 const mockGetUser = vi.fn();
+const mockRefreshSession = vi.fn();
 
 vi.mock('../src/lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: () => mockGetSession(),
       getUser: () => mockGetUser(),
+      refreshSession: () => mockRefreshSession(),
     },
     from: (table: string) => mockFrom(table),
   },
@@ -43,6 +47,10 @@ describe('AffirmationService', () => {
     });
     mockGetUser.mockResolvedValue({
       data: { user: mockUser },
+    });
+    mockRefreshSession.mockResolvedValue({
+      data: { session: mockSession },
+      error: null,
     });
   });
 
@@ -127,7 +135,7 @@ describe('AffirmationService', () => {
         })
       );
 
-      await expect(service.generateAffirmation()).rejects.toThrow('Failed to generate');
+      await expect(service.generateAffirmation()).rejects.toThrow('Server error generating affirmation');
     });
   });
 
