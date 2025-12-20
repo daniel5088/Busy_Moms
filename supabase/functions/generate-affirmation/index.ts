@@ -149,8 +149,23 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('VITE_SUPABASE_ANON_KEY')!;
+    // Use standard Supabase environment variables (SUPABASE_URL, SUPABASE_ANON_KEY)
+    // Fallback to VITE_ prefixed vars for backwards compatibility
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('VITE_SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('VITE_SUPABASE_ANON_KEY');
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('❌ Missing Supabase environment variables');
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+          'x-correlation-id': correlationId,
+        },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: false,
