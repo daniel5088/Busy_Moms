@@ -146,7 +146,7 @@ export function DashboardV4Experimental({
   const quickActions = [
     {
       icon: ShoppingBag,
-      title: 'Shopping List',
+      title: 'Shopping',
       desc: `${tasks.length} item${tasks.length === 1 ? '' : 's'} needed`,
       bgColor: 'bg-amber-50 dark:bg-gray-800',
       borderColor: 'border-amber-200 dark:border-gray-700',
