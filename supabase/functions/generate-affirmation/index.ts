@@ -460,18 +460,48 @@ Deno.serve(async (req: Request) => {
       },
     });
   } catch (error) {
-    console.error('❌ Affirmation generation error:', error);
+    const correlationId = getCorrelationId(req);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    console.error('❌ Affirmation generation error:', {
+      correlationId,
+      message: errorMessage,
+      stack: errorStack,
+      error,
+    });
+
+    // Determine error type for better user feedback
+    let userMessage = 'An unexpected error occurred while generating affirmation';
+    let statusCode = 500;
+
+    if (errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint')) {
+      userMessage = 'An affirmation already exists for this date';
+      statusCode = 409;
+    } else if (errorMessage.includes('OpenAI')) {
+      userMessage = 'AI service temporarily unavailable. Please try again.';
+      statusCode = 503;
+    } else if (errorMessage.includes('permission denied') || errorMessage.includes('RLS')) {
+      userMessage = 'Database permission error. Please contact support.';
+      statusCode = 403;
+    } else if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
+      userMessage = 'Database configuration error. Please contact support.';
+      statusCode = 500;
+    }
 
     return new Response(
       JSON.stringify({
         error: 'Internal server error',
-        message: 'An unexpected error occurred while generating affirmation',
+        message: userMessage,
+        details: errorMessage,
+        correlationId,
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
+          'x-correlation-id': correlationId,
         },
       }
     );
