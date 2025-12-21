@@ -58,7 +58,7 @@ function App() {
   const session = useSessionContext();
   const supabaseClient = useSupabaseClient();
   const { user, loading, signOut } = useAuth();
-  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
+  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard-v4');
   const [currentSubScreen, setCurrentSubScreen] = useState<SubScreen | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
@@ -322,23 +322,9 @@ function App() {
               )}
               {currentSubScreen === 'settings' && (
                 <FeatureErrorBoundary featureName="Settings">
-                  {/* Alvaro-dashboardv2: Pass navigation handler to Settings */}
-                  {/* Alvaros - V4: Pass navigation handler for Dashboard V4 */}
                   <Settings
                     darkMode={darkMode}
                     toggleDarkMode={toggleDarkMode}
-                    onNavigateToDashboardV2={() => {
-                      setCurrentSubScreen(null);
-                      setCurrentScreen('dashboard-v2');
-                    }}
-                    onNavigateToDashboardV3={() => {
-                      setCurrentSubScreen(null);
-                      setCurrentScreen('dashboard-v3');
-                    }}
-                    onNavigateToDashboardV4={() => {
-                      setCurrentSubScreen(null);
-                      setCurrentScreen('dashboard-v4');
-                    }}
                   />
                 </FeatureErrorBoundary>
               )}
