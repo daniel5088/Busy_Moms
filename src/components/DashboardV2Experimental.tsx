@@ -30,6 +30,8 @@ import {
 
 import { SubScreen } from '../App';
 
+type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing';
+
 interface DashboardProps {
   onNavigate: (screen: 'calendar' | 'family' | 'more') => void;
   onNavigateToSubScreen: (screen: SubScreen) => void;
@@ -52,8 +54,8 @@ export function DashboardV2Experimental({
   const [showTasksPopup, setShowTasksPopup] = React.useState(false);
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
-  //Alvaro-dashboardv2: State to control full-screen affirmation overlay on page load
-  const [showAffirmationOverlay, setShowAffirmationOverlay] = React.useState(true);
+  const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
+  const [isAffirmationButtonGlowing, setIsAffirmationButtonGlowing] = React.useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -61,16 +63,30 @@ export function DashboardV2Experimental({
     }
   }, [user]);
 
-  //Alvaro-dashboardv2: Keyboard escape handler for affirmation overlay accessibility
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showAffirmationOverlay) {
-        setShowAffirmationOverlay(false);
+      if (e.key === 'Escape' && affirmationStage === 'content') {
+        handleCloseAffirmation();
       }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [showAffirmationOverlay]);
+  }, [affirmationStage]);
+
+  React.useEffect(() => {
+    if (affirmationStage === 'closing') {
+      const timer = setTimeout(() => {
+        setAffirmationStage('hidden');
+        setIsAffirmationButtonGlowing(true);
+
+        setTimeout(() => {
+          setIsAffirmationButtonGlowing(false);
+        }, 600);
+      }, 450);
+
+      return () => clearTimeout(timer);
+    }
+  }, [affirmationStage]);
 
   const loadTodayAffirmation = async () => {
     try {
@@ -92,6 +108,26 @@ export function DashboardV2Experimental({
       await signOut();
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const handleOpenAffirmation = () => {
+    if (affirmationStage !== 'hidden') return;
+
+    setAffirmationStage('burst');
+
+    setTimeout(() => {
+      setAffirmationStage('logo');
+    }, 450);
+
+    setTimeout(() => {
+      setAffirmationStage('content');
+    }, 900);
+  };
+
+  const handleCloseAffirmation = () => {
+    if (affirmationStage === 'content') {
+      setAffirmationStage('closing');
     }
   };
 
@@ -156,36 +192,54 @@ export function DashboardV2Experimental({
 
   return (
     <>
-      {/* Alvaro-dashboardv2: Full-screen affirmation overlay shown on page load */}
-      {showAffirmationOverlay && todayAffirmation && (
+      {affirmationStage === 'burst' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center animate-ping opacity-75">
+                <Sparkles className="w-16 h-16 text-rose-400" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {affirmationStage === 'logo' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="animate-spin">
+            <Sparkles className="w-24 h-24 sm:w-32 sm:h-32 text-white" />
+          </div>
+        </div>
+      )}
+
+      {(affirmationStage === 'content' || affirmationStage === 'closing') && todayAffirmation && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="affirmation-overlay-title"
         >
-          {/* Background overlay - click to close */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowAffirmationOverlay(false)}
+            onClick={handleCloseAffirmation}
           />
 
-          {/* Affirmation Card */}
-          <div className="relative bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-rose-500 p-8 sm:p-12 rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden animate-in fade-in zoom-in duration-300">
-            {/* Decorative circles */}
+          <div
+            className={`relative bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-rose-500 p-8 sm:p-12 rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden transition-all duration-200 ease-out ${
+              affirmationStage === 'closing' ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+            }`}
+          >
             <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16"></div>
 
-            {/* Close button */}
             <button
-              onClick={() => setShowAffirmationOverlay(false)}
+              onClick={handleCloseAffirmation}
               className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
               aria-label="Close affirmation"
             >
               <X className="w-5 h-5 text-white" />
             </button>
 
-            {/* Content */}
             <div className="relative z-10">
               <div className="flex items-center space-x-3 mb-6">
                 <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
@@ -228,9 +282,22 @@ export function DashboardV2Experimental({
             </div>
             <div className="flex items-center space-x-3">
               <button
+                onClick={handleOpenAffirmation}
+                className={`w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95 ${
+                  isAffirmationButtonGlowing
+                    ? 'ring-2 ring-white shadow-[0_0_12px_rgba(255,255,255,0.9)]'
+                    : ''
+                }`}
+                title="Open daily affirmation"
+                aria-label="Open daily affirmation"
+              >
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              <button
                 onClick={handleSignOut}
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-colors"
                 title="Sign Out"
+                aria-label="Sign Out"
               >
                 <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
@@ -496,9 +563,7 @@ export function DashboardV2Experimental({
             </div>
           </div>
 
-          {/* Affirmation Card - Reused from original Dashboard */}
-          {/* //Alvaro-dashboardv2: Moved affirmation to bottom, shown only after overlay is closed */}
-          {!showAffirmationOverlay && todayAffirmation && (
+          {affirmationStage === 'hidden' && todayAffirmation && (
             <div
               onClick={() => setShowAffirmations(true)}
               className="bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-rose-500 p-6 rounded-2xl shadow-lg cursor-pointer hover:shadow-xl transition-all relative overflow-hidden"
@@ -530,7 +595,7 @@ export function DashboardV2Experimental({
             </div>
           )}
 
-          {!showAffirmationOverlay && !todayAffirmation && (
+          {affirmationStage === 'hidden' && !todayAffirmation && (
             <div className="bg-gradient-to-br from-rose-100 to-pink-100 dark:from-gray-800 dark:to-gray-700 border-2 border-rose-300 dark:border-rose-700 p-6 rounded-2xl">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-rose-200 dark:bg-rose-900 rounded-full flex items-center justify-center animate-pulse">
