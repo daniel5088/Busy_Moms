@@ -232,7 +232,7 @@ export function DashboardV4Experimental({
     <>
       {/* Burst Stage - Growing and fading icon */}
       {affirmationStage === 'burst' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="relative">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center animate-ping opacity-75">
@@ -245,169 +245,61 @@ export function DashboardV4Experimental({
 
       {/* Logo Stage - Spinning icon */}
       {affirmationStage === 'logo' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="animate-spin">
             <Sparkles className="w-24 h-24 sm:w-32 sm:h-32 text-white" />
           </div>
         </div>
       )}
 
-      {/* Content Stage - Full affirmation card */}
-      {(affirmationStage === 'content' || affirmationStage === 'closing') && (
+      {/* Content Stage - Affirmation modal */}
+      {(affirmationStage === 'content' || affirmationStage === 'closing') && todayAffirmation && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-in fade-in duration-300"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="affirmation-overlay-title"
         >
-          {/* Affirmation Card */}
           <div
-            className={`relative w-full max-w-3xl overflow-hidden transition-all duration-200 ease-out ${
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={handleCloseAffirmation}
+          />
+
+          <div
+            className={`relative bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-rose-500 p-8 sm:p-12 rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden transition-all duration-200 ease-out ${
               affirmationStage === 'closing' ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
             }`}
           >
-            {/* Content */}
-            <div className="relative z-10 grid grid-rows-[1fr_auto_auto] h-full min-h-[400px]">
-              {/* Middle Row - Centered Text Block */}
-              <div className="flex flex-col items-center justify-center text-center px-4">
-                <div className="flex items-center justify-center space-x-2 mb-6">
-                  <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                  <span
-                    id="affirmation-overlay-title"
-                    className="text-white font-semibold text-base sm:text-lg"
-                  >
-                    Daily Affirmations
-                  </span>
-                </div>
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16"></div>
 
-                {/* Loading State */}
-                {affirmationLoading && (
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <Loader2 className="w-12 h-12 text-white animate-spin" />
-                    <p className="text-white/90 text-base">Loading your daily affirmation...</p>
-                  </div>
-                )}
+            <button
+              onClick={handleCloseAffirmation}
+              className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
+              aria-label="Close affirmation"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
 
-                {/* Success State - Show Affirmation */}
-                {!affirmationLoading && todayAffirmation && (
-                  <p
-                    className={`text-white/95 text-lg md:text-xl leading-relaxed tracking-wide font-semibold italic my-8 ${
-                      affirmationStage === 'content' ? 'affirmation-text-reveal' : ''
-                    }`}
-                  >
-                    {todayAffirmation.affirmation_text}
-                  </p>
-                )}
-
-                {/* Disabled State */}
-                {!affirmationLoading && !todayAffirmation && affirmationsDisabled && (
-                  <div className="flex flex-col items-center justify-center space-y-4 max-w-md">
-                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                      <Settings className="w-8 h-8 text-white" />
-                    </div>
-                    <p className="text-white/90 text-base leading-relaxed">
-                      Daily affirmations are currently off. You can turn them on and configure them
-                      in Settings.
-                    </p>
-                  </div>
-                )}
-
-                {/* Error State */}
-                {!affirmationLoading &&
-                  !todayAffirmation &&
-                  !affirmationsDisabled &&
-                  affirmationError && (
-                    <div className="flex flex-col items-center justify-center space-y-4 max-w-md">
-                      <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                        <X className="w-8 h-8 text-white" />
-                      </div>
-                      <p className="text-white/90 text-base leading-relaxed">
-                        We couldn't load your affirmation right now. Please try again.
-                      </p>
-                    </div>
-                  )}
+            <div className="relative z-10">
+              <div className="flex items-center space-x-3 mb-6">
+                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                <span
+                  id="affirmation-overlay-title"
+                  className="text-white font-semibold text-base sm:text-lg"
+                >
+                  Today's Affirmation
+                </span>
               </div>
 
-              {/* Bottom Section - Button Area */}
-              <div className="pb-12 flex flex-col items-center space-y-3">
-                {/* Show different buttons based on state */}
-                {!affirmationLoading && todayAffirmation && (
-                  <>
-                    <button
-                      onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-rose-400"
-                      aria-label="Affirmation settings"
-                    >
-                      Affirmation settings
-                    </button>
+              <p className="text-white text-xl sm:text-2xl md:text-3xl leading-relaxed font-light text-center my-8">
+                {todayAffirmation.affirmation_text}
+              </p>
 
-                    <button
-                      onClick={handleCloseAffirmation}
-                      className="px-8 py-4 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
-                      aria-label="Close affirmation"
-                    >
-                      <X className="w-5 h-5" />
-                      <span>Close</span>
-                    </button>
-                  </>
-                )}
-
-                {!affirmationLoading && affirmationsDisabled && (
-                  <>
-                    <button
-                      onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
-                      className="px-6 py-3 bg-white/90 hover:bg-white rounded-xl text-rose-500 text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
-                      aria-label="Go to settings"
-                    >
-                      <Settings className="w-5 h-5" />
-                      <span>Go to Settings</span>
-                    </button>
-
-                    <button
-                      onClick={handleCloseAffirmation}
-                      className="px-8 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
-                      aria-label="Close"
-                    >
-                      <X className="w-5 h-5" />
-                      <span>Close</span>
-                    </button>
-                  </>
-                )}
-
-                {!affirmationLoading && affirmationError && !affirmationsDisabled && (
-                  <>
-                    <button
-                      onClick={() => {
-                        loadTodayAffirmation();
-                      }}
-                      className="px-6 py-3 bg-white/90 hover:bg-white rounded-xl text-rose-500 text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
-                      aria-label="Try again"
-                    >
-                      <RefreshCw className="w-5 h-5" />
-                      <span>Try Again</span>
-                    </button>
-
-                    <button
-                      onClick={handleCloseAffirmation}
-                      className="px-8 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
-                      aria-label="Close"
-                    >
-                      <X className="w-5 h-5" />
-                      <span>Close</span>
-                    </button>
-                  </>
-                )}
-
-                {affirmationLoading && (
-                  <button
-                    onClick={handleCloseAffirmation}
-                    className="px-8 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white text-base font-medium transition-colors flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5" />
-                    <span>Close</span>
-                  </button>
-                )}
+              <div className="text-center mt-6">
+                <p className="text-white/80 text-sm sm:text-base">
+                  Take a moment to embrace this message
+                </p>
               </div>
             </div>
           </div>
