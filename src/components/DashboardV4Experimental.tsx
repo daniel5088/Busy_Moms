@@ -25,6 +25,12 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { Affirmation } from '../lib/supabase';
 import { affirmationService } from '../services/affirmationService';
 import { formatEventTime, formatEventTimeRange } from '../utils/timeFormatters';
+import {
+  DashboardPopup,
+  EventsList,
+  TasksList,
+  RemindersList,
+} from './shared/DashboardPopup';
 
 import { SubScreen } from '../App';
 
@@ -51,6 +57,9 @@ export function DashboardV4Experimental({
   const [affirmationLoading, setAffirmationLoading] = React.useState(false);
   const [affirmationError, setAffirmationError] = React.useState<string | null>(null);
   const [affirmationsDisabled, setAffirmationsDisabled] = React.useState(false);
+  const [showEventsPopup, setShowEventsPopup] = React.useState(false);
+  const [showTasksPopup, setShowTasksPopup] = React.useState(false);
+  const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -343,15 +352,24 @@ export function DashboardV4Experimental({
           {/* Mini Stats */}
           <div className="bg-white bg-opacity-10 dark:bg-gray-900 dark:bg-opacity-50 rounded-xl p-3">
             <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
-              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
+              <button
+                onClick={() => setShowEventsPopup(true)}
+                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+              >
                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{events.length} events</span>
               </button>
-              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
+              <button
+                onClick={() => setShowTasksPopup(true)}
+                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+              >
                 <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{tasks.length} shopping list</span>
               </button>
-              <button className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors">
+              <button
+                onClick={() => setShowRemindersPopup(true)}
+                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+              >
                 <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{reminders.length} reminders</span>
               </button>
@@ -585,6 +603,39 @@ export function DashboardV4Experimental({
           </div>
         </div>
       </div>
+
+      {/* Events Popup */}
+      <DashboardPopup
+        isOpen={showEventsPopup}
+        onClose={() => setShowEventsPopup(false)}
+        title="Upcoming Events"
+        loading={loading}
+        loadingColor="border-purple-500"
+      >
+        <EventsList events={events} />
+      </DashboardPopup>
+
+      {/* Tasks Popup */}
+      <DashboardPopup
+        isOpen={showTasksPopup}
+        onClose={() => setShowTasksPopup(false)}
+        title="Shopping List"
+        loading={loading}
+        loadingColor="border-green-500"
+      >
+        <TasksList tasks={tasks} />
+      </DashboardPopup>
+
+      {/* Reminders Popup */}
+      <DashboardPopup
+        isOpen={showRemindersPopup}
+        onClose={() => setShowRemindersPopup(false)}
+        title="Upcoming Reminders"
+        loading={loading}
+        loadingColor="border-blue-500"
+      >
+        <RemindersList reminders={reminders} />
+      </DashboardPopup>
     </>
   );
 }
