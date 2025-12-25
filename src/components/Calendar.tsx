@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState, KeyboardEvent } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, KeyboardEvent } from 'react';
 import {
   Plus,
   MapPin,
@@ -14,6 +14,8 @@ import {
   Info,
   Loader2,
   Bell,
+  Camera,
+  Upload,
 } from 'lucide-react';
 
 import { EventForm } from './forms/EventForm';
@@ -31,6 +33,14 @@ import { useDefaultAddress } from '../hooks/useDefaultAddress';
 // --- Helpers -----------------------------------------------------------------
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
 const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
+
+interface ExtractedCalendarEvent {
+  title: string;
+  date: string;
+  time?: string | null;
+  description?: string;
+  location?: string | null;
+}
 
 // Local YYYY-MM-DD (no UTC shift)
 const toLocalISODate = (d: Date) => {
@@ -84,6 +94,17 @@ export function Calendar() {
   // Core state
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [showCamera, setShowCamera] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [extractedInfo, setExtractedInfo] = useState<ExtractedCalendarEvent[] | null>(null);
+  const [editingEvent, setEditingEvent] = useState<ExtractedCalendarEvent | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [showCameraView, setShowCameraView] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // UI modals
   const [showEventForm, setShowEventForm] = useState(false);
@@ -101,9 +122,15 @@ export function Calendar() {
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
   const [syncedGoogleEventIds, setSyncedGoogleEventIds] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // --- Data loading: only load the visible month to reduce payload -----------
   const loadEvents = useCallback(async () => {
@@ -310,6 +337,214 @@ export function Calendar() {
     setShowEventForm(true);
   }, []);
 
+  const processImage = async (file: File) => {
+    setIsProcessing(true);
+    setShowCamera(false);
+
+    try {
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke('calendar-image-agent', {
+        body: {
+          action: 'process_image',
+          image_data: base64Data,
+          image_type: file.type,
+        },
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      if (data.events && data.events.length > 0) {
+        setExtractedInfo(data.events);
+      } else {
+        alert('No calendar event information found in the image. Please try another image.');
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      alert('Failed to process image. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      processImage(file);
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      // Stop any existing stream
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facingMode },
+        audio: false,
+      });
+
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setShowCameraView(true);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      alert('Unable to access camera. Please check permissions or use the gallery option.');
+    }
+  };
+
+  const switchCamera = async () => {
+    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newFacingMode);
+    
+    // Restart camera with new facing mode
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: newFacingMode },
+        audio: false,
+      });
+      
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error switching camera:', error);
+      alert('Unable to switch camera.');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+
+    if (!context) return;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw the video frame to canvas
+    context.drawImage(video, 0, 0);
+
+    // Convert canvas to blob
+    canvas.toBlob(async (blob) => {
+      if (blob) {
+        // Stop camera stream
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          setCameraStream(null);
+        }
+        setShowCameraView(false);
+        setShowCamera(false);
+
+        // Convert blob to file and process
+        const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+        await processImage(file);
+      }
+    }, 'image/jpeg', 0.95);
+  };
+
+  const closeCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCameraView(false);
+    setShowCamera(false);
+  };
+
+  const addEventFromImage = async (event: ExtractedCalendarEvent) => {
+    if (!user?.id) {
+      alert('You must be logged in to add events');
+      return;
+    }
+
+    try {
+      // Parse the time if it exists
+      let startTime = event.time || null;
+      
+      // Ensure time is in HH:MM format
+      if (startTime && !startTime.includes(':')) {
+        startTime = null;
+      }
+
+      // Create the event directly in the database
+      const { data, error } = await supabase
+        .from('events')
+        .insert({
+          user_id: user.id,
+          title: event.title,
+          event_date: event.date,
+          start_time: startTime,
+          end_time: null,
+          description: event.description || null,
+          location: event.location || null,
+          event_type: 'other', // lowercase to match your DB enum
+          participants: [],
+          rsvp_required: false,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating event:', error);
+        showToast('Failed to add event. Please try again.', 'error');
+        return;
+      }
+
+      // Success! Close the modal and reload events
+      setExtractedInfo(null);
+      await loadEvents();
+      
+      // Select the date of the new event
+      setSelectedDate(new Date(event.date));
+      
+      // Show success message
+      showToast(`"${event.title}" added to your calendar!`, 'success');
+    } catch (error) {
+      console.error('Error adding event:', error);
+      showToast('Failed to add event. Please try again.', 'error');
+    }
+  };
+
+  const handleEditEvent = (event: ExtractedCalendarEvent, _index: number) => {
+    setEditingEvent({ ...event });
+  };
+
+  const handleSaveEditedEvent = () => {
+    if (!editingEvent || !extractedInfo) return;
+
+    const updatedEvents = extractedInfo.map((ev) =>
+      ev.date === editingEvent.date && ev.title === editingEvent.title ? editingEvent : ev
+    );
+
+    setExtractedInfo(updatedEvents);
+    setEditingEvent(null);
+  };
+
   const onKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.key === 'ArrowLeft') {
@@ -507,16 +742,25 @@ export function Calendar() {
                 </div>
 
                 {/* Add Event Button */}
-                <button
-                  onClick={() => {
-                    setSelectedEvent(null);
-                    setShowEventForm(true);
-                  }}
-                  className="w-full mt-6 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Add Event</span>
-                </button>
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowCamera(true)}
+                    className="w-14 h-14 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-xl transition-all flex items-center justify-center shadow-lg flex-shrink-0"
+                    aria-label="Add event from image"
+                  >
+                    <Camera className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedEvent(null);
+                      setShowEventForm(true);
+                    }}
+                    className="flex-1 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>Add Event</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -552,7 +796,7 @@ export function Calendar() {
                           key={`event-${ev.id}-${i}`}
                           onClick={() => {
                             setSelectedEvent(ev);
-                            setShowEventDetails(false);
+                            setShowEventDetails(true);
                           }}
                           className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
                         >
@@ -754,44 +998,10 @@ export function Calendar() {
                       )}
 
                       {selectedEvent.location && (
-                        <>
-                          {(() => {
-                            const defaultAddressString = defaultAddress
-                              ? [
-                                  defaultAddress.street_address,
-                                  defaultAddress.city,
-                                  defaultAddress.state_province,
-                                  defaultAddress.postal_code,
-                                  defaultAddress.country,
-                                ]
-                                  .filter(Boolean)
-                                  .join(', ')
-                              : undefined;
-
-                            const eventStartTime = selectedEvent.start_time
-                              ? new Date(`${selectedEvent.event_date}T${selectedEvent.start_time}`)
-                              : undefined;
-
-                            return (
-                              <div className="space-y-3">
-                                <TravelTimeIndicator
-                                  origin={defaultAddressString}
-                                  destination={selectedEvent.location!}
-                                  eventStartTime={eventStartTime}
-                                  cachedTravelTime={selectedEvent.travel_time_minutes ?? undefined}
-                                  showDepartureTime={true}
-                                />
-
-                                <DirectionsButton
-                                  origin={defaultAddressString}
-                                  destination={selectedEvent.location!}
-                                  eventStartTime={eventStartTime}
-                                  className="w-full"
-                                />
-                              </div>
-                            );
-                          })()}
-                        </>
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <MapPin className="w-4 h-4" />
+                          <span>{selectedEvent.location}</span>
+                        </div>
                       )}
 
                       {selectedEvent.participants && selectedEvent.participants.length > 0 && (
@@ -805,6 +1015,31 @@ export function Calendar() {
                         <div className="p-3 bg-gray-50 rounded-lg">
                           <p className="text-sm text-gray-700">{selectedEvent.description}</p>
                         </div>
+                      )}
+                    </div>
+
+                    <div className="flex space-x-3 pt-4">
+                      {selectedEvent.location && (
+                        <>
+                          <button
+                            onClick={() => {
+                              const url = `https://waze.com/ul?q=${encodeURIComponent(selectedEvent.location!)}`;
+                              window.open(url, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
+                          >
+                            Open in Waze
+                          </button>
+                          <button
+                            onClick={() => {
+                              const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.location!)}`;
+                              window.open(url, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
+                          >
+                            Open in Google Maps
+                          </button>
+                        </>
                       )}
                     </div>
 
@@ -980,6 +1215,298 @@ export function Calendar() {
             }}
             onClose={() => setShowConflicts(false)}
           />
+        )}
+
+        {/* Camera/Gallery Selection Modal */}
+        {showCamera && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Add from Image</h3>
+                <button
+                  onClick={() => setShowCamera(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                >
+                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Capture or select an image with event details
+              </p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={startCamera}
+                  className="aspect-square bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl font-medium hover:from-blue-600 hover:to-blue-700 transition flex flex-col items-center justify-center gap-3 shadow-lg"
+                >
+                  <Camera className="w-12 h-12" />
+                  <span className="text-sm">Camera</span>
+                </button>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="aspect-square bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-purple-700 transition flex flex-col items-center justify-center gap-3 shadow-lg"
+                >
+                  <Upload className="w-12 h-12" />
+                  <span className="text-sm">Gallery</span>
+                </button>
+              </div>
+
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Live Camera View Modal */}
+        {showCameraView && (
+          <div className="fixed inset-0 bg-black z-50 flex flex-col">
+            {/* Camera Header */}
+            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/50 to-transparent">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={closeCamera}
+                  className="p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+                <button
+                  onClick={switchCamera}
+                  className="p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition"
+                >
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Video Feed */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+
+            {/* Hidden canvas for capturing */}
+            <canvas ref={canvasRef} className="hidden" />
+
+            {/* Capture Button */}
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-8 bg-gradient-to-t from-black/50 to-transparent">
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={capturePhoto}
+                  className="w-20 h-20 rounded-full bg-white border-4 border-white/30 hover:scale-110 transition-transform shadow-lg"
+                >
+                  <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                    <Camera className="w-8 h-8 text-gray-800" />
+                  </div>
+                </button>
+              </div>
+              <p className="text-white text-center mt-4 text-sm">
+                Tap to capture • {facingMode === 'user' ? 'Front' : 'Back'} Camera
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Processing Modal */}
+        {isProcessing && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl text-center">
+              <Loader2 className="w-16 h-16 text-rose-500 animate-spin mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Processing Image</h3>
+              <p className="text-gray-600 dark:text-gray-300">AI is analyzing the image for event information...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Extracted Info Modal */}
+        {extractedInfo && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl max-h-[80vh] overflow-y-auto">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Events Found</h3>
+              <div className="space-y-4 mb-6">
+                {extractedInfo.map((event, i) => (
+                  <div key={i} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="text-gray-900 dark:text-gray-100 font-semibold flex-1">{event.title}</h4>
+                      <button
+                        onClick={() => handleEditEvent(event, i)}
+                        className="ml-2 p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition"
+                        title="Edit event"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">📅 {event.date}</p>
+                    {event.time && <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">🕐 {event.time}</p>}
+                    {event.location && <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">📍 {event.location}</p>}
+                    {event.description && <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">{event.description}</p>}
+                    <button
+                      onClick={() => addEventFromImage(event)}
+                      className="w-full mt-3 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg font-medium hover:from-rose-500 hover:to-pink-500 transition"
+                    >
+                      Add to Calendar
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setExtractedInfo(null)}
+                className="w-full py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Event Modal */}
+        {editingEvent && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Event</h3>
+                <button
+                  onClick={() => setEditingEvent(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                >
+                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                  <input
+                    type="text"
+                    value={editingEvent.title}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
+                  <input
+                    type="date"
+                    value={editingEvent.date}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time (optional)</label>
+                  <input
+                    type="time"
+                    value={editingEvent.time || ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, time: e.target.value || null })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location (optional)</label>
+                  <input
+                    type="text"
+                    value={editingEvent.location || ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value || null })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    placeholder="Add location"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (optional)</label>
+                  <textarea
+                    value={editingEvent.description || ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value || null })}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    placeholder="Add description"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setEditingEvent(null)}
+                  className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEditedEvent}
+                  className="flex-1 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed top-4 right-4 z-[70] animate-in slide-in-from-top-2 duration-300">
+            <div
+              className={`flex items-center space-x-3 px-6 py-4 rounded-xl shadow-2xl border ${
+                toast.type === 'success'
+                  ? 'bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-700'
+                  : 'bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-700'
+              }`}
+            >
+              {toast.type === 'success' ? (
+                <svg className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              <span className={`font-medium ${
+                toast.type === 'success'
+                  ? 'text-green-800 dark:text-green-200'
+                  : 'text-red-800 dark:text-red-200'
+              }`}>
+                {toast.message}
+              </span>
+              <button
+                onClick={() => setToast(null)}
+                className={`ml-2 p-1 rounded-lg transition ${
+                  toast.type === 'success'
+                    ? 'hover:bg-green-100 dark:hover:bg-green-800'
+                    : 'hover:bg-red-100 dark:hover:bg-red-800'
+                }`}
+              >
+                <X className={`w-4 h-4 ${
+                  toast.type === 'success'
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-red-600 dark:text-red-400'
+                }`} />
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </>
