@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, KeyboardEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   MapPin,
@@ -90,6 +91,7 @@ export function Calendar() {
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
     useCalendarSync();
+  const navigate = useNavigate();
 
   // Core state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -123,6 +125,8 @@ export function Calendar() {
   const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
   const [syncedGoogleEventIds, setSyncedGoogleEventIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showGiftSuggestion, setShowGiftSuggestion] = useState(false);
+  const [giftEventTitle, setGiftEventTitle] = useState('');
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
@@ -478,7 +482,7 @@ export function Calendar() {
 
   const addEventFromImage = async (event: ExtractedCalendarEvent) => {
     if (!user?.id) {
-      alert('You must be logged in to add events');
+      showToast('You must be logged in to add events', 'error');
       return;
     }
 
@@ -502,7 +506,7 @@ export function Calendar() {
           end_time: null,
           description: event.description || null,
           location: event.location || null,
-          event_type: 'other', // lowercase to match your DB enum
+          event_type: 'other',
           participants: [],
           rsvp_required: false,
         })
@@ -524,6 +528,31 @@ export function Calendar() {
       
       // Show success message
       showToast(`"${event.title}" added to your calendar!`, 'success');
+
+      // Check if it's a gift-worthy event
+      const titleLower = event.title.toLowerCase();
+      const descriptionLower = (event.description || '').toLowerCase();
+      const combinedText = titleLower + ' ' + descriptionLower;
+      
+      const isGiftEvent = 
+        combinedText.includes('birthday') ||
+        combinedText.includes('anniversary') ||
+        combinedText.includes('wedding') ||
+        combinedText.includes('graduation') ||
+        combinedText.includes('baby shower') ||
+        combinedText.includes('housewarming') ||
+        combinedText.includes('retirement') ||
+        combinedText.match(/\b(gift|present)\b/);
+
+      if (isGiftEvent) {
+        // Show gift suggestion modal after a short delay
+        console.log('🎁 Gift event detected:', event.title);
+        setTimeout(() => {
+          console.log('🎁 Showing gift suggestion modal');
+          setGiftEventTitle(event.title);
+          setShowGiftSuggestion(true);
+        }, 1500);
+      }
     } catch (error) {
       console.error('Error adding event:', error);
       showToast('Failed to add event. Please try again.', 'error');
@@ -1019,28 +1048,40 @@ export function Calendar() {
                     </div>
 
                     <div className="flex space-x-3 pt-4">
-                      {selectedEvent.location && (
-                        <>
-                          <button
-                            onClick={() => {
-                              const url = `https://waze.com/ul?q=${encodeURIComponent(selectedEvent.location!)}`;
-                              window.open(url, '_blank', 'noopener,noreferrer');
-                            }}
-                            className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
-                          >
-                            Open in Waze
-                          </button>
-                          <button
-                            onClick={() => {
-                              const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.location!)}`;
-                              window.open(url, '_blank', 'noopener,noreferrer');
-                            }}
-                            className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
-                          >
-                            Open in Google Maps
-                          </button>
-                        </>
-                      )}
+                      {selectedEvent.location && (() => {
+                        const locationLower = selectedEvent.location.toLowerCase();
+                        const isPrivateLocation = 
+                          locationLower.includes('house') ||
+                          locationLower.includes('home') ||
+                          locationLower.includes("'s place") ||
+                          locationLower.includes('my place') ||
+                          locationLower.match(/\b(at|to) \w+['']s\b/); // matches "at John's" or "to Sarah's"
+                        
+                        if (isPrivateLocation) return null;
+                        
+                        return (
+                          <>
+                            <button
+                              onClick={() => {
+                                const url = `https://waze.com/ul?q=${encodeURIComponent(selectedEvent.location!)}`;
+                                window.open(url, '_blank', 'noopener,noreferrer');
+                              }}
+                              className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
+                            >
+                              Open in Waze
+                            </button>
+                            <button
+                              onClick={() => {
+                                const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.location!)}`;
+                                window.open(url, '_blank', 'noopener,noreferrer');
+                              }}
+                              className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
+                            >
+                              Open in Google Maps
+                            </button>
+                          </>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex space-x-3 pt-4">
@@ -1053,6 +1094,38 @@ export function Calendar() {
                       >
                         Edit Event
                       </button>
+                      {/* Add Gift Finder button for gift-worthy events */}
+                      {(() => {
+                        const titleLower = selectedEvent.title.toLowerCase();
+                        const descriptionLower = (selectedEvent.description || '').toLowerCase();
+                        const combinedText = titleLower + ' ' + descriptionLower;
+
+                        const isGiftEvent =
+                          combinedText.includes('birthday') ||
+                          combinedText.includes('anniversary') ||
+                          combinedText.includes('wedding') ||
+                          combinedText.includes('graduation') ||
+                          combinedText.includes('baby shower') ||
+                          combinedText.includes('housewarming') ||
+                          combinedText.includes('retirement') ||
+                          combinedText.match(/\b(gift|present)\b/);
+
+                        if (!isGiftEvent) return null;
+
+                        return (
+                          <button
+                            onClick={() => {
+                              setGiftEventTitle(selectedEvent.title);
+                              setShowEventDetails(false);
+                              setShowGiftSuggestion(true);
+                            }}
+                            className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Gift className="w-4 h-4" />
+                            Find Gift
+                          </button>
+                        );
+                      })()}
                       <button
                         onClick={async () => {
                           if (confirm('Are you sure you want to delete this event?')) {
@@ -1461,6 +1534,48 @@ export function Calendar() {
                   Save Changes
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Gift Suggestion Modal */}
+        {showGiftSuggestion && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Gift className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  Need a Gift?
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Would you like to find a gift for <span className="font-semibold text-gray-900 dark:text-gray-100">{giftEventTitle}</span>?
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setShowGiftSuggestion(false);
+                    // Navigate to shopping with query parameter
+                    navigate('/shopping?openGiftFinder=true');
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:from-rose-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Yes, Find Gift Ideas 🎁
+                </button>
+                <button
+                  onClick={() => setShowGiftSuggestion(false)}
+                  className="w-full py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                >
+                  No, Maybe Later
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
+                We can help you find the perfect gift based on relationship, budget, and preferences
+              </p>
             </div>
           </div>
         )}
