@@ -58,6 +58,17 @@ export function Shopping() {
     }
   }, [user?.id]);
 
+  // Auto-open gift finder if navigated from calendar
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('openGiftFinder') === 'true') {
+      setActiveTab('gifts');
+      setShowGiftFinderModal(true);
+      // Clean up URL
+      window.history.replaceState({}, '', '/shopping');
+    }
+  }, []);
+
   const fetchShoppingList = async () => {
     if (!user?.id) return;
 
