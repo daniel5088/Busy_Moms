@@ -36,12 +36,21 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
       return;
     }
 
-    if (window.google?.maps) {
+    if (window.google?.maps?.places) {
       setLoaded(true);
       return;
     }
 
-    if (document.getElementById('google-maps-js')) return;
+    if (document.getElementById('google-maps-js')) {
+      const checkInterval = setInterval(() => {
+        if (window.google?.maps?.places) {
+          setLoaded(true);
+          clearInterval(checkInterval);
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkInterval), 5000);
+      return;
+    }
 
     const script = document.createElement('script');
     script.id = 'google-maps-js';
@@ -49,7 +58,13 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      setLoaded(true);
+      const checkInterval = setInterval(() => {
+        if (window.google?.maps?.places) {
+          setLoaded(true);
+          clearInterval(checkInterval);
+        }
+      }, 50);
+      setTimeout(() => clearInterval(checkInterval), 5000);
     };
     script.onerror = () => {
       console.error('Failed to load Google Maps script');
@@ -71,10 +86,15 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
 
   // Fetch predictions with debounce
   useEffect(() => {
-    if (!loaded || !window.google) return;
+    if (!loaded || !window.google?.maps?.places) return;
 
     if (!serviceRef.current) {
-      serviceRef.current = new window.google.maps.places.AutocompleteService();
+      try {
+        serviceRef.current = new window.google.maps.places.AutocompleteService();
+      } catch (error) {
+        console.error('Failed to initialize Google Places Autocomplete:', error);
+        return;
+      }
     }
 
     if (!value || value.trim().length < 2) {
