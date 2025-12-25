@@ -25,7 +25,7 @@ import { CalendarSkeleton } from './CalendarSkeleton';
 import { DirectionsButton } from './DirectionsButton';
 import { TravelTimeIndicator, TravelTimeBadge } from './TravelTimeIndicator';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { supabase } from '../lib/supabase';
 import type { Event as DbEvent } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCalendarSync } from '../hooks/useCalendarSync';
@@ -86,7 +86,6 @@ const openInAppleMaps = (location: string) => {
 
 // --- Component ---------------------------------------------------------------
 export function Calendar() {
-  const supabase = useSupabaseClient();
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
