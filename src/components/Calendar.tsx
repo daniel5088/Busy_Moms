@@ -87,9 +87,10 @@ const openInAppleMaps = (location: string) => {
 // --- Component ---------------------------------------------------------------
 interface CalendarProps {
   onNavigateToSubScreen?: (screen: SubScreen) => void;
+  onNavigateToGiftFinder?: () => void;
 }
 
-export function Calendar({ onNavigateToSubScreen }: CalendarProps = {}) {
+export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: CalendarProps = {}) {
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
@@ -1560,8 +1561,8 @@ export function Calendar({ onNavigateToSubScreen }: CalendarProps = {}) {
                 <button
                   onClick={() => {
                     setShowGiftSuggestion(false);
-                    if (onNavigateToSubScreen) {
-                      onNavigateToSubScreen('shopping');
+                    if (onNavigateToGiftFinder) {
+                      onNavigateToGiftFinder();
                     }
                   }}
                   className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:from-rose-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-xl"

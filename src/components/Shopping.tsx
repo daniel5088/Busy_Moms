@@ -31,7 +31,12 @@ import { GiftFinderModal } from './GiftFinderModal';
 import { instacartShoppingService } from '../services/instacartShoppingService';
 import { InstacartButton } from './InstacartButton';
 
-export function Shopping() {
+interface ShoppingProps {
+  openGiftFinder?: boolean;
+  onGiftFinderOpened?: () => void;
+}
+
+export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: ShoppingProps = {}) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('list');
   const [showShoppingForm, setShowShoppingForm] = useState(false);
@@ -58,16 +63,16 @@ export function Shopping() {
     }
   }, [user?.id]);
 
-  // Auto-open gift finder if navigated from calendar
+  // Auto-open gift finder if prop is set
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('openGiftFinder') === 'true') {
+    if (openGiftFinder) {
       setActiveTab('gifts');
       setShowGiftFinderModal(true);
-      // Clean up URL
-      window.history.replaceState({}, '', '/shopping');
+      if (onGiftFinderOpened) {
+        onGiftFinderOpened();
+      }
     }
-  }, []);
+  }, [openGiftFinder, onGiftFinderOpened]);
 
   const fetchShoppingList = async () => {
     if (!user?.id) return;
