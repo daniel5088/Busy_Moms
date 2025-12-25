@@ -36,7 +36,7 @@ interface ShoppingProps {
   onGiftFinderOpened?: () => void;
 }
 
-export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: ShoppingProps = {}) {
+export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: ShoppingProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('list');
   const [showShoppingForm, setShowShoppingForm] = useState(false);

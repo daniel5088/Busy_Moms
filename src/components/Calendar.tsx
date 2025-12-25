@@ -90,7 +90,7 @@ interface CalendarProps {
   onNavigateToGiftFinder?: () => void;
 }
 
-export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: CalendarProps = {}) {
+export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: CalendarProps) {
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
