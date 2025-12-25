@@ -44,6 +44,7 @@ export type Screen =
   | 'dashboard-v3'
   | 'dashboard-v4'
   | 'calendar'
+  | 'calendar-camera'
   | 'family'
   | 'more';
 export type SubScreen =
@@ -379,6 +380,11 @@ function App() {
               {currentScreen === 'calendar' && (
                 <FeatureErrorBoundary featureName="Calendar">
                   <Calendar />
+                </FeatureErrorBoundary>
+              )}
+              {currentScreen === 'calendar-camera' && (
+                <FeatureErrorBoundary featureName="Calendar Camera">
+                  <CalendarCamera />
                 </FeatureErrorBoundary>
               )}
               {currentScreen === 'family' && (
