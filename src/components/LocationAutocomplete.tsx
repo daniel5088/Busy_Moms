@@ -45,7 +45,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
 
     const script = document.createElement('script');
     script.id = 'google-maps-js';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
     script.async = true;
     script.defer = true;
     script.onload = () => {
