@@ -379,7 +379,7 @@ function App() {
               )}
               {currentScreen === 'calendar' && (
                 <FeatureErrorBoundary featureName="Calendar">
-                  <Calendar />
+                  <Calendar onNavigateToSubScreen={setCurrentSubScreen} />
                 </FeatureErrorBoundary>
               )}
               {currentScreen === 'calendar-camera' && (

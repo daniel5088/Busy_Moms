@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, KeyboardEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   MapPin,
@@ -30,6 +29,7 @@ import type { Event as DbEvent } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCalendarSync } from '../hooks/useCalendarSync';
 import { useDefaultAddress } from '../hooks/useDefaultAddress';
+import type { SubScreen } from '../App';
 
 // --- Helpers -----------------------------------------------------------------
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
@@ -85,12 +85,15 @@ const openInAppleMaps = (location: string) => {
 };
 
 // --- Component ---------------------------------------------------------------
-export function Calendar() {
+interface CalendarProps {
+  onNavigateToSubScreen?: (screen: SubScreen) => void;
+}
+
+export function Calendar({ onNavigateToSubScreen }: CalendarProps = {}) {
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
     useCalendarSync();
-  const navigate = useNavigate();
 
   // Core state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -1557,8 +1560,9 @@ export function Calendar() {
                 <button
                   onClick={() => {
                     setShowGiftSuggestion(false);
-                    // Navigate to shopping with query parameter
-                    navigate('/shopping?openGiftFinder=true');
+                    if (onNavigateToSubScreen) {
+                      onNavigateToSubScreen('shopping');
+                    }
                   }}
                   className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:from-rose-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-xl"
                 >
