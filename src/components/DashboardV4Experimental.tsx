@@ -364,7 +364,7 @@ export function DashboardV4Experimental({
                 className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
               >
                 <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{tasks.length} shopping list</span>
+                <span>{tasks.length} shopping itmes</span>
               </button>
               <button
                 onClick={() => setShowRemindersPopup(true)}
