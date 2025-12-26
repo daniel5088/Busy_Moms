@@ -9,8 +9,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
-  Link,
-} from 'lucide-react'; // Alvaro-quicklinks: Import Link icon
+} from 'lucide-react';
 import { NavigationHeader } from './NavigationHeader';
 // import { MoreMenuSkeleton } from './skeletons/MoreMenuSkeleton';
 import { SubScreen } from '../App';
@@ -52,13 +51,6 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
           title: 'Daily Affirmations',
           description: 'Manage your daily encouragement',
           action: () => window.dispatchEvent(new CustomEvent('open-affirmations')),
-        },
-        // Alvaro-quicklinks: Add Quick Links menu item
-        {
-          id: 'quick-links' as SubScreen,
-          icon: Link,
-          title: 'Quick Links',
-          description: 'Save important websites for one-tap access',
         },
         {
           icon: Bell,
