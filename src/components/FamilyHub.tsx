@@ -58,12 +58,12 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
       />
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           {familyFeatures.map((feature) => (
             <button
               key={feature.id}
               onClick={() => onNavigateToSubScreen(feature.id)}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all group flex flex-col items-center text-center"
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all group flex flex-col items-center text-center w-full min-w-0"
             >
               <div
                 className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
