@@ -63,7 +63,7 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
             <button
               key={feature.id}
               onClick={() => onNavigateToSubScreen(feature.id)}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all text-left group"
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all group flex flex-col items-center text-center"
             >
               <div
                 className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
