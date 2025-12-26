@@ -19,7 +19,7 @@ export function CalendarSkeleton() {
 
               {/* Calendar Rows */}
               <div className="space-y-2 mb-6">
-                {Array.from({ length: 5 }).map((_, i) => (
+                {Array.from({ length: 4 }).map((_, i) => (
                   <div key={`week-${i}`} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
                 ))}
               </div>
