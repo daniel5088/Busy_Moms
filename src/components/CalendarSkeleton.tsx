@@ -28,16 +28,12 @@ export function CalendarSkeleton() {
               </div>
 
               {/* Weekday Headers */}
-              <div className="grid grid-cols-7 gap-2 mb-3">
-                {Array.from({ length: 7 }).map((_, i) => (
-                  <div key={`weekday-${i}`} className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                ))}
-              </div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-3"></div>
 
-              {/* Calendar Days */}
-              <div className="grid grid-cols-7 gap-2 mb-6">
-                {Array.from({ length: 35 }).map((_, i) => (
-                  <div key={`day-${i}`} className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
+              {/* Calendar Rows */}
+              <div className="space-y-2 mb-6">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={`week-${i}`} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
                 ))}
               </div>
 
