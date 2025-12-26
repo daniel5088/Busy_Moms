@@ -74,6 +74,13 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
     }
   }, [openGiftFinder, onGiftFinderOpened]);
 
+  // TEMP: Safety fallback - redirect to 'list' if 'auto' tab is selected (hidden feature)
+  useEffect(() => {
+    if (activeTab === 'auto') {
+      setActiveTab('list');
+    }
+  }, [activeTab]);
+
   const fetchShoppingList = async () => {
     if (!user?.id) return;
 
@@ -286,11 +293,12 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
     },
   ];
 
-  const autoReorders = [
+  // TEMP: Auto-Reorder data hidden until feature is functional
+  /* const autoReorders = [
     { item: 'Huggies Size 3', nextOrder: 'March 20', frequency: 'Every 2 weeks', price: '$42.99' },
     { item: 'Formula Powder', nextOrder: 'March 18', frequency: 'Weekly', price: '$28.99' },
     { item: 'Organic Milk', nextOrder: 'March 22', frequency: 'Every 3 days', price: '$6.99' },
-  ];
+  ]; */
 
   return (
     <div className="h-screen overflow-y-auto pb-20 sm:pb-24 bg-gray-50 dark:bg-gray-900">
@@ -316,7 +324,8 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
             { id: 'list', label: 'Shopping List', icon: ShoppingCart },
             { id: 'recipes', label: 'Recipes', icon: ChefHat },
             { id: 'gifts', label: 'Gift Ideas', icon: Gift },
-            { id: 'auto', label: 'Auto-Reorder', icon: Repeat },
+            // TEMP: Auto-Reorder hidden until feature is functional. Re-enable by uncommenting line below.
+            // { id: 'auto', label: 'Auto-Reorder', icon: Repeat },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -651,7 +660,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
           </div>
         )}
 
-        {/* Auto-Reorder Tab */}
+        {/* TEMP: Auto-Reorder Tab - Hidden until feature is functional. Re-enable by removing comment block.
         {activeTab === 'auto' && (
           <div className="space-y-4">
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
@@ -696,6 +705,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
             ))}
           </div>
         )}
+        */}
       </div>
 
       <ShoppingForm
