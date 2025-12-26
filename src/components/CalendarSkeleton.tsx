@@ -35,7 +35,6 @@ export function CalendarSkeleton() {
               <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse mb-4"></div>
               <div className="space-y-3">
                 <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
-                <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse"></div>
               </div>
             </div>
           </div>
