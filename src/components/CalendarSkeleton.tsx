@@ -5,9 +5,9 @@ export function CalendarSkeleton() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
+            <div className="h-9 bg-gray-200 dark:bg-gray-700 rounded-lg w-32 animate-pulse mb-2"></div>
             <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse"></div>
           </div>
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-full w-44 animate-pulse"></div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
