@@ -533,21 +533,21 @@ export function DashboardV4Experimental({
                       action.action();
                     }
                   }}
-                  className={`p-3 sm:p-4 rounded-xl ${action.bgColor} border ${action.borderColor} shadow-sm text-left
+                  className={`p-3 sm:p-4 rounded-xl ${action.bgColor} border ${action.borderColor} shadow-sm flex flex-col items-center
                     transition-all duration-200 ease-in-out
                     ${action.hoverBg} hover:shadow-md hover:border-opacity-80
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2`}
                   aria-label={`${action.title}: ${action.desc}`}
                 >
                   <div
-                    className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 inline-block`}
+                    className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3`}
                   >
                     <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} />
                   </div>
-                  <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base`}>
+                  <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base text-center`}>
                     {action.title}
                   </h3>
-                  <p className={`text-xs sm:text-sm ${action.descColor}`}>{action.desc}</p>
+                  <p className={`text-xs sm:text-sm ${action.descColor} text-center`}>{action.desc}</p>
                 </button>
               ))}
             </div>
