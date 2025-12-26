@@ -37,7 +37,6 @@ export function DashboardSkeleton() {
         {/* Smart Reminders Skeleton */}
         <div className="space-y-2">
           <div className="h-16 bg-gray-200 dark:bg-gray-900 rounded-lg animate-pulse"></div>
-          <div className="h-16 bg-gray-200 dark:bg-gray-900 rounded-lg animate-pulse"></div>
         </div>
       </div>
     </div>
