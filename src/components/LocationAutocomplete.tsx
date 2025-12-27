@@ -14,7 +14,7 @@ type PlaceSelection = {
 interface Props {
   value: string;
   onChange: (value: string) => void;
-  apiKey?: string;
+  apiKey?: string; // ✅ key comes in as a prop
   onSelect?: (place: PlaceSelection) => void;
 }
 
@@ -22,6 +22,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
   const [loaded, setLoaded] = useState(false);
   const [predictions, setPredictions] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const serviceRef = useRef<any | null>(null);
   const debounceRef = useRef<number | null>(null);
 
   // Load Google Maps script ONCE, using the apiKey prop
@@ -83,9 +84,18 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch predictions with debounce using NEW API
+  // Fetch predictions with debounce
   useEffect(() => {
     if (!loaded || !window.google?.maps?.places) return;
+
+    if (!serviceRef.current) {
+      try {
+        serviceRef.current = new window.google.maps.places.AutocompleteService();
+      } catch (error) {
+        console.error('Failed to initialize Google Places Autocomplete:', error);
+        return;
+      }
+    }
 
     if (!value || value.trim().length < 2) {
       setPredictions([]);
@@ -96,29 +106,19 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
       window.clearTimeout(debounceRef.current);
     }
 
-    debounceRef.current = window.setTimeout(async () => {
-      try {
-        // Use the NEW AutocompleteSuggestion API
-        const { suggestions } = await window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-          input: value,
-          includedPrimaryTypes: ['establishment', 'geocode'],
-        });
+    debounceRef.current = window.setTimeout(() => {
+      serviceRef.current.getPlacePredictions(
+        { input: value },
+        (results: any[] | null, status: string) => {
+          if (status !== 'OK' || !results) {
+            setPredictions([]);
+            return;
+          }
 
-        if (suggestions && suggestions.length > 0) {
-          // Convert to format compatible with old predictions
-          const formattedPredictions = suggestions.map((s: any) => ({
-            description: s.placePrediction?.text?.text || '',
-            place_id: s.placePrediction?.placeId || '',
-          }));
-          
-          setPredictions(formattedPredictions);
-        } else {
-          setPredictions([]);
+          const unique = Array.from(new Map(results.map((p) => [p.place_id, p])).values());
+          setPredictions(unique);
         }
-      } catch (error) {
-        console.error('Autocomplete error:', error);
-        setPredictions([]);
-      }
+      );
     }, 200);
   }, [value, loaded]);
 
@@ -147,7 +147,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
     }
   };
 
-  // If script hasn't loaded (or key missing), fall back to plain input
+  // If script hasn’t loaded (or key missing), fall back to plain input
   if (!loaded || !apiKey) {
     return (
       <input
