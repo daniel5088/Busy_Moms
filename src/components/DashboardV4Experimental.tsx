@@ -34,7 +34,7 @@ import {
 
 import { SubScreen } from '../App';
 
-type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing';
+type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing' | 'disabled';
 
 interface DashboardProps {
   onNavigate: (screen: 'calendar' | 'family' | 'more') => void;
@@ -70,8 +70,12 @@ export function DashboardV4Experimental({
   // Keyboard escape handler for affirmation overlay
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && affirmationStage === 'content') {
-        handleCloseAffirmation();
+      if (e.key === 'Escape' && (affirmationStage === 'content' || affirmationStage === 'disabled')) {
+        if (affirmationStage === 'content') {
+          handleCloseAffirmation();
+        } else {
+          setAffirmationStage('hidden');
+        }
       }
     };
     window.addEventListener('keydown', handleEscape);
@@ -84,6 +88,16 @@ export function DashboardV4Experimental({
     setAffirmationsDisabled(false);
 
     try {
+      const settings = await affirmationService.getSettings();
+
+      if (!settings.enabled) {
+        setAffirmationsDisabled(true);
+        setTodayAffirmation(null);
+        setAffirmationError(null);
+        setAffirmationLoading(false);
+        return;
+      }
+
       let affirmation = await affirmationService.getTodaysAffirmation();
 
       if (!affirmation) {
@@ -98,6 +112,7 @@ export function DashboardV4Experimental({
 
       if (error?.message?.includes('disabled') || error?.message?.includes('403')) {
         setAffirmationsDisabled(true);
+        setTodayAffirmation(null);
         setAffirmationError(null);
       } else {
         setAffirmationError(error?.message || 'Unable to load affirmation');
@@ -117,6 +132,11 @@ export function DashboardV4Experimental({
 
   const handleOpenAffirmation = () => {
     if (affirmationStage !== 'hidden') return;
+
+    if (affirmationsDisabled) {
+      setAffirmationStage('disabled');
+      return;
+    }
 
     setAffirmationStage('burst');
 
@@ -315,6 +335,67 @@ export function DashboardV4Experimental({
         </div>
       )}
 
+      {/* Disabled Stage - Feature disabled message */}
+      {affirmationStage === 'disabled' && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="affirmation-disabled-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setAffirmationStage('hidden')}
+          />
+
+          <div className="relative bg-white dark:bg-gray-800 p-8 sm:p-12 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setAffirmationStage('hidden')}
+              className="absolute top-4 right-4 z-20 w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            </button>
+
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full mb-6">
+                <Sparkles className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+              </div>
+
+              <h2
+                id="affirmation-disabled-title"
+                className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4"
+              >
+                Daily Affirmations Disabled
+              </h2>
+
+              <p className="text-gray-600 dark:text-gray-400 text-base sm:text-lg mb-8 leading-relaxed">
+                This feature is currently turned off. Enable it in Settings to receive personalized
+                daily affirmations that inspire and motivate you.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    setAffirmationStage('hidden');
+                    onNavigateToSubScreen('more');
+                  }}
+                  className="px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                >
+                  Go to Settings
+                </button>
+                <button
+                  onClick={() => setAffirmationStage('hidden')}
+                  className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="pb-20 bg-gray-50 dark:bg-gray-900 min-h-screen">
         {/* Greeting Header */}
         <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 text-white p-4 pb-6 dark:border-b dark:border-gray-700">
@@ -338,8 +419,16 @@ export function DashboardV4Experimental({
                     ? 'ring-2 ring-white shadow-[0_0_12px_rgba(255,255,255,0.9)]'
                     : ''
                 }`}
-                title="Open daily affirmation"
-                aria-label="Open daily affirmation"
+                title={
+                  affirmationsDisabled
+                    ? 'Daily affirmations (Click to learn how to enable)'
+                    : 'Open daily affirmation'
+                }
+                aria-label={
+                  affirmationsDisabled
+                    ? 'Daily affirmations - currently disabled'
+                    : 'Open daily affirmation'
+                }
               >
                 <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
