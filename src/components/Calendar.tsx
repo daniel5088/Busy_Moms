@@ -1571,7 +1571,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                 <button
                   onClick={() => {
                     setShowNoEventFoundModal(false);
-                    fileInputRef.current?.click();
+                    setShowCamera(true);
                   }}
                   className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:from-rose-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-xl"
                 >
