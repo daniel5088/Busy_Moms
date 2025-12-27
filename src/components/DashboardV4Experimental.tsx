@@ -40,12 +40,14 @@ interface DashboardProps {
   onNavigate: (screen: 'calendar' | 'family' | 'more') => void;
   onNavigateToSubScreen: (screen: SubScreen) => void;
   onVoiceChatOpen?: () => void;
+  onOpenAffirmationSettings?: () => void;
 }
 
 export function DashboardV4Experimental({
   onNavigate,
   onNavigateToSubScreen,
   onVoiceChatOpen,
+  onOpenAffirmationSettings,
 }: DashboardProps) {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
@@ -378,10 +380,7 @@ export function DashboardV4Experimental({
                 <button
                   onClick={() => {
                     setAffirmationStage('hidden');
-                    onNavigateToSubScreen('settings');
-                    setTimeout(() => {
-                      window.dispatchEvent(new CustomEvent('open-affirmations'));
-                    }, 100);
+                    onOpenAffirmationSettings?.();
                   }}
                   className="px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
                 >

@@ -378,6 +378,7 @@ function App() {
                     onNavigate={setCurrentScreen}
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onVoiceChatOpen={() => setShowVoiceChat(true)}
+                    onOpenAffirmationSettings={() => setShowAffirmationSettings(true)}
                   />
                 </FeatureErrorBoundary>
               )}
