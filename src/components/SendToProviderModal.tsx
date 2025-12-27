@@ -166,7 +166,7 @@ export function SendToProviderModal({
               {provider === 'instacart' ? (
                 <div className="flex items-center space-x-2">
                   <img
-                    src="/Instacart_Carrot.png"
+                    src="/Instacart_Logo_Kale.svg"
                     alt="Instacart"
                     className="h-8 w-auto object-contain"
                   />

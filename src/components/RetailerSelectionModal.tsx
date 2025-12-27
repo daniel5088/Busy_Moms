@@ -159,7 +159,7 @@ export function RetailerSelectionModal({
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
               <img
-                src="/Instacart_Carrot.png"
+                src="/Instacart_Logo_Kale.svg"
                 alt="Instacart"
                 className="h-10 w-auto object-contain"
               />
