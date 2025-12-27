@@ -41,20 +41,30 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
     rsvp_status: 'pending' as const,
   });
 
-  // Fetch API key from Bolt secrets
+  // Fetch API key from Edge Function
   useEffect(() => {
     const fetchApiKey = async () => {
+      if (!user) return;
+
       try {
-        const { data, error } = await supabase
-          .from('secrets')
-          .select('value')
-          .eq('key', 'VITE_GOOGLE_MAPS_API_KEY')
-          .single();
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
+
+        if (!token) {
+          console.warn('No access token available');
+          return;
+        }
+
+        const { data, error } = await supabase.functions.invoke('get-google-maps-key', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         
-        if (data && !error) {
-          setApiKey(data.value);
+        if (data && !error && data.apiKey) {
+          setApiKey(data.apiKey);
         } else {
-          console.warn('Could not fetch Google Maps API key from secrets:', error);
+          console.warn('Could not fetch Google Maps API key:', error);
         }
       } catch (err) {
         console.error('Error fetching API key:', err);
@@ -62,7 +72,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
     };
     
     fetchApiKey();
-  }, []);
+  }, [user]);
 
   // Update form data when defaultDate or event changes
   useEffect(() => {
@@ -251,7 +261,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         </FormField>
       </GridLayout>
 
-      {/* Location with Google Places autocomplete (using runtime API key from secrets) */}
+      {/* Location with Google Places autocomplete (using runtime API key from Edge Function) */}
       <FormField label="Location" icon={MapPin}>
         <LocationAutocomplete
           value={formData.location}
