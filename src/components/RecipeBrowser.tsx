@@ -187,8 +187,8 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             onClick={() => setActiveView('my-recipes')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeView === 'my-recipes'
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <BookOpen className="w-4 h-4 inline mr-2" />
@@ -198,8 +198,8 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             onClick={() => setActiveView('discover')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeView === 'discover'
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <Globe className="w-4 h-4 inline mr-2" />
@@ -209,8 +209,8 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             onClick={() => setActiveView('saved')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeView === 'saved'
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <Heart className="w-4 h-4 inline mr-2" />
