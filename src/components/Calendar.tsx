@@ -777,13 +777,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                 {/* Add Event Button */}
                 <div className="flex gap-3 mt-6">
                   <button
-                    onClick={() => setShowCamera(true)}
-                    className="w-14 h-14 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-xl transition-all flex items-center justify-center shadow-lg flex-shrink-0"
-                    aria-label="Add event from image"
-                  >
-                    <Camera className="w-6 h-6" />
-                  </button>
-                  <button
                     onClick={() => {
                       setSelectedEvent(null);
                       setShowEventForm(true);
@@ -792,6 +785,13 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                   >
                     <Plus className="w-5 h-5" />
                     <span>Add Event</span>
+                  </button>
+                  <button
+                    onClick={() => setShowCamera(true)}
+                    className="w-14 h-14 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-xl transition-all flex items-center justify-center shadow-lg flex-shrink-0"
+                    aria-label="Add event from image"
+                  >
+                    <Camera className="w-6 h-6" />
                   </button>
                 </div>
               </div>
