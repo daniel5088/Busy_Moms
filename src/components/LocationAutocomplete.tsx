@@ -24,6 +24,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
   const containerRef = useRef<HTMLDivElement | null>(null);
   const serviceRef = useRef<any | null>(null);
   const debounceRef = useRef<number | null>(null);
+  const justSelectedRef = useRef<boolean>(false);
 
   // Load Google Maps script ONCE, using the apiKey prop
   useEffect(() => {
@@ -102,6 +103,11 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
       return;
     }
 
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
+
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
     }
@@ -125,6 +131,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
   const handleSelect = (p: any) => {
     const name = p.description || '';
 
+    justSelectedRef.current = true;
     onChange(name);
     setPredictions([]);
 
@@ -138,6 +145,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
 
   // Manual add handler
   const handleAddManually = () => {
+    justSelectedRef.current = true;
     setPredictions([]);
     if (onSelect) {
       onSelect({
