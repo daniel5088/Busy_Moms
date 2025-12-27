@@ -708,16 +708,16 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
                   <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                     <Loader2 className="w-10 h-10 text-white animate-spin" />
                   </div>
-                  <p className="text-lg font-semibold text-gray-800">Connecting to Sarah...</p>
-                  <p className="text-sm text-gray-600">Setting up real-time voice connection</p>
+                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">Connecting to Sarah...</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Setting up real-time voice connection</p>
                 </>
               ) : error ? (
                 <>
                   <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <X className="w-10 h-10 text-white" />
                   </div>
-                  <p className="text-lg font-semibold text-rose-600 mb-2">Connection Error</p>
-                  <p className="text-sm text-gray-600 mb-4 whitespace-pre-wrap">{error}</p>
+                  <p className="text-lg font-semibold text-rose-600 dark:text-rose-400 mb-2">Connection Error</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 whitespace-pre-wrap">{error}</p>
                   <button
                     onClick={() => {
                       setError(null);
@@ -743,8 +743,8 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
                   <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
                     <MessageCircle className="w-10 h-10 text-white" />
                   </div>
-                  <p className="text-lg font-semibold text-gray-800">Ready to talk to Sarah</p>
-                  <p className="text-sm text-gray-600">Click the microphone to start talking</p>
+                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">Ready to talk to Sarah</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Click the microphone to start talking</p>
                 </>
               )}
             </div>
@@ -760,10 +760,10 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
                   </div>
                   <div className="absolute inset-0 w-24 h-24 mx-auto bg-gradient-to-br from-rose-400 to-pink-400 rounded-full animate-ping opacity-20"></div>
                 </div>
-                <p className="text-xl font-bold text-gray-800 mb-2">Listening for wake word</p>
-                <p className="text-base text-gray-600 mb-4">Say <strong className="text-rose-600">"Hey, Sarah"</strong> to start</p>
-                <div className="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 p-4 rounded-2xl">
-                  <p className="text-sm text-rose-800 font-medium">
+                <p className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Listening for wake word</p>
+                <p className="text-base text-gray-600 dark:text-gray-400 mb-4">Say <strong className="text-rose-600 dark:text-rose-400">"Hey, Sarah"</strong> to start</p>
+                <div className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/30 dark:to-pink-900/30 border-2 border-rose-200 dark:border-rose-700 p-4 rounded-2xl">
+                  <p className="text-sm text-rose-800 dark:text-rose-200 font-medium">
                     💡 Sarah is waiting for you to say the wake word before she starts listening to your requests
                   </p>
                 </div>
@@ -778,8 +778,8 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
                 <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                   <MessageCircle className="w-12 h-12 text-white" />
                 </div>
-                <p className="text-xl font-bold text-gray-800 mb-2">Conversation Active</p>
-                <p className="text-base text-gray-600">I'm listening and ready to help!</p>
+                <p className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Conversation Active</p>
+                <p className="text-base text-gray-600 dark:text-gray-400">I'm listening and ready to help!</p>
               </div>
             </div>
           )}
@@ -788,17 +788,17 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
           {isConnected && inConversation && (
             <div className="space-y-4">
               {currentResponse && (
-                <div className="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 p-4 rounded-2xl">
-                  <p className="text-sm text-rose-900">
+                <div className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/30 dark:to-pink-900/30 border-2 border-rose-200 dark:border-rose-700 p-4 rounded-2xl">
+                  <p className="text-sm text-rose-900 dark:text-rose-200">
                     <span className="font-semibold">Sarah is responding:</span> {currentResponse}
                   </p>
                 </div>
               )}
 
               {isListening && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 p-4 rounded-2xl flex items-center space-x-3">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-2 border-green-300 dark:border-green-700 p-4 rounded-2xl flex items-center space-x-3">
                   <div className="w-4 h-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-pulse shadow-lg"></div>
-                  <p className="text-sm text-green-900 font-semibold">Listening...</p>
+                  <p className="text-sm text-green-900 dark:text-green-200 font-semibold">Listening...</p>
                 </div>
               )}
             </div>
@@ -840,14 +840,14 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
         {/* Controls - Only show in voice mode */}
         {chatMode === 'voice' && (
-        <div className="p-6 bg-gradient-to-r from-rose-50 to-pink-50 border-t-2 border-rose-100 flex items-center justify-center space-x-4">
+        <div className="p-6 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-gray-800 dark:to-gray-800 border-t-2 border-rose-100 dark:border-gray-700 flex items-center justify-center space-x-4">
           <button
             onClick={toggleMute}
             disabled={!isConnected}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md hover:shadow-lg ${
               isMuted
                 ? 'bg-gradient-to-br from-red-400 to-red-500 text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-rose-300'
+                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-2 border-gray-300 dark:border-gray-600 hover:border-rose-300 dark:hover:border-rose-500'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
           >
@@ -872,7 +872,7 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
             <PhoneOff className="w-6 h-6" />
           </button>
 
-          <div className="flex items-center space-x-2 text-sm font-medium text-rose-700">
+          <div className="flex items-center space-x-2 text-sm font-medium text-rose-700 dark:text-rose-400">
             <MessageCircle className="w-5 h-5" />
             <span>
               {isWaitingForWakeWord ? 'Say "Hey, Sarah"' : inConversation ? 'In conversation' : 'Talk to Sarah'}
@@ -883,8 +883,8 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
         {/* WebRTC Not Supported Warning - Only show in voice mode */}
         {chatMode === 'voice' && typeof openaiRealtimeService.isSupported === 'function' && !openaiRealtimeService.isSupported() && (
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-t-2 border-amber-300">
-            <p className="text-sm font-medium text-amber-900">
+          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-t-2 border-amber-300 dark:border-amber-700">
+            <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
               ⚠️ WebRTC is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.
             </p>
           </div>
