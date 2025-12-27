@@ -7,9 +7,10 @@ interface DailyAffirmationsProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenVoiceChat?: () => void;
+  externalSettingsEnabled?: boolean;
 }
 
-export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAffirmationsProps) {
+export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat, externalSettingsEnabled }: DailyAffirmationsProps) {
   const [affirmations, setAffirmations] = useState<Affirmation[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -22,6 +23,25 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen && externalSettingsEnabled !== undefined) {
+      reloadSettingsAndClearIfDisabled();
+    }
+  }, [externalSettingsEnabled, isOpen]);
+
+  const reloadSettingsAndClearIfDisabled = async () => {
+    try {
+      const settingsData = await affirmationService.getSettings();
+      setSettings(settingsData);
+
+      if (!settingsData?.enabled) {
+        setAffirmations([]);
+      }
+    } catch (error) {
+      console.error('Error reloading settings:', error);
+    }
+  };
+
   const loadAffirmations = async () => {
     setLoading(true);
     try {
@@ -29,6 +49,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
       setSettings(settingsData);
 
       if (!settingsData?.enabled) {
+        setAffirmations([]);
         setLoading(false);
         return;
       }

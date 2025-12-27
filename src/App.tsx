@@ -69,7 +69,7 @@ function App() {
   const [showAffirmationSettings, setShowAffirmationSettings] = useState(false);
   const [openGiftFinder, setOpenGiftFinder] = useState(false);
   const { toasts, removeToast } = useToast();
-  const { pendingAffirmation, dismissNotification, reloadSettings } = useAffirmationNotifier();
+  const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   // Check URL parameters
@@ -438,6 +438,7 @@ function App() {
           isOpen={showAffirmations}
           onClose={() => setShowAffirmations(false)}
           onOpenVoiceChat={() => setShowVoiceChat(true)}
+          externalSettingsEnabled={affirmationSettings?.enabled}
         />
 
         {/*Alvaros - Dailyaffirmations: Unified settings modal accessible from both Settings and More menu*/}
