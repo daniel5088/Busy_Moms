@@ -266,7 +266,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
       case 'instacart':
         return {
           type: 'logo',
-          logo: '/Instacart_Logo_Kale.svg',
+          logo: '/Instacart_Carrot.png',
           color: 'bg-green-500',
           textColor: 'text-green-600',
         };

@@ -37,21 +37,21 @@ export function InstacartButton({
           bg: 'bg-instacart-kale',
           text: 'text-instacart-cashew',
           hover: 'hover:bg-[#002d21]',
-          carrotLogo: '/Instacart_Logo_AllWhite.svg',
+          carrotLogo: '/Instacart_Carrot.png',
         };
       case 'light':
         return {
           bg: 'bg-instacart-cashew',
           text: 'text-instacart-kale',
           hover: 'hover:bg-[#f5e8d4]',
-          carrotLogo: '/Instacart_Logo_Kale.svg',
+          carrotLogo: '/Instacart_Carrot.png',
         };
       case 'white':
         return {
           bg: 'bg-white border-2 border-instacart-kale',
           text: 'text-instacart-kale',
           hover: 'hover:bg-gray-50',
-          carrotLogo: '/Instacart_Logo_Kale.svg',
+          carrotLogo: '/Instacart_Carrot.png',
         };
     }
   };
