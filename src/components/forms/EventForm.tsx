@@ -27,6 +27,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const [loading, setLoading] = useState(false);
+  const [apiKey, setApiKey] = useState<string>('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -40,8 +41,28 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
     rsvp_status: 'pending' as const,
   });
 
-  // public Google Maps key (set as VITE_GOOGLE_MAPS_API_KEY in env)
-  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+  // Fetch API key from Bolt secrets
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('secrets')
+          .select('value')
+          .eq('key', 'VITE_GOOGLE_MAPS_API_KEY')
+          .single();
+        
+        if (data && !error) {
+          setApiKey(data.value);
+        } else {
+          console.warn('Could not fetch Google Maps API key from secrets:', error);
+        }
+      } catch (err) {
+        console.error('Error fetching API key:', err);
+      }
+    };
+    
+    fetchApiKey();
+  }, []);
 
   // Update form data when defaultDate or event changes
   useEffect(() => {
@@ -230,12 +251,12 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         </FormField>
       </GridLayout>
 
-      {/* Location with Google Places autocomplete (with fallback handled inside the component) */}
+      {/* Location with Google Places autocomplete (using runtime API key from secrets) */}
       <FormField label="Location" icon={MapPin}>
         <LocationAutocomplete
           value={formData.location}
           onChange={(value: string) => setFormData((prev) => ({ ...prev, location: value }))}
-          apiKey={GOOGLE_MAPS_API_KEY}
+          apiKey={apiKey}
           onSelect={(place: any) => {
             const name = place.name || place.description || '';
             setFormData((prev) => ({ ...prev, location: name || prev.location }));
