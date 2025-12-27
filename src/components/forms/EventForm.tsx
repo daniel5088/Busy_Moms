@@ -44,14 +44,12 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
   // Fetch API key from Edge Function
   useEffect(() => {
     const fetchApiKey = async () => {
-      if (!user) return;
-
       try {
-        const session = await supabase.auth.getSession();
-        const token = session.data.session?.access_token;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
 
         if (!token) {
-          console.warn('No access token available');
+          console.warn('[EventForm] No access token available');
           return;
         }
 
@@ -61,17 +59,25 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
           }
         });
         
-        if (data && !error && data.apiKey) {
+        if (error) {
+          console.error('[EventForm] Edge Function error:', error);
+          return;
+        }
+
+        if (data && data.apiKey) {
           setApiKey(data.apiKey);
         } else {
-          console.warn('Could not fetch Google Maps API key:', error);
+          console.warn('[EventForm] No API key in response:', data);
         }
       } catch (err) {
-        console.error('Error fetching API key:', err);
+        console.error('[EventForm] Error fetching API key:', err);
       }
     };
     
-    fetchApiKey();
+    // Only fetch if user is authenticated
+    if (user) {
+      fetchApiKey();
+    }
   }, [user]);
 
   // Update form data when defaultDate or event changes
@@ -261,7 +267,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         </FormField>
       </GridLayout>
 
-      {/* Location with Google Places autocomplete (using runtime API key from Edge Function) */}
+      {/* Location with Google Places autocomplete */}
       <FormField label="Location" icon={MapPin}>
         <LocationAutocomplete
           value={formData.location}
