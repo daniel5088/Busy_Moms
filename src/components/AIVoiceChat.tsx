@@ -574,7 +574,7 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-rose-900 dark:bg-gray-900 bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-rose-900 bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 p-6">
