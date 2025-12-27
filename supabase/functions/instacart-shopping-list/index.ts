@@ -315,18 +315,39 @@ Deno.serve(async (req: Request) => {
       lineItems,
     };
 
-    // Add retailer_key if provided (as camelCase for MCP)
+    // NOTE: Instacart's create-shopping-list API does NOT support pre-selecting a retailer.
+    // Retailer selection happens on the Instacart website after the user opens the cart link.
+    // We still accept and log retailer_key for reference and future compatibility.
     if (body.retailer_key) {
-      mcpArgs.retailerKey = body.retailer_key;
       console.log(
         JSON.stringify({
           level: 'info',
-          msg: 'Adding retailer to MCP request',
+          msg: 'Retailer key received (NOT sent to MCP - not supported by Instacart API)',
           correlationId,
           retailerKey: body.retailer_key,
+          note: 'User must select retailer manually on Instacart website',
+        }),
+      );
+      // Not adding to mcpArgs as Instacart API doesn't support it
+      // mcpArgs.retailerKey = body.retailer_key;
+    } else {
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          msg: 'No retailer_key provided in request',
+          correlationId,
         }),
       );
     }
+
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        msg: 'Final MCP arguments',
+        correlationId,
+        mcpArgs: JSON.stringify(mcpArgs, null, 2),
+      }),
+    );
 
     const { payloadJson } = await callInstacartMcpTool(
       correlationId,
@@ -373,6 +394,7 @@ Deno.serve(async (req: Request) => {
         msg: 'Successfully created shopping list',
         correlationId,
         url: listUrl,
+        mcpResponse: JSON.stringify(payloadJson),
       }),
     );
 
@@ -382,6 +404,7 @@ Deno.serve(async (req: Request) => {
         products_link_url: listUrl,
         shopping_list_url: listUrl,
         items: lineItems,
+        retailer_key_sent: body.retailer_key || null,
       }),
       {
         status: 200,

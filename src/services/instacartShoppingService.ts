@@ -46,6 +46,15 @@ export class InstacartShoppingService {
       effectiveRetailerKey = primaryRetailer?.retailer_key;
     }
 
+    console.log('[InstacartShoppingService] sendToInstacart:', {
+      retailerKeyParam: retailerKey,
+      effectiveRetailerKey,
+      userId,
+      itemCount: items.length,
+      formattedItemCount: formattedItems.length,
+      items: formattedItems,
+    });
+
     const requestBody: any = {
       action: 'create_shopping_list',
       items: formattedItems,
@@ -54,6 +63,9 @@ export class InstacartShoppingService {
 
     if (effectiveRetailerKey) {
       requestBody.retailer_key = effectiveRetailerKey;
+      console.log('[InstacartShoppingService] Adding retailer_key to request:', effectiveRetailerKey);
+    } else {
+      console.warn('[InstacartShoppingService] No retailer key available!');
     }
 
     const response = await fetch(this.edgeFunctionUrl, {
@@ -103,6 +115,14 @@ export class InstacartShoppingService {
       const matchingRetailer = retailers.find((r) => r.retailer_key === effectiveRetailerKey);
       retailerName = matchingRetailer?.retailer_name;
     }
+
+    console.log('[InstacartShoppingService] Response received:', {
+      status: 'success',
+      productsLinkUrl: data.products_link_url,
+      shoppingListUrl: data.shopping_list_url,
+      retailerKey: effectiveRetailerKey,
+      retailerName,
+    });
 
     await this.updateItemsProviderStatus(
       items,

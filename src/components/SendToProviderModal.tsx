@@ -77,6 +77,13 @@ export function SendToProviderModal({
 
     try {
       const retailerKey = provider === 'instacart' ? selectedRetailer?.retailer_key : undefined;
+      console.log('[SendToProviderModal] Sending to provider:', {
+        provider,
+        retailerKey,
+        retailerName: selectedRetailer?.retailer_name,
+        itemCount: items.length,
+        items: items.map(i => i.item),
+      });
       const returnedCartUrl = await onConfirm(items, retailerKey);
       setSuccess(true);
 
@@ -218,6 +225,13 @@ export function SendToProviderModal({
                           </button>
                         </div>
                       </div>
+                    </div>
+                  )}
+                  {selectedRetailer && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-lg">
+                      <p className="text-xs text-blue-800">
+                        <strong>Note:</strong> Instacart will show a retailer selection dropdown when you open the cart. Select {selectedRetailer.retailer_name} from the dropdown to see prices and availability.
+                      </p>
                     </div>
                   )}
                 </div>
