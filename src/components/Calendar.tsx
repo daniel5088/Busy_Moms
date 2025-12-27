@@ -400,16 +400,30 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
         cameraStream.getTracks().forEach(track => track.stop());
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facingMode },
+      const constraints = {
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
         audio: false,
-      });
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
       setCameraStream(stream);
+      setShowCameraView(true);
+
+      // Wait for next tick to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Wait for video to be ready
+        await videoRef.current.play().catch(err => {
+          console.log('Video play error (can be ignored):', err);
+        });
       }
-      setShowCameraView(true);
     } catch (error) {
       console.error('Error accessing camera:', error);
       alert('Unable to access camera. Please check permissions or use the gallery option.');
@@ -419,21 +433,35 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
   const switchCamera = async () => {
     const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
     setFacingMode(newFacingMode);
-    
+
     // Restart camera with new facing mode
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
     }
-    
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: newFacingMode },
+      const constraints = {
+        video: {
+          facingMode: { ideal: newFacingMode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
         audio: false,
-      });
-      
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
       setCameraStream(stream);
+
+      // Wait for next tick to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Wait for video to be ready
+        await videoRef.current.play().catch(err => {
+          console.log('Video play error (can be ignored):', err);
+        });
       }
     } catch (error) {
       console.error('Error switching camera:', error);
@@ -1377,6 +1405,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
               ref={videoRef}
               autoPlay
               playsInline
+              muted
               className="w-full h-full object-cover"
             />
 
