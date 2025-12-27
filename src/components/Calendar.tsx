@@ -116,6 +116,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
   const [showWhatsAppForm, setShowWhatsAppForm] = useState(false);
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [showConflicts, setShowConflicts] = useState(false);
+  const [showNoEventFoundModal, setShowNoEventFoundModal] = useState(false);
 
   // Data
   const [events, setEvents] = useState<DbEvent[]>([]);
@@ -375,7 +376,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
       if (data.events && data.events.length > 0) {
         setExtractedInfo(data.events);
       } else {
-        alert('No calendar event information found in the image. Please try another image.');
+        setShowNoEventFoundModal(true);
       }
     } catch (error) {
       console.error('Error processing image:', error);
@@ -1535,6 +1536,52 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                   className="flex-1 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition"
                 >
                   Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* No Event Found Modal */}
+        {showNoEventFoundModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Info className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  No Events Found
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  We couldn't find any calendar event information in this image. Please try another image with clearer event details.
+                </p>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-xl p-4 mb-6">
+                <p className="text-sm text-blue-900 dark:text-blue-200 font-medium mb-2">Tips for better results:</p>
+                <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                  <li>• Make sure the image is clear and well-lit</li>
+                  <li>• Include event title, date, and time</li>
+                  <li>• Avoid blurry or low-quality images</li>
+                </ul>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setShowNoEventFoundModal(false);
+                    fileInputRef.current?.click();
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:from-rose-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Try Another Image
+                </button>
+                <button
+                  onClick={() => setShowNoEventFoundModal(false)}
+                  className="w-full py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                >
+                  Close
                 </button>
               </div>
             </div>
