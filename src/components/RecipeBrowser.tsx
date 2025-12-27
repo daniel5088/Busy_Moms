@@ -249,7 +249,7 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
                 setSearchQuery('');
                 setTimeout(loadRecipes, 0);
               }}
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 dark:focus:ring-rose-500"
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
@@ -303,7 +303,7 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
                 setMaxCookingTime(e.target.value ? parseInt(e.target.value) : undefined);
                 setTimeout(loadRecipes, 0);
               }}
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 dark:focus:ring-rose-500"
             >
               <option value="">Any time</option>
               <option value="15">Under 15 min</option>
@@ -317,7 +317,7 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
                 setMinServings(e.target.value ? parseInt(e.target.value) : undefined);
                 setTimeout(loadRecipes, 0);
               }}
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 dark:focus:ring-rose-500"
             >
               <option value="">Any servings</option>
               <option value="1">1+ servings</option>
