@@ -3,399 +3,375 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 
 declare const Deno: any;
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-const INSTACART_API_KEY = Deno.env.get('INSTACART_API_KEY');
-
-const INSTACART_ENV = Deno.env.get('INSTACART_ENV') || 'development';
-const INSTACART_MCP_URL =
-  INSTACART_ENV === 'production'
-    ? 'https://mcp.instacart.com/mcp'
-    : 'https://mcp.dev.instacart.tools/mcp';
-
-const corsHeaders: Record<string, string> = {
+const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type, x-correlation-id',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type, Authorization, X-Client-Info, Apikey, x-correlation-id',
 };
 
-function getCorrelationId(req: Request) {
-  return (
-    req.headers.get('x-correlation-id') ||
-    req.headers.get('X-Correlation-ID') ||
-    crypto.randomUUID()
-  );
+interface CreateShoppingListRequest {
+  // Either a list of items...
+  items?: Array<{ name: string; quantity?: number; unit?: string }>;
+  // ...or a natural-language sentence:
+  shoppingSentence?: string;
+  title?: string;
 }
 
-async function callInstacartMcpTool(
-  correlationId: string,
-  toolName: 'create-shopping-list' | 'create-recipe',
-  args: Record<string, unknown>,
-): Promise<{ payloadJson: any }> {
-  if (!INSTACART_API_KEY) {
-    throw new Error('Missing INSTACART_API_KEY');
-  }
+interface GetNearbyRetailersRequest {
+  postal_code: string;
+  country_code: string;
+}
 
-  const mcpPayload = {
-    jsonrpc: '2.0',
-    id: correlationId,
-    method: 'tools/call',
-    params: {
-      name: toolName,
-      arguments: args,
-    },
-  };
+interface Retailer {
+  retailer_key: string;
+  name: string;
+  retailer_logo_url: string;
+}
 
-  console.log(
-    JSON.stringify({
-      level: 'info',
-      msg: 'Calling Instacart MCP tool',
-      correlationId,
-      environment: INSTACART_ENV,
-      mcpUrl: INSTACART_MCP_URL,
-      toolName,
-      args: JSON.stringify(args, null, 2),
-    }),
-  );
+interface GetNearbyRetailersResponse {
+  retailers: Retailer[];
+}
 
-  const res = await fetch(INSTACART_MCP_URL, {
-    method: 'POST',
+function json(body: unknown, status: number, correlationId: string) {
+  return new Response(JSON.stringify(body), {
+    status,
     headers: {
-      Accept: 'application/json',
+      ...corsHeaders,
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${INSTACART_API_KEY}`,
+      'x-correlation-id': correlationId,
     },
-    body: JSON.stringify(mcpPayload),
   });
-
-  const text = await res.text();
-  let data: any;
-  
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { raw: text };
-  }
-
-  console.log(
-    JSON.stringify({
-      level: 'info',
-      msg: 'Instacart MCP raw response',
-      correlationId,
-      status: res.status,
-      data: JSON.stringify(data),
-    }),
-  );
-
-  if (!res.ok || data?.error) {
-    throw new Error(
-      `MCP error: ${JSON.stringify(data?.error ?? data)}`,
-    );
-  }
-
-  const result = data?.result;
-
-  if (result?.isError) {
-    const errText =
-      result?.content?.[0]?.text ??
-      'Unknown MCP error (isError=true, no content text)';
-    throw new Error(`MCP reported error: ${errText}`);
-  }
-
-  let payloadText = '';
-  try {
-    const first = result?.content?.[0];
-    if (first?.type === 'text') payloadText = first.text;
-    else if (typeof first?.text === 'string') payloadText = first.text;
-  } catch {
-    payloadText = '';
-  }
-
-  if (!payloadText) {
-    throw new Error('MCP result did not include text content');
-  }
-
-  let payloadJson: any;
-  try {
-    const match = payloadText.match(/\{[\s\S]*\}/);
-    const jsonStr = match ? match[0] : payloadText;
-    payloadJson = JSON.parse(jsonStr);
-  } catch {
-    // If not JSON, try to extract URL from plain text response
-    const urlMatch = payloadText.match(/https?:\/\/[^\s\n]+/);
-    if (urlMatch) {
-      payloadJson = {
-        url: urlMatch[0],
-        products_link_url: urlMatch[0],
-        shopping_list_url: urlMatch[0],
-        raw: payloadText,
-      };
-    } else {
-      payloadJson = { raw: payloadText };
-    }
-  }
-
-  return { payloadJson };
 }
 
 Deno.serve(async (req: Request) => {
-  const correlationId = getCorrelationId(req);
+  const incomingId = req.headers.get('x-correlation-id');
+  const correlationId = incomingId ?? crypto.randomUUID();
 
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
+    return new Response(null, {
       status: 200,
-      headers: {
-        ...corsHeaders,
-        'x-correlation-id': correlationId,
-      },
+      headers: { ...corsHeaders, 'x-correlation-id': correlationId },
     });
   }
 
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', {
-      status: 405,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/plain',
-        'x-correlation-id': correlationId,
-      },
-    });
+    return json({ error: 'Method not allowed' }, 405, correlationId);
   }
 
   try {
-    if (!INSTACART_API_KEY) {
-      return new Response(
+    const instacartApiKey = Deno.env.get('INSTACART_API_KEY');
+    if (!instacartApiKey) {
+      console.error(
         JSON.stringify({
-          status: 'error',
-          message: 'Missing INSTACART_API_KEY',
-        }),
-        {
-          status: 500,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-            'x-correlation-id': correlationId,
-          },
-        },
-      );
-    }
-
-    const body = (await req.json()) as {
-      action: string;
-      items?: Array<{ name: string; quantity?: number; unit?: string; category?: string }>;
-      title?: string;
-      retailer_key?: string;
-    };
-
-    console.log(
-      JSON.stringify({
-        level: 'info',
-        msg: 'Processing shopping list request',
-        correlationId,
-        action: body.action,
-        itemCount: body.items?.length || 0,
-        hasRetailerKey: !!body.retailer_key,
-        retailerKey: body.retailer_key || 'none',
-      }),
-    );
-
-    if (body.action !== 'create_shopping_list') {
-      return new Response(
-        JSON.stringify({
-          status: 'error',
-          message: `Unknown action: ${body.action}`,
-        }),
-        {
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-            'x-correlation-id': correlationId,
-          },
-        },
-      );
-    }
-
-    const items = body.items || [];
-    
-    if (items.length === 0) {
-      return new Response(
-        JSON.stringify({
-          status: 'error',
-          message: 'No items provided',
-        }),
-        {
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-            'x-correlation-id': correlationId,
-          },
-        },
-      );
-    }
-
-    const title = body.title || 'My Shopping List';
-
-    // Validate and format line items
-    const lineItems = items
-      .map((it: any) => {
-        const name = String(it?.name || '').trim();
-        if (!name) return null;
-
-        const item: any = { name };
-        
-        // Ensure quantity is a valid number
-        if (it.quantity !== null && it.quantity !== undefined) {
-          const qty = Number(it.quantity);
-          if (!isNaN(qty) && qty > 0) {
-            item.quantity = qty;
-          }
-        }
-        
-        // Add unit if provided
-        if (it.unit && String(it.unit).trim()) {
-          item.unit = String(it.unit).trim();
-        }
-        
-        return item;
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
-
-    if (lineItems.length === 0) {
-      return new Response(
-        JSON.stringify({
-          status: 'error',
-          message: 'No valid items after validation',
-        }),
-        {
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-            'x-correlation-id': correlationId,
-          },
-        },
-      );
-    }
-
-    console.log(
-      JSON.stringify({
-        level: 'info',
-        msg: 'Validated shopping list items',
-        correlationId,
-        lineItemCount: lineItems.length,
-        sampleLineItem: lineItems[0],
-      }),
-    );
-
-    // MCP expects camelCase field names
-    const mcpArgs: any = {
-      title,
-      lineItems,
-    };
-
-    // Add retailer_key if provided (as camelCase for MCP)
-    if (body.retailer_key) {
-      mcpArgs.retailerKey = body.retailer_key;
-      console.log(
-        JSON.stringify({
-          level: 'info',
-          msg: 'Adding retailer to MCP request',
+          level: 'error',
+          msg: 'INSTACART_API_KEY missing',
           correlationId,
-          retailerKey: body.retailer_key,
         }),
       );
-    }
-
-    const { payloadJson } = await callInstacartMcpTool(
-      correlationId,
-      'create-shopping-list',
-      mcpArgs,
-    );
-
-    let listUrl =
-      payloadJson?.shopping_list_url ||
-      payloadJson?.instacart_list_url ||
-      payloadJson?.products_link_url ||
-      payloadJson?.url ||
-      '';
-
-    if (!listUrl) {
-      return new Response(
-        JSON.stringify({
-          status: 'error',
-          message: 'MCP did not return shopping list URL',
-          details: payloadJson,
-        }),
-        {
-          status: 200,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-            'x-correlation-id': correlationId,
-          },
-        },
-      );
-    }
-
-    // Transform dev URL to production URL for end users
-    if (listUrl.includes('customers.dev.instacart.tools')) {
-      listUrl = listUrl.replace(
-        'customers.dev.instacart.tools',
-        'www.instacart.com'
-      );
-    }
-
-    console.log(
-      JSON.stringify({
-        level: 'info',
-        msg: 'Successfully created shopping list',
+      return json(
+        { error: 'INSTACART_API_KEY environment variable is not set' },
+        500,
         correlationId,
-        url: listUrl,
-      }),
-    );
+      );
+    }
 
-    return new Response(
-      JSON.stringify({
-        status: 'success',
-        products_link_url: listUrl,
-        shopping_list_url: listUrl,
-        items: lineItems,
-      }),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-          'x-correlation-id': correlationId,
+    const instacartEnv = Deno.env.get('INSTACART_ENV') || 'development';
+    const instacartBaseUrl =
+      instacartEnv === 'production'
+        ? 'https://connect.instacart.com'
+        : 'https://connect.dev.instacart.tools';
+
+    const body = await req.json();
+    const action = body?.action;
+    const payload = body ?? {};
+
+    if (action === 'ping') {
+      return json(
+        {
+          ok: true,
+          source: 'instacart-shopping-list',
+          environment: instacartEnv,
         },
-      },
-    );
-  } catch (err: any) {
+        200,
+        correlationId,
+      );
+    }
+
+    switch (action) {
+      /**
+       * create_shopping_list
+       *
+       * This now delegates to the instacart-agent MCP function to keep all
+       * MCP logic in a single place. You can still call this from your app
+       * if you have existing code that expects the old shape.
+       */
+      case 'create_shopping_list': {
+        const reqBody: CreateShoppingListRequest = payload;
+
+        // If the caller passed a natural-language sentence, send that
+        if (reqBody.shoppingSentence && typeof reqBody.shoppingSentence === 'string') {
+          // Call the instacart-agent function with tool = create-shopping-list
+          const agentUrl = new URL(req.url);
+          // Replace current path with instacart-agent (works on Supabase Edge)
+          const instacartAgentUrl = agentUrl.href.replace(
+            /\/instacart-shopping-list(\/)?$/,
+            '/instacart-agent',
+          );
+
+          console.log(
+            JSON.stringify({
+              level: 'info',
+              msg: 'Delegating to instacart-agent (MCP)',
+              correlationId,
+              instacartAgentUrl,
+            }),
+          );
+
+          const res = await fetch(instacartAgentUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-correlation-id': correlationId,
+              Authorization: req.headers.get('Authorization') ?? '',
+              apikey: req.headers.get('apikey') ?? '',
+            },
+            body: JSON.stringify({
+              shoppingSentence: reqBody.shoppingSentence,
+              tool: 'create-shopping-list',
+            }),
+          });
+
+          const text = await res.text();
+          let data: any;
+          try {
+            data = text ? JSON.parse(text) : {};
+          } catch {
+            data = { raw: text };
+          }
+
+          if (!res.ok || data?.status === 'error') {
+            return json(
+              {
+                error: 'instacart-agent failed to create shopping list',
+                http_status: res.status,
+                details: data,
+              },
+              500,
+              correlationId,
+            );
+          }
+
+          // Pass through MCP agent response shape
+          return json(data, 200, correlationId);
+        }
+
+        // If they passed an explicit items array, keep the old Connect behavior.
+        const listItems = Array.isArray(reqBody.items) ? reqBody.items : [];
+        if (!listItems.length) {
+          return json(
+            {
+              error:
+                'Either shoppingSentence or a non-empty items array is required',
+            },
+            400,
+            correlationId,
+          );
+        }
+
+        const line_items = listItems.map((item) => {
+          const li: any = { name: String(item.name ?? '').trim() || 'item' };
+          if (typeof item.quantity === 'number' && item.quantity > 0) {
+            li.quantity = item.quantity;
+          }
+          if (typeof item.unit === 'string' && item.unit.trim().length > 0) {
+            li.unit = item.unit.trim();
+          }
+          return li;
+        });
+
+        const connectPayload = {
+          title: reqBody.title || 'Shopping List',
+          line_items,
+        };
+
+        const endpoint = `${instacartBaseUrl}/idp/v1/products/products_link`;
+
+        console.log(
+          JSON.stringify({
+            level: 'info',
+            msg: 'Calling Instacart Connect API: products_link (direct items)',
+            correlationId,
+            endpoint,
+            payload: connectPayload,
+          }),
+        );
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${instacartApiKey}`,
+          },
+          body: JSON.stringify(connectPayload),
+        });
+
+        const contentType = response.headers.get('content-type');
+        const responseText = await response.text();
+
+        let responseData: any;
+        try {
+          responseData =
+            contentType?.includes('application/json') && responseText
+              ? JSON.parse(responseText)
+              : { raw: responseText };
+        } catch {
+          responseData = { raw: responseText };
+        }
+
+        if (!response.ok) {
+          return json(
+            {
+              error: 'Failed to create Instacart shopping list',
+              status: response.status,
+              details: responseData,
+            },
+            response.status,
+            correlationId,
+          );
+        }
+
+        const link = responseData?.products_link_url || '';
+        if (!link) {
+          return json(
+            {
+              error: 'Connect API did not return shopping list URL',
+              details: responseData,
+            },
+            500,
+            correlationId,
+          );
+        }
+
+        return json(
+          {
+            status: 'success',
+            instacart_list_url: link,
+            products_link_url: link,
+            shopping_list_url: link,
+          },
+          200,
+          correlationId,
+        );
+      }
+
+      /**
+       * get_nearby_retailers
+       *
+       * This still uses the Connect REST API directly since MCP only provides
+       * recipe + shopping list tools.
+       */
+      case 'get_nearby_retailers': {
+        const retailerRequest: GetNearbyRetailersRequest = payload;
+
+        if (!retailerRequest.postal_code || !retailerRequest.country_code) {
+          return json(
+            { error: 'postal_code and country_code are required' },
+            400,
+            correlationId,
+          );
+        }
+
+        const cc = retailerRequest.country_code.toUpperCase();
+        if (!['US', 'CA'].includes(cc)) {
+          return json(
+            { error: "country_code must be 'US' or 'CA'" },
+            400,
+            correlationId,
+          );
+        }
+
+        const params = new URLSearchParams({
+          postal_code: retailerRequest.postal_code,
+          country_code: cc,
+        });
+
+        const apiUrl = `${instacartBaseUrl}/idp/v1/retailers?${params.toString()}`;
+
+        console.log(
+          JSON.stringify({
+            level: 'info',
+            msg: 'Calling Instacart Connect API: retailers',
+            correlationId,
+            apiUrl,
+          }),
+        );
+
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${instacartApiKey}`,
+          },
+        });
+
+        const contentType = response.headers.get('content-type');
+        const responseText = await response.text();
+
+        let responseData: any;
+        try {
+          responseData =
+            contentType?.includes('application/json') && responseText
+              ? JSON.parse(responseText)
+              : { raw: responseText };
+        } catch {
+          responseData = { raw: responseText };
+        }
+
+        if (!response.ok) {
+          return json(
+            {
+              error: 'Failed to get nearby retailers',
+              status: response.status,
+              details: responseData,
+              endpoint: apiUrl,
+            },
+            response.status,
+            correlationId,
+          );
+        }
+
+        return json(responseData as GetNearbyRetailersResponse, 200, correlationId);
+      }
+
+      default:
+        return json(
+          {
+            error:
+              'Invalid action. Supported actions: create_shopping_list, get_nearby_retailers, ping',
+          },
+          400,
+          correlationId,
+        );
+    }
+  } catch (error) {
     console.error(
       JSON.stringify({
         level: 'error',
-        msg: 'instacart-shopping-list error',
-        error: err?.message ?? String(err),
-        stack: err?.stack,
+        msg: 'Edge function error',
         correlationId,
+        error: error instanceof Error ? error.message : String(error),
       }),
     );
 
-    return new Response(
-      JSON.stringify({
-        status: 'error',
-        message: err?.message ?? 'Unexpected error in instacart-shopping-list',
-      }),
+    return json(
       {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-          'x-correlation-id': correlationId,
-        },
+        error:
+          error instanceof Error ? error.message : 'An unexpected error occurred',
       },
+      500,
+      correlationId,
     );
   }
 });
