@@ -19,7 +19,7 @@ interface SendToProviderModalProps {
   onClose: () => void;
   items: ShoppingItem[];
   provider: ProviderName;
-  onConfirm: (items: ShoppingItem[], retailerKey?: string) => Promise<void>;
+  onConfirm: (items: ShoppingItem[], retailerKey?: string) => Promise<string | undefined>;
   userId: string;
 }
 
@@ -77,11 +77,11 @@ export function SendToProviderModal({
 
     try {
       const retailerKey = provider === 'instacart' ? selectedRetailer?.retailer_key : undefined;
-      await onConfirm(items, retailerKey);
+      const returnedCartUrl = await onConfirm(items, retailerKey);
       setSuccess(true);
 
-      if (items.length > 0 && items[0].provider_metadata?.cart_url) {
-        setCartUrl(items[0].provider_metadata.cart_url);
+      if (returnedCartUrl) {
+        setCartUrl(returnedCartUrl);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send items to provider');

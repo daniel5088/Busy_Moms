@@ -32,8 +32,7 @@ export async function sendToInstacart(
 }
 
 /**
- * Calls Supabase Edge Function: instacart-shopping-list
- * Action: get_nearby_retailers
+ * Calls Supabase Edge Function: instacart-get-retailers
  */
 export async function getNearbyRetailers(postalCode: string): Promise<any> {
   // requires logged in user
@@ -41,10 +40,9 @@ export async function getNearbyRetailers(postalCode: string): Promise<any> {
   if (!session?.access_token) throw new Error('Please sign in first.');
 
   const { data, error } = await supabase.functions.invoke(
-    'instacart-shopping-list',
+    'instacart-get-retailers',
     {
       body: {
-        action: 'get_nearby_retailers',
         postal_code: postalCode,
         country_code: 'US',
       },

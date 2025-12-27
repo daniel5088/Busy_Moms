@@ -223,12 +223,15 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
 
     setSendingToProvider(true);
     try {
+      let cartUrl: string | undefined;
       if (sendProvider === 'instacart') {
-        await instacartShoppingService.sendToInstacart(items, retailerKey);
+        const response = await instacartShoppingService.sendToInstacart(items, retailerKey);
+        cartUrl = response?.products_link_url || response?.shopping_list_url;
       }
       await fetchShoppingList();
       clearSelection();
       setShowSendModal(false);
+      return cartUrl;
     } catch (error) {
       console.error('Error sending to provider:', error);
       throw error;

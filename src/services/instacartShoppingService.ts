@@ -362,14 +362,16 @@ export class InstacartShoppingService {
       throw new Error('User must be authenticated to get nearby retailers');
     }
 
-    const response = await fetch(this.edgeFunctionUrl, {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const getRetailersUrl = `${supabaseUrl}/functions/v1/instacart-get-retailers`;
+
+    const response = await fetch(getRetailersUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        action: 'get_nearby_retailers',
         postal_code: postalCode,
         country_code: countryCode,
       }),
