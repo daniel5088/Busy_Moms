@@ -81,7 +81,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
         role="dialog"
         aria-labelledby="affirmation-settings-title"
         aria-modal="true"
-        className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
       >
         {/*Alvaros - Dailyaffirmations: Updated gradient to match app's rose/pink/orange theme*/}
         <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 p-6 text-white relative">
@@ -118,16 +118,16 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
           <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-6">
               {/*Alvaros - Dailyaffirmations: Clarified that this controls notification delivery*/}
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <Sparkles className="w-5 h-5 text-rose-600" />
-                    <h3 className="font-semibold text-gray-900">Enable Daily Affirmations</h3>
+                    <Sparkles className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">Enable Daily Affirmations</h3>
                   </div>
                   <button
                     onClick={() => updateSetting('enabled', !settings.enabled)}
                     className={`w-12 h-6 rounded-full relative transition-all ${
-                      settings.enabled ? 'bg-rose-500' : 'bg-gray-300'
+                      settings.enabled ? 'bg-rose-500' : 'bg-gray-300 dark:bg-gray-600'
                     }`}
                   >
                     <div
@@ -137,7 +137,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                     ></div>
                   </button>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {settings.enabled
                     ? 'Daily affirmations will be delivered at your scheduled times'
                     : "Daily affirmations are turned off. You won't receive any notifications"}
@@ -145,19 +145,19 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
               </div>
 
               {/* Phone notifications coming soon card */}
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 opacity-50">
+              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 opacity-50">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <Bell className="w-5 h-5 text-rose-600" />
-                    <h3 className="font-semibold text-gray-900">
+                    <Bell className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                       Phone notifications (coming soon)
                     </h3>
                   </div>
-                  <div className="w-12 h-6 rounded-full relative bg-gray-300 pointer-events-none cursor-not-allowed">
+                  <div className="w-12 h-6 rounded-full relative bg-gray-300 dark:bg-gray-600 pointer-events-none cursor-not-allowed">
                     <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 shadow"></div>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   You'll soon be able to control whether Daily Affirmations are sent as push
                   notifications to your phone.
                 </p>
@@ -165,13 +165,13 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
 
               {/*Alvaros - Dailyaffirmations: Changed to "Delivery schedule" with helper text, dims when disabled*/}
               <div
-                className={`bg-white border border-gray-200 rounded-xl p-4 ${
+                className={`bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 ${
                   !settings.enabled ? 'opacity-50 pointer-events-none' : ''
                 }`}
               >
                 <div className="flex items-center space-x-2 mb-4">
-                  <Clock className="w-5 h-5 text-rose-600" />
-                  <h3 className="font-semibold text-gray-900">Delivery schedule</h3>
+                  <Clock className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Delivery schedule</h3>
                 </div>
 
                 <div className="space-y-3">
@@ -182,7 +182,7 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                       onChange={() => updateSetting('frequency', 'once_daily')}
                       className="w-4 h-4 text-rose-600 focus:ring-rose-500"
                     />
-                    <span className="text-gray-700">Once daily</span>
+                    <span className="text-gray-700 dark:text-gray-200">Once daily</span>
                   </label>
 
                   <label className="flex items-center space-x-3 cursor-pointer">
@@ -192,52 +192,52 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                       onChange={() => updateSetting('frequency', 'twice_daily')}
                       className="w-4 h-4 text-rose-600 focus:ring-rose-500"
                     />
-                    <span className="text-gray-700">Twice daily</span>
+                    <span className="text-gray-700 dark:text-gray-200">Twice daily</span>
                   </label>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   Choose how many times per day you want to receive affirmations.
                 </p>
               </div>
 
               {/*Alvaros - Dailyaffirmations: Clarified that times are in user's timezone, dims when disabled*/}
               <div
-                className={`bg-white border border-gray-200 rounded-xl p-4 ${
+                className={`bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 ${
                   !settings.enabled ? 'opacity-50 pointer-events-none' : ''
                 }`}
               >
                 <div className="flex items-center space-x-2 mb-2">
-                  <Clock className="w-5 h-5 text-rose-600" />
-                  <h3 className="font-semibold text-gray-900">Delivery Times</h3>
+                  <Clock className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Delivery Times</h3>
                 </div>
-                <p className="text-xs text-gray-500 mb-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                   Times are based on your timezone
                   {settings.timezone ? `: ${settings.timezone}` : ''}.
                 </p>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                       Primary Time
                     </label>
                     <input
                       type="time"
                       value={settings.preferred_time?.slice(0, 5) || '08:00'}
                       onChange={(e) => updateSetting('preferred_time', `${e.target.value}:00`)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     />
                   </div>
 
                   {settings.frequency === 'twice_daily' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Secondary Time
                       </label>
                       <input
                         type="time"
                         value={settings.secondary_time?.slice(0, 5) || '20:00'}
                         onChange={(e) => updateSetting('secondary_time', `${e.target.value}:00`)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                       />
                     </div>
                   )}
@@ -246,23 +246,23 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
 
               {/*Alvaros - Dailyaffirmations: Clarified what data sources control and updated colors, dims when disabled*/}
               <div
-                className={`bg-white border border-gray-200 rounded-xl p-4 ${
+                className={`bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 ${
                   !settings.enabled ? 'opacity-50 pointer-events-none' : ''
                 }`}
               >
                 <div className="flex items-center space-x-2 mb-4">
-                  <CheckSquare className="w-5 h-5 text-rose-600" />
-                  <h3 className="font-semibold text-gray-900">Personalization Sources</h3>
+                  <CheckSquare className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Personalization Sources</h3>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                   Choose which data to use for generating personalized affirmations
                 </p>
 
                 <div className="space-y-3">
-                  <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 dark:bg-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-550 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <CalendarIcon className="w-5 h-5 text-rose-600" />
-                      <span className="text-gray-700">Calendar Events</span>
+                      <CalendarIcon className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                      <span className="text-gray-700 dark:text-gray-200">Calendar Events</span>
                     </div>
                     <input
                       type="checkbox"
@@ -272,11 +272,11 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                     />
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 dark:bg-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-550 transition-colors">
                     <div className="flex items-center space-x-3">
                       {/*Alvaros - Dailyaffirmations: Changed Tasks icon to rose-600 for consistency*/}
-                      <CheckSquare className="w-5 h-5 text-rose-600" />
-                      <span className="text-gray-700">Tasks</span>
+                      <CheckSquare className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                      <span className="text-gray-700 dark:text-gray-200">Tasks</span>
                     </div>
                     <input
                       type="checkbox"
@@ -286,10 +286,10 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                     />
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 dark:bg-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-550 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <Users className="w-5 h-5 text-pink-600" />
-                      <span className="text-gray-700">Family Members</span>
+                      <Users className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                      <span className="text-gray-700 dark:text-gray-200">Family Members</span>
                     </div>
                     <input
                       type="checkbox"
@@ -299,10 +299,10 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
                     />
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 dark:bg-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-550 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <ShoppingBag className="w-5 h-5 text-green-600" />
-                      <span className="text-gray-700">Shopping List</span>
+                      <ShoppingBag className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <span className="text-gray-700 dark:text-gray-200">Shopping List</span>
                     </div>
                     <input
                       type="checkbox"
@@ -317,15 +317,15 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center py-12">
-            <p className="text-gray-500">Failed to load settings</p>
+            <p className="text-gray-500 dark:text-gray-400">Failed to load settings</p>
           </div>
         )}
 
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex space-x-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+              className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
             </button>
