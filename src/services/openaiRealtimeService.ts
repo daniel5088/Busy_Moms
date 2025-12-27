@@ -1,6 +1,7 @@
 import { aiAssistantService } from './aiAssistantService';
 import { sendToInstacart } from './instacartAgentService';
 import { supabase } from "../lib/supabase";
+import { IngredientParser } from '../utils/ingredientParser';
 
 // Fallback minimal speech types (safe for TS projects without full lib.dom)
 interface MinimalSpeechResult { transcript: string }
@@ -254,17 +255,18 @@ export class OpenAIRealtimeService extends Emitter {
       {
         type: 'function',
         name: 'add_shopping_item',
-        description: 'Add an item to the shopping list',
+        description: 'Add an item to the shopping list. Parse the full item description to extract quantity, unit, and item name.',
         parameters: {
           type: 'object',
           properties: {
-            title: { type: 'string', description: 'The item to add' },
+            title: { type: 'string', description: 'The complete item description including quantity and unit (e.g., "5 gallons of water", "2 pounds chicken")' },
             category: {
               type: 'string',
               enum: ['dairy', 'produce', 'meat', 'bakery', 'baby', 'household', 'other'],
               description: 'Category of the item'
             },
-            quantity: { type: 'number', description: 'How many to buy' }
+            quantity: { type: 'number', description: 'Quantity number (extracted from title if needed)' },
+            unit: { type: 'string', description: 'Unit of measurement (e.g., gallons, pounds, cups, each)' }
           },
           required: ['title']
         }
@@ -915,8 +917,49 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleAddShoppingItem(args: any) {
-    const message = `add ${args.title} to shopping list${args.quantity ? ' quantity ' + args.quantity : ''}`;
-    return await aiAssistantService.processUserMessage(message, this.currentUserId!);
+    if (!this.currentUserId) {
+      return { success: false, message: 'User not authenticated' };
+    }
+
+    try {
+      const parsed = IngredientParser.parse(args.title);
+
+      const quantity = args.quantity ?? parsed.quantity ?? 1;
+      const unit = args.unit ?? parsed.unit ?? IngredientParser.smartDetectUnit(parsed.ingredient, args.category);
+      const itemName = parsed.ingredient;
+      const category = args.category ?? 'other';
+
+      const itemData = {
+        item: itemName,
+        category,
+        quantity,
+        unit,
+        user_id: this.currentUserId,
+        completed: false,
+        assigned_to: null,
+        purchase_status: 'not_sent',
+      };
+
+      const { data, error } = await supabase
+        .from('shopping_lists')
+        .insert([itemData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding shopping item:', error);
+        return { success: false, message: `Failed to add ${itemName} to shopping list` };
+      }
+
+      return {
+        success: true,
+        message: `Added ${quantity} ${unit} of ${itemName} to your shopping list`,
+        data
+      };
+    } catch (error) {
+      console.error('Error in handleAddShoppingItem:', error);
+      return { success: false, message: 'Failed to add item to shopping list' };
+    }
   }
 
   private async handleCreateTask(args: any) {
