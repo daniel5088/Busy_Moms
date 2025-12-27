@@ -19,7 +19,7 @@ interface SendToProviderModalProps {
   onClose: () => void;
   items: ShoppingItem[];
   provider: ProviderName;
-  onConfirm: (items: ShoppingItem[], retailerKey?: string) => Promise<string | undefined>;
+  onConfirm: (items: ShoppingItem[], retailerKey?: string) => Promise<void>;
   userId: string;
 }
 
@@ -76,21 +76,27 @@ export function SendToProviderModal({
     setError(null);
 
     try {
+      // Get the retailer key before calling onConfirm
       const retailerKey = provider === 'instacart' ? selectedRetailer?.retailer_key : undefined;
-      console.log('[SendToProviderModal] Sending to provider:', {
+      
+      console.log('🎯 Confirming send to provider:', {
         provider,
         retailerKey,
-        retailerName: selectedRetailer?.retailer_name,
         itemCount: items.length,
-        items: items.map(i => i.item),
+        selectedRetailer: selectedRetailer?.retailer_name,
       });
-      const returnedCartUrl = await onConfirm(items, retailerKey);
+
+      // Call the parent's onConfirm which should handle the actual API call
+      await onConfirm(items, retailerKey);
+      
       setSuccess(true);
 
-      if (returnedCartUrl) {
-        setCartUrl(returnedCartUrl);
+      // Check if we got a cart URL back
+      if (items.length > 0 && items[0].provider_metadata?.cart_url) {
+        setCartUrl(items[0].provider_metadata.cart_url);
       }
     } catch (err) {
+      console.error('❌ Error sending to provider:', err);
       setError(err instanceof Error ? err.message : 'Failed to send items to provider');
       setLoading(false);
     }
@@ -112,11 +118,42 @@ export function SendToProviderModal({
     setShowRetailerModal(false);
   };
 
-  const handleViewCart = () => {
-    if (cartUrl) {
+  const handleViewCart = async () => {
+    if (provider === 'instacart') {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const retailerKey = selectedRetailer?.retailer_key;
+        
+        console.log('🛒 Opening cart:', {
+          retailerKey,
+          itemCount: items.length,
+          items: items.map(i => ({ name: i.item, quantity: i.quantity })),
+        });
+        
+        // Regenerate cart with current data
+        const response = await instacartShoppingService.sendToInstacart(items, retailerKey);
+        
+        console.log('✅ Cart created:', response);
+        
+        if (response.products_link_url) {
+          window.open(response.products_link_url, '_blank', 'noopener,noreferrer');
+          handleClose();
+        } else {
+          throw new Error('No cart URL received from Instacart');
+        }
+      } catch (err) {
+        console.error('❌ Error opening cart:', err);
+        setError(err instanceof Error ? err.message : 'Failed to open cart');
+        // Don't close modal on error so user can see the error
+      } finally {
+        setLoading(false);
+      }
+    } else if (cartUrl) {
       window.open(cartUrl, '_blank', 'noopener,noreferrer');
+      handleClose();
     }
-    handleClose();
   };
 
   if (!isOpen || !currentProvider) return null;
@@ -225,13 +262,6 @@ export function SendToProviderModal({
                           </button>
                         </div>
                       </div>
-                    </div>
-                  )}
-                  {selectedRetailer && (
-                    <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-lg">
-                      <p className="text-xs text-blue-800">
-                        <strong>Note:</strong> Instacart will show a retailer selection dropdown when you open the cart. Select {selectedRetailer.retailer_name} from the dropdown to see prices and availability.
-                      </p>
                     </div>
                   )}
                 </div>
