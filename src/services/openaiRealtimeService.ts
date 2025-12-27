@@ -109,12 +109,11 @@ export class OpenAIRealtimeService extends Emitter {
   sendMessage(text: string) {
     const lower = text.toLowerCase();
 
-    // 🛒 Detect Instacart request BEFORE sending anything to Realtime model
+    // 🛒 Detect Instacart request ONLY for explicit Instacart mentions
     if (
       lower.includes("instacart") ||
-      lower.includes("add to cart") ||
-      lower.includes("shopping list") ||
-      lower.includes("grocery")
+      lower.includes("send to instacart") ||
+      lower.includes("order from instacart")
     ) {
       console.log("🛒 Instacart text detected:", text);
 
@@ -650,16 +649,16 @@ export class OpenAIRealtimeService extends Emitter {
         if (transcript) {
           const lower = transcript.toLowerCase();
           console.log('🎤 Checking for Instacart keywords in:', lower);
-          
-          // Simple keyword-based trigger for Instacart flows
-          if (lower.includes('instacart') || lower.includes('shopping list') || lower.includes('grocery') || lower.includes('add to cart')) {
+
+          // Only trigger Instacart for explicit mentions
+          if (lower.includes('instacart') || lower.includes('send to instacart') || lower.includes('order from instacart')) {
             console.log('🛒🛒🛒 INSTACART DETECTED IN TRANSCRIPT!');
             console.log('🛒 Full transcript:', transcript);
-            
+
             this.emitUI({ type: 'instacart.order.started', text: transcript });
-            
+
             console.log('🛒 Calling sendToInstacart...');
-            
+
             try {
               const result = await sendToInstacart(transcript);
               console.log('🛒🛒🛒 INSTACART RESULT:', result);
@@ -712,16 +711,17 @@ export class OpenAIRealtimeService extends Emitter {
           }
           
           console.log('👤 User transcript:', transcript);
-          
+
           if (transcript) {
             const lower = transcript.toLowerCase();
-            if (lower.includes('instacart') || lower.includes('shopping') || lower.includes('grocery') || lower.includes('add to cart')) {
+            // Only trigger Instacart for explicit mentions
+            if (lower.includes('instacart') || lower.includes('send to instacart') || lower.includes('order from instacart')) {
               console.log('🛒🛒🛒 INSTACART DETECTED IN USER MESSAGE!');
               console.log('🛒 Transcript:', transcript);
-              
+
               // Cancel the AI response and handle Instacart instead
               this.emitUI({ type: 'instacart.order.started', text: transcript });
-              
+
               console.log('🛒 Calling sendToInstacart...');
               sendToInstacart(transcript)
                 .then(result => {
@@ -732,7 +732,7 @@ export class OpenAIRealtimeService extends Emitter {
                   console.error('🛒❌ Instacart failed:', e);
                   this.emitUI({ type: 'instacart.order.error', error: e?.message ?? String(e) });
                 });
-              
+
               // Try to cancel the pending response
               if (this.dc && this.dc.readyState === 'open') {
                 console.log('🛒 Sending response.cancel to OpenAI');
