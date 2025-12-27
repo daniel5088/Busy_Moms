@@ -172,10 +172,10 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
       />
 
       {showDropdown && (
-        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
+        <ul className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
           {value.trim().length > 0 && (
             <li
-              className="px-3 py-2 text-purple-700 font-medium hover:bg-purple-50 cursor-pointer border-b border-gray-100"
+              className="px-3 py-2 text-rose-700 dark:text-rose-400 font-medium hover:bg-rose-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600"
               onMouseDown={(e) => {
                 e.preventDefault();
                 handleAddManually();
@@ -188,7 +188,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
           {predictions.map((p) => (
             <li
               key={p.place_id}
-              className="px-3 py-2 hover:bg-purple-50 cursor-pointer"
+              className="px-3 py-2 text-gray-900 dark:text-gray-100 hover:bg-rose-50 dark:hover:bg-gray-700 cursor-pointer"
               onMouseDown={(e) => {
                 e.preventDefault();
                 handleSelect(p);
