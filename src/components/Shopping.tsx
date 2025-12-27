@@ -455,10 +455,10 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
                       key={item.id}
                       className={`group p-3 sm:p-4 rounded-xl border-2 transition-all ${
                         selectedItems.has(item.id)
-                          ? 'border-green-400 bg-green-50'
+                          ? 'border-green-400 bg-green-50 dark:bg-green-900/20 dark:border-green-500'
                           : item.urgent
-                            ? 'bg-red-50 border-red-200'
-                            : 'bg-white border-gray-200 hover:border-green-300'
+                            ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-600'
+                            : 'bg-white border-gray-200 hover:border-green-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-green-500'
                       }`}
                     >
                       <div className="flex items-start space-x-2 sm:space-x-3">
@@ -470,21 +470,21 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-medium text-sm sm:text-base text-gray-900 break-words">
+                            <h3 className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 break-words">
                               {item.item}
                             </h3>
                             <div className="flex items-center gap-2">
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                 <button
                                   onClick={() => handleEditItem(item)}
-                                  className="p-1.5 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+                                  className="p-1.5 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
                                   title="Edit item"
                                 >
                                   <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteItem(item.id)}
-                                  className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                                  className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
                                   title="Delete item"
                                 >
                                   <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -499,7 +499,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
                               />
                             </div>
                           </div>
-                          <div className="text-xs sm:text-sm text-gray-600 mt-1">
+                          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                             <p>
                               {item.category}{' '}
                               {item.quantity && item.quantity > 1 ? `(${item.quantity})` : ''}
@@ -529,8 +529,8 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
                                 className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
                                   preferredRetailer?.retailer_key ===
                                   item.provider_metadata?.retailer_key
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-gray-100 text-gray-700'
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                 }`}
                               >
                                 <Store className="w-3 h-3" />
@@ -544,7 +544,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
                               </div>
                             )}
                             {item.urgent && (
-                              <div className="inline-flex items-center px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                              <div className="inline-flex items-center px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full text-xs font-medium">
                                 Urgent
                               </div>
                             )}
@@ -553,7 +553,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
                                 href={item.provider_metadata.cart_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors"
+                                className="inline-flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                               >
                                 <ShoppingCart className="w-3 h-3" />
                                 <span>View Cart</span>
