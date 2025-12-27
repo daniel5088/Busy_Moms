@@ -1035,7 +1035,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                 {selectedEvent && (
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         {selectedEvent.title}
                       </h3>
                       <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-rose-100 text-rose-700">
@@ -1044,13 +1044,13 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                     </div>
 
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                         <CalendarIcon className="w-4 h-4" />
                         <span>{new Date(selectedEvent.event_date).toLocaleDateString()}</span>
                       </div>
 
                       {(selectedEvent.start_time || selectedEvent.end_time) && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                           <Clock className="w-4 h-4" />
                           <span>
                             {formatTimeRange(selectedEvent.start_time, selectedEvent.end_time)}
@@ -1059,22 +1059,22 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                       )}
 
                       {selectedEvent.location && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                           <MapPin className="w-4 h-4" />
                           <span>{selectedEvent.location}</span>
                         </div>
                       )}
 
                       {selectedEvent.participants && selectedEvent.participants.length > 0 && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                           <Users className="w-4 h-4" />
                           <span>{selectedEvent.participants.join(', ')}</span>
                         </div>
                       )}
 
                       {selectedEvent.description && (
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-700">{selectedEvent.description}</p>
+                        <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <p className="text-sm text-gray-700 dark:text-gray-200">{selectedEvent.description}</p>
                         </div>
                       )}
                     </div>
@@ -1189,7 +1189,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                           setShowEventDetails(false);
                           setSelectedEvent(null);
                         }}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         Close
                       </button>
@@ -1200,7 +1200,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                 {selectedReminder && (
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         {selectedReminder.title}
                       </h3>
                       <div className="flex items-center space-x-2">
@@ -1222,21 +1222,21 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                     </div>
 
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                         <CalendarIcon className="w-4 h-4" />
                         <span>{new Date(selectedReminder.reminder_date).toLocaleDateString()}</span>
                       </div>
 
                       {selectedReminder.reminder_time && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                           <Clock className="w-4 h-4" />
                           <span>{formatTimeRange(selectedReminder.reminder_time, null)}</span>
                         </div>
                       )}
 
                       {selectedReminder.description && (
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-700">{selectedReminder.description}</p>
+                        <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <p className="text-sm text-gray-700 dark:text-gray-200">{selectedReminder.description}</p>
                         </div>
                       )}
                     </div>
@@ -1294,7 +1294,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                           setShowEventDetails(false);
                           setSelectedReminder(null);
                         }}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         Close
                       </button>
