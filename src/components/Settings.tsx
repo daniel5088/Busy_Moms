@@ -110,6 +110,26 @@ export function Settings({
     }
   }, [user]);
 
+  const updatePersonality = async (personality: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ ai_personality: personality })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating personality:', error);
+        return;
+      }
+
+      setCurrentProfile(prev => prev ? { ...prev, ai_personality: personality } : null);
+    } catch (error) {
+      console.error('Error updating personality:', error);
+    }
+  };
+
   const loadFamilyMembers = React.useCallback(async () => {
     if (!user) {
       setFamilyMembers([]);
@@ -540,7 +560,7 @@ export function Settings({
                     ? 'bg-rose-500 text-white'
                     : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-rose-100 dark:hover:bg-gray-600'
                 }`}
-                onClick={() => setShowProfileForm(true)}
+                onClick={() => updatePersonality(personality)}
               >
                 {personality}
               </button>
