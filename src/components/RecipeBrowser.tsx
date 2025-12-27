@@ -437,10 +437,10 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             <div
               key={recipe.id}
               onClick={() => onRecipeSelect(recipe)}
-              className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden hover:border-green-300 transition-all cursor-pointer"
+              className="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 overflow-hidden hover:border-green-300 dark:hover:border-green-500 transition-all cursor-pointer"
             >
               {recipe.image_url && (
-                <div className="relative h-48 bg-gray-200">
+                <div className="relative h-48 bg-gray-200 dark:bg-gray-700">
                   <img
                     src={recipe.image_url}
                     alt={recipe.title}
@@ -448,22 +448,22 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
                   />
                   <button
                     onClick={(e) => handleSaveToggle(recipe.id, e)}
-                    className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+                    className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <Heart
                       className={`w-5 h-5 ${
                         savedRecipeIds.has(recipe.id)
                           ? 'fill-red-500 text-red-500'
-                          : 'text-gray-400'
+                          : 'text-gray-400 dark:text-gray-500'
                       }`}
                     />
                   </button>
                 </div>
               )}
               <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">{recipe.title}</h3>
-                {recipe.author && <p className="text-sm text-gray-600 mb-2">By {recipe.author}</p>}
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{recipe.title}</h3>
+                {recipe.author && <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">By {recipe.author}</p>}
+                <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                   {recipe.cooking_time_minutes && (
                     <div className="flex items-center space-x-1">
                       <Clock className="w-4 h-4" />
