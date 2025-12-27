@@ -15,10 +15,17 @@ import { InstacartUnitMapper } from '../utils/instacartUnitMapper';
 
 export class InstacartShoppingService {
   private edgeFunctionUrl: string;
+  private retailersEdgeFunctionUrl: string;
 
   constructor() {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     this.edgeFunctionUrl = `${supabaseUrl}/functions/v1/instacart-shopping-list`;
+    this.retailersEdgeFunctionUrl = `${supabaseUrl}/functions/v1/instacart-get-retailers`;
+
+    console.log('🔧 InstacartShoppingService initialized:', {
+      shoppingListUrl: this.edgeFunctionUrl,
+      retailersUrl: this.retailersEdgeFunctionUrl,
+    });
   }
 
   async sendToInstacart(
@@ -35,25 +42,17 @@ export class InstacartShoppingService {
 
     const formattedItems = this.formatItemsForInstacart(items);
 
-    // ✅ Determine which retailer to use:
-    // 1) explicit override from caller
-    // 2) fallback to primary retailer from user_preferred_retailers table
+    console.log('📦 Formatted items for Instacart:', formattedItems);
+
+    // Determine which retailer to use
     let effectiveRetailerKey: string | null | undefined = retailerKey;
 
     const userId = items[0]?.user_id;
     if (!effectiveRetailerKey && userId) {
       const primaryRetailer = await this.getPrimaryRetailer(userId);
       effectiveRetailerKey = primaryRetailer?.retailer_key;
+      console.log('🏪 Using primary retailer:', effectiveRetailerKey);
     }
-
-    console.log('[InstacartShoppingService] sendToInstacart:', {
-      retailerKeyParam: retailerKey,
-      effectiveRetailerKey,
-      userId,
-      itemCount: items.length,
-      formattedItemCount: formattedItems.length,
-      items: formattedItems,
-    });
 
     const requestBody: any = {
       action: 'create_shopping_list',
@@ -61,14 +60,16 @@ export class InstacartShoppingService {
       title: 'My Shopping List',
     };
 
+    // Only add retailer_key if we have one
     if (effectiveRetailerKey) {
       requestBody.retailer_key = effectiveRetailerKey;
-      console.log('[InstacartShoppingService] Adding retailer_key to request:', effectiveRetailerKey);
-    } else {
-      console.warn('[InstacartShoppingService] No retailer key available!');
+      console.log('🏪 Adding retailer_key to request:', effectiveRetailerKey);
     }
 
-    const response = await fetch(this.edgeFunctionUrl, {
+    console.log('📤 Sending request to edge function:', JSON.stringify(requestBody, null, 2));
+
+    // Use the correct endpoint for retailers
+    const response = await fetch(this.retailersEdgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,6 +82,7 @@ export class InstacartShoppingService {
 
     try {
       const responseText = await response.text();
+      console.log('📥 Raw response:', responseText);
 
       if (!response.ok) {
         let errorData: any = {};
@@ -92,6 +94,7 @@ export class InstacartShoppingService {
 
         const errorMessage =
           errorData.error ||
+          errorData.message ||
           errorData.details?.error ||
           responseText ||
           `Failed to create Instacart shopping list: ${response.statusText}`;
@@ -100,6 +103,7 @@ export class InstacartShoppingService {
       }
 
       data = JSON.parse(responseText);
+      console.log('✅ Parsed response:', data);
     } catch (error) {
       if (error instanceof Error && error.message.includes('Unexpected token')) {
         throw new Error(
@@ -109,20 +113,13 @@ export class InstacartShoppingService {
       throw error;
     }
 
+    // Get retailer name for metadata
     let retailerName: string | undefined;
     if (effectiveRetailerKey && userId) {
       const retailers = await this.getPreferredRetailers(userId);
       const matchingRetailer = retailers.find((r) => r.retailer_key === effectiveRetailerKey);
       retailerName = matchingRetailer?.retailer_name;
     }
-
-    console.log('[InstacartShoppingService] Response received:', {
-      status: 'success',
-      productsLinkUrl: data.products_link_url,
-      shoppingListUrl: data.shopping_list_url,
-      retailerKey: effectiveRetailerKey,
-      retailerName,
-    });
 
     await this.updateItemsProviderStatus(
       items,
@@ -220,10 +217,13 @@ export class InstacartShoppingService {
         item.category || undefined
       );
 
+      // Ensure quantity is always a valid number
+      const quantity = formatted.quantity || item.quantity || 1;
+      
       return {
         name: item.item,
-        quantity: formatted.quantity,
-        unit: formatted.unit,
+        quantity: typeof quantity === 'number' ? quantity : parseInt(String(quantity)) || 1,
+        unit: formatted.unit || item.unit || null,
         category: item.category || 'other',
       };
     });
@@ -382,10 +382,8 @@ export class InstacartShoppingService {
       throw new Error('User must be authenticated to get nearby retailers');
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const getRetailersUrl = `${supabaseUrl}/functions/v1/instacart-get-retailers`;
-
-    const response = await fetch(getRetailersUrl, {
+    // Use the correct endpoint for retailers
+    const response = await fetch(this.retailersEdgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
