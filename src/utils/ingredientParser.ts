@@ -109,7 +109,9 @@ export class IngredientParser {
     let remainingText = quantityResult.remaining;
 
     const unitResult = this.extractUnit(remainingText);
-    const ingredient = unitResult.remaining.trim();
+    let ingredient = unitResult.remaining.trim();
+
+    ingredient = ingredient.replace(/^(of|a|an|the)\s+/i, '').trim();
 
     if (!quantityResult.quantity && !unitResult.unit) {
       confidence = 0.3;
