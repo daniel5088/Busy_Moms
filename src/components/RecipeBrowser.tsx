@@ -187,7 +187,7 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             onClick={() => setActiveView('my-recipes')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeView === 'my-recipes'
-                ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white'
+                ? 'bg-green-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -198,7 +198,7 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             onClick={() => setActiveView('discover')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeView === 'discover'
-                ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white'
+                ? 'bg-green-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -209,7 +209,7 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
             onClick={() => setActiveView('saved')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeView === 'saved'
-                ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 text-white'
+                ? 'bg-green-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
