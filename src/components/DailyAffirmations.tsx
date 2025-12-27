@@ -14,6 +14,7 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'today' | 'history'>('today');
+  const [settings, setSettings] = useState<{ enabled: boolean } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -24,6 +25,14 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
   const loadAffirmations = async () => {
     setLoading(true);
     try {
+      const settingsData = await affirmationService.getSettings();
+      setSettings(settingsData);
+
+      if (!settingsData?.enabled) {
+        setLoading(false);
+        return;
+      }
+
       const history = await affirmationService.getAffirmationHistory(30);
       setAffirmations(history);
 
@@ -137,7 +146,13 @@ export function DailyAffirmations({ isOpen, onClose, onOpenVoiceChat }: DailyAff
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-gray-800">
-          {loading ? (
+          {settings && !settings.enabled ? (
+            <div className="flex items-center justify-center py-12 px-6">
+              <p className="text-center text-gray-600 dark:text-gray-400 leading-relaxed max-w-md">
+                Daily Affirmations are short, positive reflections designed to support your mindset throughout the day. Turn them on in Settings to receive a daily affirmation.
+              </p>
+            </div>
+          ) : loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
             </div>
