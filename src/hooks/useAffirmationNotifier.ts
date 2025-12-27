@@ -76,10 +76,26 @@ export function useAffirmationNotifier() {
     }
   };
 
+  const reloadSettings = async () => {
+    try {
+      const data = await affirmationService.getSettings();
+      setSettings(data);
+      console.log('🔄 Affirmation settings reloaded');
+
+      // If affirmations are now disabled, clear any pending affirmation
+      if (data && !data.enabled) {
+        setPendingAffirmation(null);
+      }
+    } catch (error) {
+      console.error('Error reloading affirmation settings:', error);
+    }
+  };
+
   return {
     pendingAffirmation,
     settings,
     dismissNotification,
     showBrowserNotification,
+    reloadSettings,
   };
 }

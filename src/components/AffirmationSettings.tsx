@@ -22,9 +22,10 @@ import { AffirmationSettings as AffirmationSettingsType } from '../lib/supabase'
 interface AffirmationSettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  onSettingsChanged?: () => void;
 }
 
-export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProps) {
+export function AffirmationSettings({ isOpen, onClose, onSettingsChanged }: AffirmationSettingsProps) {
   const [settings, setSettings] = useState<AffirmationSettingsType | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,6 +56,8 @@ export function AffirmationSettings({ isOpen, onClose }: AffirmationSettingsProp
       await affirmationService.updateSettings(settings);
       //Alvaros - Dailyaffirmations: TODO: Replace alerts with app-wide toast notifications for consistency
       alert('Settings saved successfully!');
+      // Notify parent component that settings have changed
+      onSettingsChanged?.();
       onClose();
     } catch (error) {
       console.error('Error saving settings:', error);

@@ -69,7 +69,7 @@ function App() {
   const [showAffirmationSettings, setShowAffirmationSettings] = useState(false);
   const [openGiftFinder, setOpenGiftFinder] = useState(false);
   const { toasts, removeToast } = useToast();
-  const { pendingAffirmation, dismissNotification } = useAffirmationNotifier();
+  const { pendingAffirmation, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   // Check URL parameters
@@ -444,6 +444,7 @@ function App() {
         <AffirmationSettings
           isOpen={showAffirmationSettings}
           onClose={() => setShowAffirmationSettings(false)}
+          onSettingsChanged={reloadSettings}
         />
 
         <ToastContainer toasts={toasts} onRemove={removeToast} />
