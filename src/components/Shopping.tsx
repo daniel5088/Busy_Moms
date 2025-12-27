@@ -218,17 +218,23 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
     setShowSendModal(true);
   };
 
-  const handleConfirmSend = async (items: ShoppingItem[], retailerKey?: string) => {
+  const handleConfirmSend = async (items: ShoppingItem[], retailerKey?: string): Promise<string | undefined> => {
     if (!sendProvider) return;
 
     setSendingToProvider(true);
     try {
+      let cartUrl: string | undefined;
+
       if (sendProvider === 'instacart') {
-        await instacartShoppingService.sendToInstacart(items, retailerKey);
+        const response = await instacartShoppingService.sendToInstacart(items, retailerKey);
+        cartUrl = response.products_link_url;
+        console.log('✅ Cart URL received:', cartUrl);
       }
+
       await fetchShoppingList();
       clearSelection();
-      setShowSendModal(false);
+
+      return cartUrl;
     } catch (error) {
       console.error('Error sending to provider:', error);
       throw error;

@@ -19,7 +19,7 @@ interface SendToProviderModalProps {
   onClose: () => void;
   items: ShoppingItem[];
   provider: ProviderName;
-  onConfirm: (items: ShoppingItem[], retailerKey?: string) => Promise<void>;
+  onConfirm: (items: ShoppingItem[], retailerKey?: string) => Promise<string | undefined>;
   userId: string;
 }
 
@@ -76,9 +76,8 @@ export function SendToProviderModal({
     setError(null);
 
     try {
-      // Get the retailer key before calling onConfirm
       const retailerKey = provider === 'instacart' ? selectedRetailer?.retailer_key : undefined;
-      
+
       console.log('🎯 Confirming send to provider:', {
         provider,
         retailerKey,
@@ -86,15 +85,15 @@ export function SendToProviderModal({
         selectedRetailer: selectedRetailer?.retailer_name,
       });
 
-      // Call the parent's onConfirm which should handle the actual API call
-      await onConfirm(items, retailerKey);
-      
-      setSuccess(true);
+      const returnedCartUrl = await onConfirm(items, retailerKey);
 
-      // Check if we got a cart URL back
-      if (items.length > 0 && items[0].provider_metadata?.cart_url) {
-        setCartUrl(items[0].provider_metadata.cart_url);
+      if (returnedCartUrl) {
+        setCartUrl(returnedCartUrl);
+        console.log('✅ Cart URL set in modal:', returnedCartUrl);
       }
+
+      setSuccess(true);
+      setLoading(false);
     } catch (err) {
       console.error('❌ Error sending to provider:', err);
       setError(err instanceof Error ? err.message : 'Failed to send items to provider');
