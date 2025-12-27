@@ -223,14 +223,14 @@ export function RecipeBrowser({ onRecipeSelect }: RecipeBrowserProps) {
         <div className="space-y-4">
           <div className="flex space-x-2">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-400" />
               <input
                 type="text"
                 placeholder="Search 1000+ recipes from TheMealDB..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full pl-10 pr-4 py-2 border-2 border-transparent bg-gradient-to-r from-rose-100 via-pink-100 to-orange-100 dark:from-rose-900/30 dark:via-pink-900/30 dark:to-orange-900/30 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent dark:text-gray-100 dark:placeholder-gray-400"
+                className="w-full pl-10 pr-4 py-2 border-2 border-transparent bg-gradient-to-r from-rose-100 via-pink-100 to-orange-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-rose-400 dark:focus:ring-green-500 focus:border-transparent dark:text-gray-100 dark:placeholder-gray-400"
               />
             </div>
             <button
