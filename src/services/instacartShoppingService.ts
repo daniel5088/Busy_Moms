@@ -68,8 +68,7 @@ export class InstacartShoppingService {
 
     console.log('📤 Sending request to edge function:', JSON.stringify(requestBody, null, 2));
 
-    // Use the correct endpoint for retailers
-    const response = await fetch(this.retailersEdgeFunctionUrl, {
+    const response = await fetch(this.edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
