@@ -15,7 +15,7 @@ import {
   Loader2,
   Bell,
   Camera,
-  Upload,
+  Image,
 } from 'lucide-react';
 
 import { EventForm } from './forms/EventForm';
@@ -1353,7 +1353,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
                   onClick={() => fileInputRef.current?.click()}
                   className="aspect-square bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl font-medium hover:from-purple-600 hover:to-purple-700 transition flex flex-col items-center justify-center gap-3 shadow-lg"
                 >
-                  <Upload className="w-12 h-12" />
+                  <Image className="w-12 h-12" />
                   <span className="text-sm">Gallery</span>
                 </button>
               </div>
