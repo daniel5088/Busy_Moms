@@ -1,6 +1,7 @@
 import { aiAssistantService } from './aiAssistantService';
 import { sendToInstacart } from './instacartAgentService';
 import { supabase } from "../lib/supabase";
+import { instacartShoppingService } from './instacartShoppingService';
 
 // Fallback minimal speech types (safe for TS projects without full lib.dom)
 interface MinimalSpeechResult { transcript: string }
@@ -120,7 +121,13 @@ export class OpenAIRealtimeService extends Emitter {
       // Emit UI event so the chat bubble appears immediately
       this.emitUI({ type: "instacart.order.started", text });
 
-      sendToInstacart(text)
+      // Fetch preferred retailer and send to Instacart
+      (async () => {
+        const primaryRetailer = this.currentUserId ? await instacartShoppingService.getPrimaryRetailer(this.currentUserId) : null;
+        const retailerId = primaryRetailer?.retailer_key;
+        console.log("🛒 Using preferred retailer:", retailerId);
+        return sendToInstacart(text, retailerId || undefined);
+      })()
         .then((result) => this.emitUI({ type: "instacart.order.result", data: result }))
         .catch((error) =>
           this.emitUI({
@@ -660,7 +667,10 @@ export class OpenAIRealtimeService extends Emitter {
             console.log('🛒 Calling sendToInstacart...');
 
             try {
-              const result = await sendToInstacart(transcript);
+              const primaryRetailer = this.currentUserId ? await instacartShoppingService.getPrimaryRetailer(this.currentUserId) : null;
+              const retailerId = primaryRetailer?.retailer_key;
+              console.log('🛒 Using preferred retailer:', retailerId);
+              const result = await sendToInstacart(transcript, retailerId || undefined);
               console.log('🛒🛒🛒 INSTACART RESULT:', result);
               console.log('🛒 Result items:', result.items);
               console.log('🛒 Result status:', result.status);
@@ -723,7 +733,13 @@ export class OpenAIRealtimeService extends Emitter {
               this.emitUI({ type: 'instacart.order.started', text: transcript });
 
               console.log('🛒 Calling sendToInstacart...');
-              sendToInstacart(transcript)
+
+              (async () => {
+                const primaryRetailer = this.currentUserId ? await instacartShoppingService.getPrimaryRetailer(this.currentUserId) : null;
+                const retailerId = primaryRetailer?.retailer_key;
+                console.log('🛒 Using preferred retailer:', retailerId);
+                return sendToInstacart(transcript, retailerId || undefined);
+              })()
                 .then(result => {
                   console.log('🛒✅ Instacart success:', result);
                   this.emitUI({ type: 'instacart.order.result', data: result });
