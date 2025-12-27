@@ -574,8 +574,8 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-rose-900 bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-rose-900 dark:bg-gray-900 bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 p-6">
           <div className="flex items-center justify-between">
@@ -627,7 +627,7 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
         </div>
 
         {/* Conversation Area */}
-        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-rose-50 to-white">
+        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-rose-50 to-white dark:from-gray-800 dark:to-gray-900">
           {/* Text Chat Mode */}
           {chatMode === 'text' && (
             <div className="h-full flex flex-col">
@@ -637,10 +637,10 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
                     <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
                       <MessageSquare className="w-10 h-10 text-white" />
                     </div>
-                    <p className="text-lg font-semibold text-gray-800 mb-2">Text Chat with Sarah</p>
-                    <p className="text-sm text-gray-600 mb-4">Type your message below to start chatting</p>
-                    <div className="bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 p-4 rounded-2xl max-w-sm mx-auto">
-                      <p className="text-sm text-rose-800 font-medium">
+                    <p className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">Text Chat with Sarah</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Type your message below to start chatting</p>
+                    <div className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/30 dark:to-pink-900/30 border-2 border-rose-200 dark:border-rose-700 p-4 rounded-2xl max-w-sm mx-auto">
+                      <p className="text-sm text-rose-800 dark:text-rose-200 font-medium">
                         💡 Ask me to schedule events, add shopping items, create tasks, and more!
                       </p>
                     </div>
@@ -663,7 +663,7 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
                         className={`max-w-[80%] p-4 rounded-2xl ${
                           message.role === 'user'
                             ? 'bg-gradient-to-br from-rose-400 to-pink-400 text-white'
-                            : 'bg-white border-2 border-rose-100 text-gray-900'
+                            : 'bg-white dark:bg-gray-700 border-2 border-rose-100 dark:border-gray-600 text-gray-900 dark:text-gray-100'
                         }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">{displayText}</p>
@@ -687,8 +687,8 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
                 {isProcessing && (
                   <div className="flex justify-start">
-                    <div className="bg-white border-2 border-rose-100 p-4 rounded-2xl">
-                      <Loader2 className="w-5 h-5 animate-spin text-rose-600" />
+                    <div className="bg-white dark:bg-gray-700 border-2 border-rose-100 dark:border-gray-600 p-4 rounded-2xl">
+                      <Loader2 className="w-5 h-5 animate-spin text-rose-600 dark:text-rose-400" />
                     </div>
                   </div>
                 )}
@@ -809,7 +809,7 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
 
         {/* Text Input Area for Text Chat Mode */}
         {chatMode === 'text' && (
-          <div className="p-6 bg-white border-t-2 border-rose-100">
+          <div className="p-6 bg-white dark:bg-gray-800 border-t-2 border-rose-100 dark:border-gray-700">
             <div className="flex space-x-2">
               <input
                 type="text"
@@ -817,7 +817,7 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
                 onChange={(e) => setTextInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all"
+                className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-rose-400 focus:border-rose-400 placeholder:text-gray-500 dark:placeholder:text-gray-400 transition-all"
                 disabled={isProcessing}
               />
               <button
