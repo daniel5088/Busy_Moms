@@ -223,15 +223,12 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
 
     setSendingToProvider(true);
     try {
-      let cartUrl: string | undefined;
       if (sendProvider === 'instacart') {
-        const response = await instacartShoppingService.sendToInstacart(items, retailerKey);
-        cartUrl = response?.products_link_url || response?.shopping_list_url;
+        await instacartShoppingService.sendToInstacart(items, retailerKey);
       }
       await fetchShoppingList();
       clearSelection();
       setShowSendModal(false);
-      return cartUrl;
     } catch (error) {
       console.error('Error sending to provider:', error);
       throw error;
@@ -521,40 +518,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
                                 )}
                               </div>
                             )}
-                            {item.provider_name === 'instacart' && item.provider_metadata?.retailer_name && (
-                              <div
-                                className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-xs font-medium flex-grow ${
-                                  preferredRetailer?.retailer_key ===
-                                  item.provider_metadata?.retailer_key
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-gray-100 text-gray-700'
-                                }`}
-                              >
-                                <div className="flex items-center space-x-1.5">
-                                  <Store className="w-3 h-3" />
-                                  <span>
-                                    {item.provider_metadata.retailer_name}
-                                    {preferredRetailer?.retailer_key ===
-                                      item.provider_metadata?.retailer_key && (
-                                      <span className="ml-1 font-semibold">(Preferred Retailer)</span>
-                                    )}
-                                  </span>
-                                </div>
-                                {item.provider_metadata?.cart_url && (
-                                  <a
-                                    href={item.provider_metadata.cart_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center space-x-1 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <ExternalLink className="w-3 h-3" />
-                                    <span>View Cart</span>
-                                  </a>
-                                )}
-                              </div>
-                            )}
-                            {item.provider_name !== 'instacart' && item.provider_metadata?.retailer_name && (
+                            {item.provider_metadata?.retailer_name && (
                               <div
                                 className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
                                   preferredRetailer?.retailer_key ===
@@ -577,6 +541,17 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
                               <div className="inline-flex items-center px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
                                 Urgent
                               </div>
+                            )}
+                            {item.provider_metadata?.cart_url && (
+                              <a
+                                href={item.provider_metadata.cart_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                <span>View Cart</span>
+                              </a>
                             )}
                           </div>
                         </div>
