@@ -814,16 +814,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-24">
-        {/* Hidden Diagnostics Button - Only visible in development */}
-        {import.meta.env.DEV && (
-          <button
-            onClick={runGoogleCalendarDiagnostics}
-            className="fixed bottom-4 left-4 px-3 py-2 bg-purple-600 text-white text-xs rounded-lg shadow-lg hover:bg-purple-700 transition-colors z-50"
-            title="Run Google Calendar Diagnostics"
-          >
-            🔍 Debug
-          </button>
-        )}
 
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Header */}
