@@ -214,55 +214,22 @@ class GoogleCalendarService {
     return this.signedIn;
   }
 
-  async isConnected(userId: string): Promise<boolean> {
-    if (!this.baseUrl) {
-      console.log('⚠️ Supabase URL not configured');
-      return false;
-    }
-
+  async isConnected(): Promise<boolean> {
     try {
-      const session = await getActiveSession();
-
-      if (!session) {
-        console.log('⚠️ No active session');
-        return false;
-      }
-
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!anonKey) {
-        console.log('⚠️ Supabase anon key not configured');
-        return false;
-      }
-
-      const response = await fetch(`${this.baseUrl}/google-calendar`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: anonKey,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('google-calendar', {
+        body: {
           action: 'isConnected',
-          userId,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        console.log('⚠️ Could not check Google Calendar connection status');
+      if (error) {
+        console.error('Error checking Google Calendar connection:', error);
         return false;
       }
 
-      const data = await response.json();
-      const connected = data.connected || false;
-
-      console.log(
-        `🔍 Google Calendar connection status for user ${userId}:`,
-        connected ? '✅ Connected' : '⭕ Not connected'
-      );
-      return connected;
+      return data?.connected === true;
     } catch (error) {
-      console.log('⚠️ Error checking Google Calendar connection:', error);
+      console.error('Exception checking Google Calendar connection:', error);
       return false;
     }
   }
@@ -419,13 +386,46 @@ class GoogleCalendarService {
     }
   }
 
-  async getEvents(options: CalendarListOptions = {}): Promise<GoogleCalendarEvent[]> {
+  async getEvents(params: {
+    timeMin?: string;
+    timeMax?: string;
+    maxResults?: number;
+    q?: string;
+  }): Promise<GoogleCalendarEvent[]> {
     try {
-      const data = await this.makeApiCall('getEvents', options);
-      return data.items || [];
-    } catch (error) {
-      console.error('❌ Failed to get events:', error);
-      throw error;
+      const { data, error } = await supabase.functions.invoke('google-calendar', {
+        body: {
+          action: 'getEvents',
+          timeMin: params.timeMin,
+          timeMax: params.timeMax,
+          maxResults: params.maxResults || 250,
+          q: params.q,
+        },
+      });
+
+      if (error) {
+        console.error('Error fetching Google Calendar events:', error);
+        
+        // Check if it's an authentication error
+        if (error.message?.includes('authentication') || 
+            error.message?.includes('Unauthorized') ||
+            error.message?.includes('401')) {
+          throw new Error('Google Calendar authentication failed. Please reconnect your account.');
+        }
+        
+        throw new Error(error.message || 'Failed to fetch Google Calendar events');
+      }
+
+      return data?.items || [];
+    } catch (error: any) {
+      console.error('Exception fetching Google Calendar events:', error);
+      
+      // Re-throw with a user-friendly message
+      if (error.message?.includes('authentication') || error.message?.includes('auth')) {
+        throw error; // Already has a good message
+      }
+      
+      throw new Error('Unable to load Google Calendar events. Please try reconnecting your account.');
     }
   }
 
