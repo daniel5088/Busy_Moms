@@ -13,6 +13,7 @@ import {
 import { TaskForm } from './forms/TaskForm';
 import { Task, FamilyMember, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { googleTasksService } from '../services/googleTasks';
 
 export function Tasks() {
   const { user } = useAuth();
