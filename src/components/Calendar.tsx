@@ -203,19 +203,32 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
       if (!user?.id || !mounted) return;
 
       try {
-        const connected = await googleCalendarService.isConnected(user.id);
+        const connected = await googleCalendarService.isConnected();
         if (!mounted) return;
 
         setIsGoogleConnected(connected);
 
         if (connected && mounted) {
-          // Don't auto-sync here - let the useCalendarSync hook handle periodic sync
-          await loadGoogleEvents();
+          try {
+            await loadGoogleEvents();
+          } catch (loadError: any) {
+            console.error('Failed to load Google events:', loadError);
+            
+            // If it's an auth error, disconnect
+            if (loadError.message?.includes('authentication') || 
+                loadError.message?.includes('401') ||
+                loadError.message?.includes('Unauthorized')) {
+              console.log('Authentication failed, disconnecting Google Calendar');
+              setIsGoogleConnected(false);
+              setGoogleEvents([]);
+            }
+          }
         }
       } catch (error) {
-        console.error('Auto-sync failed:', error);
+        console.error('Error checking Google Calendar:', error);
         if (mounted) {
           setIsGoogleConnected(false);
+          setGoogleEvents([]);
         }
       }
     };
@@ -225,24 +238,53 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
     return () => {
       mounted = false;
     };
-  }, [user?.id, performSync]);
+  }, [user?.id]);
 
   const loadGoogleEvents = async () => {
     if (!user?.id) return;
 
     try {
+      // Double-check connection before making API call
+      const connected = await googleCalendarService.isConnected();
+      if (!connected) {
+        console.log('Google Calendar not connected, clearing events');
+        setGoogleEvents([]);
+        setIsGoogleConnected(false);
+        return;
+      }
+
       const timeMin = monthStart.toISOString();
       const timeMax = monthEnd.toISOString();
 
+      console.log('📅 Loading Google Calendar events...');
       const events = await googleCalendarService.getEvents({
         timeMin,
         timeMax,
         maxResults: 100,
       });
 
+      console.log(`✅ Loaded ${events.length} Google Calendar events`);
       setGoogleEvents(events);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading Google events:', error);
+      
+      // Clear events on any error
+      setGoogleEvents([]);
+      
+      // If it's an auth error, also clear the connection status
+      const isAuthError = 
+        error.message?.includes('authentication') ||
+        error.message?.includes('401') ||
+        error.message?.includes('Unauthorized') ||
+        error.message?.includes('auth');
+      
+      if (isAuthError) {
+        console.log('🔓 Authentication error detected, clearing Google connection');
+        setIsGoogleConnected(false);
+        
+        // Show user-friendly error message
+        showToast('Google Calendar connection expired. Please reconnect.', 'error');
+      }
     }
   };
 
@@ -656,7 +698,114 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
 
   const isCurrentMonth = (day: Date) => day.getMonth() === currentDate.getMonth();
 
-  // --- UI --------------------------------------------------------------------
+  // --- Diagnostics ----------------------------------------------------------
+  const runGoogleCalendarDiagnostics = async () => {
+    if (!user?.id) {
+      console.log('❌ No user logged in');
+      return;
+    }
+
+    console.log('🔍 Running Google Calendar Diagnostics...');
+    console.log('================================');
+
+    try {
+      // Check 1: Environment variables
+      console.log('\n1️⃣ Checking Environment...');
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      console.log('✅ Supabase URL:', supabaseUrl ? 'Configured' : '❌ Missing');
+      console.log('✅ Anon Key:', anonKey ? 'Configured' : '❌ Missing');
+
+      // Check 2: Database tokens
+      console.log('\n2️⃣ Checking Database Tokens...');
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('google_tokens')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (tokenError) {
+        console.error('❌ Database error:', tokenError);
+      } else if (!tokenData) {
+        console.log('⚠️ No tokens found in database - Google Calendar not connected');
+      } else {
+        console.log('✅ Token record found');
+        console.log('   - Has access_token:', !!tokenData.access_token);
+        console.log('   - Has refresh_token:', !!tokenData.refresh_token);
+        console.log('   - Expiry:', tokenData.expiry_ts);
+        
+        const now = new Date();
+        const expiry = new Date(tokenData.expiry_ts);
+        const minutesUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 60);
+        
+        console.log('   - Status:', minutesUntilExpiry > 0 ? 
+          `✅ Valid (${Math.round(minutesUntilExpiry)} minutes remaining)` : 
+          '⚠️ Expired');
+      }
+
+      // Check 3: Connection status via API
+      console.log('\n3️⃣ Checking API Connection...');
+      try {
+        const connected = await googleCalendarService.isConnected();
+        console.log('✅ API Connection Status:', connected ? '✅ Connected' : '⚠️ Not Connected');
+      } catch (error: any) {
+        console.error('❌ API Connection Check Failed:', error.message);
+      }
+
+      // Check 4: Try to load events
+      console.log('\n4️⃣ Testing Event Load...');
+      try {
+        const events = await googleCalendarService.getEvents({
+          maxResults: 1,
+          timeMin: new Date().toISOString(),
+        });
+        console.log('✅ Event Load Successful - Found', events.length, 'events');
+      } catch (error: any) {
+        console.error('❌ Event Load Failed:', error.message);
+        
+        if (error.message.includes('authentication') || error.message.includes('401')) {
+          console.log('💡 Suggestion: Token needs refresh or reconnection');
+        }
+      }
+
+      // Check 5: Edge Function diagnostics
+      console.log('\n5️⃣ Edge Function Diagnostics...');
+      try {
+        const session = await supabase.auth.getSession();
+        if (session.data.session) {
+          const response = await fetch(`${supabaseUrl}/functions/v1/google-calendar`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.data.session.access_token}`,
+              'apikey': anonKey,
+            },
+            body: JSON.stringify({
+              action: 'diagnostics',
+              userId: user.id,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Edge Function Response:', data);
+          } else {
+            console.error('❌ Edge Function Error:', response.status, await response.text());
+          }
+        }
+      } catch (error: any) {
+        console.error('❌ Edge Function Diagnostics Failed:', error.message);
+      }
+
+    } catch (error) {
+      console.error('❌ Diagnostics failed:', error);
+    }
+
+    console.log('\n================================');
+    console.log('✅ Diagnostics Complete');
+  };
+
+  // --- UI -------------------------------------------------------------------
   // Alvaros Skeletons
   if (loading) {
     return <CalendarSkeleton />;
@@ -665,6 +814,17 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-24">
+        {/* Hidden Diagnostics Button - Only visible in development */}
+        {import.meta.env.DEV && (
+          <button
+            onClick={runGoogleCalendarDiagnostics}
+            className="fixed bottom-4 left-4 px-3 py-2 bg-purple-600 text-white text-xs rounded-lg shadow-lg hover:bg-purple-700 transition-colors z-50"
+            title="Run Google Calendar Diagnostics"
+          >
+            🔍 Debug
+          </button>
+        )}
+
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
@@ -706,6 +866,73 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
               </div>
             )}
           </div>
+
+          {/* Google Calendar Connection Banner */}
+          {user?.id && !isGoogleConnected && (
+            <div className="mb-6 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-2xl p-4 shadow-lg" data-google-banner>
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <svg viewBox="0 0 24 24" className="w-10 h-10" fill="currentColor">
+                    <path
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      fill="#4285F4"
+                    />
+                    <path
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      fill="#34A853"
+                    />
+                    <path
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      fill="#FBBC05"
+                    />
+                    <path
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      fill="#EA4335"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                    Connect Google Calendar
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                    Sync your Google Calendar events to see all your appointments in one place. 
+                    Your events stay private and secure.
+                  </p>
+                  <button
+                    onClick={() => {
+                      // Navigate to settings or trigger Google OAuth
+                      if (onNavigateToSubScreen) {
+                        onNavigateToSubScreen('settings');
+                      }
+                    }}
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="white"
+                      />
+                    </svg>
+                    <span>Connect Google Calendar</span>
+                  </button>
+                </div>
+                <button
+                  onClick={() => {
+                    // Option to dismiss the banner
+                    const banner = document.querySelector('[data-google-banner]');
+                    if (banner) {
+                      (banner as HTMLElement).style.display = 'none';
+                    }
+                  }}
+                  className="flex-shrink-0 p-2 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg transition-colors"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Calendar Grid - Left Side */}
