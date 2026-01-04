@@ -82,7 +82,7 @@ export function Settings({
     if (!user) return;
 
     try {
-      const connected = await googleCalendarService.isConnected(user.id);
+      const connected = await googleCalendarService.isConnected();
       setIsGoogleConnected(connected);
     } catch (error) {
       console.error('Error checking Google Calendar connection:', error);
