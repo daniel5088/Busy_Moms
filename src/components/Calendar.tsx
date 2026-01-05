@@ -238,32 +238,31 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, monthStart]); // ✅ add monthStart so it reruns when month changes
 
   const loadGoogleEvents = async () => {
     if (!user?.id) return;
 
     try {
-      // Double-check connection before making API call
       const connected = await googleCalendarService.isConnected();
       if (!connected) {
-        console.log('Google Calendar not connected, clearing events');
         setGoogleEvents([]);
         setIsGoogleConnected(false);
         return;
       }
 
-      const timeMin = monthStart.toISOString();
-      const timeMax = monthEnd.toISOString();
+      // ✅ Use [monthStart, nextMonthStart) instead of endOfMonth midnight
+      const timeMin = new Date(monthStart.getFullYear(), monthStart.getMonth(), 1).toISOString();
+      const timeMax = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1).toISOString();
 
-      console.log('📅 Loading Google Calendar events...');
+      console.log('📅 Loading Google Calendar events...', { timeMin, timeMax });
+
       const events = await googleCalendarService.getEvents({
         timeMin,
         timeMax,
         maxResults: 100,
       });
 
-      console.log(`✅ Loaded ${events.length} Google Calendar events`);
       setGoogleEvents(events);
     } catch (error: any) {
       console.error('Error loading Google events:', error);
@@ -814,6 +813,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-24">
+        {/* Hidden Diagnostics Button - Only visible in development */}
+        {import.meta.env.DEV && (
+          <button
+            onClick={runGoogleCalendarDiagnostics}
+            className="fixed bottom-4 left-4 px-3 py-2 bg-purple-600 text-white text-xs rounded-lg shadow-lg hover:bg-purple-700 transition-colors z-50"
+            title="Run Google Calendar Diagnostics"
+          >
+            🔍 Debug
+          </button>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Header */}
