@@ -494,12 +494,39 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ error: 'Event must have a valid summary' }, 400, correlationId);
         }
 
-        const createdEvent = await makeGoogleCalendarRequest(accessToken, '/calendars/primary/events', {
-          method: 'POST',
-          body: JSON.stringify(event),
+        // Validate start and end
+        if (!event.start) {
+          return jsonResponse({ error: 'Event must have a start time' }, 400, correlationId);
+        }
+        if (!event.end) {
+          return jsonResponse({ error: 'Event must have an end time' }, 400, correlationId);
+        }
+
+        console.log('📅 Creating Google Calendar event:', {
+          summary: event.summary,
+          start: event.start,
+          end: event.end,
+          hasAttendees: !!event.attendees,
+          attendeesCount: event.attendees?.length || 0,
+          correlationId,
         });
 
-        return jsonResponse(createdEvent, 200, correlationId);
+        try {
+          const createdEvent = await makeGoogleCalendarRequest(accessToken, '/calendars/primary/events', {
+            method: 'POST',
+            body: JSON.stringify(event),
+          });
+
+          console.log('✅ Event created successfully:', createdEvent.id, { correlationId });
+          return jsonResponse(createdEvent, 200, correlationId);
+        } catch (error: any) {
+          console.error('❌ Failed to create event in Google Calendar:', {
+            error: error?.message || String(error),
+            event: { summary: event.summary, start: event.start, end: event.end },
+            correlationId,
+          });
+          throw error;
+        }
       }
 
       case 'updateEvent': {

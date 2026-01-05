@@ -389,10 +389,26 @@ class GoogleCalendarService {
 
   async insertEvent(event: Partial<GoogleCalendarEvent>): Promise<GoogleCalendarEvent> {
     try {
+      console.log('📤 Inserting event to Google Calendar:', {
+        summary: event.summary,
+        start: event.start,
+        end: event.end,
+        location: event.location,
+        attendees: event.attendees?.length || 0,
+      });
+
       const createdEvent = await this.makeApiCall('insertEvent', { event });
+      console.log('✅ Event created successfully:', createdEvent.id);
       return createdEvent;
-    } catch (error) {
-      console.error('❌ Failed to create event:', error);
+    } catch (error: any) {
+      console.error('❌ Failed to create event:', {
+        error: error?.message || String(error),
+        event: {
+          summary: event.summary,
+          start: event.start,
+          end: event.end,
+        },
+      });
       throw error;
     }
   }

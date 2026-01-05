@@ -322,6 +322,15 @@ export class CalendarSyncService {
           dateTime: `${localEvent.event_date}T${localEvent.end_time}`,
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         };
+      } else {
+        const startDateTime = new Date(`${localEvent.event_date}T${localEvent.start_time}`);
+        startDateTime.setHours(startDateTime.getHours() + 1);
+        const endDate = startDateTime.toISOString().split('T')[0];
+        const endTime = startDateTime.toTimeString().split(' ')[0];
+        googleEvent.end = {
+          dateTime: `${endDate}T${endTime}`,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        };
       }
     } else {
       // All-day event
@@ -336,12 +345,15 @@ export class CalendarSyncService {
       };
     }
 
-    // Add attendees if any
+    // Add attendees if any (only include valid email addresses)
     if (localEvent.participants && localEvent.participants.length > 0) {
-      googleEvent.attendees = localEvent.participants.map((p) => ({
-        email: p.includes('@') ? p : undefined,
-        displayName: !p.includes('@') ? p : undefined,
-      }));
+      const validAttendees = localEvent.participants
+        .filter((p) => p && p.includes('@'))
+        .map((email) => ({ email }));
+
+      if (validAttendees.length > 0) {
+        googleEvent.attendees = validAttendees;
+      }
     }
 
     return googleEvent;

@@ -319,9 +319,28 @@ export class SyncOrchestrator {
 
         if (!mapping) {
           // New local event - create in Google Calendar
+
+          // Skip events that don't have required fields
+          if (!localEvent.event_date || !localEvent.title) {
+            console.warn(`⚠️ Skipping event without required fields: ${localEvent.id}`);
+            continue;
+          }
+
           const googleEventData = calendarSyncService.localEventToGoogle(localEvent);
 
+          // Validate that the Google event has required fields
+          if (!googleEventData.summary || !googleEventData.start || !googleEventData.end) {
+            console.error(`⚠️ Invalid Google event data for: ${localEvent.title}`, googleEventData);
+            result.errors.push(`Skipped event with missing required fields: ${localEvent.title}`);
+            continue;
+          }
+
           try {
+            console.log(`📤 Creating Google event: ${localEvent.title}`, {
+              start: googleEventData.start,
+              end: googleEventData.end,
+            });
+
             const createdGoogleEvent = await googleCalendarService.insertEvent(googleEventData);
 
             // Create mapping
@@ -337,8 +356,10 @@ export class SyncOrchestrator {
 
             result.created++;
             console.log(`✅ Created Google event from local: ${localEvent.title}`);
-          } catch (error) {
-            result.errors.push(`Failed to create Google event: ${error}`);
+          } catch (error: any) {
+            const errorMessage = error?.message || String(error);
+            console.error(`❌ Failed to create Google event: ${localEvent.title}`, errorMessage);
+            result.errors.push(`Failed to create "${localEvent.title}": ${errorMessage}`);
           }
         } else {
           // Existing mapping - check for changes
