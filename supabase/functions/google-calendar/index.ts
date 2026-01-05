@@ -43,28 +43,64 @@ function jsonResponse(data: any, status = 200, correlationId?: string) {
 async function refreshGoogleToken(refreshToken: string, clientId: string, clientSecret: string) {
   console.log('🔄 Refreshing Google access token...');
 
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: refreshToken,
-      grant_type: 'refresh_token',
-    }),
-  });
+  try {
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('❌ Token refresh failed:', errorText);
-    throw new Error(`Token refresh failed: ${response.status} ${response.statusText}`);
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      console.error('❌ Token refresh failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+      });
+
+      // Parse error details if possible
+      let errorDetails = responseText;
+      try {
+        const errorJson = JSON.parse(responseText);
+        errorDetails = errorJson.error_description || errorJson.error || responseText;
+      } catch {
+        // Keep original text if not JSON
+      }
+
+      // Check for specific error types
+      if (responseText.includes('invalid_grant') || responseText.includes('Token has been expired or revoked')) {
+        throw new Error('REFRESH_TOKEN_REVOKED');
+      }
+
+      throw new Error(`Token refresh failed: ${response.status} - ${errorDetails}`);
+    }
+
+    const tokenData = JSON.parse(responseText);
+    
+    // Validate the response has required fields
+    if (!tokenData.access_token) {
+      console.error('❌ Invalid token response - missing access_token:', tokenData);
+      throw new Error('Invalid token response from Google');
+    }
+
+    console.log('✅ Token refresh successful', {
+      expires_in: tokenData.expires_in,
+      token_type: tokenData.token_type,
+    });
+
+    return tokenData;
+  } catch (error) {
+    console.error('❌ Token refresh exception:', error);
+    throw error;
   }
-
-  const tokenData = await response.json();
-  console.log('✅ Token refresh successful');
-  return tokenData;
 }
 
 async function getValidAccessToken(
@@ -75,6 +111,7 @@ async function getValidAccessToken(
 ) {
   console.log('🔍 Getting valid access token for user:', userId);
 
+  // Fetch the token record
   const { data: tokenData, error } = await serviceSupabase
     .from('google_tokens')
     .select('*')
@@ -88,31 +125,65 @@ async function getValidAccessToken(
 
   if (!tokenData) {
     console.error('❌ No Google tokens found for user:', userId);
-    throw new Error('Google Calendar not connected. Please connect your Google Calendar first.');
+    throw new Error('NOT_CONNECTED');
   }
 
-  console.log('✅ Found stored tokens, checking expiry...');
+  console.log('✅ Found stored tokens', {
+    has_access_token: !!tokenData.access_token,
+    has_refresh_token: !!tokenData.refresh_token,
+    expiry: tokenData.expiry_ts,
+  });
 
+  // Check if token is expired
   const now = new Date();
   const expiry = new Date(tokenData.expiry_ts);
+  const isExpired = now >= expiry;
+  
+  // Add 5 minute buffer - refresh if token expires in less than 5 minutes
+  const expiresInMinutes = (expiry.getTime() - now.getTime()) / (1000 * 60);
+  const shouldRefresh = isExpired || expiresInMinutes < 5;
 
-  if (now >= expiry) {
-    console.log('⏰ Token expired, refreshing...');
+  console.log('⏰ Token expiry check:', {
+    now: now.toISOString(),
+    expiry: expiry.toISOString(),
+    isExpired,
+    expiresInMinutes: Math.round(expiresInMinutes),
+    shouldRefresh,
+  });
+
+  if (shouldRefresh) {
+    console.log('🔄 Token needs refresh...');
 
     if (!tokenData.refresh_token) {
       console.error('❌ No refresh token available');
-      throw new Error('Google Calendar connection expired. Please reconnect your Google Calendar.');
+      
+      // Delete the invalid token record
+      await serviceSupabase
+        .from('google_tokens')
+        .delete()
+        .eq('user_id', userId);
+      
+      throw new Error('REFRESH_TOKEN_MISSING');
     }
 
     try {
+      // Attempt to refresh the token
       const refreshResponse = await refreshGoogleToken(
         tokenData.refresh_token,
         googleClientId,
         googleClientSecret
       );
 
-      const newExpiry = new Date(Date.now() + refreshResponse.expires_in * 1000);
+      // Calculate new expiry (with 5 minute buffer for safety)
+      const expiresIn = refreshResponse.expires_in || 3600; // Default 1 hour
+      const newExpiry = new Date(Date.now() + (expiresIn - 300) * 1000); // Subtract 5 min
 
+      console.log('💾 Updating token in database...', {
+        newExpiry: newExpiry.toISOString(),
+        expiresIn: expiresIn,
+      });
+
+      // Update the database with new token
       const { error: updateError } = await serviceSupabase
         .from('google_tokens')
         .update({
@@ -123,21 +194,35 @@ async function getValidAccessToken(
         .eq('user_id', userId);
 
       if (updateError) {
-        console.error('❌ Failed to update refreshed token:', updateError);
+        console.error('❌ Failed to update refreshed token in DB:', updateError);
         throw new Error(`Failed to update token: ${updateError.message}`);
       }
 
-      console.log('✅ Token refreshed and updated');
+      console.log('✅ Token refreshed and updated in database');
       return refreshResponse.access_token;
-    } catch (error) {
+      
+    } catch (error: any) {
       console.error('❌ Token refresh failed:', error);
-      throw new Error(
-        'Failed to refresh Google Calendar token. Please reconnect your Google Calendar.'
-      );
+      
+      // If the refresh token itself is invalid/revoked, delete the record
+      if (error.message === 'REFRESH_TOKEN_REVOKED' || 
+          error.message?.includes('invalid_grant')) {
+        console.log('🗑️ Refresh token revoked, deleting token record');
+        
+        await serviceSupabase
+          .from('google_tokens')
+          .delete()
+          .eq('user_id', userId);
+        
+        throw new Error('REFRESH_TOKEN_REVOKED');
+      }
+      
+      // For other errors, keep the token record but throw error
+      throw new Error(`Token refresh failed: ${error.message}`);
     }
   }
 
-  console.log('✅ Using existing valid token');
+  console.log('✅ Using existing valid token (expires in', Math.round(expiresInMinutes), 'minutes)');
   return tokenData.access_token;
 }
 
@@ -342,14 +427,57 @@ Deno.serve(async (req: Request) => {
         googleClientSecret
       );
     } catch (error: any) {
-      console.error('❌ Failed to get Google access token:', error, {
-        correlationId,
-      });
+      console.error('❌ Failed to get Google access token:', error);
+      
+      const errorMessage = error.message || 'Unknown authentication error';
+      
+      // Handle special error codes with specific messages
+      if (errorMessage === 'NOT_CONNECTED') {
+        return jsonResponse(
+          {
+            error: 'Google Calendar not connected',
+            details: 'Please connect your Google Calendar in Settings.',
+            action: 'reconnect_required',
+            code: 'NOT_CONNECTED',
+          },
+          401,
+          correlationId
+        );
+      }
+      
+      if (errorMessage === 'REFRESH_TOKEN_MISSING') {
+        return jsonResponse(
+          {
+            error: 'Google Calendar connection invalid',
+            details: 'Connection is missing required refresh token. Please reconnect your Google Calendar.',
+            action: 'reconnect_required',
+            code: 'REFRESH_TOKEN_MISSING',
+          },
+          401,
+          correlationId
+        );
+      }
+      
+      if (errorMessage === 'REFRESH_TOKEN_REVOKED' || errorMessage.includes('invalid_grant')) {
+        return jsonResponse(
+          {
+            error: 'Google Calendar access revoked',
+            details: 'Your Google Calendar access has been revoked. Please reconnect your Google Calendar.',
+            action: 'reconnect_required',
+            code: 'REFRESH_TOKEN_REVOKED',
+          },
+          401,
+          correlationId
+        );
+      }
+      
+      // Generic authentication failure
       return jsonResponse(
         {
-          error: 'Google Tasks authentication failed',
-          details: error instanceof Error ? error.message : 'Unknown authentication error',
+          error: 'Google Calendar authentication failed',
+          details: errorMessage,
           action: 'reconnect_required',
+          code: 'AUTH_FAILED',
         },
         401,
         correlationId
@@ -451,6 +579,67 @@ Deno.serve(async (req: Request) => {
         const tasks = await makeGoogleTasksRequest(accessToken, endpoint);
 
         return jsonResponse(tasks, 200, correlationId);
+      }
+
+      case 'diagnostics': {
+        try {
+          const { data: tokenData, error } = await serviceSupabase
+            .from('google_tokens')
+            .select('expiry_ts, created_at, updated_at')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (error) {
+            return jsonResponse(
+              {
+                status: 'error',
+                message: 'Database error',
+                error: error.message,
+              },
+              500,
+              correlationId
+            );
+          }
+
+          if (!tokenData) {
+            return jsonResponse(
+              {
+                status: 'not_connected',
+                message: 'No Google Calendar connection found',
+              },
+              200,
+              correlationId
+            );
+          }
+
+          const now = new Date();
+          const expiry = new Date(tokenData.expiry_ts);
+          const isExpired = now >= expiry;
+          const minutesUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 60);
+
+          return jsonResponse(
+            {
+              status: 'connected',
+              token_status: isExpired ? 'expired' : 'valid',
+              expiry_ts: tokenData.expiry_ts,
+              minutes_until_expiry: Math.round(minutesUntilExpiry),
+              created_at: tokenData.created_at,
+              updated_at: tokenData.updated_at,
+              needs_refresh: isExpired || minutesUntilExpiry < 5,
+            },
+            200,
+            correlationId
+          );
+        } catch (error: any) {
+          return jsonResponse(
+            {
+              status: 'error',
+              message: error.message,
+            },
+            500,
+            correlationId
+          );
+        }
       }
 
       default:
