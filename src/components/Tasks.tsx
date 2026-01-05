@@ -14,6 +14,7 @@ import { TaskForm } from './forms/TaskForm';
 import { Task, FamilyMember, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { googleTasksService } from '../services/googleTasks';
+import { taskSyncOrchestrator } from '../services/taskSyncOrchestrator';
 
 export function Tasks() {
   const { user } = useAuth();
@@ -120,6 +121,10 @@ export function Tasks() {
       if (error) throw error;
 
       setTasks((prev) => prev.map((task) => (task.id === taskId ? updatedTask : task)));
+
+      taskSyncOrchestrator.syncSingleTask(user.id, taskId, 'local_to_google').catch((err) => {
+        console.error('Failed to sync task status to Google Tasks:', err);
+      });
     } catch (error) {
       console.error('Error updating task status:', error);
       alert('Error updating task. Please try again.');

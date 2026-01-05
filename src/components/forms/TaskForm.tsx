@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, CheckSquare, User, Calendar, Clock, Star, Hash } from 'lucide-react';
 import { supabase, Task, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { taskSyncOrchestrator } from '../../services/taskSyncOrchestrator';
 
 interface TaskFormProps {
   isOpen: boolean;
@@ -104,6 +105,11 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
       if (result.error) throw result.error;
 
       onTaskCreated(result.data);
+
+      taskSyncOrchestrator.syncSingleTask(user.id, result.data.id, 'local_to_google').catch((err) => {
+        console.error('Failed to sync task to Google Tasks:', err);
+      });
+
       onClose();
       setFormData({
         title: '',

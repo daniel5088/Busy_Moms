@@ -34,6 +34,7 @@ import { ErrorDashboard } from './errors/ErrorDashboard';
 //Alvaros - Dailyaffirmations: Remove AffirmationSettings import (now managed at App level)
 import { ConnectGoogleCalendarButton } from './ConnectGoogleCalendarButton';
 import { SyncSettings } from './SyncSettings';
+import { TaskSyncSettings } from './TaskSyncSettings';
 import { RetailerSearch } from './RetailerSearch';
 import { AddressManager } from './AddressManager';
 import { FamilyMember, Profile, supabase } from '../lib/supabase';
@@ -58,6 +59,7 @@ export function Settings({
   const [showProfileForm, setShowProfileForm] = useState(false);
   //Alvaros - Dailyaffirmations: Removed showAffirmationSettings state (now managed at App level)
   const [showSyncSettings, setShowSyncSettings] = useState(false);
+  const [showTaskSyncSettings, setShowTaskSyncSettings] = useState(false);
   const [showRetailerSearch, setShowRetailerSearch] = useState(false);
   const [showAddressManager, setShowAddressManager] = useState(false);
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
@@ -727,6 +729,54 @@ export function Settings({
           </div>
         </div>
 
+        {/* Google Tasks Sync Section */}
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Google Tasks Sync
+          </h2>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    Google Tasks
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {isGoogleConnected ? 'Sync your tasks with Google Tasks' : 'Connect Google Calendar to enable task sync'}
+                  </p>
+                </div>
+              </div>
+              {isGoogleConnected && (
+                <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">Available</span>
+                </div>
+              )}
+            </div>
+
+            {isGoogleConnected ? (
+              <div className="space-y-3">
+                <button
+                  onClick={() => setShowTaskSyncSettings(true)}
+                  className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium"
+                >
+                  Task Sync Settings
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Configure how your tasks sync with Google Tasks. Tasks will appear in Google Calendar.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Connect Google Calendar to enable task sync
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Family Members List */}
         <div className="mt-4 sm:mt-6">
           <div className="flex items-center justify-between mb-4">
@@ -934,6 +984,8 @@ export function Settings({
       {/*Alvaros - Dailyaffirmations: Removed AffirmationSettings modal (now rendered at App level)*/}
 
       <SyncSettings isOpen={showSyncSettings} onClose={() => setShowSyncSettings(false)} />
+
+      <TaskSyncSettings isOpen={showTaskSyncSettings} onClose={() => setShowTaskSyncSettings(false)} />
 
       {showRetailerSearch && user && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
