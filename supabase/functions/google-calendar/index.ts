@@ -462,27 +462,57 @@ Deno.serve(async (req: Request) => {
 
     switch (action) {
       case 'getEvents': {
-        const { timeMin, timeMax, maxResults, q } = body ?? {};
+        try {
+          const { timeMin, timeMax, maxResults, q } = body ?? {};
 
-        let endpoint = '/calendars/primary/events?singleEvents=true&orderBy=startTime';
+          let endpoint = '/calendars/primary/events?singleEvents=true&orderBy=startTime';
 
-        if (timeMin) endpoint += `&timeMin=${encodeURIComponent(timeMin)}`;
-        if (timeMax) endpoint += `&timeMax=${encodeURIComponent(timeMax)}`;
-        if (maxResults) endpoint += `&maxResults=${Math.min(Number(maxResults), 2500)}`;
-        if (q) endpoint += `&q=${encodeURIComponent(q)}`;
+          if (timeMin) endpoint += `&timeMin=${encodeURIComponent(timeMin)}`;
+          if (timeMax) endpoint += `&timeMax=${encodeURIComponent(timeMax)}`;
+          if (maxResults) endpoint += `&maxResults=${Math.min(Number(maxResults), 2500)}`;
+          if (q) endpoint += `&q=${encodeURIComponent(q)}`;
 
-        const events = await makeGoogleCalendarRequest(accessToken, endpoint);
-        return jsonResponse(events, 200, correlationId);
+          console.log('📅 Fetching Google Calendar events', { endpoint, correlationId });
+          const events = await makeGoogleCalendarRequest(accessToken, endpoint);
+          console.log('✅ Successfully fetched events', { count: events.items?.length || 0, correlationId });
+          return jsonResponse(events, 200, correlationId);
+        } catch (error: any) {
+          console.error('❌ getEvents action failed:', error, { correlationId });
+          return jsonResponse(
+            {
+              error: 'Failed to fetch events',
+              details: error?.message || String(error),
+              code: 'GET_EVENTS_FAILED',
+            },
+            500,
+            correlationId
+          );
+        }
       }
 
       case 'listUpcoming': {
-        const maxResults = Number(body?.maxResults ?? 10);
-        const now = new Date().toISOString();
+        try {
+          const maxResults = Number(body?.maxResults ?? 10);
+          const now = new Date().toISOString();
 
-        const endpoint = `/calendars/primary/events?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(now)}&maxResults=${Math.min(maxResults, 100)}`;
+          const endpoint = `/calendars/primary/events?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(now)}&maxResults=${Math.min(maxResults, 100)}`;
 
-        const events = await makeGoogleCalendarRequest(accessToken, endpoint);
-        return jsonResponse(events, 200, correlationId);
+          console.log('📅 Fetching upcoming events', { maxResults, correlationId });
+          const events = await makeGoogleCalendarRequest(accessToken, endpoint);
+          console.log('✅ Successfully fetched upcoming events', { count: events.items?.length || 0, correlationId });
+          return jsonResponse(events, 200, correlationId);
+        } catch (error: any) {
+          console.error('❌ listUpcoming action failed:', error, { correlationId });
+          return jsonResponse(
+            {
+              error: 'Failed to fetch upcoming events',
+              details: error?.message || String(error),
+              code: 'LIST_UPCOMING_FAILED',
+            },
+            500,
+            correlationId
+          );
+        }
       }
 
       case 'insertEvent': {
@@ -525,7 +555,15 @@ Deno.serve(async (req: Request) => {
             event: { summary: event.summary, start: event.start, end: event.end },
             correlationId,
           });
-          throw error;
+          return jsonResponse(
+            {
+              error: 'Failed to create event',
+              details: error?.message || String(error),
+              code: 'INSERT_EVENT_FAILED',
+            },
+            500,
+            correlationId
+          );
         }
       }
 

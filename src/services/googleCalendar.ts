@@ -339,18 +339,29 @@ class GoogleCalendarService {
           errorData = { error: `Server error: ${errorText || response.statusText}` };
         }
 
+        // Build detailed error message
         const errorMessage =
+          errorData.details ||
           errorData.error ||
           errorData.message ||
-          errorData.details ||
           `API call failed with status ${response.status}`;
+
+        const errorCode = errorData.code || 'UNKNOWN_ERROR';
+
         console.error(`❌ API call failed (${action}):`, {
           status: response.status,
           statusText: response.statusText,
           error: errorData,
+          errorMessage,
+          errorCode,
         });
 
-        throw new Error(errorMessage);
+        const error = new Error(errorMessage);
+        // @ts-ignore
+        error.code = errorCode;
+        // @ts-ignore
+        error.details = errorData;
+        throw error;
       }
 
       const result = await response.json();
