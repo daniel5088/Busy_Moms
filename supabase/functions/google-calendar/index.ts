@@ -1,23 +1,19 @@
 /*
-  # Google Tasks API Integration
+  # Google Tasks API Integration (Edge Function)
 
-  1. Purpose
-    - Dedicated edge function for Google Tasks API
-    - Handle OAuth token refresh automatically
-    - Provide secure access to Google Tasks data
+  - Secure Google Tasks API access for authenticated users
+  - Uses Supabase service role for token storage access
+  - Automatically refreshes Google access tokens
+  - Returns reconnect_required for broken OAuth state
 
-  2. Security
-    - Uses service role key for database access
-    - Handles authenticated users
-    - Automatic token refresh
-
-  3. API Actions
-    - ping: health check (no auth)
-    - isConnected: check if Google Calendar is connected
-    - insertTask: create new task
-    - updateTask: update task status/details
-    - deleteTask: delete a task
-    - listTasks: get tasks from a list
+  Actions:
+    - ping (no auth)
+    - isConnected
+    - insertTask
+    - updateTask
+    - deleteTask
+    - listTasks
+    - diagnostics
 */
 
 import { createClient } from 'npm:@supabase/supabase-js@2.55.0';
@@ -40,190 +36,218 @@ function jsonResponse(data: any, status = 200, correlationId?: string) {
   });
 }
 
-async function refreshGoogleToken(refreshToken: string, clientId: string, clientSecret: string) {
-  console.log('🔄 Refreshing Google access token...');
+type GoogleTokenRow = {
+  user_id: string;
+  access_token: string | null;
+  refresh_token: string | null;
+  expiry_ts: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
 
-  try {
-    const response = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
-      }),
-    });
-
-    const responseText = await response.text();
-    
-    if (!response.ok) {
-      console.error('❌ Token refresh failed:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: responseText,
-      });
-
-      // Parse error details if possible
-      let errorDetails = responseText;
-      try {
-        const errorJson = JSON.parse(responseText);
-        errorDetails = errorJson.error_description || errorJson.error || responseText;
-      } catch {
-        // Keep original text if not JSON
-      }
-
-      // Check for specific error types
-      if (responseText.includes('invalid_grant') || responseText.includes('Token has been expired or revoked')) {
-        throw new Error('REFRESH_TOKEN_REVOKED');
-      }
-
-      throw new Error(`Token refresh failed: ${response.status} - ${errorDetails}`);
-    }
-
-    const tokenData = JSON.parse(responseText);
-    
-    // Validate the response has required fields
-    if (!tokenData.access_token) {
-      console.error('❌ Invalid token response - missing access_token:', tokenData);
-      throw new Error('Invalid token response from Google');
-    }
-
-    console.log('✅ Token refresh successful', {
-      expires_in: tokenData.expires_in,
-      token_type: tokenData.token_type,
-    });
-
-    return tokenData;
-  } catch (error) {
-    console.error('❌ Token refresh exception:', error);
-    throw error;
-  }
+function getCorrelationId(req: Request) {
+  const incomingId =
+    req.headers.get('x-correlation-id') ?? req.headers.get('X-Correlation-Id');
+  return incomingId ?? crypto.randomUUID();
 }
 
-async function getValidAccessToken(
-  serviceSupabase: any,
-  userId: string,
-  googleClientId: string,
-  googleClientSecret: string
+async function refreshGoogleToken(
+  refreshToken: string,
+  clientId: string,
+  clientSecret: string
 ) {
-  console.log('🔍 Getting valid access token for user:', userId);
+  console.log('🔄 Refreshing Google access token...');
 
-  // Fetch the token record
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  });
+
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    console.error('❌ Token refresh failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: responseText,
+    });
+
+    // Interpret google error payload if possible
+    let errorDetails = responseText;
+    try {
+      const errorJson = JSON.parse(responseText);
+      errorDetails = errorJson.error_description || errorJson.error || responseText;
+    } catch {
+      // ignore
+    }
+
+    // common revoked/invalid refresh token signals
+    if (
+      responseText.includes('invalid_grant') ||
+      responseText.includes('Token has been expired or revoked')
+    ) {
+      const e = new Error('REFRESH_TOKEN_REVOKED');
+      // @ts-ignore
+      e.code = 'REFRESH_TOKEN_REVOKED';
+      throw e;
+    }
+
+    throw new Error(`Token refresh failed: ${response.status} - ${errorDetails}`);
+  }
+
+  const tokenData = JSON.parse(responseText);
+
+  if (!tokenData.access_token) {
+    console.error('❌ Invalid token response - missing access_token:', tokenData);
+    throw new Error('Invalid token response from Google (missing access_token)');
+  }
+
+  console.log('✅ Token refresh successful', {
+    expires_in: tokenData.expires_in,
+    token_type: tokenData.token_type,
+  });
+
+  return tokenData as {
+    access_token: string;
+    expires_in?: number;
+    token_type?: string;
+    scope?: string;
+  };
+}
+
+/**
+ * Loads tokens and ensures we have a valid access token (refresh if needed).
+ * Uses service role client for DB access.
+ */
+async function getValidAccessToken(opts: {
+  serviceSupabase: ReturnType<typeof createClient>;
+  userId: string;
+  googleClientId: string;
+  googleClientSecret: string;
+  correlationId: string;
+}) {
+  const { serviceSupabase, userId, googleClientId, googleClientSecret, correlationId } = opts;
+
+  console.log('🔍 Getting valid access token for user:', userId, { correlationId });
+
   const { data: tokenData, error } = await serviceSupabase
     .from('google_tokens')
-    .select('*')
+    .select('user_id, access_token, refresh_token, expiry_ts, created_at, updated_at')
     .eq('user_id', userId)
-    .maybeSingle();
+    .maybeSingle<GoogleTokenRow>();
 
   if (error) {
-    console.error('❌ Database error fetching tokens:', error);
-    throw new Error(`Database error: ${error.message}`);
+    console.error('❌ DB error fetching tokens:', error, { correlationId });
+    throw new Error(`DB_ERROR: ${error.message}`);
   }
 
   if (!tokenData) {
-    console.error('❌ No Google tokens found for user:', userId);
+    console.error('❌ No Google tokens found for user:', userId, { correlationId });
     throw new Error('NOT_CONNECTED');
   }
 
-  console.log('✅ Found stored tokens', {
-    has_access_token: !!tokenData.access_token,
-    has_refresh_token: !!tokenData.refresh_token,
-    expiry: tokenData.expiry_ts,
-  });
-
-  // Check if token is expired
   const now = new Date();
-  const expiry = new Date(tokenData.expiry_ts);
-  const isExpired = now >= expiry;
-  
-  // Add 5 minute buffer - refresh if token expires in less than 5 minutes
-  const expiresInMinutes = (expiry.getTime() - now.getTime()) / (1000 * 60);
-  const shouldRefresh = isExpired || expiresInMinutes < 5;
+
+  // expiry_ts can be null or invalid; treat invalid as expired
+  const expiry = tokenData.expiry_ts ? new Date(tokenData.expiry_ts) : null;
+  const expiryValid = !!expiry && !Number.isNaN(expiry.getTime());
+
+  const expiresInMinutes = expiryValid
+    ? (expiry!.getTime() - now.getTime()) / (1000 * 60)
+    : -999;
+
+  // Refresh if expired or within 5 minutes of expiry, or expiry is missing/invalid
+  const shouldRefresh = !expiryValid || expiresInMinutes < 5;
 
   console.log('⏰ Token expiry check:', {
     now: now.toISOString(),
-    expiry: expiry.toISOString(),
-    isExpired,
+    expiry_ts: tokenData.expiry_ts,
+    expiryValid,
     expiresInMinutes: Math.round(expiresInMinutes),
     shouldRefresh,
+    has_access_token: !!tokenData.access_token,
+    has_refresh_token: !!tokenData.refresh_token,
+    correlationId,
   });
 
-  if (shouldRefresh) {
-    console.log('🔄 Token needs refresh...');
-
-    if (!tokenData.refresh_token) {
-      console.error('❌ No refresh token available');
-      
-      // Delete the invalid token record
-      await serviceSupabase
-        .from('google_tokens')
-        .delete()
-        .eq('user_id', userId);
-      
-      throw new Error('REFRESH_TOKEN_MISSING');
-    }
-
-    try {
-      // Attempt to refresh the token
-      const refreshResponse = await refreshGoogleToken(
-        tokenData.refresh_token,
-        googleClientId,
-        googleClientSecret
-      );
-
-      // Calculate new expiry (with 5 minute buffer for safety)
-      const expiresIn = refreshResponse.expires_in || 3600; // Default 1 hour
-      const newExpiry = new Date(Date.now() + (expiresIn - 300) * 1000); // Subtract 5 min
-
-      console.log('💾 Updating token in database...', {
-        newExpiry: newExpiry.toISOString(),
-        expiresIn: expiresIn,
-      });
-
-      // Update the database with new token
-      const { error: updateError } = await serviceSupabase
-        .from('google_tokens')
-        .update({
-          access_token: refreshResponse.access_token,
-          expiry_ts: newExpiry.toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId);
-
-      if (updateError) {
-        console.error('❌ Failed to update refreshed token in DB:', updateError);
-        throw new Error(`Failed to update token: ${updateError.message}`);
-      }
-
-      console.log('✅ Token refreshed and updated in database');
-      return refreshResponse.access_token;
-      
-    } catch (error: any) {
-      console.error('❌ Token refresh failed:', error);
-      
-      // If the refresh token itself is invalid/revoked, delete the record
-      if (error.message === 'REFRESH_TOKEN_REVOKED' || 
-          error.message?.includes('invalid_grant')) {
-        console.log('🗑️ Refresh token revoked, deleting token record');
-        
-        await serviceSupabase
-          .from('google_tokens')
-          .delete()
-          .eq('user_id', userId);
-        
-        throw new Error('REFRESH_TOKEN_REVOKED');
-      }
-      
-      // For other errors, keep the token record but throw error
-      throw new Error(`Token refresh failed: ${error.message}`);
-    }
+  if (!shouldRefresh && tokenData.access_token) {
+    console.log('✅ Using existing valid access token', {
+      expiresInMinutes: Math.round(expiresInMinutes),
+      correlationId,
+    });
+    return tokenData.access_token;
   }
 
-  console.log('✅ Using existing valid token (expires in', Math.round(expiresInMinutes), 'minutes)');
-  return tokenData.access_token;
+  // Need refresh
+  if (!tokenData.refresh_token) {
+    console.error('❌ Missing refresh token; cannot refresh', { correlationId });
+
+    // Do NOT delete record here; let UI reconnect without losing context.
+    const e = new Error('REFRESH_TOKEN_MISSING');
+    // @ts-ignore
+    e.code = 'REFRESH_TOKEN_MISSING';
+    throw e;
+  }
+
+  let refreshResponse: Awaited<ReturnType<typeof refreshGoogleToken>>;
+  try {
+    refreshResponse = await refreshGoogleToken(
+      tokenData.refresh_token,
+      googleClientId,
+      googleClientSecret
+    );
+  } catch (err: any) {
+    console.error('❌ Refresh attempt failed', err, { correlationId });
+
+    if (err?.message === 'REFRESH_TOKEN_REVOKED' || err?.code === 'REFRESH_TOKEN_REVOKED') {
+      // optional: delete token record if revoked to force clean reconnect
+      console.log('🗑️ Refresh token revoked; deleting token record', { correlationId });
+
+      await serviceSupabase.from('google_tokens').delete().eq('user_id', userId);
+      const e = new Error('REFRESH_TOKEN_REVOKED');
+      // @ts-ignore
+      e.code = 'REFRESH_TOKEN_REVOKED';
+      throw e;
+    }
+
+    throw new Error(`TOKEN_REFRESH_FAILED: ${err?.message ?? String(err)}`);
+  }
+
+  // compute new expiry with 5-minute safety buffer
+  const expiresIn = refreshResponse.expires_in ?? 3600;
+  const bufferedSeconds = Math.max(expiresIn - 300, 60); // never less than 1 minute
+  const newExpiry = new Date(Date.now() + bufferedSeconds * 1000);
+
+  console.log('💾 Updating token in DB', {
+    userId,
+    newExpiry: newExpiry.toISOString(),
+    expiresIn,
+    correlationId,
+  });
+
+  const { error: updateError } = await serviceSupabase
+    .from('google_tokens')
+    .update({
+      access_token: refreshResponse.access_token,
+      // Do NOT overwrite refresh_token here; google refresh response usually doesn't include it
+      expiry_ts: newExpiry.toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId);
+
+  if (updateError) {
+    console.error('❌ Failed updating refreshed token in DB:', updateError, { correlationId });
+    throw new Error(`DB_UPDATE_FAILED: ${updateError.message}`);
+  }
+
+  console.log('✅ Token refreshed and saved', { correlationId });
+  return refreshResponse.access_token;
 }
 
 async function makeGoogleTasksRequest(
@@ -233,68 +257,65 @@ async function makeGoogleTasksRequest(
 ) {
   const url = `https://tasks.googleapis.com/tasks/v1${endpoint}`;
 
-  console.log(`📡 Making Google Tasks API request: ${options.method || 'GET'} ${endpoint}`);
+  console.log(`📡 Google Tasks request: ${options.method || 'GET'} ${endpoint}`);
 
   const response = await fetch(url, {
     ...options,
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers ?? {}),
     },
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(
-      `❌ Google Tasks API error: ${response.status} ${response.statusText} - ${errorText}`
-    );
+    console.error(`❌ Google Tasks API error: ${response.status} ${response.statusText}`, {
+      endpoint,
+      errorText,
+    });
     throw new Error(
       `Google Tasks API error: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
   const data = await response.json();
-  console.log('✅ Google Tasks API request successful');
+  console.log('✅ Google Tasks API success');
   return data;
 }
 
-async function getAuthenticatedUser(req: Request, supabase: any) {
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader) {
-    throw new Error('Missing authorization header');
-  }
-
+async function getAuthenticatedUserId(req: Request, supabaseAnonAuthed: ReturnType<typeof createClient>) {
+  // IMPORTANT: supabase client must be created with req Authorization header in global.headers
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await supabaseAnonAuthed.auth.getUser();
 
-  if (error || !user) {
-    throw new Error('Unauthorized');
-  }
+  if (error || !user) throw new Error('Unauthorized');
+  return user.id;
+}
 
-  return user;
+function authErrorPayload(code: string, details: string) {
+  return {
+    error: 'Google Calendar authentication failed',
+    details,
+    action: 'reconnect_required',
+    code,
+  };
 }
 
 Deno.serve(async (req: Request) => {
-  const incomingId = req.headers.get('x-correlation-id');
-  const correlationId = incomingId ?? crypto.randomUUID();
+  const correlationId = getCorrelationId(req);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 200,
-      headers: {
-        ...corsHeaders,
-        'x-correlation-id': correlationId,
-      },
+      headers: { ...corsHeaders, 'x-correlation-id': correlationId },
     });
   }
 
   try {
-    console.log(`🚀 Google Tasks API - ${req.method} ${req.url}`, {
-      correlationId,
-    });
+    console.log(`🚀 Google Tasks - ${req.method} ${req.url}`, { correlationId });
 
     if (req.method !== 'POST') {
       return jsonResponse({ error: 'Method not allowed' }, 405, correlationId);
@@ -306,14 +327,13 @@ Deno.serve(async (req: Request) => {
     const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const googleClientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
-    if (!supabaseUrl || !serviceRoleKey) {
-      console.error('❌ Missing Supabase environment variables', {
-        correlationId,
-      });
+    if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
+      console.error('❌ Missing Supabase env', { correlationId });
       return jsonResponse(
         {
           error: 'Server configuration error',
-          details: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY',
+          details:
+            'Missing SUPABASE_URL, SUPABASE_ANON_KEY, or SUPABASE_SERVICE_ROLE_KEY',
         },
         500,
         correlationId
@@ -321,12 +341,12 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!googleClientId || !googleClientSecret) {
-      console.error('❌ Missing Google OAuth credentials', { correlationId });
+      console.error('❌ Missing Google OAuth env', { correlationId });
       return jsonResponse(
         {
           error: 'Google Tasks not configured',
           details:
-            'Missing GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables. Please configure these in your Supabase project settings.',
+            'Missing GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET in Edge Function secrets.',
         },
         500,
         correlationId
@@ -336,31 +356,21 @@ Deno.serve(async (req: Request) => {
     let body: any = {};
     try {
       body = await req.json();
-    } catch (error) {
-      console.error('❌ Invalid JSON in request body:', error, {
-        correlationId,
-      });
+    } catch {
       return jsonResponse({ error: 'Invalid JSON in request body' }, 400, correlationId);
     }
 
-    const { action } = body;
+    const action = body?.action;
+    if (!action) return jsonResponse({ error: 'Missing action parameter' }, 400, correlationId);
 
-    if (!action) {
-      return jsonResponse({ error: 'Missing action parameter' }, 400, correlationId);
-    }
-
-    // Simple ping action for diagnostics (no auth needed)
+    // Ping is unauthenticated
     if (action === 'ping') {
-      console.log('📶 Google Tasks ping received', { correlationId });
       return jsonResponse({ ok: true, source: 'google-tasks' }, 200, correlationId);
     }
 
-    // Require authenticated user for all other actions
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
+    // Create an authed anon client to validate the incoming user JWT
+    const supabaseAnonAuthed = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
       global: {
         headers: {
           Authorization: req.headers.get('Authorization') || '',
@@ -370,160 +380,107 @@ Deno.serve(async (req: Request) => {
 
     let userId: string;
     try {
-      const user = await getAuthenticatedUser(req, supabase);
-      userId = user.id;
-      console.log('✅ Authenticated user:', userId, { correlationId });
-    } catch (error: any) {
-      console.error('❌ Authentication failed:', error, { correlationId });
+      userId = await getAuthenticatedUserId(req, supabaseAnonAuthed);
+      console.log('✅ Authenticated user', { userId, correlationId });
+    } catch (err) {
+      console.error('❌ Unauthorized', err, { correlationId });
+      return jsonResponse({ error: 'Unauthorized' }, 401, correlationId);
+    }
+
+    // Service role client for DB access (bypasses RLS)
+    const serviceSupabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    if (action === 'isConnected') {
+      const { data: tokenData, error } = await serviceSupabase
+        .from('google_tokens')
+        .select('access_token, refresh_token, expiry_ts')
+        .eq('user_id', userId)
+        .maybeSingle<GoogleTokenRow>();
+
+      if (error) {
+        return jsonResponse(
+          { connected: false, error: error.message },
+          500,
+          correlationId
+        );
+      }
+
+      const connected = !!tokenData?.refresh_token; // refresh token is the real signal
       return jsonResponse(
-        {
-          error: 'Unauthorized',
-          message: error instanceof Error ? error.message : 'Authentication required',
-        },
-        401,
+        { connected, expiry_ts: tokenData?.expiry_ts ?? null },
+        200,
         correlationId
       );
     }
 
-    const serviceSupabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false },
-    });
-
-    // Check if Google is connected
-    if (action === 'isConnected') {
-      try {
-        const { data: tokenData, error } = await serviceSupabase
-          .from('google_tokens')
-          .select('access_token, expiry_ts')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        const isConnected = !error && !!tokenData?.access_token;
-        console.log(`🔍 Connection check for user ${userId}: ${isConnected}`, {
-          correlationId,
-        });
-
-        return jsonResponse(
-          {
-            connected: isConnected,
-            expiry_ts: tokenData?.expiry_ts ?? null,
-          },
-          200,
-          correlationId
-        );
-      } catch (error: any) {
-        console.error('❌ Connection check failed:', error, { correlationId });
-        return jsonResponse({ connected: false, error: error.message }, 500, correlationId);
-      }
-    }
-
-    // Get valid access token for all remaining actions
+    // Token for all other actions
     let accessToken: string;
     try {
-      accessToken = await getValidAccessToken(
+      accessToken = await getValidAccessToken({
         serviceSupabase,
         userId,
         googleClientId,
-        googleClientSecret
-      );
-    } catch (error: any) {
-      console.error('❌ Failed to get Google access token:', error);
-      
-      const errorMessage = error.message || 'Unknown authentication error';
-      
-      // Handle special error codes with specific messages
-      if (errorMessage === 'NOT_CONNECTED') {
+        googleClientSecret,
+        correlationId,
+      });
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+
+      console.error('❌ Failed to get Google access token', { msg, correlationId });
+
+      if (msg === 'NOT_CONNECTED') {
+        return jsonResponse(authErrorPayload('NOT_CONNECTED', 'Please connect Google in Settings.'), 401, correlationId);
+      }
+      if (msg === 'REFRESH_TOKEN_MISSING') {
         return jsonResponse(
-          {
-            error: 'Google Calendar not connected',
-            details: 'Please connect your Google Calendar in Settings.',
-            action: 'reconnect_required',
-            code: 'NOT_CONNECTED',
-          },
+          authErrorPayload('REFRESH_TOKEN_MISSING', 'Missing refresh token. Please reconnect Google.'),
           401,
           correlationId
         );
       }
-      
-      if (errorMessage === 'REFRESH_TOKEN_MISSING') {
+      if (msg === 'REFRESH_TOKEN_REVOKED') {
         return jsonResponse(
-          {
-            error: 'Google Calendar connection invalid',
-            details: 'Connection is missing required refresh token. Please reconnect your Google Calendar.',
-            action: 'reconnect_required',
-            code: 'REFRESH_TOKEN_MISSING',
-          },
+          authErrorPayload('REFRESH_TOKEN_REVOKED', 'Access revoked. Please reconnect Google.'),
           401,
           correlationId
         );
       }
-      
-      if (errorMessage === 'REFRESH_TOKEN_REVOKED' || errorMessage.includes('invalid_grant')) {
-        return jsonResponse(
-          {
-            error: 'Google Calendar access revoked',
-            details: 'Your Google Calendar access has been revoked. Please reconnect your Google Calendar.',
-            action: 'reconnect_required',
-            code: 'REFRESH_TOKEN_REVOKED',
-          },
-          401,
-          correlationId
-        );
-      }
-      
-      // Generic authentication failure
+
       return jsonResponse(
-        {
-          error: 'Google Calendar authentication failed',
-          details: errorMessage,
-          action: 'reconnect_required',
-          code: 'AUTH_FAILED',
-        },
+        authErrorPayload('AUTH_FAILED', msg),
         401,
         correlationId
       );
     }
 
-    console.log(`✅ Processing Google Tasks action: ${action} for user: ${userId}`, {
-      correlationId,
-    });
+    console.log('✅ Processing action', { action, userId, correlationId });
 
     switch (action) {
       case 'insertTask': {
-        const { task } = body;
-
+        const task = body?.task;
         if (!task || typeof task !== 'object') {
           return jsonResponse({ error: 'Missing or invalid task data' }, 400, correlationId);
         }
-
         if (!task.title || typeof task.title !== 'string') {
           return jsonResponse({ error: 'Task must have a valid title' }, 400, correlationId);
         }
 
-        // Get the default task list
+        // default list
         const taskLists = await makeGoogleTasksRequest(accessToken, '/users/@me/lists');
         const defaultList = taskLists.items?.[0]?.id || '@default';
 
-        // Create the task
-        const createdTask = await makeGoogleTasksRequest(
-          accessToken,
-          `/lists/${defaultList}/tasks`,
-          {
-            method: 'POST',
-            body: JSON.stringify(task),
-          }
-        );
+        const createdTask = await makeGoogleTasksRequest(accessToken, `/lists/${defaultList}/tasks`, {
+          method: 'POST',
+          body: JSON.stringify(task),
+        });
 
-        return jsonResponse(
-          { ...createdTask, taskListId: defaultList },
-          200,
-          correlationId
-        );
+        return jsonResponse({ ...createdTask, taskListId: defaultList }, 200, correlationId);
       }
 
       case 'updateTask': {
-        const { taskListId, taskId, task } = body;
-
+        const { taskListId, taskId, task } = body ?? {};
         if (!taskListId || typeof taskListId !== 'string') {
           return jsonResponse({ error: 'Missing or invalid taskListId' }, 400, correlationId);
         }
@@ -537,18 +494,14 @@ Deno.serve(async (req: Request) => {
         const updatedTask = await makeGoogleTasksRequest(
           accessToken,
           `/lists/${taskListId}/tasks/${taskId}`,
-          {
-            method: 'PATCH',
-            body: JSON.stringify(task),
-          }
+          { method: 'PATCH', body: JSON.stringify(task) }
         );
 
         return jsonResponse(updatedTask, 200, correlationId);
       }
 
       case 'deleteTask': {
-        const { taskListId, taskId } = body;
-
+        const { taskListId, taskId } = body ?? {};
         if (!taskListId || typeof taskListId !== 'string') {
           return jsonResponse({ error: 'Missing or invalid taskListId' }, 400, correlationId);
         }
@@ -560,101 +513,82 @@ Deno.serve(async (req: Request) => {
           method: 'DELETE',
         });
 
+        return jsonResponse({ success: true, message: 'Task deleted successfully' }, 200, correlationId);
+      }
+
+      case 'listTasks': {
+        const taskListId = body?.taskListId ?? '@default';
+        const maxResults = Number(body?.maxResults ?? 100);
+        const showCompleted = Boolean(body?.showCompleted ?? false);
+
+        let endpoint = `/lists/${taskListId}/tasks?maxResults=${Math.min(maxResults, 100)}`;
+        if (showCompleted) endpoint += '&showCompleted=true';
+
+        const tasks = await makeGoogleTasksRequest(accessToken, endpoint);
+        return jsonResponse(tasks, 200, correlationId);
+      }
+
+      case 'diagnostics': {
+        const { data: tokenData, error } = await serviceSupabase
+          .from('google_tokens')
+          .select('expiry_ts, created_at, updated_at, refresh_token')
+          .eq('user_id', userId)
+          .maybeSingle<GoogleTokenRow>();
+
+        if (error) {
+          return jsonResponse(
+            { status: 'error', message: 'Database error', error: error.message },
+            500,
+            correlationId
+          );
+        }
+
+        if (!tokenData) {
+          return jsonResponse(
+            { status: 'not_connected', message: 'No Google connection found' },
+            200,
+            correlationId
+          );
+        }
+
+        const now = new Date();
+        const expiry = tokenData.expiry_ts ? new Date(tokenData.expiry_ts) : null;
+        const expiryValid = !!expiry && !Number.isNaN(expiry.getTime());
+
+        const minutesUntilExpiry = expiryValid
+          ? (expiry!.getTime() - now.getTime()) / (1000 * 60)
+          : null;
+
+        const isExpired = expiryValid ? now >= expiry! : true;
+
         return jsonResponse(
-          { success: true, message: 'Task deleted successfully' },
+          {
+            status: 'connected',
+            token_status: isExpired ? 'expired' : 'valid',
+            expiry_ts: tokenData.expiry_ts,
+            minutes_until_expiry: minutesUntilExpiry !== null ? Math.round(minutesUntilExpiry) : null,
+            created_at: tokenData.created_at ?? null,
+            updated_at: tokenData.updated_at ?? null,
+            has_refresh_token: !!tokenData.refresh_token,
+            needs_refresh: !expiryValid || isExpired || (minutesUntilExpiry !== null && minutesUntilExpiry < 5),
+          },
           200,
           correlationId
         );
       }
 
-      case 'listTasks': {
-        const { taskListId = '@default', maxResults = 100, showCompleted = false } = body;
-
-        let endpoint = `/lists/${taskListId}/tasks?maxResults=${Math.min(maxResults, 100)}`;
-        
-        if (showCompleted) {
-          endpoint += '&showCompleted=true';
-        }
-
-        const tasks = await makeGoogleTasksRequest(accessToken, endpoint);
-
-        return jsonResponse(tasks, 200, correlationId);
-      }
-
-      case 'diagnostics': {
-        try {
-          const { data: tokenData, error } = await serviceSupabase
-            .from('google_tokens')
-            .select('expiry_ts, created_at, updated_at')
-            .eq('user_id', userId)
-            .maybeSingle();
-
-          if (error) {
-            return jsonResponse(
-              {
-                status: 'error',
-                message: 'Database error',
-                error: error.message,
-              },
-              500,
-              correlationId
-            );
-          }
-
-          if (!tokenData) {
-            return jsonResponse(
-              {
-                status: 'not_connected',
-                message: 'No Google Calendar connection found',
-              },
-              200,
-              correlationId
-            );
-          }
-
-          const now = new Date();
-          const expiry = new Date(tokenData.expiry_ts);
-          const isExpired = now >= expiry;
-          const minutesUntilExpiry = (expiry.getTime() - now.getTime()) / (1000 * 60);
-
-          return jsonResponse(
-            {
-              status: 'connected',
-              token_status: isExpired ? 'expired' : 'valid',
-              expiry_ts: tokenData.expiry_ts,
-              minutes_until_expiry: Math.round(minutesUntilExpiry),
-              created_at: tokenData.created_at,
-              updated_at: tokenData.updated_at,
-              needs_refresh: isExpired || minutesUntilExpiry < 5,
-            },
-            200,
-            correlationId
-          );
-        } catch (error: any) {
-          return jsonResponse(
-            {
-              status: 'error',
-              message: error.message,
-            },
-            500,
-            correlationId
-          );
-        }
-      }
-
       default:
         return jsonResponse({ error: `Unknown action: ${action}` }, 400, correlationId);
     }
-  } catch (error) {
-    console.error('❌ Google Tasks function error:', error, {
-      correlationId,
-    });
+  } catch (error: any) {
+    const correlationId = crypto.randomUUID();
+    console.error('❌ Google Tasks function error:', error, { correlationId });
 
     return jsonResponse(
       {
         error: 'Internal server error',
         message: 'An unexpected error occurred',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: error?.message ?? String(error),
       },
       500,
       correlationId
