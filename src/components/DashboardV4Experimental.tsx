@@ -31,6 +31,11 @@ import {
   TasksList,
   RemindersList,
 } from './shared/DashboardPopup';
+import {
+  findDueSlot,
+  markAsAutoShown,
+  clearOldAutoShowData,
+} from '../utils/affirmationScheduler';
 
 import { SubScreen } from '../App';
 
@@ -62,6 +67,8 @@ export function DashboardV4Experimental({
   const [showEventsPopup, setShowEventsPopup] = React.useState(false);
   const [showTasksPopup, setShowTasksPopup] = React.useState(false);
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
+  const [isAutoOpened, setIsAutoOpened] = React.useState(false);
+  const [autoOpenedSlotIndex, setAutoOpenedSlotIndex] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (user) {
@@ -92,7 +99,7 @@ export function DashboardV4Experimental({
     try {
       const settings = await affirmationService.getSettings();
 
-      if (!settings.enabled) {
+      if (!settings || !settings.enabled) {
         setAffirmationsDisabled(true);
         setTodayAffirmation(null);
         setAffirmationError(null);
@@ -109,6 +116,18 @@ export function DashboardV4Experimental({
 
       setTodayAffirmation(affirmation);
       setAffirmationError(null);
+
+      clearOldAutoShowData();
+
+      if (user?.id && affirmation) {
+        const dueSlot = findDueSlot(settings, user.id);
+        if (dueSlot) {
+          const todayStr = new Date().toISOString().split('T')[0];
+          markAsAutoShown(user.id, todayStr, dueSlot.slotIndex);
+          setAutoOpenedSlotIndex(dueSlot.slotIndex);
+          handleOpenAffirmation(true);
+        }
+      }
     } catch (error: any) {
       console.error("Error loading today's affirmation:", error);
 
@@ -132,13 +151,15 @@ export function DashboardV4Experimental({
     }
   };
 
-  const handleOpenAffirmation = () => {
+  const handleOpenAffirmation = (isAutomatic: boolean = false) => {
     if (affirmationStage !== 'hidden') return;
 
     if (affirmationsDisabled) {
       setAffirmationStage('disabled');
       return;
     }
+
+    setIsAutoOpened(isAutomatic);
 
     setAffirmationStage('burst');
 
@@ -153,6 +174,12 @@ export function DashboardV4Experimental({
 
   const handleCloseAffirmation = () => {
     if (affirmationStage === 'content') {
+      if (isAutoOpened && user?.id && autoOpenedSlotIndex !== null) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        markAsAutoShown(user.id, todayStr, autoOpenedSlotIndex);
+      }
+      setIsAutoOpened(false);
+      setAutoOpenedSlotIndex(null);
       setAffirmationStage('closing');
     }
   };
