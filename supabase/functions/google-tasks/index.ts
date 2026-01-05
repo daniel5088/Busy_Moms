@@ -1,7 +1,7 @@
 /*
-  # Google Calendar API Integration (Edge Function)
+  # Google Tasks API Integration (Edge Function)
 
-  - Secure Google Calendar API access for authenticated users
+  - Secure Google Tasks API access for authenticated users
   - Uses Supabase service role for token storage access
   - Automatically refreshes Google access tokens
   - Returns reconnect_required for broken OAuth state
@@ -9,12 +9,10 @@
   Actions:
     - ping (no auth)
     - isConnected
-    - getEvents
-    - insertEvent
-    - updateEvent
-    - deleteEvent
-    - listUpcoming
-    - disconnect
+    - insertTask
+    - updateTask
+    - deleteTask
+    - listTasks
     - diagnostics
 */
 
@@ -239,14 +237,14 @@ async function getValidAccessToken(opts: {
   return refreshResponse.access_token;
 }
 
-async function makeGoogleCalendarRequest(
+async function makeGoogleTasksRequest(
   accessToken: string,
   endpoint: string,
   options: RequestInit = {}
 ) {
-  const url = `https://www.googleapis.com/calendar/v3${endpoint}`;
+  const url = `https://tasks.googleapis.com/tasks/v1${endpoint}`;
 
-  console.log(`📡 Google Calendar request: ${options.method || 'GET'} ${endpoint}`);
+  console.log(`📡 Google Tasks request: ${options.method || 'GET'} ${endpoint}`);
 
   const response = await fetch(url, {
     ...options,
@@ -259,17 +257,17 @@ async function makeGoogleCalendarRequest(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`❌ Google Calendar API error: ${response.status} ${response.statusText}`, {
+    console.error(`❌ Google Tasks API error: ${response.status} ${response.statusText}`, {
       endpoint,
       errorText,
     });
     throw new Error(
-      `Google Calendar API error: ${response.status} ${response.statusText} - ${errorText}`
+      `Google Tasks API error: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
   const data = await response.json();
-  console.log('✅ Google Calendar API success');
+  console.log('✅ Google Tasks API success');
   return data;
 }
 
@@ -285,7 +283,7 @@ async function getAuthenticatedUserId(req: Request, supabaseAnonAuthed: ReturnTy
 
 function authErrorPayload(code: string, details: string) {
   return {
-    error: 'Google Calendar authentication failed',
+    error: 'Google Tasks authentication failed',
     details,
     action: 'reconnect_required',
     code,
@@ -303,7 +301,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    console.log(`🚀 Google Calendar - ${req.method} ${req.url}`, { correlationId });
+    console.log(`🚀 Google Tasks - ${req.method} ${req.url}`, { correlationId });
 
     if (req.method !== 'POST') {
       return jsonResponse({ error: 'Method not allowed' }, 405, correlationId);
@@ -332,7 +330,7 @@ Deno.serve(async (req: Request) => {
       console.error('❌ Missing Google OAuth env', { correlationId });
       return jsonResponse(
         {
-          error: 'Google Calendar not configured',
+          error: 'Google Tasks not configured',
           details:
             'Missing GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET in Edge Function secrets.',
         },
@@ -352,7 +350,7 @@ Deno.serve(async (req: Request) => {
     if (!action) return jsonResponse({ error: 'Missing action parameter' }, 400, correlationId);
 
     if (action === 'ping') {
-      return jsonResponse({ ok: true, source: 'google-calendar' }, 200, correlationId);
+      return jsonResponse({ ok: true, source: 'google-tasks' }, 200, correlationId);
     }
 
     const supabaseAnonAuthed = createClient(supabaseUrl, supabaseAnonKey, {
@@ -400,25 +398,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (action === 'disconnect') {
-      const { error } = await serviceSupabase
-        .from('google_tokens')
-        .delete()
-        .eq('user_id', userId);
-
-      if (error) {
-        console.error('❌ Failed to disconnect:', error, { correlationId });
-        return jsonResponse(
-          { error: 'Failed to disconnect', details: error.message },
-          500,
-          correlationId
-        );
-      }
-
-      console.log('✅ Google Calendar disconnected', { userId, correlationId });
-      return jsonResponse({ success: true, message: 'Disconnected successfully' }, 200, correlationId);
-    }
-
     let accessToken: string;
     try {
       accessToken = await getValidAccessToken({
@@ -461,76 +440,73 @@ Deno.serve(async (req: Request) => {
     console.log('✅ Processing action', { action, userId, correlationId });
 
     switch (action) {
-      case 'getEvents': {
-        const { timeMin, timeMax, maxResults, q } = body ?? {};
-
-        let endpoint = '/calendars/primary/events?singleEvents=true&orderBy=startTime';
-
-        if (timeMin) endpoint += `&timeMin=${encodeURIComponent(timeMin)}`;
-        if (timeMax) endpoint += `&timeMax=${encodeURIComponent(timeMax)}`;
-        if (maxResults) endpoint += `&maxResults=${Math.min(Number(maxResults), 2500)}`;
-        if (q) endpoint += `&q=${encodeURIComponent(q)}`;
-
-        const events = await makeGoogleCalendarRequest(accessToken, endpoint);
-        return jsonResponse(events, 200, correlationId);
-      }
-
-      case 'listUpcoming': {
-        const maxResults = Number(body?.maxResults ?? 10);
-        const now = new Date().toISOString();
-
-        const endpoint = `/calendars/primary/events?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(now)}&maxResults=${Math.min(maxResults, 100)}`;
-
-        const events = await makeGoogleCalendarRequest(accessToken, endpoint);
-        return jsonResponse(events, 200, correlationId);
-      }
-
-      case 'insertEvent': {
-        const event = body?.event;
-        if (!event || typeof event !== 'object') {
-          return jsonResponse({ error: 'Missing or invalid event data' }, 400, correlationId);
+      case 'insertTask': {
+        const task = body?.task;
+        if (!task || typeof task !== 'object') {
+          return jsonResponse({ error: 'Missing or invalid task data' }, 400, correlationId);
         }
-        if (!event.summary || typeof event.summary !== 'string') {
-          return jsonResponse({ error: 'Event must have a valid summary' }, 400, correlationId);
+        if (!task.title || typeof task.title !== 'string') {
+          return jsonResponse({ error: 'Task must have a valid title' }, 400, correlationId);
         }
 
-        const createdEvent = await makeGoogleCalendarRequest(accessToken, '/calendars/primary/events', {
+        const taskLists = await makeGoogleTasksRequest(accessToken, '/users/@me/lists');
+        const defaultList = taskLists.items?.[0]?.id || '@default';
+
+        const createdTask = await makeGoogleTasksRequest(accessToken, `/lists/${defaultList}/tasks`, {
           method: 'POST',
-          body: JSON.stringify(event),
+          body: JSON.stringify(task),
         });
 
-        return jsonResponse(createdEvent, 200, correlationId);
+        return jsonResponse({ ...createdTask, taskListId: defaultList }, 200, correlationId);
       }
 
-      case 'updateEvent': {
-        const { eventId, event } = body ?? {};
-        if (!eventId || typeof eventId !== 'string') {
-          return jsonResponse({ error: 'Missing or invalid eventId' }, 400, correlationId);
+      case 'updateTask': {
+        const { taskListId, taskId, task } = body ?? {};
+        if (!taskListId || typeof taskListId !== 'string') {
+          return jsonResponse({ error: 'Missing or invalid taskListId' }, 400, correlationId);
         }
-        if (!event || typeof event !== 'object') {
-          return jsonResponse({ error: 'Missing or invalid event data' }, 400, correlationId);
+        if (!taskId || typeof taskId !== 'string') {
+          return jsonResponse({ error: 'Missing or invalid taskId' }, 400, correlationId);
+        }
+        if (!task || typeof task !== 'object') {
+          return jsonResponse({ error: 'Missing or invalid task data' }, 400, correlationId);
         }
 
-        const updatedEvent = await makeGoogleCalendarRequest(
+        const updatedTask = await makeGoogleTasksRequest(
           accessToken,
-          `/calendars/primary/events/${eventId}`,
-          { method: 'PATCH', body: JSON.stringify(event) }
+          `/lists/${taskListId}/tasks/${taskId}`,
+          { method: 'PATCH', body: JSON.stringify(task) }
         );
 
-        return jsonResponse(updatedEvent, 200, correlationId);
+        return jsonResponse(updatedTask, 200, correlationId);
       }
 
-      case 'deleteEvent': {
-        const { eventId } = body ?? {};
-        if (!eventId || typeof eventId !== 'string') {
-          return jsonResponse({ error: 'Missing or invalid eventId' }, 400, correlationId);
+      case 'deleteTask': {
+        const { taskListId, taskId } = body ?? {};
+        if (!taskListId || typeof taskListId !== 'string') {
+          return jsonResponse({ error: 'Missing or invalid taskListId' }, 400, correlationId);
+        }
+        if (!taskId || typeof taskId !== 'string') {
+          return jsonResponse({ error: 'Missing or invalid taskId' }, 400, correlationId);
         }
 
-        await makeGoogleCalendarRequest(accessToken, `/calendars/primary/events/${eventId}`, {
+        await makeGoogleTasksRequest(accessToken, `/lists/${taskListId}/tasks/${taskId}`, {
           method: 'DELETE',
         });
 
-        return jsonResponse({ success: true, message: 'Event deleted successfully' }, 200, correlationId);
+        return jsonResponse({ success: true, message: 'Task deleted successfully' }, 200, correlationId);
+      }
+
+      case 'listTasks': {
+        const taskListId = body?.taskListId ?? '@default';
+        const maxResults = Number(body?.maxResults ?? 100);
+        const showCompleted = Boolean(body?.showCompleted ?? false);
+
+        let endpoint = `/lists/${taskListId}/tasks?maxResults=${Math.min(maxResults, 100)}`;
+        if (showCompleted) endpoint += '&showCompleted=true';
+
+        const tasks = await makeGoogleTasksRequest(accessToken, endpoint);
+        return jsonResponse(tasks, 200, correlationId);
       }
 
       case 'diagnostics': {
@@ -587,7 +563,7 @@ Deno.serve(async (req: Request) => {
     }
   } catch (error: any) {
     const correlationId = crypto.randomUUID();
-    console.error('❌ Google Calendar function error:', error, { correlationId });
+    console.error('❌ Google Tasks function error:', error, { correlationId });
 
     return jsonResponse(
       {

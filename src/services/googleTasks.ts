@@ -12,7 +12,7 @@ export interface GoogleTask {
 
 class GoogleTasksService {
   private async callEdgeFunction(action: string, data: any = {}) {
-    const { data: result, error } = await supabase.functions.invoke('google-calendar', {
+    const { data: result, error } = await supabase.functions.invoke('google-tasks', {
       body: { action, ...data },
     });
 
