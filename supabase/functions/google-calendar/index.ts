@@ -127,6 +127,7 @@ async function getValidAccessToken(opts: {
   googleClientId: string;
   googleClientSecret: string;
   correlationId: string;
+  forceRefresh?: boolean;
 }) {
   const { serviceSupabase, userId, googleClientId, googleClientSecret, correlationId } = opts;
 
@@ -170,12 +171,19 @@ async function getValidAccessToken(opts: {
     correlationId,
   });
 
-  if (!shouldRefresh && tokenData.access_token) {
+  // If force refresh is requested (after a 401 error), always refresh
+  const forceRefresh = opts.forceRefresh || false;
+
+  if (!shouldRefresh && !forceRefresh && tokenData.access_token) {
     console.log('✅ Using existing valid access token', {
       expiresInMinutes: Math.round(expiresInMinutes),
       correlationId,
     });
     return tokenData.access_token;
+  }
+
+  if (forceRefresh) {
+    console.log('🔄 Force refreshing token after 401 error', { correlationId });
   }
 
   if (!tokenData.refresh_token) {
@@ -242,11 +250,18 @@ async function getValidAccessToken(opts: {
 async function makeGoogleCalendarRequest(
   accessToken: string,
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  correlationId?: string
 ) {
   const url = `https://www.googleapis.com/calendar/v3${endpoint}`;
 
-  console.log(`📡 Google Calendar request: ${options.method || 'GET'} ${endpoint}`);
+  // Mask the token for logging (show first and last 4 chars)
+  const tokenPreview = accessToken ? `${accessToken.substring(0, 4)}...${accessToken.substring(accessToken.length - 4)}` : 'MISSING';
+  console.log(`📡 Google Calendar request: ${options.method || 'GET'} ${endpoint}`, {
+    tokenPreview,
+    tokenLength: accessToken?.length || 0,
+    correlationId,
+  });
 
   const response = await fetch(url, {
     ...options,
@@ -262,14 +277,24 @@ async function makeGoogleCalendarRequest(
     console.error(`❌ Google Calendar API error: ${response.status} ${response.statusText}`, {
       endpoint,
       errorText,
+      tokenPreview,
+      correlationId,
     });
+
+    // If it's a 401, the token is invalid - suggest refresh
+    if (response.status === 401) {
+      throw new Error(
+        `INVALID_TOKEN: Token authentication failed - ${errorText}`
+      );
+    }
+
     throw new Error(
       `Google Calendar API error: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
   const data = await response.json();
-  console.log('✅ Google Calendar API success');
+  console.log('✅ Google Calendar API success', { correlationId });
   return data;
 }
 
@@ -473,7 +498,39 @@ Deno.serve(async (req: Request) => {
           if (q) endpoint += `&q=${encodeURIComponent(q)}`;
 
           console.log('📅 Fetching Google Calendar events', { endpoint, correlationId });
-          const events = await makeGoogleCalendarRequest(accessToken, endpoint);
+          let events;
+          try {
+            events = await makeGoogleCalendarRequest(accessToken, endpoint, {}, correlationId);
+          } catch (error: any) {
+            // If we get INVALID_TOKEN error, try refreshing the token once and retry
+            if (error?.message?.includes('INVALID_TOKEN')) {
+              console.log('🔄 Token invalid, attempting refresh and retry...', { correlationId });
+              try {
+                const newAccessToken = await getValidAccessToken({
+                  serviceSupabase,
+                  userId,
+                  googleClientId,
+                  googleClientSecret,
+                  correlationId,
+                  forceRefresh: true,
+                });
+                // Retry with new token
+                events = await makeGoogleCalendarRequest(newAccessToken, endpoint, {}, correlationId);
+              } catch (refreshError: any) {
+                // If refresh fails, return auth error
+                if (refreshError?.message?.includes('REFRESH_TOKEN_REVOKED')) {
+                  return jsonResponse(
+                    authErrorPayload('REFRESH_TOKEN_REVOKED', 'Access revoked. Please reconnect Google Calendar.'),
+                    401,
+                    correlationId
+                  );
+                }
+                throw refreshError;
+              }
+            } else {
+              throw error;
+            }
+          }
           console.log('✅ Successfully fetched events', { count: events.items?.length || 0, correlationId });
           return jsonResponse(events, 200, correlationId);
         } catch (error: any) {
@@ -498,7 +555,7 @@ Deno.serve(async (req: Request) => {
           const endpoint = `/calendars/primary/events?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(now)}&maxResults=${Math.min(maxResults, 100)}`;
 
           console.log('📅 Fetching upcoming events', { maxResults, correlationId });
-          const events = await makeGoogleCalendarRequest(accessToken, endpoint);
+          const events = await makeGoogleCalendarRequest(accessToken, endpoint, {}, correlationId);
           console.log('✅ Successfully fetched upcoming events', { count: events.items?.length || 0, correlationId });
           return jsonResponse(events, 200, correlationId);
         } catch (error: any) {
@@ -542,10 +599,15 @@ Deno.serve(async (req: Request) => {
         });
 
         try {
-          const createdEvent = await makeGoogleCalendarRequest(accessToken, '/calendars/primary/events', {
-            method: 'POST',
-            body: JSON.stringify(event),
-          });
+          const createdEvent = await makeGoogleCalendarRequest(
+            accessToken,
+            '/calendars/primary/events',
+            {
+              method: 'POST',
+              body: JSON.stringify(event),
+            },
+            correlationId
+          );
 
           console.log('✅ Event created successfully:', createdEvent.id, { correlationId });
           return jsonResponse(createdEvent, 200, correlationId);
@@ -579,7 +641,8 @@ Deno.serve(async (req: Request) => {
         const updatedEvent = await makeGoogleCalendarRequest(
           accessToken,
           `/calendars/primary/events/${eventId}`,
-          { method: 'PATCH', body: JSON.stringify(event) }
+          { method: 'PATCH', body: JSON.stringify(event) },
+          correlationId
         );
 
         return jsonResponse(updatedEvent, 200, correlationId);
@@ -591,9 +654,14 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ error: 'Missing or invalid eventId' }, 400, correlationId);
         }
 
-        await makeGoogleCalendarRequest(accessToken, `/calendars/primary/events/${eventId}`, {
-          method: 'DELETE',
-        });
+        await makeGoogleCalendarRequest(
+          accessToken,
+          `/calendars/primary/events/${eventId}`,
+          {
+            method: 'DELETE',
+          },
+          correlationId
+        );
 
         return jsonResponse({ success: true, message: 'Event deleted successfully' }, 200, correlationId);
       }
