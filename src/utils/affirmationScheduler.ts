@@ -25,7 +25,12 @@ export function clearOldAutoShowData(): void {
   const today = new Date();
   const twoDaysAgo = new Date(today);
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-  const cutoffDateStr = twoDaysAgo.toISOString().split('T')[0];
+  const y = twoDaysAgo.getFullYear();
+  const m = twoDaysAgo.getMonth() + 1;
+  const d = twoDaysAgo.getDate();
+  const mm = m < 10 ? '0' + m : '' + m;
+  const dd = d < 10 ? '0' + d : '' + d;
+  const cutoffDateStr = `${y}-${mm}-${dd}`;
 
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -77,16 +82,30 @@ export function findDueSlot(
 
   const currentHour = currentDate.getHours();
   const currentMinute = currentDate.getMinutes();
-  const todayStr = currentDate.toISOString().split('T')[0];
+  const y = currentDate.getFullYear();
+  const m = currentDate.getMonth() + 1;
+  const d = currentDate.getDate();
+  const mm = m < 10 ? '0' + m : '' + m;
+  const dd = d < 10 ? '0' + d : '' + d;
+  const todayStr = `${y}-${mm}-${dd}`;
 
-  for (const slot of slots) {
+  const sortedSlots = [...slots].sort((a, b) => {
+    if (a.hour !== b.hour) {
+      return a.hour - b.hour;
+    }
+    return a.minute - b.minute;
+  });
+
+  let latestCandidate: ScheduledSlot | null = null;
+
+  for (const slot of sortedSlots) {
     const isAfterSlotTime =
       currentHour > slot.hour || (currentHour === slot.hour && currentMinute >= slot.minute);
 
     if (isAfterSlotTime && !hasBeenAutoShown(userId, todayStr, slot.slotIndex)) {
-      return slot;
+      latestCandidate = slot;
     }
   }
 
-  return null;
+  return latestCandidate;
 }
