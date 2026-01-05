@@ -700,7 +700,7 @@ export function Settings({
                   onClick={async () => {
                     if (confirm('Are you sure you want to disconnect Google Calendar?')) {
                       try {
-                        const success = await googleCalendarService.disconnect(user?.id || '');
+                        const success = await googleCalendarService.disconnect();
                         if (success) {
                           setIsGoogleConnected(false);
                         } else {
