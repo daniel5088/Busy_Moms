@@ -263,24 +263,35 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
         maxResults: 100,
       });
 
-      setGoogleEvents(events);
+      // Filter out Google Tasks that appear as calendar events
+      const calendarOnlyEvents = events.filter((event) => {
+        // Exclude events that are actually tasks
+        // Google Tasks in calendar have a description pointing to tasks.google.com
+        if (event.description && event.description.includes('tasks.google.com')) {
+          console.log('🚫 Filtering out Google Task:', event.summary);
+          return false;
+        }
+        return true;
+      });
+
+      setGoogleEvents(calendarOnlyEvents);
     } catch (error: any) {
       console.error('Error loading Google events:', error);
-      
+
       // Clear events on any error
       setGoogleEvents([]);
-      
+
       // If it's an auth error, also clear the connection status
-      const isAuthError = 
+      const isAuthError =
         error.message?.includes('authentication') ||
         error.message?.includes('401') ||
         error.message?.includes('Unauthorized') ||
         error.message?.includes('auth');
-      
+
       if (isAuthError) {
         console.log('🔓 Authentication error detected, clearing Google connection');
         setIsGoogleConnected(false);
-        
+
         // Show user-friendly error message
         showToast('Google Calendar connection expired. Please reconnect.', 'error');
       }
