@@ -165,26 +165,26 @@ export function Tasks() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-700';
       case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-600';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 text-red-700';
+        return 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-700';
+        return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300';
       case 'low':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
     }
   };
 
@@ -216,15 +216,15 @@ export function Tasks() {
   return (
     <div className="h-screen overflow-y-auto pb-20 sm:pb-24">
       {/* Header */}
-      <div className="bg-white p-4 sm:p-6 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Tasks</h1>
-            <p className="text-sm sm:text-base text-gray-600">Manage family tasks and chores</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Manage family tasks and chores</p>
           </div>
           <button
             onClick={() => setShowTaskForm(true)}
-            className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500 text-white rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
+            className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500 dark:bg-purple-600 text-white rounded-full flex items-center justify-center hover:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
           >
             <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -232,26 +232,26 @@ export function Tasks() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
-          <div className="bg-green-50 p-2 sm:p-3 rounded-lg text-center">
-            <div className="text-lg sm:text-2xl font-bold text-green-600">{completedTasks}</div>
-            <div className="text-xs sm:text-sm text-green-700">Completed</div>
+          <div className="bg-green-50 dark:bg-green-900 p-2 sm:p-3 rounded-lg text-center">
+            <div className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">{completedTasks}</div>
+            <div className="text-xs sm:text-sm text-green-700 dark:text-green-300">Completed</div>
           </div>
-          <div className="bg-blue-50 p-2 sm:p-3 rounded-lg text-center">
-            <div className="text-lg sm:text-2xl font-bold text-blue-600">
+          <div className="bg-blue-50 dark:bg-blue-900 p-2 sm:p-3 rounded-lg text-center">
+            <div className="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
               {tasks.filter((t) => t.status === 'pending').length}
             </div>
-            <div className="text-xs sm:text-sm text-blue-700">Pending</div>
+            <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">Pending</div>
           </div>
-          <div className="bg-purple-50 p-2 sm:p-3 rounded-lg text-center">
-            <div className="text-lg sm:text-2xl font-bold text-purple-600">{totalPoints}</div>
-            <div className="text-xs sm:text-sm text-purple-700">Points Earned</div>
+          <div className="bg-purple-50 dark:bg-purple-900 p-2 sm:p-3 rounded-lg text-center">
+            <div className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{totalPoints}</div>
+            <div className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Points Earned</div>
           </div>
         </div>
 
         {/* Filters */}
         <div className="space-y-3">
           {/* Status Tabs */}
-          <div className="flex space-x-0.5 sm:space-x-1 bg-gray-100 rounded-lg p-1">
+          <div className="flex space-x-0.5 sm:space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             {[
               { id: 'all', label: 'All Tasks', icon: CheckSquare },
               { id: 'pending', label: 'Pending', icon: Clock },
@@ -263,8 +263,8 @@ export function Tasks() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? 'bg-white text-purple-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
                 }`}
               >
                 <tab.icon className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -276,11 +276,11 @@ export function Tasks() {
 
           {/* Family Member Filter */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-            <Filter className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+            <Filter className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 dark:text-gray-400" />
             <select
               value={selectedMember}
               onChange={(e) => setSelectedMember(e.target.value)}
-              className="px-2 sm:px-3 py-1 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-2 sm:px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="all">All Family Members</option>
               <option value="">Unassigned</option>
@@ -297,8 +297,8 @@ export function Tasks() {
       <div className="p-4 sm:p-6">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-purple-500"></div>
-            <span className="ml-2 text-sm sm:text-base text-gray-600">Loading tasks...</span>
+            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-purple-500 dark:border-purple-400"></div>
+            <span className="ml-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">Loading tasks...</span>
           </div>
         ) : (
           <div className="space-y-4">
@@ -307,10 +307,10 @@ export function Tasks() {
                 key={task.id}
                 className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
                   task.status === 'completed'
-                    ? 'bg-gray-50 border-gray-200 opacity-75'
+                    ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-75'
                     : task.priority === 'high'
-                      ? 'bg-red-50 border-red-200'
-                      : 'bg-white border-gray-200 hover:border-purple-300'
+                      ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800'
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
                 }`}
               >
                 <div className="flex items-start space-x-2 sm:space-x-3">
@@ -322,7 +322,7 @@ export function Tasks() {
                     className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                       task.status === 'completed'
                         ? 'bg-green-500 border-green-500'
-                        : 'border-gray-300 hover:border-purple-500'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-purple-500 dark:hover:border-purple-400'
                     }`}
                   >
                     {task.status === 'completed' && (
@@ -336,7 +336,7 @@ export function Tasks() {
                         {getCategoryIcon(task.category || 'other')}
                       </span>
                       <h3
-                        className={`font-semibold text-sm sm:text-base ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                        className={`font-semibold text-sm sm:text-base ${task.status === 'completed' ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}
                       >
                         {task.title}
                       </h3>
@@ -346,7 +346,7 @@ export function Tasks() {
                         {task.priority}
                       </span>
                       {task.points && task.points > 0 && (
-                        <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium flex items-center space-x-1">
+                        <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded-full text-xs font-medium flex items-center space-x-1">
                           <Star className="w-2 h-2 sm:w-3 sm:h-3" />
                           <span>{task.points}</span>
                         </span>
@@ -355,13 +355,13 @@ export function Tasks() {
 
                     {task.description && (
                       <p
-                        className={`text-xs sm:text-sm mb-2 ${task.status === 'completed' ? 'text-gray-400' : 'text-gray-600'}`}
+                        className={`text-xs sm:text-sm mb-2 ${task.status === 'completed' ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}
                       >
                         {task.description}
                       </p>
                     )}
 
-                    <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm text-gray-500">
+                    <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                       {(task as any).assigned_family_member && (
                         <div className="flex items-center space-x-1">
                           <User className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -387,7 +387,7 @@ export function Tasks() {
                     </div>
 
                     {task.notes && (
-                      <p className="text-xs sm:text-sm text-gray-500 mt-2 italic">{task.notes}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{task.notes}</p>
                     )}
                   </div>
 
@@ -396,7 +396,7 @@ export function Tasks() {
                       <select
                         value={task.status}
                         onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                        className="px-1.5 sm:px-2 py-0.5 sm:py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="px-1.5 sm:px-2 py-0.5 sm:py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       >
                         <option value="pending">Pending</option>
                         <option value="in_progress">In Progress</option>
@@ -407,14 +407,14 @@ export function Tasks() {
 
                     <button
                       onClick={() => handleEditTask(task)}
-                      className="px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-100 text-purple-600 rounded text-xs hover:bg-purple-200 transition-colors"
+                      className="px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 rounded text-xs hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
                     >
                       Edit
                     </button>
 
                     <button
                       onClick={() => deleteTask(task.id)}
-                      className="px-2 sm:px-3 py-0.5 sm:py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200 transition-colors"
+                      className="px-2 sm:px-3 py-0.5 sm:py-1 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 rounded text-xs hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                     >
                       Delete
                     </button>
@@ -425,18 +425,18 @@ export function Tasks() {
 
             {filteredTasks.length === 0 && !loading && (
               <div className="text-center py-12">
-                <CheckSquare className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                <CheckSquare className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                   {activeTab === 'all' ? 'No tasks yet' : `No ${activeTab} tasks`}
                 </h3>
-                <p className="text-sm sm:text-base text-gray-600 mb-4">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
                   {activeTab === 'all'
                     ? 'Create your first task to get started'
                     : `No tasks with ${activeTab} status`}
                 </p>
                 <button
                   onClick={() => setShowTaskForm(true)}
-                  className="px-4 sm:px-6 py-2 sm:py-3 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-600 transition-colors text-sm sm:text-base"
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-purple-500 dark:bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-600 dark:hover:bg-purple-700 transition-colors text-sm sm:text-base"
                 >
                   Create First Task
                 </button>
