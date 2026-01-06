@@ -18,6 +18,8 @@ import {
   Settings,
   RefreshCw,
   Camera,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
@@ -49,6 +51,27 @@ const formatReminderDate = (dateString: string): string => {
     month: 'short',
     day: 'numeric',
   });
+};
+
+const getWeekLabel = (offset: number): string => {
+  if (offset === 0) return 'This Week';
+  if (offset === 1) return 'Next Week';
+  if (offset === -1) return 'Last Week';
+  return offset > 0 ? `+${offset} weeks` : `${offset} weeks`;
+};
+
+const getWeekRange = (offset: number): { start: Date; end: Date } => {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - dayOfWeek + offset * 7);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  return { start: startOfWeek, end: endOfWeek };
 };
 
 type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing' | 'disabled';
@@ -85,6 +108,15 @@ export function DashboardV4Experimental({
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
   const [isAutoOpened, setIsAutoOpened] = React.useState(false);
   const [autoOpenedSlotIndex, setAutoOpenedSlotIndex] = React.useState<number | null>(null);
+  const [reminderWeekOffset, setReminderWeekOffset] = React.useState(0);
+
+  const filteredReminders = React.useMemo(() => {
+    const { start, end } = getWeekRange(reminderWeekOffset);
+    return reminders.filter((reminder) => {
+      const reminderDate = new Date(reminder.reminder_date + 'T00:00:00');
+      return reminderDate >= start && reminderDate <= end;
+    });
+  }, [reminders, reminderWeekOffset]);
 
   React.useEffect(() => {
     if (user) {
@@ -701,12 +733,33 @@ export function DashboardV4Experimental({
 
           {/* Smart Reminders */}
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
-              Smart Reminders
-            </h2>
-            {reminders.length > 0 ? (
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
+                Smart Reminders
+              </h2>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setReminderWeekOffset(reminderWeekOffset - 1)}
+                  className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  title="Previous week"
+                >
+                  <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                </button>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[100px] text-center">
+                  {getWeekLabel(reminderWeekOffset)}
+                </span>
+                <button
+                  onClick={() => setReminderWeekOffset(reminderWeekOffset + 1)}
+                  className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  title="Next week"
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                </button>
+              </div>
+            </div>
+            {filteredReminders.length > 0 ? (
               <div className="space-y-2">
-                {reminders.map((reminder) => (
+                {filteredReminders.map((reminder) => (
                   <div
                     key={reminder.id}
                     className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer"
@@ -740,7 +793,9 @@ export function DashboardV4Experimental({
             ) : (
               <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 text-center">
                 <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" aria-hidden="true" />
-                <p className="text-gray-500 dark:text-gray-400">No reminders for today</p>
+                <p className="text-gray-500 dark:text-gray-400">
+                  No reminders for {reminderWeekOffset === 0 ? 'this week' : getWeekLabel(reminderWeekOffset).toLowerCase()}
+                </p>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Ask Sarah to set a reminder for you</p>
               </div>
             )}
