@@ -133,6 +133,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showGiftSuggestion, setShowGiftSuggestion] = useState(false);
   const [giftEventTitle, setGiftEventTitle] = useState('');
+  const [selectedEvents, setSelectedEvents] = useState<Set<number>>(new Set());
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
@@ -652,6 +653,88 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     } catch (error) {
       console.error('Error adding event:', error);
       showToast('Failed to add event. Please try again.', 'error');
+    }
+  };
+
+  const addMultipleEventsFromImage = async (indices: number[]) => {
+    if (!user?.id || !extractedInfo) {
+      showToast('You must be logged in to add events', 'error');
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const index of indices) {
+      const event = extractedInfo[index];
+      try {
+        let startTime = event.time || null;
+        if (startTime && !startTime.includes(':')) {
+          startTime = null;
+        }
+
+        const { error } = await supabase
+          .from('events')
+          .insert({
+            user_id: user.id,
+            title: event.title,
+            event_date: event.date,
+            start_time: startTime,
+            end_time: null,
+            description: event.description || null,
+            location: event.location || null,
+            event_type: 'other',
+            participants: [],
+            rsvp_required: false,
+          });
+
+        if (error) {
+          console.error('Error creating event:', error);
+          errorCount++;
+        } else {
+          successCount++;
+        }
+      } catch (error) {
+        console.error('Error adding event:', error);
+        errorCount++;
+      }
+    }
+
+    // Clear selected events and close modal
+    setSelectedEvents(new Set());
+    setExtractedInfo(null);
+    await loadEvents();
+
+    // Show summary message
+    if (successCount > 0) {
+      showToast(
+        `${successCount} event${successCount > 1 ? 's' : ''} added successfully!${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
+        errorCount > 0 ? 'error' : 'success'
+      );
+    } else {
+      showToast('Failed to add events. Please try again.', 'error');
+    }
+  };
+
+  const toggleEventSelection = (index: number) => {
+    setSelectedEvents((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!extractedInfo) return;
+
+    if (selectedEvents.size === extractedInfo.length) {
+      setSelectedEvents(new Set());
+    } else {
+      setSelectedEvents(new Set(extractedInfo.map((_, i) => i)));
     }
   };
 
@@ -1684,41 +1767,93 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {extractedInfo && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl max-h-[80vh] overflow-y-auto">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Events Found</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Events Found</h3>
+                <button
+                  onClick={toggleSelectAll}
+                  className="text-sm font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition"
+                >
+                  {selectedEvents.size === extractedInfo.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+
               <div className="space-y-4 mb-6">
                 {extractedInfo.map((event, i) => (
-                  <div key={i} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="text-gray-900 dark:text-gray-100 font-semibold flex-1">{event.title}</h4>
-                      <button
-                        onClick={() => handleEditEvent(event, i)}
-                        className="ml-2 p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition"
-                        title="Edit event"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
+                  <div
+                    key={i}
+                    className={`p-4 rounded-xl border transition-all ${
+                      selectedEvents.has(i)
+                        ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-600'
+                        : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedEvents.has(i)}
+                        onChange={() => toggleEventSelection(i)}
+                        className="mt-1 w-5 h-5 text-rose-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-rose-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="text-gray-900 dark:text-gray-100 font-semibold flex-1">
+                            {event.title}
+                          </h4>
+                          <button
+                            onClick={() => handleEditEvent(event, i)}
+                            className="ml-2 p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition"
+                            title="Edit event"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">📅 {event.date}</p>
+                        {event.time && (
+                          <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">🕐 {event.time}</p>
+                        )}
+                        {event.location && (
+                          <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">
+                            📍 {event.location}
+                          </p>
+                        )}
+                        {event.description && (
+                          <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                            {event.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">📅 {event.date}</p>
-                    {event.time && <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">🕐 {event.time}</p>}
-                    {event.location && <p className="text-gray-600 dark:text-gray-300 text-sm mb-1">📍 {event.location}</p>}
-                    {event.description && <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">{event.description}</p>}
-                    <button
-                      onClick={() => addEventFromImage(event)}
-                      className="w-full mt-3 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg font-medium hover:from-rose-500 hover:to-pink-500 transition"
-                    >
-                      Add to Calendar
-                    </button>
                   </div>
                 ))}
               </div>
-              <button
-                onClick={() => setExtractedInfo(null)}
-                className="w-full py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition"
-              >
-                Close
-              </button>
+
+              <div className="space-y-3">
+                {selectedEvents.size > 0 && (
+                  <button
+                    onClick={() => addMultipleEventsFromImage(Array.from(selectedEvents))}
+                    className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-semibold hover:from-rose-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>Add Selected ({selectedEvents.size})</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setExtractedInfo(null);
+                    setSelectedEvents(new Set());
+                  }}
+                  className="w-full py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
