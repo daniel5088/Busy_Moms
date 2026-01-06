@@ -68,6 +68,7 @@ function App() {
   //Alvaros - Dailyaffirmations: State for unified affirmation settings modal
   const [showAffirmationSettings, setShowAffirmationSettings] = useState(false);
   const [openGiftFinder, setOpenGiftFinder] = useState(false);
+  const [openCalendarCamera, setOpenCalendarCamera] = useState(false);
   const { toasts, removeToast } = useToast();
   const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -379,6 +380,10 @@ function App() {
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onVoiceChatOpen={() => setShowVoiceChat(true)}
                     onOpenAffirmationSettings={() => setShowAffirmationSettings(true)}
+                    onNavigateToCalendarCamera={() => {
+                      setCurrentScreen('calendar');
+                      setOpenCalendarCamera(true);
+                    }}
                   />
                 </FeatureErrorBoundary>
               )}
@@ -390,6 +395,8 @@ function App() {
                       setCurrentSubScreen('shopping');
                       setOpenGiftFinder(true);
                     }}
+                    openCalendarCamera={openCalendarCamera}
+                    onCalendarCameraOpened={() => setOpenCalendarCamera(false)}
                   />
                 </FeatureErrorBoundary>
               )}

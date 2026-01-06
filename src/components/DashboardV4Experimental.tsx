@@ -17,6 +17,7 @@ import {
   Loader2,
   Settings,
   RefreshCw,
+  Camera,
 } from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
@@ -46,6 +47,7 @@ interface DashboardProps {
   onNavigateToSubScreen: (screen: SubScreen) => void;
   onVoiceChatOpen?: () => void;
   onOpenAffirmationSettings?: () => void;
+  onNavigateToCalendarCamera?: () => void;
 }
 
 export function DashboardV4Experimental({
@@ -53,6 +55,7 @@ export function DashboardV4Experimental({
   onNavigateToSubScreen,
   onVoiceChatOpen,
   onOpenAffirmationSettings,
+  onNavigateToCalendarCamera,
 }: DashboardProps) {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
@@ -255,17 +258,17 @@ export function DashboardV4Experimental({
       action: () => onNavigateToSubScreen('quick-links'),
     },
     {
-      icon: Shield,
-      title: 'Background Screening',
-      desc: 'Coming soon',
-      bgColor: 'bg-gray-50 dark:bg-gray-800',
-      borderColor: 'border-gray-200 dark:border-gray-700',
-      iconBgColor: 'bg-gray-100 dark:bg-gray-700',
-      iconColor: 'text-gray-400 dark:text-gray-500',
-      textColor: 'text-gray-500 dark:text-gray-400',
-      descColor: 'text-gray-400 dark:text-gray-500',
-      hoverBg: 'hover:bg-gray-100 dark:hover:bg-gray-750',
-      action: () => {},
+      icon: Camera,
+      title: 'Scan Event',
+      desc: 'Add from photo',
+      bgColor: 'bg-indigo-50 dark:bg-gray-800',
+      borderColor: 'border-indigo-200 dark:border-gray-700',
+      iconBgColor: 'bg-indigo-100 dark:bg-indigo-900',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      textColor: 'text-gray-900 dark:text-gray-100',
+      descColor: 'text-gray-600 dark:text-gray-400',
+      hoverBg: 'hover:bg-indigo-100 dark:hover:bg-gray-700',
+      action: () => onNavigateToCalendarCamera?.(),
     },
     {
       icon: BookOpen,

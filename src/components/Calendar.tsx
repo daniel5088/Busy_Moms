@@ -88,9 +88,11 @@ const openInAppleMaps = (location: string) => {
 interface CalendarProps {
   onNavigateToSubScreen?: (screen: SubScreen) => void;
   onNavigateToGiftFinder?: () => void;
+  openCalendarCamera?: boolean;
+  onCalendarCameraOpened?: () => void;
 }
 
-export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: CalendarProps) {
+export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCalendarCamera, onCalendarCameraOpened }: CalendarProps) {
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
@@ -239,6 +241,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder }: Cale
       mounted = false;
     };
   }, [user?.id, monthStart]); // ✅ add monthStart so it reruns when month changes
+
+  // Auto-open camera menu if navigated from Dashboard quick action
+  useEffect(() => {
+    if (openCalendarCamera) {
+      setShowCamera(true);
+      if (onCalendarCameraOpened) {
+        onCalendarCameraOpened();
+      }
+    }
+  }, [openCalendarCamera, onCalendarCameraOpened]);
 
   const loadGoogleEvents = async () => {
     if (!user?.id) return;
