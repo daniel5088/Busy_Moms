@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, User, Phone, Mail, Star } from 'lucide-react';
 import { supabase, Contact } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { categorizeContact } from '../../utils/contactCategorizer';
 
 interface ContactFormProps {
   isOpen: boolean;
@@ -25,8 +26,7 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
     available: true,
   });
 
-  // Update form data when editContact changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (editContact) {
       setFormData({
         name: editContact.name || '',
@@ -40,7 +40,6 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
         available: editContact.available !== false,
       });
     } else {
-      // Reset form for new contact
       setFormData({
         name: '',
         role: '',
@@ -54,6 +53,17 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
       });
     }
   }, [editContact]);
+
+  useEffect(() => {
+    if (!editContact && (formData.name || formData.role || formData.notes)) {
+      const suggestedCategory = categorizeContact(
+        formData.name,
+        formData.role,
+        formData.notes
+      );
+      setFormData((prev) => ({ ...prev, category: suggestedCategory }));
+    }
+  }, [formData.name, formData.role, formData.notes, editContact]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +150,7 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
               </div>
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-                  Category
+                  Category (auto-detected)
                 </label>
                 <select
                   value={formData.category}
@@ -149,7 +159,7 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
                 >
                   <option value="babysitter">Babysitter</option>
                   <option value="coach">Coach</option>
-                  <option value="doctor">Doctor</option>
+                  <option value="doctor">Medical</option>
                   <option value="tutor">Tutor</option>
                   <option value="teacher">Teacher</option>
                   <option value="other">Other</option>

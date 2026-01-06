@@ -18,7 +18,7 @@ import { ContactForm } from './forms/ContactForm';
 import { Contact, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { googleContactsService, GoogleContact } from '../services/googleContacts';
-import { getCategoryFromGoogleContact } from '../utils/contactCategorizer';
+import { getCategoryFromGoogleContact, categorizeContact } from '../utils/contactCategorizer';
 
 export function Contacts() {
   const { user } = useAuth();
@@ -34,6 +34,43 @@ export function Contacts() {
     loadContacts();
     checkGoogleConnection();
   }, [user]);
+
+  React.useEffect(() => {
+    const recategorizeExistingContacts = async () => {
+      if (!user?.id || contacts.length === 0) return;
+
+      try {
+        const contactsToUpdate: Contact[] = [];
+
+        for (const contact of contacts) {
+          const suggestedCategory = categorizeContact(
+            contact.name,
+            contact.role || '',
+            contact.notes || ''
+          );
+
+          if (suggestedCategory !== contact.category && suggestedCategory !== 'other') {
+            contactsToUpdate.push({ ...contact, category: suggestedCategory });
+          }
+        }
+
+        if (contactsToUpdate.length > 0) {
+          for (const contact of contactsToUpdate) {
+            await supabase
+              .from('contacts')
+              .update({ category: contact.category })
+              .eq('id', contact.id);
+          }
+
+          await loadContacts();
+        }
+      } catch (error) {
+        console.error('Error recategorizing contacts:', error);
+      }
+    };
+
+    recategorizeExistingContacts();
+  }, [contacts.length]);
 
   const checkGoogleConnection = async () => {
     try {
