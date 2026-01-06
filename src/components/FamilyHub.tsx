@@ -57,8 +57,8 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
         subtitle="Manage your family's activities and organization"
       />
 
-      <div className="max-w-7xl mx-auto px-4 pt-16 pb-6">
-        <p className="text-center text-base text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-6">
+        <p className="text-center text-base text-gray-600 dark:text-gray-400 mt-2 mb-4 max-w-2xl mx-auto">
           Quick access to your family's shared spaces — folders, contacts, tasks, and shopping.
         </p>
 
