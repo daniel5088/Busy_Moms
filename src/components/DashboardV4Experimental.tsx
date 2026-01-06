@@ -478,22 +478,28 @@ export function DashboardV4Experimental({
               <button
                 onClick={() => setShowEventsPopup(true)}
                 className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+                aria-label={`View all ${events.length} events`}
+                aria-haspopup="dialog"
               >
-                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
                 <span>{events.length} events</span>
               </button>
               <button
                 onClick={() => setShowTasksPopup(true)}
                 className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+                aria-label={`View all ${tasks.length} shopping items`}
+                aria-haspopup="dialog"
               >
-                <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
                 <span>{tasks.length} shopping items</span>
               </button>
               <button
                 onClick={() => setShowRemindersPopup(true)}
                 className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+                aria-label={`View all ${reminders.length} reminders`}
+                aria-haspopup="dialog"
               >
-                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
                 <span>{reminders.length} reminders</span>
               </button>
             </div>
