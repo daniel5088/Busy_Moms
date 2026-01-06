@@ -104,6 +104,10 @@ export interface Contact {
   background_check_status?: string | null;
   available?: boolean | null;
   last_contact?: string | null;
+  google_resource_name?: string | null;
+  google_etag?: string | null;
+  synced_at?: string | null;
+  sync_status?: 'local_only' | 'synced' | 'sync_pending' | 'sync_error' | null;
   created_at?: string;
   updated_at?: string;
 }

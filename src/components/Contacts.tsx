@@ -10,10 +10,14 @@ import {
   Edit,
   Mail,
   Trash2,
+  RefreshCw,
+  Cloud,
+  CloudOff,
 } from 'lucide-react';
 import { ContactForm } from './forms/ContactForm';
 import { Contact, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { googleContactsService, GoogleContact } from '../services/googleContacts';
 
 export function Contacts() {
   const { user } = useAuth();
@@ -22,11 +26,24 @@ export function Contacts() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
 
-  // Load contacts on component mount
   React.useEffect(() => {
     loadContacts();
+    checkGoogleConnection();
   }, [user]);
+
+  const checkGoogleConnection = async () => {
+    try {
+      await googleContactsService.initialize();
+      const connected = await googleContactsService.isConnected();
+      setGoogleConnected(connected);
+    } catch (error) {
+      console.error('Error checking Google connection:', error);
+      setGoogleConnected(false);
+    }
+  };
 
   const loadContacts = async () => {
     if (!user?.id) return;
@@ -91,6 +108,131 @@ export function Contacts() {
     setEditingContact(null);
   };
 
+  const mapGoogleContactToLocal = (googleContact: GoogleContact): Partial<Contact> => {
+    const name = googleContact.names?.[0]?.displayName || 'Unknown';
+    const email = googleContact.emailAddresses?.[0]?.value || null;
+    const phone = googleContact.phoneNumbers?.[0]?.value || null;
+
+    return {
+      name,
+      email,
+      phone,
+      role: 'Contact',
+      category: 'other',
+      google_resource_name: googleContact.resourceName,
+      google_etag: googleContact.etag,
+      sync_status: 'synced',
+      synced_at: new Date().toISOString(),
+    };
+  };
+
+  const mapLocalContactToGoogle = (contact: Contact): Partial<GoogleContact> => {
+    const googleContact: Partial<GoogleContact> = {
+      names: [
+        {
+          givenName: contact.name.split(' ')[0],
+          familyName: contact.name.split(' ').slice(1).join(' ') || undefined,
+        },
+      ],
+    };
+
+    if (contact.email) {
+      googleContact.emailAddresses = [{ value: contact.email }];
+    }
+
+    if (contact.phone) {
+      googleContact.phoneNumbers = [{ value: contact.phone }];
+    }
+
+    return googleContact;
+  };
+
+  const syncWithGoogle = async () => {
+    if (!user?.id || !googleConnected) {
+      alert('Please connect your Google account in Settings to sync contacts.');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const googleContactsResponse = await googleContactsService.listContacts({
+        pageSize: 1000,
+      });
+
+      const googleContacts = googleContactsResponse.connections || [];
+
+      const existingContacts = contacts.filter((c) => c.google_resource_name);
+      const existingResourceNames = new Set(existingContacts.map((c) => c.google_resource_name));
+
+      const newGoogleContacts = googleContacts.filter(
+        (gc) => !existingResourceNames.has(gc.resourceName)
+      );
+
+      for (const googleContact of newGoogleContacts) {
+        const localContact = mapGoogleContactToLocal(googleContact);
+
+        const { data, error } = await supabase
+          .from('contacts')
+          .insert({
+            ...localContact,
+            user_id: user.id,
+          })
+          .select()
+          .single();
+
+        if (!error && data) {
+          setContacts((prev) => [...prev, data]);
+        }
+      }
+
+      const localOnlyContacts = contacts.filter(
+        (c) => !c.google_resource_name && c.sync_status !== 'synced'
+      );
+
+      for (const localContact of localOnlyContacts) {
+        try {
+          const googleContact = mapLocalContactToGoogle(localContact);
+          const createdGoogleContact = await googleContactsService.createContact(googleContact);
+
+          await supabase
+            .from('contacts')
+            .update({
+              google_resource_name: createdGoogleContact.resourceName,
+              google_etag: createdGoogleContact.etag,
+              sync_status: 'synced',
+              synced_at: new Date().toISOString(),
+            })
+            .eq('id', localContact.id);
+
+          setContacts((prev) =>
+            prev.map((c) =>
+              c.id === localContact.id
+                ? {
+                    ...c,
+                    google_resource_name: createdGoogleContact.resourceName,
+                    google_etag: createdGoogleContact.etag,
+                    sync_status: 'synced' as const,
+                    synced_at: new Date().toISOString(),
+                  }
+                : c
+            )
+          );
+        } catch (error) {
+          console.error('Error syncing contact to Google:', error);
+        }
+      }
+
+      alert(
+        `Sync complete! Added ${newGoogleContacts.length} contacts from Google and synced ${localOnlyContacts.length} local contacts.`
+      );
+    } catch (error) {
+      console.error('Error syncing contacts:', error);
+      alert('Error syncing contacts. Please try again.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const categories = [
     { id: 'all', label: 'All Contacts', count: contacts.length },
     {
@@ -117,13 +259,42 @@ export function Contacts() {
       {/* Header */}
       <div className="bg-white p-4 sm:p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Contacts</h1>
-            <p className="text-sm sm:text-base text-gray-600">Your trusted network</p>
+            <div className="flex items-center space-x-2">
+              <p className="text-sm sm:text-base text-gray-600">Your trusted network</p>
+              {googleConnected && (
+                <div className="flex items-center space-x-1 text-xs text-green-600">
+                  <Cloud className="w-3 h-3" />
+                  <span>Synced</span>
+                </div>
+              )}
+              {!googleConnected && (
+                <div className="flex items-center space-x-1 text-xs text-gray-400">
+                  <CloudOff className="w-3 h-3" />
+                  <span>Not connected</span>
+                </div>
+              )}
+            </div>
           </div>
-          <button className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500 text-white rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors">
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" onClick={() => setShowContactForm(true)} />
-          </button>
+          <div className="flex items-center space-x-2">
+            {googleConnected && (
+              <button
+                onClick={syncWithGoogle}
+                disabled={syncing}
+                className="flex items-center space-x-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync'}</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowContactForm(true)}
+              className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Category Filter */}
@@ -134,14 +305,14 @@ export function Contacts() {
               onClick={() => setSelectedCategory(category.id)}
               className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
                 selectedCategory === category.id
-                  ? 'bg-purple-500 text-white'
+                  ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               <span>{category.label}</span>
               <span
                 className={`px-1.5 py-0.5 sm:px-2 rounded-full text-xs ${
-                  selectedCategory === category.id ? 'bg-purple-400' : 'bg-gray-200'
+                  selectedCategory === category.id ? 'bg-blue-400' : 'bg-gray-200'
                 }`}
               >
                 {category.count}
@@ -179,7 +350,7 @@ export function Contacts() {
               className="group bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all"
             >
               <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-semibold text-sm sm:text-lg">
                     {contact.name
                       .split(' ')
@@ -197,6 +368,12 @@ export function Contacts() {
                       <div className="flex items-center space-x-1 bg-green-100 text-green-700 px-1.5 py-0.5 sm:px-2 rounded-full">
                         <CheckCircle className="w-2 h-2 sm:w-3 sm:h-3" />
                         <span className="text-xs font-medium">Verified</span>
+                      </div>
+                    )}
+                    {contact.google_resource_name && (
+                      <div className="flex items-center space-x-1 bg-blue-100 text-blue-700 px-1.5 py-0.5 sm:px-2 rounded-full">
+                        <Cloud className="w-2 h-2 sm:w-3 sm:h-3" />
+                        <span className="text-xs font-medium">Google</span>
                       </div>
                     )}
                   </div>
@@ -253,7 +430,7 @@ export function Contacts() {
                           alert('No email address available for this contact');
                         }
                       }}
-                      className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-purple-500 text-white rounded-lg text-xs sm:text-sm hover:bg-purple-600 transition-colors"
+                      className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-indigo-500 text-white rounded-lg text-xs sm:text-sm hover:bg-indigo-600 transition-colors"
                     >
                       <Mail className="w-2 h-2 sm:w-3 sm:h-3" />
                       <span>Email</span>
@@ -266,7 +443,7 @@ export function Contacts() {
                     )}
                     <button
                       onClick={() => handleEditContact(contact)}
-                      className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-purple-500 text-white rounded-lg text-xs sm:text-sm hover:bg-purple-600 transition-colors"
+                      className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-gray-500 text-white rounded-lg text-xs sm:text-sm hover:bg-gray-600 transition-colors"
                     >
                       <Edit className="w-2 h-2 sm:w-3 sm:h-3" />
                       <span>Edit</span>
@@ -310,7 +487,7 @@ export function Contacts() {
                 </p>
                 <button
                   onClick={() => setShowContactForm(true)}
-                  className="px-4 sm:px-6 py-2 sm:py-3 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-600 transition-colors text-sm sm:text-base"
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors text-sm sm:text-base"
                 >
                   Add First Contact
                 </button>
