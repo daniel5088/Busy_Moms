@@ -111,6 +111,19 @@ export function useDashboardData(): DashboardData {
     }
   }, [user, loadDashboardData]);
 
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      console.log('📊 Dashboard data update event received, reloading...');
+      loadDashboardData();
+    };
+
+    window.addEventListener('dashboard-data-updated', handleDataUpdate);
+
+    return () => {
+      window.removeEventListener('dashboard-data-updated', handleDataUpdate);
+    };
+  }, [loadDashboardData]);
+
   return {
     events,
     todayEvents,

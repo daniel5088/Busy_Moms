@@ -402,7 +402,7 @@ function fallbackClassify(message: string): IntentResult {
   // Reminder patterns
   if (/\bremind\s+me\b/.test(lower) || /\bset\s+(?:a\s+)?reminder\b/.test(lower)) {
     const titleMatch = lower.match(
-      /remind\s+me\s+to\s+([^.!?]+)|set\s+(?:a\s+)?reminder\s+(?:to\s+)?([^.!?]+)/,
+      /remind\s+me\s+to\s+([^.!?]+?)(?:\s+(?:on|at|by|for|in)\s+|\s*$)|set\s+(?:a\s+)?reminder\s+(?:to\s+)?([^.!?]+?)(?:\s+(?:on|at|by|for|in)\s+|\s*$)/,
     );
     const title =
       titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
@@ -412,11 +412,11 @@ function fallbackClassify(message: string): IntentResult {
         /\b(today|tomorrow|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?|\d{4}-\d{2}-\d{2})\b/,
       )?.[0],
     );
-    const time = toISOTime(
-      lower.match(
-        /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}(?::\d{2})?)\b/,
-      )?.[0],
+
+    const timeMatch = lower.match(
+      /(?:at|by)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm))|(?:at|by)\s+(\d{1,2}:\d{2})/i,
     );
+    const time = toISOTime(timeMatch?.[1] || timeMatch?.[2]);
 
     return { type: 'reminder', details: { title, date, time } };
   }
@@ -752,6 +752,15 @@ class AIAssistantService {
   ): Promise<AIAction> {
     return this.handleTaskDelete(details, userId);
   }
+
+  /** Direct reminder creation with structured data (for voice AI, etc.) */
+  async createReminder(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    return this.handleReminderAction(details, userId);
+  }
+
   /** Calendar Creation */
   private async handleCalendarAction(
     details: Record<string, unknown>,
@@ -825,6 +834,10 @@ class AIAssistantService {
           message: 'Failed to create calendar event.',
         };
       }
+
+      window.dispatchEvent(new CustomEvent('dashboard-data-updated', {
+        detail: { type: 'calendar', action: 'created' }
+      }));
 
       let timeMsg = '';
       if (start_time && end_time) {
@@ -1274,6 +1287,11 @@ class AIAssistantService {
       }
 
       console.log('⏰ Reminder created successfully:', data);
+
+      window.dispatchEvent(new CustomEvent('dashboard-data-updated', {
+        detail: { type: 'reminder', action: 'created' }
+      }));
+
       return {
         type: 'reminder',
         success: true,
@@ -1331,6 +1349,11 @@ class AIAssistantService {
       }
 
       console.log('🛒 Shopping item created successfully:', data);
+
+      window.dispatchEvent(new CustomEvent('dashboard-data-updated', {
+        detail: { type: 'shopping', action: 'created' }
+      }));
+
       return {
         type: 'shopping',
         success: true,
@@ -1423,6 +1446,10 @@ class AIAssistantService {
       }
 
       console.log('✅ Task created successfully:', data);
+
+      window.dispatchEvent(new CustomEvent('dashboard-data-updated', {
+        detail: { type: 'task', action: 'created' }
+      }));
 
       let message = `✅ Task created: ${title}`;
       if (due_date) message += ` due ${due_date}`;

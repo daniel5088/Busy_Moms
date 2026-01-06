@@ -912,8 +912,11 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleCreateReminder(args: any) {
-    const message = `remind me to ${args.title} on ${args.date}${args.time ? ' at ' + args.time : ''}`;
-    return await aiAssistantService.processUserMessage(message, this.currentUserId!);
+    return await aiAssistantService.createReminder({
+      title: args.title,
+      date: args.date,
+      time: args.time
+    }, this.currentUserId!);
   }
 
   private async handleAddShoppingItem(args: any) {
