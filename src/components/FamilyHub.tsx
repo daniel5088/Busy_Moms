@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, FolderOpen, UserPlus, ShoppingBag, CheckSquare, Calendar } from 'lucide-react';
+import { Users, FolderOpen, UserPlus, ShoppingBag, CheckSquare } from 'lucide-react';
 import { NavigationHeader } from './NavigationHeader';
 // import { FamilyHubSkeleton } from './skeletons/FamilyHubSkeleton';
 import { SubScreen, Screen } from '../App';
@@ -57,7 +57,11 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
         subtitle="Manage your family's activities and organization"
       />
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 pt-16 pb-6">
+        <p className="text-center text-base text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+          Quick access to your family's shared spaces — folders, contacts, tasks, and shopping.
+        </p>
+
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           {familyFeatures.map((feature) => (
             <button
@@ -76,26 +80,6 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
               <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
             </button>
           ))}
-        </div>
-
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-rose-600 dark:text-rose-300" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Family Calendar</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                View all family events in one place
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => onNavigateToScreen('calendar')}
-            className="w-full px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors font-medium"
-          >
-            View Calendar
-          </button>
         </div>
       </div>
     </div>
