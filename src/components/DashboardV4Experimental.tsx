@@ -40,6 +40,17 @@ import {
 
 import { SubScreen } from '../App';
 
+const formatReminderDate = (dateString: string): string => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
 type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing' | 'disabled';
 
 interface DashboardProps {
@@ -709,11 +720,7 @@ export function DashboardV4Experimental({
                         {reminder.title}
                       </span>
                       <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {new Date(reminder.reminder_date).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
+                        {formatReminderDate(reminder.reminder_date)}
                         {reminder.reminder_time && ` at ${formatEventTime(reminder.reminder_time)}`}
                       </div>
                       {reminder.description && (

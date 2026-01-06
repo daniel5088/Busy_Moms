@@ -301,11 +301,30 @@ async function classifyMessage(
   calendarSummary: string,
 ): Promise<IntentResult> {
   const today = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const todayFormatted = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 
   console.log('🤖 Classifying message:', message);
 
   const systemPrompt = `You are a smart assistant that classifies user messages into actions.
 Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query|calendar_update|calendar_delete|reminder|shopping|shopping_query|shopping_update|shopping_delete|task|task_query|task_update|task_delete|family|family_query|family_update|family_delete|chat", "details": {...}}
+
+IMPORTANT DATE CONTEXT:
+- Today is ${today} (${todayFormatted})
+- Tomorrow is ${tomorrow}
+
+When parsing dates:
+- "jan 17", "january 17", "1/17" → "2026-01-17" (use the ACTUAL date, NOT relative terms)
+- "tomorrow" → "${tomorrow}"
+- "today" → "${today}"
+- Always return exact YYYY-MM-DD format
+- Never interpret specific calendar dates (like "jan 17") as relative terms (like "tomorrow")
+- If user says a specific month and day, use that exact date in YYYY-MM-DD format
 
 Current Calendar Context:
 ${calendarSummary}
