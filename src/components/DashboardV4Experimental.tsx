@@ -341,7 +341,7 @@ export function DashboardV4Experimental({
               className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-rose-400"
               aria-label="Close affirmation"
             >
-              <X className="w-5 h-5 text-white" />
+              <X className="w-5 h-5 text-white" aria-hidden="true" />
             </button>
 
             <div className="relative z-10">
@@ -388,7 +388,7 @@ export function DashboardV4Experimental({
               className="absolute top-4 right-4 z-20 w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
               aria-label="Close"
             >
-              <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <X className="w-5 h-5 text-gray-600 dark:text-gray-300" aria-hidden="true" />
             </button>
 
             <div className="text-center">
@@ -521,10 +521,11 @@ export function DashboardV4Experimental({
                   {todayEvents.length > 0 ? (
                     <div className="space-y-3">
                       {todayEvents.map((event) => (
-                        <div
+                        <button
                           key={event.id}
-                          className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
+                          className="w-full text-left p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
+                          aria-label={`${event.title}, ${formatEventTimeRange(event.start_time, event.end_time)}${event.location ? `, ${event.location}` : ''}. Tap to view calendar.`}
                         >
                           <div className="flex items-center space-x-1.5">
                             {' '}
@@ -532,7 +533,7 @@ export function DashboardV4Experimental({
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
                               {' '}
                               {/* //Alvaros - V4 */}
-                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
+                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" aria-hidden="true" />
                             </div>
                             <div className="flex-1 min-w-0 space-y-0.5">
                               {' '}
@@ -554,12 +555,12 @@ export function DashboardV4Experimental({
                               )}
                             </div>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                      <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                      <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" aria-hidden="true" />
                       <p className="text-gray-500 dark:text-gray-400 mb-3">
                         No events scheduled for today
                       </p>
@@ -587,10 +588,15 @@ export function DashboardV4Experimental({
                   {thisWeekEvents.length > 0 ? (
                     <div className="space-y-3">
                       {thisWeekEvents.map((event) => (
-                        <div
+                        <button
                           key={event.id}
-                          className="p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
+                          className="w-full text-left p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
+                          aria-label={`${event.title}, ${new Date(event.event_date).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}${event.start_time ? ` at ${formatEventTimeRange(event.start_time, event.end_time)}` : ''}${event.location ? `, ${event.location}` : ''}. Tap to view calendar.`}
                         >
                           <div className="flex items-center space-x-1.5">
                             {' '}
@@ -598,7 +604,7 @@ export function DashboardV4Experimental({
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
                               {' '}
                               {/* //Alvaros - V4 */}
-                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" />
+                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" aria-hidden="true" />
                             </div>
                             <div className="flex-1 min-w-0 space-y-0.5">
                               {' '}
@@ -626,12 +632,12 @@ export function DashboardV4Experimental({
                               )}
                             </div>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                      <Calendar className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                      <Calendar className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" aria-hidden="true" />
                       <p className="text-gray-500 dark:text-gray-400 mb-3">
                         No events scheduled for this week
                       </p>
@@ -671,7 +677,7 @@ export function DashboardV4Experimental({
                   <div
                     className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3`}
                   >
-                    <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} />
+                    <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} aria-hidden="true" />
                   </div>
                   <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base text-center`}>
                     {action.title}
@@ -696,6 +702,7 @@ export function DashboardV4Experimental({
                   >
                     <div
                       className={`w-2 h-2 rounded-full ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}
+                      aria-hidden="true"
                     ></div>
                     <div className="flex-1">
                       <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200 font-medium">
@@ -716,7 +723,7 @@ export function DashboardV4Experimental({
                       )}
                     </div>
                     {reminder.priority === 'high' && (
-                      <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-full text-xs font-medium">
+                      <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-full text-xs font-medium" aria-hidden="true">
                         High Priority
                       </span>
                     )}
@@ -725,7 +732,7 @@ export function DashboardV4Experimental({
               </div>
             ) : (
               <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 text-center">
-                <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" aria-hidden="true" />
                 <p className="text-gray-500 dark:text-gray-400">No reminders for today</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Ask Sarah to set a reminder for you</p>
               </div>
