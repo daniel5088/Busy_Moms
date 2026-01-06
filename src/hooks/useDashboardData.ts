@@ -83,14 +83,13 @@ export function useDashboardData(): DashboardData {
 
       setTasks(tasksData || []);
 
-      // Load upcoming reminders (next 7 days)
+      // Load upcoming reminders (all future reminders)
       const { data: remindersData, error: remindersError } = await supabase
         .from('reminders')
         .select('*')
         .eq('user_id', user.id)
         .eq('completed', false)
         .gte('reminder_date', today)
-        .lte('reminder_date', nextWeek)
         .order('reminder_date', { ascending: true })
         .order('reminder_time', { ascending: true });
 
