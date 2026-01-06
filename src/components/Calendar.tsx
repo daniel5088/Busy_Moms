@@ -1562,7 +1562,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
         {/* Camera/Gallery Selection Modal */}
         {showCamera && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full max-h-[60vh] sm:max-h-[520px] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Event from Image</h3>
