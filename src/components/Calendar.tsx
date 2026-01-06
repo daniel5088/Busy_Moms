@@ -1562,10 +1562,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
         {/* Camera/Gallery Selection Modal */}
         {showCamera && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Add Event from Image</h3>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full max-h-[60vh] sm:max-h-[520px] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Event from Image</h3>
                 <button
                   onClick={() => setShowCamera(false)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
@@ -1574,24 +1574,24 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                 </button>
               </div>
 
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Capture or select an image with event details
               </p>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={startCamera}
-                  className="aspect-square bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl font-medium hover:from-rose-600 hover:to-rose-700 transition flex flex-col items-center justify-center gap-3 shadow-lg"
+                  className="h-32 bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl font-medium hover:from-rose-600 hover:to-rose-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
                 >
-                  <Camera className="w-12 h-12" />
+                  <Camera className="w-8 h-8" />
                   <span className="text-sm">Camera</span>
                 </button>
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="aspect-square bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl font-medium hover:from-amber-600 hover:to-amber-700 transition flex flex-col items-center justify-center gap-3 shadow-lg"
+                  className="h-32 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl font-medium hover:from-amber-600 hover:to-amber-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
                 >
-                  <Image className="w-12 h-12" />
+                  <Image className="w-8 h-8" />
                   <span className="text-sm">Gallery</span>
                 </button>
               </div>
