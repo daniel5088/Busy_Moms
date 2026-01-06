@@ -69,6 +69,7 @@ function App() {
   const [showAffirmationSettings, setShowAffirmationSettings] = useState(false);
   const [openGiftFinder, setOpenGiftFinder] = useState(false);
   const [openCalendarCamera, setOpenCalendarCamera] = useState(false);
+  const [openRecipesTab, setOpenRecipesTab] = useState(false);
   const { toasts, removeToast } = useToast();
   const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -308,6 +309,8 @@ function App() {
                   <Shopping
                     openGiftFinder={openGiftFinder}
                     onGiftFinderOpened={() => setOpenGiftFinder(false)}
+                    openRecipesTab={openRecipesTab}
+                    onRecipesTabOpened={() => setOpenRecipesTab(false)}
                   />
                 </FeatureErrorBoundary>
               )}
@@ -383,6 +386,10 @@ function App() {
                     onNavigateToCalendarCamera={() => {
                       setCurrentScreen('calendar');
                       setOpenCalendarCamera(true);
+                    }}
+                    onNavigateToRecipes={() => {
+                      setCurrentSubScreen('shopping');
+                      setOpenRecipesTab(true);
                     }}
                   />
                 </FeatureErrorBoundary>

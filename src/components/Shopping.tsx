@@ -34,9 +34,11 @@ import { InstacartButton } from './InstacartButton';
 interface ShoppingProps {
   openGiftFinder?: boolean;
   onGiftFinderOpened?: () => void;
+  openRecipesTab?: boolean;
+  onRecipesTabOpened?: () => void;
 }
 
-export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: ShoppingProps) {
+export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecipesTab = false, onRecipesTabOpened }: ShoppingProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('list');
   const [showShoppingForm, setShowShoppingForm] = useState(false);
@@ -73,6 +75,16 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened }: Shoppin
       }
     }
   }, [openGiftFinder, onGiftFinderOpened]);
+
+  // Auto-open recipes tab if prop is set
+  useEffect(() => {
+    if (openRecipesTab) {
+      setActiveTab('recipes');
+      if (onRecipesTabOpened) {
+        onRecipesTabOpened();
+      }
+    }
+  }, [openRecipesTab, onRecipesTabOpened]);
 
   // TEMP: Safety fallback - redirect to 'list' if 'auto' tab is selected (hidden feature)
   useEffect(() => {

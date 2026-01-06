@@ -48,6 +48,7 @@ interface DashboardProps {
   onVoiceChatOpen?: () => void;
   onOpenAffirmationSettings?: () => void;
   onNavigateToCalendarCamera?: () => void;
+  onNavigateToRecipes?: () => void;
 }
 
 export function DashboardV4Experimental({
@@ -56,6 +57,7 @@ export function DashboardV4Experimental({
   onVoiceChatOpen,
   onOpenAffirmationSettings,
   onNavigateToCalendarCamera,
+  onNavigateToRecipes,
 }: DashboardProps) {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
@@ -281,7 +283,7 @@ export function DashboardV4Experimental({
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('shopping'),
+      action: () => onNavigateToRecipes?.(),
     },
   ];
 
