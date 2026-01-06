@@ -9,6 +9,8 @@ import {
   LogOut,
   User,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { WhatsAppIntegration } from './WhatsAppIntegration';
 import { DailyAffirmations } from './DailyAffirmations';
@@ -37,7 +39,7 @@ interface DashboardProps {
 export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }: DashboardProps) {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
-  const { events, todayEvents, tasks, reminders, loading, reload } = useDashboardData();
+  const { events, todayEvents, tasks, reminders, loading, reload, setReminderWeekOffset, reminderWeekOffset } = useDashboardData();
 
   const [isWhatsAppOpen, setIsWhatsAppOpen] = React.useState(false);
   const [showAffirmations, setShowAffirmations] = React.useState(false);
@@ -65,6 +67,14 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
     } catch (error) {
       console.error("Error loading today's affirmation:", error);
     }
+  };
+
+  const getWeekLabel = (offset: number) => {
+    if (offset === 0) return 'This Week';
+    if (offset === 1) return 'Next Week';
+    if (offset === -1) return 'Last Week';
+    if (offset > 0) return `${offset} Weeks Ahead`;
+    return `${Math.abs(offset)} Weeks Ago`;
   };
 
   const handleSignOut = async () => {
@@ -337,9 +347,30 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
 
         {/* Smart Reminders */}
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
-            Smart Reminders
-          </h2>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
+              Smart Reminders
+            </h2>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setReminderWeekOffset(reminderWeekOffset - 1)}
+                className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                title="Previous week"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+              </button>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[100px] text-center">
+                {getWeekLabel(reminderWeekOffset)}
+              </span>
+              <button
+                onClick={() => setReminderWeekOffset(reminderWeekOffset + 1)}
+                className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                title="Next week"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+              </button>
+            </div>
+          </div>
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-yellow-500"></div>
@@ -383,7 +414,9 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
           ) : (
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 text-center">
               <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400 mb-3">No upcoming reminders</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-3">
+                No reminders for {getWeekLabel(reminderWeekOffset).toLowerCase()}
+              </p>
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 Ask Sarah to set reminders for you!
               </p>

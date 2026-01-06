@@ -12,6 +12,8 @@ interface DashboardData {
   loading: boolean;
   error: Error | null;
   reload: () => Promise<void>;
+  setReminderWeekOffset: (offset: number) => void;
+  reminderWeekOffset: number;
 }
 
 /**
@@ -27,6 +29,7 @@ export function useDashboardData(): DashboardData {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [reminderWeekOffset, setReminderWeekOffset] = useState(0);
 
   const loadDashboardData = useCallback(async () => {
     if (!user?.id) return;
@@ -83,13 +86,19 @@ export function useDashboardData(): DashboardData {
 
       setTasks(tasksData || []);
 
-      // Load upcoming reminders (all future reminders)
+      // Load reminders for the selected week
+      const weekStartOffset = reminderWeekOffset * 7;
+      const weekEndOffset = weekStartOffset + 6;
+      const weekStart = getDateInDays(weekStartOffset);
+      const weekEnd = getDateInDays(weekEndOffset);
+
       const { data: remindersData, error: remindersError } = await supabase
         .from('reminders')
         .select('*')
         .eq('user_id', user.id)
         .eq('completed', false)
-        .gte('reminder_date', today)
+        .gte('reminder_date', weekStart)
+        .lte('reminder_date', weekEnd)
         .order('reminder_date', { ascending: true })
         .order('reminder_time', { ascending: true });
 
@@ -102,7 +111,7 @@ export function useDashboardData(): DashboardData {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, reminderWeekOffset]);
 
   useEffect(() => {
     if (user) {
@@ -132,5 +141,7 @@ export function useDashboardData(): DashboardData {
     loading,
     error,
     reload: loadDashboardData,
+    setReminderWeekOffset,
+    reminderWeekOffset,
   };
 }
