@@ -467,7 +467,7 @@ Deno.serve(async (req: Request) => {
         try {
           const { pageSize, pageToken } = body ?? {};
 
-          let endpoint = '/people/me/connections?personFields=names,emailAddresses,phoneNumbers,photos,metadata';
+          let endpoint = '/people/me/connections?personFields=names,emailAddresses,phoneNumbers,photos,metadata,organizations,biographies';
 
           if (pageSize) endpoint += `&pageSize=${Math.min(Number(pageSize), 1000)}`;
           if (pageToken) endpoint += `&pageToken=${encodeURIComponent(pageToken)}`;
@@ -497,7 +497,7 @@ Deno.serve(async (req: Request) => {
             return jsonResponse({ error: 'Missing or invalid resourceName' }, 400, correlationId);
           }
 
-          const endpoint = `/${resourceName}?personFields=names,emailAddresses,phoneNumbers,photos,metadata`;
+          const endpoint = `/${resourceName}?personFields=names,emailAddresses,phoneNumbers,photos,metadata,organizations,biographies`;
 
           console.log('👤 Fetching Google Contact', { resourceName, correlationId });
           const contact = await makeGooglePeopleRequest(accessToken, endpoint, {}, correlationId);
@@ -528,7 +528,7 @@ Deno.serve(async (req: Request) => {
         try {
           const createdContact = await makeGooglePeopleRequest(
             accessToken,
-            '/people:createContact?personFields=names,emailAddresses,phoneNumbers,metadata',
+            '/people:createContact?personFields=names,emailAddresses,phoneNumbers,metadata,organizations,biographies',
             {
               method: 'POST',
               body: JSON.stringify(contact),

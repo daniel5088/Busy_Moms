@@ -18,6 +18,7 @@ import { ContactForm } from './forms/ContactForm';
 import { Contact, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { googleContactsService, GoogleContact } from '../services/googleContacts';
+import { getCategoryFromGoogleContact } from '../utils/contactCategorizer';
 
 export function Contacts() {
   const { user } = useAuth();
@@ -113,12 +114,17 @@ export function Contacts() {
     const email = googleContact.emailAddresses?.[0]?.value || null;
     const phone = googleContact.phoneNumbers?.[0]?.value || null;
 
+    const category = getCategoryFromGoogleContact(googleContact);
+
+    const organizations = (googleContact as any).organizations || [];
+    const role = organizations[0]?.title || 'Contact';
+
     return {
       name,
       email,
       phone,
-      role: 'Contact',
-      category: 'other',
+      role,
+      category,
       google_resource_name: googleContact.resourceName,
       google_etag: googleContact.etag,
       sync_status: 'synced',
@@ -247,6 +253,12 @@ export function Contacts() {
       count: contacts.filter((c) => c.category === 'doctor').length,
     },
     { id: 'tutor', label: 'Tutors', count: contacts.filter((c) => c.category === 'tutor').length },
+    {
+      id: 'teacher',
+      label: 'Teachers',
+      count: contacts.filter((c) => c.category === 'teacher').length,
+    },
+    { id: 'other', label: 'Other', count: contacts.filter((c) => c.category === 'other').length },
   ];
 
   const filteredContacts =
