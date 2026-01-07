@@ -20,7 +20,7 @@ import { useProfile } from '../hooks/useProfile';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { Affirmation } from '../lib/supabase';
 import { affirmationService } from '../services/affirmationService';
-import { formatEventTime } from '../utils/timeFormatters';
+import { formatEventTime, formatDate } from '../utils/timeFormatters';
 import {
   DashboardPopup,
   EventsList,
@@ -390,11 +390,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                       {reminder.title}
                     </span>
                     <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {new Date(reminder.reminder_date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                      {formatDate(reminder.reminder_date)}
                       {reminder.reminder_time && ` at ${formatEventTime(reminder.reminder_time)}`}
                     </div>
                     {reminder.description && (

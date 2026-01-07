@@ -7,6 +7,7 @@ import {
   AffiliateSearchCriteria,
 } from '../lib/supabase';
 import { affiliateMatrixService } from '../services/affiliateMatrixService';
+import { formatDate } from '../utils/timeFormatters';
 
 interface GiftFinderFormProps {
   familyMembers: FamilyMember[];
@@ -556,7 +557,7 @@ export function GiftFinderForm({
                 <option value="">No event</option>
                 {upcomingEvents.map((event) => (
                   <option key={event.id} value={event.id}>
-                    {event.title} - {new Date(event.event_date).toLocaleDateString()}
+                    {event.title} - {formatDate(event.event_date)}
                   </option>
                 ))}
               </select>
