@@ -1,0 +1,128 @@
+# Busy Moms Mobile App
+
+React Native mobile app for Busy Moms, built with Expo and TypeScript.
+
+## Features
+
+- 📱 **Dashboard**: View today's schedule, tasks, and reminders
+- 📅 **Calendar**: Manage events and appointments
+- 🛒 **Shopping**: Create and manage shopping lists
+- 👨‍👩‍👧‍👦 **Family**: Track family members and their details
+- ⚙️ **Settings**: Manage account and preferences
+
+## Tech Stack
+
+- **Expo SDK 54** - React Native framework
+- **expo-router** - File-based navigation
+- **Supabase** - Backend and authentication
+- **TypeScript** - Type safety
+- **lucide-react-native** - Icons
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Create a `.env` file with your Supabase credentials:
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+3. Start the development server:
+   ```bash
+   npm start
+   ```
+
+4. Run on your device:
+   - **iOS**: Press `i` or scan QR code with Camera app
+   - **Android**: Press `a` or scan QR code with Expo Go app
+   - **Web**: Press `w`
+
+## Project Structure
+
+```
+BusyMoms-mobile/
+├── app/                    # App screens (expo-router)
+│   ├── (auth)/            # Authentication screens
+│   ├── (tabs)/            # Main tab screens
+│   ├── _layout.tsx        # Root layout
+│   └── index.tsx          # Entry point
+├── components/            # Reusable components
+├── hooks/                 # Custom React hooks
+├── lib/                   # Libraries (Supabase client)
+├── utils/                 # Utility functions
+└── constants/             # App constants
+```
+
+## Key Conversions from Web App
+
+### HTML → React Native Components
+- `div` → `View`
+- `p`, `span`, `h1-h6` → `Text`
+- `button` → `Pressable`
+- `input` → `TextInput`
+- `img` → `Image`
+
+### Styling
+- All styles converted to `StyleSheet.create()`
+- Flexbox is default (no need for `display: flex`)
+- Numbers without units (e.g., `padding: 16` not `16px`)
+- Pressable for touch interactions with `pressed` state
+
+### Navigation
+- File-based routing with expo-router
+- Tabs for main navigation
+- Stack navigation for screens
+
+## Testing
+
+Test the app using Expo Go:
+
+```bash
+npm start
+```
+
+Then scan the QR code with:
+- iOS: Camera app
+- Android: Expo Go app
+
+## Building
+
+For production builds:
+
+```bash
+# iOS
+npm run ios
+
+# Android
+npm run android
+```
+
+## Environment Variables
+
+Configure in `app.config.js`:
+- `EXPO_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+
+## Authentication
+
+The app uses Supabase authentication with email/password:
+- Sign up flow with email verification
+- Sign in with existing account
+- Secure session management with AsyncStorage
+
+## Database
+
+All data is synced with Supabase:
+- Events (calendar)
+- Shopping lists
+- Family members
+- Reminders
+- User profiles
+
+## License
+
+Private - All rights reserved
