@@ -772,6 +772,7 @@ export function DashboardV4Experimental({
                   <div
                     key={reminder.id}
                     className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer"
+                    onClick={() => onNavigateToEvent?.(reminder.reminder_date)}
                   >
                     <div
                       className={`w-2 h-2 rounded-full ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}
