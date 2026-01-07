@@ -63,6 +63,13 @@ interface IntentResult {
 }
 
 /** ---- Shared helpers ---------------------------------------------------- */
+function getLocalISODate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function toISODate(input?: string | number | Date | unknown): string | null {
   if (!input) return null;
   const s = String(input).trim();
@@ -87,18 +94,18 @@ function toISODate(input?: string | number | Date | unknown): string | null {
   // Natural words "today" / "tomorrow"
   const lower = s.toLowerCase();
   if (lower === 'today') {
-    return new Date().toISOString().split('T')[0];
+    return getLocalISODate(new Date());
   }
   if (lower === 'tomorrow') {
     const d = new Date();
     d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
+    return getLocalISODate(d);
   }
 
-  // Try parsing Date(...) and format to YYYY-MM-DD
+  // Try parsing Date(...) and format to YYYY-MM-DD using local time
   const d = new Date(s);
   if (!Number.isNaN(d.getTime())) {
-    return d.toISOString().split('T')[0];
+    return getLocalISODate(d);
   }
 
   return null;
@@ -300,10 +307,13 @@ async function classifyMessage(
   message: string,
   calendarSummary: string,
 ): Promise<IntentResult> {
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-  const currentYear = new Date().getFullYear();
-  const todayFormatted = new Date().toLocaleDateString('en-US', {
+  const nowLocal = new Date();
+  const today = getLocalISODate(nowLocal);
+  const tomorrowDate = new Date(nowLocal);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = getLocalISODate(tomorrowDate);
+  const currentYear = nowLocal.getFullYear();
+  const todayFormatted = nowLocal.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
