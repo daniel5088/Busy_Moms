@@ -165,8 +165,6 @@ export function DashboardV4Experimental({
       if (user?.id && affirmation) {
         const dueSlot = findDueSlot(settings, user.id);
         if (dueSlot) {
-          const todayStr = new Date().toISOString().split('T')[0];
-          markAsAutoShown(user.id, todayStr, dueSlot.slotIndex);
           setAutoOpenedSlotIndex(dueSlot.slotIndex);
           handleOpenAffirmation(true);
         }
