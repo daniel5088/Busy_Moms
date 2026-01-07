@@ -334,7 +334,7 @@ export function Contacts() {
                 className="flex items-center space-x-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync'}</span>
+                <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync to Google'}</span>
               </button>
             )}
             <button
