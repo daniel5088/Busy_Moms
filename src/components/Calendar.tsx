@@ -144,9 +144,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [giftEventTitle, setGiftEventTitle] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<Set<number>>(new Set());
 
-  // Ref for events list container to enable auto-scrolling
-  const eventsListRef = useRef<HTMLDivElement>(null);
-
   // Handle initial selected date from dashboard navigation
   useEffect(() => {
     if (initialSelectedDate) {
@@ -154,13 +151,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       setSelectedDate(date);
       setCurrentDate(date);
       onDateSelected?.();
-
-      // Scroll events list to top after a short delay to ensure rendering
-      setTimeout(() => {
-        if (eventsListRef.current) {
-          eventsListRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }, 100);
     }
   }, [initialSelectedDate, onDateSelected]);
 
@@ -1191,7 +1181,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   {selectedDate && isSameDay(selectedDate, new Date()) ? 'Today' : 'Selected Day'}
                 </h3>
 
-                <div ref={eventsListRef} className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto">
+                <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto">
                   {itemsForSelectedDate.events.length === 0 &&
                   itemsForSelectedDate.reminders.length === 0 &&
                   (itemsForSelectedDate.googleEvents?.length || 0) === 0 ? (
