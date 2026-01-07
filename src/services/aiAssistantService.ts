@@ -170,6 +170,19 @@ function coerceInt(n: unknown, fallback: number | null = null): number | null {
   return Number.isFinite(v) ? v : fallback;
 }
 
+function formatTimeForDisplay(time: string): string {
+  try {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours, 10);
+    const minute = parseInt(minutes, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:${String(minute).padStart(2, '0')} ${ampm}`;
+  } catch {
+    return time;
+  }
+}
+
 /**
  * Very simple parser for sentences like:
  * "add chicken in my instacart"
@@ -425,22 +438,24 @@ function fallbackClassify(message: string): IntentResult {
 
   // Reminder patterns
   if (/\bremind\s+me\b/.test(lower) || /\bset\s+(?:a\s+)?reminder\b/.test(lower)) {
-    const titleMatch = lower.match(
-      /remind\s+me\s+to\s+([^.!?]+?)(?:\s+(?:on|at|by|for|in)\s+|\s*$)|set\s+(?:a\s+)?reminder\s+(?:to\s+)?([^.!?]+?)(?:\s+(?:on|at|by|for|in)\s+|\s*$)/,
+    // Extract date first
+    const dateMatch = lower.match(
+      /\b(today|tomorrow|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?|\d{4}-\d{2}-\d{2})\b/,
     );
-    const title =
-      titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
+    const date = toISODate(dateMatch?.[0]);
 
-    const date = toISODate(
-      lower.match(
-        /\b(today|tomorrow|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?|\d{4}-\d{2}-\d{2})\b/,
-      )?.[0],
-    );
-
+    // Extract time
     const timeMatch = lower.match(
-      /(?:at|by)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm))|(?:at|by)\s+(\d{1,2}:\d{2})/i,
+      /(?:at|by)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)|\d{1,2}:\d{2})/i,
     );
-    const time = toISOTime(timeMatch?.[1] || timeMatch?.[2]);
+    const time = toISOTime(timeMatch?.[1]);
+
+    // Extract title by removing date and time phrases
+    let titleText = lower;
+    titleText = titleText.replace(/^remind\s+me\s+to\s+/, '');
+    titleText = titleText.replace(/^set\s+(?:a\s+)?reminder\s+(?:to\s+)?/, '');
+    titleText = titleText.replace(/\s+(today|tomorrow|on|at|by|for|in)\s+.*$/, '');
+    const title = titleText.trim() || message;
 
     return { type: 'reminder', details: { title, date, time } };
   }
@@ -1271,10 +1286,15 @@ class AIAssistantService {
     userId: UUID,
   ): Promise<AIAction> {
     console.log('⏰ Creating reminder with details:', details);
+    console.log('⏰ Raw date from AI:', details.date);
+    console.log('⏰ Raw time from AI:', details.time);
 
     const title = String(details.title ?? 'Reminder');
     const date = toISODate(details.date);
     const time = toISOTime(details.time);
+
+    console.log('⏰ Parsed date:', date);
+    console.log('⏰ Parsed time:', time);
 
     if (!date) {
       return {
@@ -1320,12 +1340,11 @@ class AIAssistantService {
         detail: { type: 'reminder', action: 'created' }
       }));
 
+      const timeDisplay = time ? ` at ${formatTimeForDisplay(time)}` : '';
       return {
         type: 'reminder',
         success: true,
-        message: `✅ Reminder set for ${date}${
-          time ? ' at ' + time.slice(0, 5) : ''
-        }: ${title}`,
+        message: `✅ Reminder set for ${date}${timeDisplay}: ${title}`,
         data,
       };
     } catch (error) {
