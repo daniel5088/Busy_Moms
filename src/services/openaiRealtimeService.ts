@@ -382,12 +382,17 @@ export class OpenAIRealtimeService extends Emitter {
 
   private configureSession() {
     if (!this.dc || this.dc.readyState !== 'open') {
-      console.warn('⚠️ Cannot configure session - data channel not ready');
+      console.error('❌ Cannot configure session - data channel not ready', {
+        dcExists: !!this.dc,
+        readyState: this.dc?.readyState
+      });
       return;
     }
 
     if (this.sessionConfigured) {
-      console.log('⚙️ Session already configured, skipping');
+      console.error('❌ Session already configured, SHOULD NOT HAPPEN!', {
+        sessionConfigured: this.sessionConfigured
+      });
       return;
     }
 
@@ -433,7 +438,8 @@ export class OpenAIRealtimeService extends Emitter {
     try {
       this.dc.send(JSON.stringify(sessionConfig));
       this.sessionConfigured = true;
-      console.log('✅ Session configuration message sent successfully');
+      console.log('✅✅✅ Session configuration message SENT successfully');
+      console.log('⏳ Waiting for session.updated event from OpenAI...');
     } catch (error) {
       console.error('❌ Failed to send session configuration:', error);
       this.sessionConfigured = false;
@@ -565,6 +571,10 @@ export class OpenAIRealtimeService extends Emitter {
   async connectRealtime() {
     if (this.pc) return;
 
+    // Reset session state for new connection
+    this.sessionConfigured = false;
+    console.log('🔄 Starting new realtime connection - session configuration reset');
+
     // Acquire ephemeral key from your backend (Edge Function/Server), trying multiple candidates.
     const tokenJson = await this.fetchJsonFirst({ userId: this.currentUserId || 'anonymous', roomId: 'default' });
     const EPHEMERAL_KEY = this.extractEphemeralKey(tokenJson);
@@ -633,7 +643,9 @@ export class OpenAIRealtimeService extends Emitter {
     this.stopRecording();
     this.stopWakeWordDetection();
     this.connected = false;
+    this.sessionConfigured = false;
     this.audioEl = undefined;
+    console.log('🔌 Disconnected and reset session state');
   }
 
   async processUserText(message: string) {
