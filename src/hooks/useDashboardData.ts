@@ -148,19 +148,12 @@ export function useDashboardData(): DashboardData {
     }
   }, [user, loadDashboardData]);
 
-  // Initial load of reminders
+  // Reload reminders when offset changes or initially
   useEffect(() => {
     if (user) {
       loadReminders();
     }
-  }, [user]);
-
-  // Separate effect to reload only reminders when offset changes
-  useEffect(() => {
-    if (user && reminderWeekOffset !== 0) {
-      loadReminders();
-    }
-  }, [reminderWeekOffset]);
+  }, [user, reminderWeekOffset]);
 
   useEffect(() => {
     const handleDataUpdate = () => {
