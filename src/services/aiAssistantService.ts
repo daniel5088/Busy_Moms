@@ -338,6 +338,13 @@ When parsing dates:
 - Never interpret specific calendar dates (like "jan 17") as relative terms (like "tomorrow")
 - If user says a specific month and day, use that exact date in ${currentYear} in YYYY-MM-DD format
 
+When parsing times:
+- User says "6pm" or "6 pm" → return "6pm" (keep natural format)
+- User says "6:30pm" or "6:30 pm" → return "6:30pm" (keep natural format)
+- User says "18:00" → return "18:00" (keep 24-hour format)
+- ALWAYS extract and include time when user specifies it
+- If no time specified, omit the time field entirely
+
 Current Calendar Context:
 ${calendarSummary}
 
@@ -351,16 +358,21 @@ For family queries: {"type": "family_query", "details": {"query_type": "all|sear
 For family updates: {"type": "family_update", "details": {"search_term": "name to find", "updates": {"age": number, "school": "school name", "grade": "grade level"}}}
 For family deletion: {"type": "family_delete", "details": {"search_term": "name to delete"}}
 
-For reminders: {"type": "reminder", "details": {"title": "reminder text", "date": "YYYY-MM-DD", "time": "HH:MM:SS"}}
-For calendar creation: {"type": "calendar", "details": {"title": "event name", "date": "YYYY-MM-DD", "time": "HH:MM:SS", "location": "place"}}
+For reminders: {"type": "reminder", "details": {"title": "reminder text", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm"}}
+For calendar creation: {"type": "calendar", "details": {"title": "event name", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm", "location": "place"}}
 For calendar queries: {"type": "calendar_query", "details": {"query_type": "today|week|availability|search|next", "date": "YYYY-MM-DD", "search_term": "keyword"}}
 For calendar updates: {"type": "calendar_update", "details": {"search_term": "event to find", "updates": {"date": "new date", "time": "new time", "location": "new location"}}}
 For calendar deletion: {"type": "calendar_delete", "details": {"search_term": "event to delete", "date": "YYYY-MM-DD"}}
-For task creation: {"type": "task", "details": {"title": "task name", "category": "chores|homework|sports|music|health|social|other", "priority": "low|medium|high", "assigned_to": "person name", "date": "YYYY-MM-DD", "time": "HH:MM:SS"}}
+For task creation: {"type": "task", "details": {"title": "task name", "category": "chores|homework|sports|music|health|social|other", "priority": "low|medium|high", "assigned_to": "person name", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm"}}
 For task queries: {"type": "task_query", "details": {"query_type": "all|pending|in_progress|completed|search|assigned_to", "search_term": "keyword", "assigned_to": "person name"}}
 For task updates: {"type": "task_update", "details": {"search_term": "task to find", "updates": {"status": "pending|in_progress|completed|cancelled", "priority": "low|medium|high", "date": "new date"}}}
 For task deletion: {"type": "task_delete", "details": {"search_term": "task to delete"}}
-For chat: {"type": "chat", "details": {"query": "user question"}}`;
+For chat: {"type": "chat", "details": {"query": "user question"}}
+
+EXAMPLES:
+"remind me to refill the ice tomorrow at 6pm" → {"type": "reminder", "details": {"title": "refill the ice", "date": "${tomorrow}", "time": "6pm"}}
+"add dentist appointment on jan 20 at 2:30pm" → {"type": "calendar", "details": {"title": "dentist appointment", "date": "${currentYear}-01-20", "time": "2:30pm"}}
+"remind me to call mom tomorrow" → {"type": "reminder", "details": {"title": "call mom", "date": "${tomorrow}"}}`;
 
   try {
     const response = await openaiService.chat([
