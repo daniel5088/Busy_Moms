@@ -115,6 +115,11 @@ function toISOTime(input?: string | number | Date | unknown): string | null {
   if (!input) return null;
   const s = String(input).trim();
 
+  // "14:30:00" - already in ISO format
+  if (/^\d{2}:\d{2}:\d{2}$/.test(s)) {
+    return s;
+  }
+
   // "14:30"
   const m = s.match(/^(\d{2}):(\d{2})$/);
   if (m) {
@@ -442,7 +447,9 @@ function fallbackClassify(message: string): IntentResult {
     const dateMatch = lower.match(
       /\b(today|tomorrow|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?|\d{4}-\d{2}-\d{2})\b/,
     );
+    console.log('📅 Fallback date match:', dateMatch?.[0]);
     const date = toISODate(dateMatch?.[0]);
+    console.log('📅 Fallback parsed date:', date);
 
     // Extract time
     const timeMatch = lower.match(
