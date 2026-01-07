@@ -31,6 +31,55 @@ export function useDashboardData(): DashboardData {
   const [error, setError] = useState<Error | null>(null);
   const [reminderWeekOffset, setReminderWeekOffset] = useState(0);
 
+  const loadReminders = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const today = getTodayISO();
+      const nextWeek = getDateInDays(7);
+
+      // Load reminders based on offset
+      // 0 = today, 1 = tomorrow, 2+ = this week and beyond
+      let reminderStart: string;
+      let reminderEnd: string;
+
+      if (reminderWeekOffset === 0) {
+        // Today only
+        reminderStart = today;
+        reminderEnd = today;
+      } else if (reminderWeekOffset === 1) {
+        // Tomorrow only
+        reminderStart = getDateInDays(1);
+        reminderEnd = getDateInDays(1);
+      } else if (reminderWeekOffset === 2) {
+        // This week (starting from day after tomorrow through end of week)
+        reminderStart = getDateInDays(2);
+        reminderEnd = nextWeek;
+      } else {
+        // Future weeks
+        const weeksAhead = reminderWeekOffset - 2;
+        reminderStart = getDateInDays(7 + (weeksAhead - 1) * 7);
+        reminderEnd = getDateInDays(7 + weeksAhead * 7 - 1);
+      }
+
+      const { data: remindersData, error: remindersError } = await supabase
+        .from('reminders')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('completed', false)
+        .gte('reminder_date', reminderStart)
+        .lte('reminder_date', reminderEnd)
+        .order('reminder_date', { ascending: true })
+        .order('reminder_time', { ascending: true });
+
+      if (remindersError) throw remindersError;
+
+      setReminders(remindersData || []);
+    } catch (err: any) {
+      console.error('Error loading reminders:', err);
+    }
+  }, [user?.id, reminderWeekOffset]);
+
   const loadDashboardData = useCallback(async () => {
     if (!user?.id) return;
 
@@ -85,57 +134,26 @@ export function useDashboardData(): DashboardData {
       if (tasksError) throw tasksError;
 
       setTasks(tasksData || []);
-
-      // Load reminders based on offset
-      // 0 = today, 1 = tomorrow, 2+ = this week and beyond
-      let reminderStart: string;
-      let reminderEnd: string;
-
-      if (reminderWeekOffset === 0) {
-        // Today only
-        reminderStart = today;
-        reminderEnd = today;
-      } else if (reminderWeekOffset === 1) {
-        // Tomorrow only
-        reminderStart = getDateInDays(1);
-        reminderEnd = getDateInDays(1);
-      } else if (reminderWeekOffset === 2) {
-        // This week (starting from day after tomorrow through end of week)
-        reminderStart = getDateInDays(2);
-        reminderEnd = nextWeek;
-      } else {
-        // Future weeks
-        const weeksAhead = reminderWeekOffset - 2;
-        reminderStart = getDateInDays(7 + (weeksAhead - 1) * 7);
-        reminderEnd = getDateInDays(7 + weeksAhead * 7 - 1);
-      }
-
-      const { data: remindersData, error: remindersError } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('completed', false)
-        .gte('reminder_date', reminderStart)
-        .lte('reminder_date', reminderEnd)
-        .order('reminder_date', { ascending: true })
-        .order('reminder_time', { ascending: true });
-
-      if (remindersError) throw remindersError;
-
-      setReminders(remindersData || []);
     } catch (err: any) {
       console.error('Error loading dashboard data:', err);
       setError(err);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, reminderWeekOffset]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
       loadDashboardData();
     }
   }, [user, loadDashboardData]);
+
+  // Reload reminders when offset changes or initially
+  useEffect(() => {
+    if (user) {
+      loadReminders();
+    }
+  }, [user, reminderWeekOffset]);
 
   useEffect(() => {
     const handleDataUpdate = () => {
@@ -148,7 +166,7 @@ export function useDashboardData(): DashboardData {
     return () => {
       window.removeEventListener('dashboard-data-updated', handleDataUpdate);
     };
-  }, [loadDashboardData]);
+  }, []);
 
   return {
     events,

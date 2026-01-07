@@ -734,7 +734,11 @@ export function DashboardV4Experimental({
               </h2>
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => setReminderWeekOffset(Math.max(0, reminderWeekOffset - 1))}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setReminderWeekOffset(Math.max(0, reminderWeekOffset - 1));
+                  }}
                   disabled={reminderWeekOffset === 0}
                   className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:dark:hover:bg-gray-700"
                   title="Previous period"
@@ -745,7 +749,11 @@ export function DashboardV4Experimental({
                   {getWeekLabel(reminderWeekOffset)}
                 </span>
                 <button
-                  onClick={() => setReminderWeekOffset(reminderWeekOffset + 1)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setReminderWeekOffset(reminderWeekOffset + 1);
+                  }}
                   className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   title="Next period"
                 >

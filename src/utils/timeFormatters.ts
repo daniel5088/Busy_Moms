@@ -56,16 +56,25 @@ export function formatDate(
 }
 
 /**
- * Gets today's date in ISO format (YYYY-MM-DD)
+ * Gets today's date in ISO format (YYYY-MM-DD) using local timezone
  */
 export function getTodayISO(): string {
-  return new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**
- * Gets a date N days from now in ISO format (YYYY-MM-DD)
+ * Gets a date N days from now in ISO format (YYYY-MM-DD) using local timezone
  * @param days - Number of days to add
  */
 export function getDateInDays(days: number): string {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const now = new Date();
+  now.setDate(now.getDate() + days);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

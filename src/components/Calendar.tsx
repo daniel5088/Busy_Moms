@@ -51,6 +51,12 @@ const toLocalISODate = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+// Parse YYYY-MM-DD string to local date without timezone shift
+const parseLocalDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 const WEEKDAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const formatTimeRange = (startTime?: string | null, endTime?: string | null) => {
@@ -1367,7 +1373,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                         <CalendarIcon className="w-4 h-4" />
-                        <span>{new Date(selectedEvent.event_date).toLocaleDateString()}</span>
+                        <span>{parseLocalDate(selectedEvent.event_date).toLocaleDateString()}</span>
                       </div>
 
                       {(selectedEvent.start_time || selectedEvent.end_time) && (
@@ -1545,7 +1551,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                         <CalendarIcon className="w-4 h-4" />
-                        <span>{new Date(selectedReminder.reminder_date).toLocaleDateString()}</span>
+                        <span>{parseLocalDate(selectedReminder.reminder_date).toLocaleDateString()}</span>
                       </div>
 
                       {selectedReminder.reminder_time && (
