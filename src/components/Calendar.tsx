@@ -96,9 +96,11 @@ interface CalendarProps {
   onNavigateToGiftFinder?: () => void;
   openCalendarCamera?: boolean;
   onCalendarCameraOpened?: () => void;
+  initialSelectedDate?: string | null;
+  onDateSelected?: () => void;
 }
 
-export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCalendarCamera, onCalendarCameraOpened }: CalendarProps) {
+export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCalendarCamera, onCalendarCameraOpened, initialSelectedDate, onDateSelected }: CalendarProps) {
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
@@ -140,6 +142,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [showGiftSuggestion, setShowGiftSuggestion] = useState(false);
   const [giftEventTitle, setGiftEventTitle] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<Set<number>>(new Set());
+
+  // Handle initial selected date from dashboard navigation
+  useEffect(() => {
+    if (initialSelectedDate) {
+      const date = parseLocalDate(initialSelectedDate);
+      setSelectedDate(date);
+      setCurrentDate(date);
+      onDateSelected?.();
+    }
+  }, [initialSelectedDate, onDateSelected]);
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);

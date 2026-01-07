@@ -70,6 +70,7 @@ function App() {
   const [openGiftFinder, setOpenGiftFinder] = useState(false);
   const [openCalendarCamera, setOpenCalendarCamera] = useState(false);
   const [openRecipesTab, setOpenRecipesTab] = useState(false);
+  const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
   const { toasts, removeToast } = useToast();
   const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -391,6 +392,10 @@ function App() {
                       setCurrentSubScreen('shopping');
                       setOpenRecipesTab(true);
                     }}
+                    onNavigateToEvent={(eventDate: string) => {
+                      setSelectedEventDate(eventDate);
+                      setCurrentScreen('calendar');
+                    }}
                   />
                 </FeatureErrorBoundary>
               )}
@@ -404,6 +409,8 @@ function App() {
                     }}
                     openCalendarCamera={openCalendarCamera}
                     onCalendarCameraOpened={() => setOpenCalendarCamera(false)}
+                    initialSelectedDate={selectedEventDate}
+                    onDateSelected={() => setSelectedEventDate(null)}
                   />
                 </FeatureErrorBoundary>
               )}
