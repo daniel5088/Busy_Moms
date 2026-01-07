@@ -1,6 +1,6 @@
 export type ContactCategory = 'babysitter' | 'coach' | 'doctor' | 'tutor' | 'teacher' | 'other';
 
-const CATEGORY_KEYWORDS: Record<ContactCategory, string[]> = {
+const CATEGORY_KEYWORDS: Record<ContactCategory, (string | RegExp)[]> = {
   babysitter: [
     'babysitter',
     'babysitting',
@@ -109,8 +109,14 @@ export function categorizeContact(
     if (category === 'other') continue;
 
     for (const keyword of keywords) {
-      if (textToAnalyze.includes(keyword.toLowerCase())) {
-        return category as ContactCategory;
+      if (keyword instanceof RegExp) {
+        if (keyword.test(textToAnalyze)) {
+          return category as ContactCategory;
+        }
+      } else {
+        if (textToAnalyze.includes(keyword.toLowerCase())) {
+          return category as ContactCategory;
+        }
       }
     }
   }
