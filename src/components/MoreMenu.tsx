@@ -56,7 +56,17 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
           icon: Bell,
           title: 'Notifications',
           description: 'Manage alerts and reminders',
-          action: () => onNavigateToSubScreen('settings' as SubScreen),
+          action: () => {
+            onNavigateToSubScreen('settings' as SubScreen);
+            if (typeof window !== 'undefined') {
+              setTimeout(() => {
+                document.getElementById('notifications-settings')?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }, 100);
+            }
+          },
         },
       ],
     },
