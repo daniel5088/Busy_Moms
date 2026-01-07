@@ -94,6 +94,7 @@ export function DashboardV4Experimental({
     tasks,
     reminders,
     loading,
+    reload,
     reminderWeekOffset,
     setReminderWeekOffset,
   } = useDashboardData();
