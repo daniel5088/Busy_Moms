@@ -1035,6 +1035,13 @@ export const openaiRealtimeService = new OpenAIRealtimeService({
   voice: 'shimmer',
   instructions: `You are Sara, a helpful AI assistant for busy parents embedded in a family organizer app.
 
+Current date context: Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}.
+
+When users mention day names (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday), calculate the NEXT occurrence of that day from today. For example:
+- If today is Tuesday and user says "Sunday", use the date of the upcoming Sunday (5 days from now)
+- If today is Friday and user says "Monday", use the date of the upcoming Monday (3 days from now)
+- Never use dates in the past when user mentions day names
+
 You have full access to the user's calendar, tasks, shopping lists, and reminders. You can:
 
 CALENDAR MANAGEMENT:

@@ -338,7 +338,21 @@ async function classifyMessage(
     year: 'numeric'
   });
 
+  const next7Days: Array<{ dayName: string; date: string }> = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(nowLocal);
+    date.setDate(date.getDate() + i);
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const dateStr = getLocalISODate(date);
+    next7Days.push({ dayName, date: dateStr });
+  }
+
+  const dayNameMapping = next7Days
+    .map(d => `- "${d.dayName.toLowerCase()}" → "${d.date}"`)
+    .join('\n');
+
   console.log('🤖 Classifying message:', message);
+  console.log('📅 Next 7 days mapping:', next7Days);
 
   const systemPrompt = `You are a smart assistant that classifies user messages into actions.
 Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query|calendar_update|calendar_delete|reminder|shopping|shopping_query|shopping_update|shopping_delete|task|task_query|task_update|task_delete|family|family_query|family_update|family_delete|chat", "details": {...}}
@@ -348,10 +362,15 @@ IMPORTANT DATE CONTEXT:
 - Tomorrow is ${tomorrow}
 - Current year is ${currentYear}
 
+DAY NAME TO DATE MAPPING (next 7 days):
+${dayNameMapping}
+
 When parsing dates:
 - "jan 17", "january 17", "1/17" → "${currentYear}-01-17" (use the ACTUAL date, NOT relative terms)
 - "tomorrow" → "${tomorrow}"
 - "today" → "${today}"
+- ALWAYS use the day name mapping above for day names like "Monday", "Tuesday", "Sunday", etc.
+- If user says a day name (like "Sunday" or "Monday"), find it in the mapping above and use that exact date
 - Always return exact YYYY-MM-DD format in the current year (${currentYear})
 - Never interpret specific calendar dates (like "jan 17") as relative terms (like "tomorrow")
 - If user says a specific month and day, use that exact date in ${currentYear} in YYYY-MM-DD format
@@ -390,7 +409,8 @@ For chat: {"type": "chat", "details": {"query": "user question"}}
 EXAMPLES:
 "remind me to refill the ice tomorrow at 6pm" → {"type": "reminder", "details": {"title": "refill the ice", "date": "${tomorrow}", "time": "6pm"}}
 "add dentist appointment on jan 20 at 2:30pm" → {"type": "calendar", "details": {"title": "dentist appointment", "date": "${currentYear}-01-20", "time": "2:30pm"}}
-"remind me to call mom tomorrow" → {"type": "reminder", "details": {"title": "call mom", "date": "${tomorrow}"}}`;
+"remind me to call mom tomorrow" → {"type": "reminder", "details": {"title": "call mom", "date": "${tomorrow}"}}
+"remind me on Sunday to take out the dog at 5pm" → {"type": "reminder", "details": {"title": "take out the dog", "date": "${next7Days.find(d => d.dayName === 'Sunday')?.date || tomorrow}", "time": "5pm"}}`;
 
   try {
     const response = await openaiService.chat([
