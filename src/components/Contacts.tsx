@@ -311,17 +311,17 @@ export function Contacts() {
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Contacts</h1>
             <div className="flex items-center space-x-2">
-              <p className="text-sm sm:text-base text-gray-600">Google Contacts</p>
+              <p className="text-sm sm:text-base text-gray-600">Your trusted network</p>
               {googleConnected && (
                 <div className="flex items-center space-x-1 text-xs text-green-600">
                   <Cloud className="w-3 h-3" />
-                  <span>Synced</span>
+                  <span>Google Contacts Synced</span>
                 </div>
               )}
               {!googleConnected && (
                 <div className="flex items-center space-x-1 text-xs text-gray-400">
                   <CloudOff className="w-3 h-3" />
-                  <span>Not connected</span>
+                  <span>Google not connected</span>
                 </div>
               )}
             </div>
