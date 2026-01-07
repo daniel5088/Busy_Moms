@@ -302,6 +302,7 @@ async function classifyMessage(
 ): Promise<IntentResult> {
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const currentYear = new Date().getFullYear();
   const todayFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -317,14 +318,15 @@ Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query
 IMPORTANT DATE CONTEXT:
 - Today is ${today} (${todayFormatted})
 - Tomorrow is ${tomorrow}
+- Current year is ${currentYear}
 
 When parsing dates:
-- "jan 17", "january 17", "1/17" → "2026-01-17" (use the ACTUAL date, NOT relative terms)
+- "jan 17", "january 17", "1/17" → "${currentYear}-01-17" (use the ACTUAL date, NOT relative terms)
 - "tomorrow" → "${tomorrow}"
 - "today" → "${today}"
-- Always return exact YYYY-MM-DD format
+- Always return exact YYYY-MM-DD format in the current year (${currentYear})
 - Never interpret specific calendar dates (like "jan 17") as relative terms (like "tomorrow")
-- If user says a specific month and day, use that exact date in YYYY-MM-DD format
+- If user says a specific month and day, use that exact date in ${currentYear} in YYYY-MM-DD format
 
 Current Calendar Context:
 ${calendarSummary}
