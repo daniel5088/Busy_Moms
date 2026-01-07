@@ -310,14 +310,6 @@ export function Settings({
     const googleCalendarSection = document.querySelector('[data-google-calendar-section]');
     if (googleCalendarSection) {
       googleCalendarSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const connectButton = googleCalendarSection.querySelector(
-        '[data-google-calendar-connect]'
-      ) as HTMLButtonElement;
-      if (connectButton) {
-        setTimeout(() => {
-          connectButton.click();
-        }, 300);
-      }
     }
   };
 
