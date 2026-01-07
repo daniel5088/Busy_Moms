@@ -56,23 +56,12 @@ const formatReminderDate = (dateString: string): string => {
 const getWeekLabel = (offset: number): string => {
   if (offset === 0) return 'Today';
   if (offset === 1) return 'Tomorrow';
-  if (offset === -1) return 'Yesterday';
-  const absOffset = Math.abs(offset);
-  return offset > 0 ? `+${absOffset} days` : `-${absOffset} days`;
-};
-
-const getDateRange = (offset: number): { start: Date; end: Date } => {
-  const today = new Date();
-  const targetDate = new Date(today);
-  targetDate.setDate(today.getDate() + offset);
-
-  const start = new Date(targetDate);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(targetDate);
-  end.setHours(23, 59, 59, 999);
-
-  return { start, end };
+  if (offset === 2) return 'This Week';
+  if (offset > 2) {
+    const weeksAhead = offset - 2;
+    return weeksAhead === 1 ? 'Next Week' : `+${weeksAhead} Weeks`;
+  }
+  return 'Past';
 };
 
 type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing' | 'disabled';
@@ -96,7 +85,16 @@ export function DashboardV4Experimental({
 }: DashboardProps) {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
-  const { events, todayEvents, thisWeekEvents, tasks, reminders, loading } = useDashboardData();
+  const {
+    events,
+    todayEvents,
+    thisWeekEvents,
+    tasks,
+    reminders,
+    loading,
+    reminderWeekOffset,
+    setReminderWeekOffset,
+  } = useDashboardData();
 
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
@@ -109,15 +107,11 @@ export function DashboardV4Experimental({
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
   const [isAutoOpened, setIsAutoOpened] = React.useState(false);
   const [autoOpenedSlotIndex, setAutoOpenedSlotIndex] = React.useState<number | null>(null);
-  const [reminderWeekOffset, setReminderWeekOffset] = React.useState(0);
 
+  // Reminders are already filtered by the hook based on reminderWeekOffset
   const filteredReminders = React.useMemo(() => {
-    const { start, end } = getDateRange(reminderWeekOffset);
-    return reminders.filter((reminder) => {
-      const reminderDate = new Date(reminder.reminder_date + 'T00:00:00');
-      return reminderDate >= start && reminderDate <= end;
-    });
-  }, [reminders, reminderWeekOffset]);
+    return reminders;
+  }, [reminders]);
 
   React.useEffect(() => {
     if (user) {
@@ -740,9 +734,10 @@ export function DashboardV4Experimental({
               </h2>
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => setReminderWeekOffset(reminderWeekOffset - 1)}
-                  className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  title="Previous week"
+                  onClick={() => setReminderWeekOffset(Math.max(0, reminderWeekOffset - 1))}
+                  disabled={reminderWeekOffset === 0}
+                  className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:dark:hover:bg-gray-700"
+                  title="Previous period"
                 >
                   <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                 </button>
@@ -752,7 +747,7 @@ export function DashboardV4Experimental({
                 <button
                   onClick={() => setReminderWeekOffset(reminderWeekOffset + 1)}
                   className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  title="Next week"
+                  title="Next period"
                 >
                   <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                 </button>

@@ -86,19 +86,37 @@ export function useDashboardData(): DashboardData {
 
       setTasks(tasksData || []);
 
-      // Load reminders for the selected week
-      const weekStartOffset = reminderWeekOffset * 7;
-      const weekEndOffset = weekStartOffset + 6;
-      const weekStart = getDateInDays(weekStartOffset);
-      const weekEnd = getDateInDays(weekEndOffset);
+      // Load reminders based on offset
+      // 0 = today, 1 = tomorrow, 2+ = this week and beyond
+      let reminderStart: string;
+      let reminderEnd: string;
+
+      if (reminderWeekOffset === 0) {
+        // Today only
+        reminderStart = today;
+        reminderEnd = today;
+      } else if (reminderWeekOffset === 1) {
+        // Tomorrow only
+        reminderStart = getDateInDays(1);
+        reminderEnd = getDateInDays(1);
+      } else if (reminderWeekOffset === 2) {
+        // This week (starting from day after tomorrow through end of week)
+        reminderStart = getDateInDays(2);
+        reminderEnd = nextWeek;
+      } else {
+        // Future weeks
+        const weeksAhead = reminderWeekOffset - 2;
+        reminderStart = getDateInDays(7 + (weeksAhead - 1) * 7);
+        reminderEnd = getDateInDays(7 + weeksAhead * 7 - 1);
+      }
 
       const { data: remindersData, error: remindersError } = await supabase
         .from('reminders')
         .select('*')
         .eq('user_id', user.id)
         .eq('completed', false)
-        .gte('reminder_date', weekStart)
-        .lte('reminder_date', weekEnd)
+        .gte('reminder_date', reminderStart)
+        .lte('reminder_date', reminderEnd)
         .order('reminder_date', { ascending: true })
         .order('reminder_time', { ascending: true });
 
