@@ -107,7 +107,6 @@ export function DashboardV4Experimental({
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
   const [isAutoOpened, setIsAutoOpened] = React.useState(false);
   const [autoOpenedSlotIndex, setAutoOpenedSlotIndex] = React.useState<number | null>(null);
-  const lastAutoOpenCheckDate = React.useRef<string | null>(null);
 
   // Reminders are already filtered by the hook based on reminderWeekOffset
   const filteredReminders = React.useMemo(() => {
@@ -163,10 +162,16 @@ export function DashboardV4Experimental({
 
       clearOldAutoShowData();
 
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (user?.id && affirmation && lastAutoOpenCheckDate.current !== todayStr) {
-        lastAutoOpenCheckDate.current = todayStr;
-        const dueSlot = findDueSlot(settings, user.id);
+      if (user?.id && affirmation) {
+        const currentDate = new Date();
+        const y = currentDate.getFullYear();
+        const m = currentDate.getMonth() + 1;
+        const d = currentDate.getDate();
+        const mm = m < 10 ? '0' + m : '' + m;
+        const dd = d < 10 ? '0' + d : '' + d;
+        const todayStr = `${y}-${mm}-${dd}`;
+
+        const dueSlot = findDueSlot(settings, user.id, currentDate);
         if (dueSlot) {
           markAsAutoShown(user.id, todayStr, dueSlot.slotIndex);
           setAutoOpenedSlotIndex(dueSlot.slotIndex);
