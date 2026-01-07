@@ -241,13 +241,22 @@ export class OpenAIRealtimeService extends Emitter {
       {
         type: 'function',
         name: 'create_reminder',
-        description: 'Set a reminder for a specific date and time',
+        description: 'CRITICAL: ALWAYS call this function when user asks to be reminded of something. DO NOT just respond with text - ACTUALLY CREATE the reminder by calling this function. Examples: "remind me to drink water", "set a reminder to call mom", "don\'t let me forget to take medicine"',
         parameters: {
           type: 'object',
           properties: {
-            title: { type: 'string', description: 'What to be reminded about' },
-            date: { type: 'string', description: 'Date for the reminder' },
-            time: { type: 'string', description: 'Time for the reminder' }
+            title: {
+              type: 'string',
+              description: 'What to be reminded about (extract from user\'s request, e.g., "drink water", "call mom", "take out trash")'
+            },
+            date: {
+              type: 'string',
+              description: 'Date for the reminder in YYYY-MM-DD format or natural language like "today", "tomorrow", "Sunday". REQUIRED - always extract date from user\'s request.'
+            },
+            time: {
+              type: 'string',
+              description: 'Time for the reminder in formats like "4pm", "16:00", "2:30pm". Extract from user\'s request if specified.'
+            }
           },
           required: ['title', 'date']
         }
@@ -376,6 +385,10 @@ export class OpenAIRealtimeService extends Emitter {
 
     console.log('⚙️ Configuring OpenAI Realtime session with function tools');
 
+    const tools = this.getFunctionTools();
+    console.log('⚙️ Number of tools being configured:', tools.length);
+    console.log('⚙️ Tool names:', tools.map(t => t.name).join(', '));
+
     const sessionConfig = {
       type: 'session.update',
       session: {
@@ -393,13 +406,14 @@ export class OpenAIRealtimeService extends Emitter {
           prefix_padding_ms: 300,
           silence_duration_ms: 500
         },
-        tools: this.getFunctionTools(),
+        tools,
         tool_choice: 'auto',
         temperature: 0.8,
         max_response_output_tokens: 4096
       }
     };
 
+    console.log('⚙️ Sending session configuration:', JSON.stringify(sessionConfig, null, 2));
     this.dc.send(JSON.stringify(sessionConfig));
     this.sessionConfigured = true;
     console.log('✅ Session configured with function tools');
@@ -636,12 +650,37 @@ export class OpenAIRealtimeService extends Emitter {
   private async handleOpenAIEvent(event: any) {
     switch (event.type) {
       case 'session.created':
+        console.log('✅ Session created');
+        console.log('📋 Session details:', JSON.stringify(event, null, 2));
+        break;
+
       case 'session.updated':
-        console.log('✅ Session ready:', event.type);
+        console.log('✅✅✅ SESSION UPDATED - VERIFYING CONFIGURATION');
+        console.log('📋 Full session update event:', JSON.stringify(event, null, 2));
+
+        // Verify tools were registered
+        const session = event.session;
+        if (session?.tools) {
+          console.log('✅ Tools successfully registered:', session.tools.length);
+          console.log('✅ Tool names:', session.tools.map((t: any) => t.name).join(', '));
+          console.log('✅ Tool choice setting:', session.tool_choice);
+        } else {
+          console.error('❌ WARNING: No tools found in session configuration!');
+        }
+
+        // Verify instructions
+        if (session?.instructions) {
+          const hasReminderInstructions = session.instructions.includes('create_reminder');
+          console.log('✅ Instructions contain create_reminder guidance:', hasReminderInstructions);
+          if (!hasReminderInstructions) {
+            console.error('❌ WARNING: Instructions do not mention create_reminder!');
+          }
+        }
         break;
 
       case 'conversation.item.input_audio_transcription.completed': {
         console.log('🎤🎤🎤 AUDIO TRANSCRIPTION COMPLETED');
+        console.log('🎤 Full event:', JSON.stringify(event, null, 2));
         const transcript = (event as any).transcript || '';
         console.log('🎤 Transcript:', transcript);
         
@@ -749,25 +788,71 @@ export class OpenAIRealtimeService extends Emitter {
       }
 
       case 'response.function_call_arguments.delta':
+        console.log('🔧🔧🔧 FUNCTION CALL DELTA RECEIVED');
+        console.log('🔧 Call ID:', event.call_id);
+        console.log('🔧 Function name:', event.name);
+        console.log('🔧 Delta:', event.delta);
         if (event.call_id) {
           const existing = this.pendingFunctionCalls.get(event.call_id) || { name: event.name, arguments: '' };
           existing.arguments += event.delta || '';
           this.pendingFunctionCalls.set(event.call_id, existing);
+          console.log('🔧 Accumulated arguments:', existing.arguments);
         }
         break;
 
       case 'response.function_call_arguments.done':
+        console.log('🔧🔧🔧 FUNCTION CALL DONE');
+        console.log('🔧 Call ID:', event.call_id);
+        console.log('🔧 Full event:', event);
         if (event.call_id) {
           const call = this.pendingFunctionCalls.get(event.call_id);
           if (call) {
+            console.log('🔧 Executing function:', call.name);
+            console.log('🔧 With arguments:', call.arguments);
             await this.executeFunctionCall(event.call_id, call.name || event.name, call.arguments || event.arguments);
             this.pendingFunctionCalls.delete(event.call_id);
           }
         }
         break;
 
+      case 'response.created':
+        console.log('🤖 RESPONSE CREATED');
+        console.log('🤖 Response ID:', event.response?.id);
+        console.log('🤖 Full event:', JSON.stringify(event, null, 2));
+        break;
+
+      case 'response.output_item.added':
+        console.log('📤📤📤 OUTPUT ITEM ADDED');
+        console.log('📤 Item type:', event.item?.type);
+        console.log('📤 Full event:', JSON.stringify(event, null, 2));
+
+        // Check if this is a function call or a text/audio response
+        if (event.item?.type === 'function_call') {
+          console.log('✅ OpenAI is calling a function!');
+          console.log('✅ Function name:', event.item?.name);
+        } else if (event.item?.type === 'message') {
+          console.log('⚠️ OpenAI is responding with a message instead of calling a function');
+        }
+        break;
+
       case 'response.done':
         console.log('✅ Response completed');
+        console.log('✅ Full response:', JSON.stringify(event, null, 2));
+
+        // Analyze what happened in this response
+        const response = event.response;
+        if (response?.output) {
+          const hasFunctionCalls = response.output.some((item: any) => item.type === 'function_call');
+          const hasMessages = response.output.some((item: any) => item.type === 'message');
+
+          console.log('✅ Response contained function calls:', hasFunctionCalls);
+          console.log('✅ Response contained messages:', hasMessages);
+
+          if (hasMessages && !hasFunctionCalls) {
+            console.warn('⚠️⚠️⚠️ WARNING: OpenAI responded with text only, no function calls!');
+            console.warn('⚠️ This might indicate the model is not understanding when to call functions');
+          }
+        }
         break;
 
       case 'error':
@@ -1034,6 +1119,24 @@ export const openaiRealtimeService = new OpenAIRealtimeService({
   vadThreshold: 0.03,
   voice: 'shimmer',
   instructions: `You are Sara, a helpful AI assistant for busy parents embedded in a family organizer app.
+
+⚠️ CRITICAL FUNCTION CALLING RULES - READ CAREFULLY:
+When a user asks you to DO something (create, add, set, schedule, remind, etc.), you MUST call the appropriate function - DO NOT just respond with text saying you'll do it.
+
+WRONG: User says "remind me to drink water at 4pm" → You respond "I'll set that reminder for you" ❌
+RIGHT: User says "remind me to drink water at 4pm" → You CALL create_reminder function ✅
+
+WRONG: User says "add milk to shopping list" → You respond "I'll add that to your list" ❌
+RIGHT: User says "add milk to shopping list" → You CALL add_shopping_item function ✅
+
+WRONG: User says "schedule meeting tomorrow at 2pm" → You respond "I'll schedule that" ❌
+RIGHT: User says "schedule meeting tomorrow at 2pm" → You CALL create_calendar_event function ✅
+
+ACTION TRIGGERS - When user says these phrases, CALL THE FUNCTION:
+- "remind me" / "set a reminder" / "don't let me forget" → CALL create_reminder
+- "add to shopping list" / "buy" / "get" → CALL add_shopping_item
+- "schedule" / "add to calendar" / "create event" → CALL create_calendar_event
+- "create a task" / "add task" → CALL create_task
 
 Current date context: Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}.
 
