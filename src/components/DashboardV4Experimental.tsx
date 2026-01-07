@@ -54,24 +54,25 @@ const formatReminderDate = (dateString: string): string => {
 };
 
 const getWeekLabel = (offset: number): string => {
-  if (offset === 0) return 'This Week';
-  if (offset === 1) return 'Next Week';
-  if (offset === -1) return 'Last Week';
-  return offset > 0 ? `+${offset} weeks` : `${offset} weeks`;
+  if (offset === 0) return 'Today';
+  if (offset === 1) return 'Tomorrow';
+  if (offset === -1) return 'Yesterday';
+  const absOffset = Math.abs(offset);
+  return offset > 0 ? `+${absOffset} days` : `-${absOffset} days`;
 };
 
-const getWeekRange = (offset: number): { start: Date; end: Date } => {
+const getDateRange = (offset: number): { start: Date; end: Date } => {
   const today = new Date();
-  const dayOfWeek = today.getDay();
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - dayOfWeek + offset * 7);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + offset);
 
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999);
+  const start = new Date(targetDate);
+  start.setHours(0, 0, 0, 0);
 
-  return { start: startOfWeek, end: endOfWeek };
+  const end = new Date(targetDate);
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
 };
 
 type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing' | 'disabled';
@@ -111,7 +112,7 @@ export function DashboardV4Experimental({
   const [reminderWeekOffset, setReminderWeekOffset] = React.useState(0);
 
   const filteredReminders = React.useMemo(() => {
-    const { start, end } = getWeekRange(reminderWeekOffset);
+    const { start, end } = getDateRange(reminderWeekOffset);
     return reminders.filter((reminder) => {
       const reminderDate = new Date(reminder.reminder_date + 'T00:00:00');
       return reminderDate >= start && reminderDate <= end;
@@ -794,7 +795,7 @@ export function DashboardV4Experimental({
               <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 text-center">
                 <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" aria-hidden="true" />
                 <p className="text-gray-500 dark:text-gray-400">
-                  No reminders for {reminderWeekOffset === 0 ? 'this week' : getWeekLabel(reminderWeekOffset).toLowerCase()}
+                  No reminders for {getWeekLabel(reminderWeekOffset).toLowerCase()}
                 </p>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Ask Sarah to set a reminder for you</p>
               </div>
