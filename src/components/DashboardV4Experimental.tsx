@@ -165,6 +165,8 @@ export function DashboardV4Experimental({
       if (user?.id && affirmation) {
         const dueSlot = findDueSlot(settings, user.id);
         if (dueSlot) {
+          const todayStr = new Date().toISOString().split('T')[0];
+          markAsAutoShown(user.id, todayStr, dueSlot.slotIndex);
           setAutoOpenedSlotIndex(dueSlot.slotIndex);
           handleOpenAffirmation(true);
         }
@@ -215,10 +217,6 @@ export function DashboardV4Experimental({
 
   const handleCloseAffirmation = () => {
     if (affirmationStage === 'content') {
-      if (isAutoOpened && user?.id && autoOpenedSlotIndex !== null) {
-        const todayStr = new Date().toISOString().split('T')[0];
-        markAsAutoShown(user.id, todayStr, autoOpenedSlotIndex);
-      }
       setIsAutoOpened(false);
       setAutoOpenedSlotIndex(null);
       setAffirmationStage('closing');
