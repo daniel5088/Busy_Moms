@@ -34,9 +34,10 @@ interface DashboardProps {
   onNavigate: (screen: 'calendar' | 'family' | 'more') => void;
   onNavigateToSubScreen: (screen: SubScreen) => void;
   onVoiceChatOpen?: () => void;
+  onNavigateToEvent?: (eventDate: string) => void;
 }
 
-export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }: DashboardProps) {
+export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen, onNavigateToEvent }: DashboardProps) {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
   const { events, todayEvents, tasks, reminders, loading, reload, setReminderWeekOffset, reminderWeekOffset } = useDashboardData();
@@ -306,7 +307,13 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                 <div
                   key={event.id}
                   className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => onNavigate('calendar')}
+                  onClick={() => {
+                    if (onNavigateToEvent) {
+                      onNavigateToEvent(event.event_date);
+                    } else {
+                      onNavigate('calendar');
+                    }
+                  }}
                 >
                   <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
@@ -381,6 +388,13 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen }
                 <div
                   key={reminder.id}
                   className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer"
+                  onClick={() => {
+                    if (onNavigateToEvent) {
+                      onNavigateToEvent(reminder.reminder_date);
+                    } else {
+                      onNavigate('calendar');
+                    }
+                  }}
                 >
                   <div
                     className={`w-2 h-2 rounded-full ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}

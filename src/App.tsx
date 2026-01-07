@@ -359,6 +359,10 @@ function App() {
                     onNavigate={setCurrentScreen}
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onVoiceChatOpen={() => setShowVoiceChat(true)}
+                    onNavigateToEvent={(eventDate: string) => {
+                      setSelectedEventDate(eventDate);
+                      setCurrentScreen('calendar');
+                    }}
                   />
                 </FeatureErrorBoundary>
               )}
