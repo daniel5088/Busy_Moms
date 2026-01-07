@@ -304,7 +304,7 @@ export function DashboardV4Experimental({
     },
     {
       icon: Camera,
-      title: 'Scan events',
+      title: 'Scan Events',
       desc: 'Add from photo',
       bgColor: 'bg-teal-50 dark:bg-gray-800',
       borderColor: 'border-teal-200 dark:border-gray-700',
