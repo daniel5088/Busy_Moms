@@ -105,6 +105,7 @@ export function DashboardV4Experimental({
   const [showEventsPopup, setShowEventsPopup] = React.useState(false);
   const [showTasksPopup, setShowTasksPopup] = React.useState(false);
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
+  const [selectedEvent, setSelectedEvent] = React.useState<any | null>(null);
   const [isAutoOpened, setIsAutoOpened] = React.useState(false);
   const [autoOpenedSlotIndex, setAutoOpenedSlotIndex] = React.useState<number | null>(null);
 
@@ -565,8 +566,8 @@ export function DashboardV4Experimental({
                         <button
                           key={event.id}
                           className="w-full text-left p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
-                          onClick={() => onNavigate('calendar')}
-                          aria-label={`${event.title}, ${formatEventTimeRange(event.start_time, event.end_time)}${event.location ? `, ${event.location}` : ''}. Tap to view calendar.`}
+                          onClick={() => setSelectedEvent(event)}
+                          aria-label={`${event.title}, ${formatEventTimeRange(event.start_time, event.end_time)}${event.location ? `, ${event.location}` : ''}. Tap to view event details.`}
                         >
                           <div className="flex items-center space-x-1.5">
                             {' '}
@@ -632,8 +633,8 @@ export function DashboardV4Experimental({
                         <button
                           key={event.id}
                           className="w-full text-left p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
-                          onClick={() => onNavigate('calendar')}
-                          aria-label={`${event.title}, ${formatDate(event.event_date)}${event.start_time ? ` at ${formatEventTimeRange(event.start_time, event.end_time)}` : ''}${event.location ? `, ${event.location}` : ''}. Tap to view calendar.`}
+                          onClick={() => setSelectedEvent(event)}
+                          aria-label={`${event.title}, ${formatDate(event.event_date)}${event.start_time ? ` at ${formatEventTimeRange(event.start_time, event.end_time)}` : ''}${event.location ? `, ${event.location}` : ''}. Tap to view event details.`}
                         >
                           <div className="flex items-center space-x-1.5">
                             {' '}
@@ -834,6 +835,99 @@ export function DashboardV4Experimental({
       >
         <RemindersList reminders={reminders} />
       </DashboardPopup>
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {selectedEvent.title}
+                </h2>
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                    <Calendar className="w-5 h-5" />
+                    <span className="font-medium">Date</span>
+                  </div>
+                  <p className="mt-1 text-gray-900 dark:text-gray-100 ml-7">
+                    {formatDate(selectedEvent.event_date)}
+                  </p>
+                </div>
+
+                {(selectedEvent.start_time || selectedEvent.end_time) && (
+                  <div>
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                      <Clock className="w-5 h-5" />
+                      <span className="font-medium">Time</span>
+                    </div>
+                    <p className="mt-1 text-gray-900 dark:text-gray-100 ml-7">
+                      {formatEventTimeRange(selectedEvent.start_time, selectedEvent.end_time)}
+                    </p>
+                  </div>
+                )}
+
+                {selectedEvent.location && (
+                  <div>
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                      <Users className="w-5 h-5" />
+                      <span className="font-medium">Location</span>
+                    </div>
+                    <p className="mt-1 text-gray-900 dark:text-gray-100 ml-7">
+                      {selectedEvent.location}
+                    </p>
+                  </div>
+                )}
+
+                {selectedEvent.description && (
+                  <div>
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                      <BookOpen className="w-5 h-5" />
+                      <span className="font-medium">Description</span>
+                    </div>
+                    <p className="mt-1 text-gray-900 dark:text-gray-100 ml-7">
+                      {selectedEvent.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex space-x-3">
+                <button
+                  onClick={() => {
+                    setSelectedEvent(null);
+                    onNavigate('calendar');
+                  }}
+                  className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors"
+                >
+                  View in Calendar
+                </button>
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
