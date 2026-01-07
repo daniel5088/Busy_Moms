@@ -71,6 +71,7 @@ function App() {
   const [openCalendarCamera, setOpenCalendarCamera] = useState(false);
   const [openRecipesTab, setOpenRecipesTab] = useState(false);
   const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
+  const [scrollToGoogleCalendar, setScrollToGoogleCalendar] = useState(false);
   const { toasts, removeToast } = useToast();
   const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -251,6 +252,13 @@ function App() {
     };
   }, []);
 
+  // Reset scroll to Google Calendar flag when subscreen changes
+  useEffect(() => {
+    if (currentSubScreen !== 'settings') {
+      setScrollToGoogleCalendar(false);
+    }
+  }, [currentSubScreen]);
+
   // Show loading only when we're checking auth or onboarding for authenticated users
   if (loading || (user && checkingOnboarding)) {
     return (
@@ -335,6 +343,7 @@ function App() {
                   <Settings
                     darkMode={darkMode}
                     toggleDarkMode={toggleDarkMode}
+                    scrollToGoogleCalendar={scrollToGoogleCalendar}
                   />
                 </FeatureErrorBoundary>
               )}
@@ -411,6 +420,10 @@ function App() {
                     onCalendarCameraOpened={() => setOpenCalendarCamera(false)}
                     initialSelectedDate={selectedEventDate}
                     onDateSelected={() => setSelectedEventDate(null)}
+                    onNavigateToGoogleCalendarSettings={() => {
+                      setScrollToGoogleCalendar(true);
+                      setCurrentSubScreen('settings');
+                    }}
                   />
                 </FeatureErrorBoundary>
               )}

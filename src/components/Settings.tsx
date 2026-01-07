@@ -47,11 +47,13 @@ import type { UserMeasurementPreferences } from '../lib/supabase';
 interface SettingsProps {
   darkMode: boolean;
   toggleDarkMode: () => void;
+  scrollToGoogleCalendar?: boolean;
 }
 
 export function Settings({
   darkMode,
   toggleDarkMode,
+  scrollToGoogleCalendar = false,
 }: SettingsProps) {
   const { user, signOut } = useAuth();
   const { performSync } = useCalendarSync();
@@ -222,6 +224,15 @@ export function Settings({
     checkGoogleConnection,
     loadMeasurementPreferences,
   ]);
+
+  // Scroll to Google Calendar section if requested
+  React.useEffect(() => {
+    if (scrollToGoogleCalendar) {
+      setTimeout(() => {
+        handleGoogleCalendarConnect();
+      }, 500);
+    }
+  }, [scrollToGoogleCalendar]);
 
   // Listen for auth state changes to detect when Google Calendar is connected
   React.useEffect(() => {
