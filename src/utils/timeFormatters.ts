@@ -52,7 +52,9 @@ export function formatDate(
     day: 'numeric',
   }
 ): string {
-  return new Date(dateString).toLocaleDateString('en-US', options);
+  const [year, month, day] = dateString.split('-').map(Number);
+  const localDate = new Date(year, month - 1, day);
+  return localDate.toLocaleDateString('en-US', options);
 }
 
 /**

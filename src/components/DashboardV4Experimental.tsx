@@ -27,7 +27,7 @@ import { useProfile } from '../hooks/useProfile';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { Affirmation } from '../lib/supabase';
 import { affirmationService } from '../services/affirmationService';
-import { formatEventTime, formatEventTimeRange } from '../utils/timeFormatters';
+import { formatEventTime, formatEventTimeRange, formatDate } from '../utils/timeFormatters';
 import {
   DashboardPopup,
   EventsList,
@@ -630,11 +630,7 @@ export function DashboardV4Experimental({
                           key={event.id}
                           className="w-full text-left p-2 sm:p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer" //Alvaros - V4
                           onClick={() => onNavigate('calendar')}
-                          aria-label={`${event.title}, ${new Date(event.event_date).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                          })}${event.start_time ? ` at ${formatEventTimeRange(event.start_time, event.end_time)}` : ''}${event.location ? `, ${event.location}` : ''}. Tap to view calendar.`}
+                          aria-label={`${event.title}, ${formatDate(event.event_date)}${event.start_time ? ` at ${formatEventTimeRange(event.start_time, event.end_time)}` : ''}${event.location ? `, ${event.location}` : ''}. Tap to view calendar.`}
                         >
                           <div className="flex items-center space-x-1.5">
                             {' '}
@@ -648,11 +644,7 @@ export function DashboardV4Experimental({
                               {' '}
                               {/* //Alvaros - V4 */}
                               <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">
-                                {new Date(event.event_date).toLocaleDateString('en-US', {
-                                  weekday: 'short',
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
+                                {formatDate(event.event_date)}
                                 {event.start_time &&
                                   ` at ${formatEventTimeRange(event.start_time, event.end_time)}`}
                               </p>

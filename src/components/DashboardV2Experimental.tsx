@@ -423,11 +423,7 @@ export function DashboardV2Experimental({
                               {event.title}
                             </h3>
                             <span className="text-xs sm:text-sm text-rose-600 font-medium">
-                              {new Date(event.event_date).toLocaleDateString('en-US', {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {formatDate(event.event_date)}
                             </span>
                           </div>
                           {event.start_time && (
