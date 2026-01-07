@@ -109,6 +109,7 @@ export function DashboardV4Experimental({
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
   const [isAutoOpened, setIsAutoOpened] = React.useState(false);
   const [autoOpenedSlotIndex, setAutoOpenedSlotIndex] = React.useState<number | null>(null);
+  const [affirmationStatus, setAffirmationStatus] = React.useState<string>('');
 
   // Reminders are already filtered by the hook based on reminderWeekOffset
   const filteredReminders = React.useMemo(() => {
@@ -212,6 +213,7 @@ export function DashboardV4Experimental({
     }
 
     setIsAutoOpened(isAutomatic);
+    setAffirmationStatus('Loading your daily affirmation');
 
     setAffirmationStage('burst');
 
@@ -221,6 +223,7 @@ export function DashboardV4Experimental({
 
     setTimeout(() => {
       setAffirmationStage('content');
+      setAffirmationStatus('');
     }, 900);
   };
 
@@ -336,6 +339,11 @@ export function DashboardV4Experimental({
 
   return (
     <>
+      {/* Screen reader status announcements */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {affirmationStatus}
+      </div>
+
       {/* Burst Stage - Growing and fading icon */}
       {affirmationStage === 'burst' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -738,9 +746,9 @@ export function DashboardV4Experimental({
                   }}
                   disabled={reminderWeekOffset === 0}
                   className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:dark:hover:bg-gray-700"
-                  title="Previous period"
+                  aria-label="Go to previous week"
                 >
-                  <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                  <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" aria-hidden="true" />
                 </button>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[100px] text-center">
                   {getWeekLabel(reminderWeekOffset)}
@@ -752,9 +760,9 @@ export function DashboardV4Experimental({
                     setReminderWeekOffset(reminderWeekOffset + 1);
                   }}
                   className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  title="Next period"
+                  aria-label="Go to next week"
                 >
-                  <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                  <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-300" aria-hidden="true" />
                 </button>
               </div>
             </div>
