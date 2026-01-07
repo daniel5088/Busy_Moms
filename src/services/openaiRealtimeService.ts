@@ -381,9 +381,17 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private configureSession() {
-    if (!this.dc || this.dc.readyState !== 'open' || this.sessionConfigured) return;
+    if (!this.dc || this.dc.readyState !== 'open') {
+      console.warn('⚠️ Cannot configure session - data channel not ready');
+      return;
+    }
 
-    console.log('⚙️ Configuring OpenAI Realtime session with function tools');
+    if (this.sessionConfigured) {
+      console.log('⚙️ Session already configured, skipping');
+      return;
+    }
+
+    console.log('⚙️⚙️⚙️ CONFIGURING OpenAI Realtime session with function tools');
 
     const tools = this.getFunctionTools();
     console.log('⚙️ Number of tools being configured:', tools.length);
@@ -413,10 +421,23 @@ export class OpenAIRealtimeService extends Emitter {
       }
     };
 
-    console.log('⚙️ Sending session configuration:', JSON.stringify(sessionConfig, null, 2));
-    this.dc.send(JSON.stringify(sessionConfig));
-    this.sessionConfigured = true;
-    console.log('✅ Session configured with function tools');
+    console.log('⚙️ Sending session configuration...');
+    console.log('⚙️ Config preview:', JSON.stringify({
+      tools: tools.length,
+      toolNames: tools.map(t => t.name),
+      instructionsLength: this.config.instructions?.length,
+      voice: this.config.voice,
+      transcriptionEnabled: true
+    }, null, 2));
+
+    try {
+      this.dc.send(JSON.stringify(sessionConfig));
+      this.sessionConfigured = true;
+      console.log('✅ Session configuration message sent successfully');
+    } catch (error) {
+      console.error('❌ Failed to send session configuration:', error);
+      this.sessionConfigured = false;
+    }
   }
 
   /** Build a list of candidate URLs for the ephemeral token endpoint. */
@@ -570,7 +591,7 @@ export class OpenAIRealtimeService extends Emitter {
     this.dc = this.pc.createDataChannel('oai-events');
     this.dc.onopen = () => {
       console.log('✅ Data channel opened');
-      this.configureSession();
+      console.log('⏳ Waiting for session.created event to configure session...');
     };
     this.dc.onmessage = async (ev) => {
       try {
@@ -650,8 +671,16 @@ export class OpenAIRealtimeService extends Emitter {
   private async handleOpenAIEvent(event: any) {
     switch (event.type) {
       case 'session.created':
-        console.log('✅ Session created');
-        console.log('📋 Session details:', JSON.stringify(event, null, 2));
+        console.log('✅✅✅ SESSION CREATED');
+        console.log('📋 Session ID:', event.session?.id);
+        console.log('📋 Current tools in session:', event.session?.tools?.length || 0);
+        console.log('📋 Current voice:', event.session?.voice);
+        console.log('📋 Input audio transcription:', event.session?.input_audio_transcription);
+        console.log('📋 Full session details:', JSON.stringify(event, null, 2));
+
+        // NOW configure the session with our tools
+        console.log('🔄 Session created, now sending our custom configuration...');
+        this.configureSession();
         break;
 
       case 'session.updated':
@@ -675,6 +704,13 @@ export class OpenAIRealtimeService extends Emitter {
           if (!hasReminderInstructions) {
             console.error('❌ WARNING: Instructions do not mention create_reminder!');
           }
+        }
+
+        // Verify audio transcription
+        if (session?.input_audio_transcription) {
+          console.log('✅ Audio transcription enabled:', session.input_audio_transcription);
+        } else {
+          console.error('❌ WARNING: Audio transcription not enabled!');
         }
         break;
 
