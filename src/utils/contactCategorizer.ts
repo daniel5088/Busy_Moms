@@ -35,8 +35,7 @@ const CATEGORY_KEYWORDS: Record<ContactCategory, string[]> = {
   ],
   doctor: [
     'doctor',
-    /\bdr\b/i,
-    'dr.',
+    /\bdr\.?\b/i,
     'physician',
     'pediatrician',
     'dentist',
@@ -62,6 +61,7 @@ const CATEGORY_KEYWORDS: Record<ContactCategory, string[]> = {
     'pharmacy',
     'pharmacist',
   ],
+
   tutor: [
     'tutor',
     'tutoring',
