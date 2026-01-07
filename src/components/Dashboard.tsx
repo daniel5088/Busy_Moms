@@ -11,6 +11,7 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import { WhatsAppIntegration } from './WhatsAppIntegration';
 import { DailyAffirmations } from './DailyAffirmations';
@@ -48,6 +49,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen, 
   const [showTasksPopup, setShowTasksPopup] = React.useState(false);
   const [showRemindersPopup, setShowRemindersPopup] = React.useState(false);
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
+  const [reminderToDelete, setReminderToDelete] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (user) {
@@ -83,6 +85,23 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen, 
       await signOut();
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const handleDeleteReminder = async (reminderId: number) => {
+    try {
+      const { supabase } = await import('../lib/supabase');
+      const { error } = await supabase
+        .from('reminders')
+        .delete()
+        .eq('id', reminderId);
+
+      if (error) throw error;
+
+      setReminderToDelete(null);
+      reload();
+    } catch (error) {
+      console.error('Error deleting reminder:', error);
     }
   };
 
@@ -387,19 +406,22 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen, 
               {reminders.map((reminder) => (
                 <div
                   key={reminder.id}
-                  className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer"
-                  onClick={() => {
-                    if (onNavigateToEvent) {
-                      onNavigateToEvent(reminder.reminder_date);
-                    } else {
-                      onNavigate('calendar');
-                    }
-                  }}
+                  className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 transition-colors relative"
                 >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReminderToDelete(reminder.id);
+                    }}
+                    className="absolute top-2 right-2 w-5 h-5 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 rounded-full flex items-center justify-center transition-colors"
+                    title="Delete reminder"
+                  >
+                    <X className="w-3 h-3 text-red-600 dark:text-red-300" />
+                  </button>
                   <div
-                    className={`w-2 h-2 rounded-full ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}
+                    className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${reminder.priority === 'high' ? 'bg-red-400' : 'bg-yellow-400'}`}
                   ></div>
-                  <div className="flex-1">
+                  <div className="flex-1 pr-6">
                     <span className="text-sm sm:text-base text-gray-800 dark:text-gray-200 font-medium">
                       {reminder.title}
                     </span>
@@ -412,12 +434,12 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen, 
                         {reminder.description}
                       </p>
                     )}
+                    {reminder.priority === 'high' && (
+                      <span className="inline-block mt-2 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-full text-xs font-medium">
+                        High Priority
+                      </span>
+                    )}
                   </div>
-                  {reminder.priority === 'high' && (
-                    <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-full text-xs font-medium">
-                      High Priority
-                    </span>
-                  )}
                 </div>
               ))}
             </div>
@@ -525,7 +547,7 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen, 
         loading={loading}
         loadingColor="border-blue-500"
       >
-        <RemindersList reminders={reminders} />
+        <RemindersList reminders={reminders} onDelete={reload} />
       </DashboardPopup>
 
       <DailyAffirmations
@@ -535,6 +557,34 @@ export function Dashboard({ onNavigate, onNavigateToSubScreen, onVoiceChatOpen, 
           loadTodayAffirmation();
         }}
       />
+
+      {/* Delete Reminder Confirmation Modal */}
+      {reminderToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">
+              Delete Reminder?
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to delete this reminder? This action cannot be undone.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setReminderToDelete(null)}
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteReminder(reminderToDelete)}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -843,7 +843,7 @@ export function DashboardV4Experimental({
         loading={loading}
         loadingColor="border-blue-500"
       >
-        <RemindersList reminders={reminders} />
+        <RemindersList reminders={reminders} onDelete={reload} />
       </DashboardPopup>
     </>
   );
