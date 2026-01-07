@@ -311,7 +311,7 @@ export function Contacts() {
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Contacts</h1>
             <div className="flex items-center space-x-2">
-              <p className="text-sm sm:text-base text-gray-600">Your trusted network</p>
+              <p className="text-sm sm:text-base text-gray-600">Google Contacts</p>
               {googleConnected && (
                 <div className="flex items-center space-x-1 text-xs text-green-600">
                   <Cloud className="w-3 h-3" />
