@@ -532,15 +532,19 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   async startRecording() {
+    console.log('🎤 Listening...');
     this.emitUI({ type: 'recording.started' });
   }
 
   stopRecording() {
+    console.log('🔇 Stopped listening');
     this.emitUI({ type: 'recording.stopped' });
   }
 
   async connectRealtime() {
     if (this.pc) return;
+
+    console.log('🔌 Connecting to OpenAI Realtime API...');
 
     // Reset session state for new connection
     this.sessionConfigured = false;
@@ -570,7 +574,7 @@ export class OpenAIRealtimeService extends Emitter {
     // Data channel
     this.dc = this.pc.createDataChannel('oai-events');
     this.dc.onopen = () => {
-      // Data channel ready
+      console.log('✅ Connected to OpenAI');
     };
     this.dc.onmessage = async (ev) => {
       try {
@@ -607,6 +611,7 @@ export class OpenAIRealtimeService extends Emitter {
       this.pc = undefined;
       this.dc = undefined;
       this.emitUI({ type: 'realtime.disconnected' });
+      console.log('🔌 Disconnected from OpenAI');
     }
     this.stopRecording();
     this.stopWakeWordDetection();
@@ -655,7 +660,7 @@ export class OpenAIRealtimeService extends Emitter {
         break;
 
       case 'session.updated':
-        // Session updated successfully
+        console.log('✅ Sara is ready to help!');
         break;
 
       case 'conversation.item.input_audio_transcription.completed': {
@@ -663,6 +668,7 @@ export class OpenAIRealtimeService extends Emitter {
         this.lastUserTranscript = transcript;
 
         if (transcript) {
+          console.log('💬 You said:', transcript);
           const lower = transcript.toLowerCase();
 
           // Only trigger Instacart for explicit mentions
@@ -762,6 +768,17 @@ export class OpenAIRealtimeService extends Emitter {
       case 'error':
         console.error('❌ OpenAI error:', event.error);
         this.emitUI({ type: 'error', error: event.error });
+        break;
+
+      case 'input_audio_buffer.speech_started':
+        console.log('🎤 Speech detected...');
+        break;
+
+      case 'response.audio_transcript.done':
+        const responseTranscript = (event as any).transcript;
+        if (responseTranscript) {
+          console.log('🤖 Sara:', responseTranscript);
+        }
         break;
     }
   }
