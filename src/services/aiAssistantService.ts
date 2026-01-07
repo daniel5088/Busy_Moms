@@ -1268,10 +1268,14 @@ class AIAssistantService {
           {
             user_id: userId,
             title,
+            description: String(details.description || ''),
             reminder_date: date,
             reminder_time: time,
             priority: 'medium',
             completed: false,
+            recurring: false,
+            recurring_pattern: null,
+            family_member_id: null,
           },
         ])
         .select()
