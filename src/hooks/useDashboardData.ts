@@ -157,7 +157,6 @@ export function useDashboardData(): DashboardData {
 
   useEffect(() => {
     const handleDataUpdate = () => {
-      console.log('📊 Dashboard data update event received, reloading...');
       loadDashboardData();
     };
 

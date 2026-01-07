@@ -1312,16 +1312,9 @@ class AIAssistantService {
     details: Record<string, unknown>,
     userId: UUID,
   ): Promise<AIAction> {
-    console.log('⏰ Creating reminder with details:', details);
-    console.log('⏰ Raw date from AI:', details.date);
-    console.log('⏰ Raw time from AI:', details.time);
-
     const title = String(details.title ?? 'Reminder');
     const date = toISODate(details.date);
     const time = toISOTime(details.time);
-
-    console.log('⏰ Parsed date:', date);
-    console.log('⏰ Parsed time:', time);
 
     if (!date) {
       return {
@@ -1360,8 +1353,6 @@ class AIAssistantService {
           message: error.message || 'Failed to create reminder.',
         };
       }
-
-      console.log('⏰ Reminder created successfully:', data);
 
       window.dispatchEvent(new CustomEvent('dashboard-data-updated', {
         detail: { type: 'reminder', action: 'created' }

@@ -292,11 +292,8 @@ function App() {
 
   // Show onboarding if user exists but hasn't completed onboarding
   if (showOnboarding) {
-    console.log('📚 Showing onboarding for user:', user.id);
     return <Onboarding onComplete={() => setShowOnboarding(false)} />;
   }
-
-  console.log('🏠 Showing main app for user:', user.id);
   // Show main app if user is authenticated and has completed onboarding
   return (
     <ErrorBoundary componentName="App">

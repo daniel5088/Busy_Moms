@@ -110,13 +110,12 @@ export class OpenAIRealtimeService extends Emitter {
   sendMessage(text: string) {
     const lower = text.toLowerCase();
 
-    // 🛒 Detect Instacart request ONLY for explicit Instacart mentions
+    // Detect Instacart request ONLY for explicit Instacart mentions
     if (
       lower.includes("instacart") ||
       lower.includes("send to instacart") ||
       lower.includes("order from instacart")
     ) {
-      console.log("🛒 Instacart text detected:", text);
 
       // Emit UI event so the chat bubble appears immediately
       this.emitUI({ type: "instacart.order.started", text });
@@ -136,11 +135,9 @@ export class OpenAIRealtimeService extends Emitter {
 
     // 🧠 Non-Instacart messages go to Sara normally
     if (!this.dc || this.dc.readyState !== "open") {
-      console.error("❌ Data channel not ready");
+      console.error("Data channel not ready");
       return;
     }
-
-    console.log("📤 Sending text message:", text);
 
     const event = {
       type: "conversation.item.create",
@@ -157,10 +154,6 @@ export class OpenAIRealtimeService extends Emitter {
 
   // == Internals ==
   private emitUI(event: RealtimeEvent) {
-    console.log('📢📢📢 EMITTING EVENT:', event.type);
-    if (event.type.includes('instacart')) {
-      console.log('📢 Instacart event details:', event);
-    }
     this.onEventCb?.(event);
     this.emit(event);
   }
@@ -382,25 +375,16 @@ export class OpenAIRealtimeService extends Emitter {
 
   private configureSession() {
     if (!this.dc || this.dc.readyState !== 'open') {
-      console.error('❌ Cannot configure session - data channel not ready', {
-        dcExists: !!this.dc,
-        readyState: this.dc?.readyState
-      });
+      console.error('Cannot configure session - data channel not ready');
       return;
     }
 
     if (this.sessionConfigured) {
-      console.error('❌ Session already configured, SHOULD NOT HAPPEN!', {
-        sessionConfigured: this.sessionConfigured
-      });
+      console.error('Session already configured');
       return;
     }
 
-    console.log('⚙️⚙️⚙️ CONFIGURING OpenAI Realtime session with function tools');
-
     const tools = this.getFunctionTools();
-    console.log('⚙️ Number of tools being configured:', tools.length);
-    console.log('⚙️ Tool names:', tools.map(t => t.name).join(', '));
 
     const sessionConfig = {
       type: 'session.update',
@@ -426,22 +410,11 @@ export class OpenAIRealtimeService extends Emitter {
       }
     };
 
-    console.log('⚙️ Sending session configuration...');
-    console.log('⚙️ Config preview:', JSON.stringify({
-      tools: tools.length,
-      toolNames: tools.map(t => t.name),
-      instructionsLength: this.config.instructions?.length,
-      voice: this.config.voice,
-      transcriptionEnabled: true
-    }, null, 2));
-
     try {
       this.dc.send(JSON.stringify(sessionConfig));
       this.sessionConfigured = true;
-      console.log('✅✅✅ Session configuration message SENT successfully');
-      console.log('⏳ Waiting for session.updated event from OpenAI...');
     } catch (error) {
-      console.error('❌ Failed to send session configuration:', error);
+      console.error('Failed to send session configuration:', error);
       this.sessionConfigured = false;
     }
   }
@@ -559,12 +532,10 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   async startRecording() {
-    console.log('🎤 Starting recording (audio is handled by OpenAI Realtime API)');
     this.emitUI({ type: 'recording.started' });
   }
 
   stopRecording() {
-    console.log('🛑 Stopping recording');
     this.emitUI({ type: 'recording.stopped' });
   }
 
@@ -573,7 +544,6 @@ export class OpenAIRealtimeService extends Emitter {
 
     // Reset session state for new connection
     this.sessionConfigured = false;
-    console.log('🔄 Starting new realtime connection - session configuration reset');
 
     // Acquire ephemeral key from your backend (Edge Function/Server), trying multiple candidates.
     const tokenJson = await this.fetchJsonFirst({ userId: this.currentUserId || 'anonymous', roomId: 'default' });
@@ -600,17 +570,15 @@ export class OpenAIRealtimeService extends Emitter {
     // Data channel
     this.dc = this.pc.createDataChannel('oai-events');
     this.dc.onopen = () => {
-      console.log('✅ Data channel opened');
-      console.log('⏳ Waiting for session.created event to configure session...');
+      // Data channel ready
     };
     this.dc.onmessage = async (ev) => {
       try {
         const event = JSON.parse(ev.data);
-        console.log('📨 Received OpenAI event:', event.type, event);
         this.emitUI({ type: event.type, ...event });
         await this.handleOpenAIEvent(event);
       } catch (e) {
-        console.error('❌ Failed to parse data channel message:', e);
+        console.error('Failed to parse data channel message:', e);
       }
     };
 
@@ -645,7 +613,6 @@ export class OpenAIRealtimeService extends Emitter {
     this.connected = false;
     this.sessionConfigured = false;
     this.audioEl = undefined;
-    console.log('🔌 Disconnected and reset session state');
   }
 
   async processUserText(message: string) {
@@ -683,152 +650,79 @@ export class OpenAIRealtimeService extends Emitter {
   private async handleOpenAIEvent(event: any) {
     switch (event.type) {
       case 'session.created':
-        console.log('✅✅✅ SESSION CREATED');
-        console.log('📋 Session ID:', event.session?.id);
-        console.log('📋 Current tools in session:', event.session?.tools?.length || 0);
-        console.log('📋 Current voice:', event.session?.voice);
-        console.log('📋 Input audio transcription:', event.session?.input_audio_transcription);
-        console.log('📋 Full session details:', JSON.stringify(event, null, 2));
-
-        // NOW configure the session with our tools
-        console.log('🔄 Session created, now sending our custom configuration...');
+        // Configure the session with our tools
         this.configureSession();
         break;
 
       case 'session.updated':
-        console.log('✅✅✅ SESSION UPDATED - VERIFYING CONFIGURATION');
-        console.log('📋 Full session update event:', JSON.stringify(event, null, 2));
-
-        // Verify tools were registered
-        const session = event.session;
-        if (session?.tools) {
-          console.log('✅ Tools successfully registered:', session.tools.length);
-          console.log('✅ Tool names:', session.tools.map((t: any) => t.name).join(', '));
-          console.log('✅ Tool choice setting:', session.tool_choice);
-        } else {
-          console.error('❌ WARNING: No tools found in session configuration!');
-        }
-
-        // Verify instructions
-        if (session?.instructions) {
-          const hasReminderInstructions = session.instructions.includes('create_reminder');
-          console.log('✅ Instructions contain create_reminder guidance:', hasReminderInstructions);
-          if (!hasReminderInstructions) {
-            console.error('❌ WARNING: Instructions do not mention create_reminder!');
-          }
-        }
-
-        // Verify audio transcription
-        if (session?.input_audio_transcription) {
-          console.log('✅ Audio transcription enabled:', session.input_audio_transcription);
-        } else {
-          console.error('❌ WARNING: Audio transcription not enabled!');
-        }
+        // Session updated successfully
         break;
 
       case 'conversation.item.input_audio_transcription.completed': {
-        console.log('🎤🎤🎤 AUDIO TRANSCRIPTION COMPLETED');
-        console.log('🎤 Full event:', JSON.stringify(event, null, 2));
         const transcript = (event as any).transcript || '';
-        console.log('🎤 Transcript:', transcript);
-        
-        // Store for debugging
         this.lastUserTranscript = transcript;
-        
+
         if (transcript) {
           const lower = transcript.toLowerCase();
-          console.log('🎤 Checking for Instacart keywords in:', lower);
 
           // Only trigger Instacart for explicit mentions
           if (lower.includes('instacart') || lower.includes('send to instacart') || lower.includes('order from instacart')) {
-            console.log('🛒🛒🛒 INSTACART DETECTED IN TRANSCRIPT!');
-            console.log('🛒 Full transcript:', transcript);
-
             this.emitUI({ type: 'instacart.order.started', text: transcript });
-
-            console.log('🛒 Calling sendToInstacart...');
 
             try {
               const result = await sendToInstacart(transcript);
-              console.log('🛒🛒🛒 INSTACART RESULT:', result);
-              console.log('🛒 Result items:', result.items);
-              console.log('🛒 Result status:', result.status);
-              console.log('🛒 Emitting instacart.order.result event');
               this.emitUI({ type: 'instacart.order.result', data: result });
-              console.log('🛒✅ Event emitted successfully');
             } catch (e: any) {
-              console.error('❌❌❌ INSTACART ERROR:', e);
+              console.error('Instacart error:', e);
               this.emitUI({ type: 'instacart.order.error', error: e?.message ?? String(e) });
             }
-          } else {
-            console.log('🎤 No Instacart keywords found in transcript');
           }
-        } else {
-          console.log('🎤 No transcript data available');
         }
         break;
       }
 
       case 'conversation.item.created': {
         const item = (event as any).item;
-        console.log('💬💬💬 CONVERSATION ITEM CREATED');
-        console.log('💬 Item role:', item?.role);
-        
+
         // When user message is created, check if we should intercept for Instacart
         if (item?.role === 'user') {
-          console.log('👤 User message created, checking content...');
-          
           // Try to get text from various possible locations
           let transcript = '';
-          
+
           if (item.content) {
             if (Array.isArray(item.content)) {
               for (const c of item.content) {
                 if (c?.type === 'input_audio' && c?.transcript) {
                   transcript = c.transcript;
-                  console.log('👤 Found input_audio transcript:', transcript);
                 }
                 if (c?.type === 'input_text' && c?.text) {
                   transcript = c.text;
-                  console.log('👤 Found input_text:', transcript);
                 }
               }
             } else if (typeof item.content === 'string') {
               transcript = item.content;
-              console.log('👤 Found string content:', transcript);
             }
           }
-          
-          console.log('👤 User transcript:', transcript);
 
           if (transcript) {
             const lower = transcript.toLowerCase();
             // Only trigger Instacart for explicit mentions
             if (lower.includes('instacart') || lower.includes('send to instacart') || lower.includes('order from instacart')) {
-              console.log('🛒🛒🛒 INSTACART DETECTED IN USER MESSAGE!');
-              console.log('🛒 Transcript:', transcript);
-
-              // Cancel the AI response and handle Instacart instead
               this.emitUI({ type: 'instacart.order.started', text: transcript });
 
-              console.log('🛒 Calling sendToInstacart...');
               sendToInstacart(transcript)
                 .then(result => {
-                  console.log('🛒✅ Instacart success:', result);
                   this.emitUI({ type: 'instacart.order.result', data: result });
                 })
                 .catch(e => {
-                  console.error('🛒❌ Instacart failed:', e);
+                  console.error('Instacart failed:', e);
                   this.emitUI({ type: 'instacart.order.error', error: e?.message ?? String(e) });
                 });
 
               // Try to cancel the pending response
               if (this.dc && this.dc.readyState === 'open') {
-                console.log('🛒 Sending response.cancel to OpenAI');
                 this.dc.send(JSON.stringify({ type: 'response.cancel' }));
               }
-            } else {
-              console.log('💬 No Instacart keywords found');
             }
           }
         }
@@ -836,27 +730,17 @@ export class OpenAIRealtimeService extends Emitter {
       }
 
       case 'response.function_call_arguments.delta':
-        console.log('🔧🔧🔧 FUNCTION CALL DELTA RECEIVED');
-        console.log('🔧 Call ID:', event.call_id);
-        console.log('🔧 Function name:', event.name);
-        console.log('🔧 Delta:', event.delta);
         if (event.call_id) {
           const existing = this.pendingFunctionCalls.get(event.call_id) || { name: event.name, arguments: '' };
           existing.arguments += event.delta || '';
           this.pendingFunctionCalls.set(event.call_id, existing);
-          console.log('🔧 Accumulated arguments:', existing.arguments);
         }
         break;
 
       case 'response.function_call_arguments.done':
-        console.log('🔧🔧🔧 FUNCTION CALL DONE');
-        console.log('🔧 Call ID:', event.call_id);
-        console.log('🔧 Full event:', event);
         if (event.call_id) {
           const call = this.pendingFunctionCalls.get(event.call_id);
           if (call) {
-            console.log('🔧 Executing function:', call.name);
-            console.log('🔧 With arguments:', call.arguments);
             await this.executeFunctionCall(event.call_id, call.name || event.name, call.arguments || event.arguments);
             this.pendingFunctionCalls.delete(event.call_id);
           }
@@ -864,43 +748,15 @@ export class OpenAIRealtimeService extends Emitter {
         break;
 
       case 'response.created':
-        console.log('🤖 RESPONSE CREATED');
-        console.log('🤖 Response ID:', event.response?.id);
-        console.log('🤖 Full event:', JSON.stringify(event, null, 2));
+        // Response created
         break;
 
       case 'response.output_item.added':
-        console.log('📤📤📤 OUTPUT ITEM ADDED');
-        console.log('📤 Item type:', event.item?.type);
-        console.log('📤 Full event:', JSON.stringify(event, null, 2));
-
-        // Check if this is a function call or a text/audio response
-        if (event.item?.type === 'function_call') {
-          console.log('✅ OpenAI is calling a function!');
-          console.log('✅ Function name:', event.item?.name);
-        } else if (event.item?.type === 'message') {
-          console.log('⚠️ OpenAI is responding with a message instead of calling a function');
-        }
+        // Output item added
         break;
 
       case 'response.done':
-        console.log('✅ Response completed');
-        console.log('✅ Full response:', JSON.stringify(event, null, 2));
-
-        // Analyze what happened in this response
-        const response = event.response;
-        if (response?.output) {
-          const hasFunctionCalls = response.output.some((item: any) => item.type === 'function_call');
-          const hasMessages = response.output.some((item: any) => item.type === 'message');
-
-          console.log('✅ Response contained function calls:', hasFunctionCalls);
-          console.log('✅ Response contained messages:', hasMessages);
-
-          if (hasMessages && !hasFunctionCalls) {
-            console.warn('⚠️⚠️⚠️ WARNING: OpenAI responded with text only, no function calls!');
-            console.warn('⚠️ This might indicate the model is not understanding when to call functions');
-          }
-        }
+        // Response completed
         break;
 
       case 'error':
@@ -911,7 +767,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async executeFunctionCall(callId: string, functionName: string, argsJson: string) {
-    console.log('🔧 Executing function:', functionName, 'with args:', argsJson);
 
     try {
       const args = JSON.parse(argsJson);
@@ -968,7 +823,6 @@ export class OpenAIRealtimeService extends Emitter {
   private sendFunctionResult(callId: string, result: any) {
     if (!this.dc || this.dc.readyState !== 'open') return;
 
-    console.log('📤 Sending function result for', callId, ':', result);
 
     const outputMessage = result.message || JSON.stringify(result);
 
@@ -986,7 +840,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleCreateCalendarEvent(args: any) {
-    console.log('📅 Voice AI creating calendar event with args:', args);
 
     const details: Record<string, unknown> = {
       title: args.title,
@@ -1023,7 +876,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleUpdateCalendarEvent(args: any) {
-    console.log('✏️ Voice AI updating calendar event with args:', args);
 
     const details: Record<string, unknown> = {
       search_term: args.search_term,
@@ -1034,7 +886,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleDeleteCalendarEvent(args: any) {
-    console.log('🗑️ Voice AI deleting calendar event with args:', args);
 
     const details: Record<string, unknown> = {
       search_term: args.search_term,
@@ -1099,7 +950,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleCreateTask(args: any) {
-    console.log('✅ Voice AI creating task with args:', args);
 
     const details: Record<string, unknown> = {
       title: args.title,
@@ -1117,7 +967,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleQueryTasks(args: any) {
-    console.log('📋 Voice AI querying tasks with args:', args);
 
     const details: Record<string, unknown> = {
       query_type: args.query_type,
@@ -1129,7 +978,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleUpdateTask(args: any) {
-    console.log('✏️ Voice AI updating task with args:', args);
 
     const details: Record<string, unknown> = {
       search_term: args.search_term,
@@ -1140,7 +988,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleCompleteTask(args: any) {
-    console.log('✅ Voice AI completing task with args:', args);
 
     const details: Record<string, unknown> = {
       search_term: args.search_term,
@@ -1151,7 +998,6 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleDeleteTask(args: any) {
-    console.log('🗑️ Voice AI deleting task with args:', args);
 
     const details: Record<string, unknown> = {
       search_term: args.search_term
