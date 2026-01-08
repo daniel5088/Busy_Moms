@@ -1076,14 +1076,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                       <button
                         onClick={goPrevMonth}
                         className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                        aria-label="Previous month"
                       >
-                        <ChevronLeft className="w-5 h-5 text-gray-600" />
+                        <ChevronLeft className="w-5 h-5 text-gray-600" aria-hidden="true" />
                       </button>
                       <button
                         onClick={goNextMonth}
                         className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                        aria-label="Next month"
                       >
-                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -1114,11 +1116,19 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     const isSelected = selectedDate && isSameDay(day, selectedDate);
                     const isToday = isSameDay(day, new Date());
 
+                    const dateLabel = day.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+                    const eventLabel = count > 0 ? `, ${count} event${count > 1 ? 's' : ''}` : '';
+                    const selectedLabel = isSelected ? ', selected' : '';
+                    const todayLabel = isToday ? ', today' : '';
+                    const ariaLabel = `${dateLabel}${eventLabel}${selectedLabel}${todayLabel}`;
+
                     return (
                       <button
                         key={i}
                         onClick={() => onDayClick(day)}
                         onDoubleClick={() => onDayDoubleClick(day)}
+                        aria-label={ariaLabel}
+                        aria-pressed={isSelected}
                         className={`
                           relative aspect-square rounded-xl p-2 transition-all
                           flex flex-col items-center justify-center
@@ -1135,7 +1145,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                       >
                         <span className="text-sm">{day.getDate()}</span>
                         {count > 0 && (
-                          <div className="flex gap-0.5 mt-1">
+                          <div className="flex gap-0.5 mt-1" aria-hidden="true">
                             {Array.from({ length: Math.min(count, 3) }).map((_, idx) => (
                               <div
                                 key={idx}
@@ -1168,7 +1178,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     className="w-14 h-14 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-xl transition-all flex items-center justify-center shadow-lg flex-shrink-0"
                     aria-label="Add event from image"
                   >
-                    <Camera className="w-6 h-6" />
+                    <Camera className="w-6 h-6" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -1202,13 +1212,14 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     <>
                       {/* Events */}
                       {itemsForSelectedDate.events.map((ev, i) => (
-                        <div
+                        <button
+                          type="button"
                           key={`event-${ev.id}-${i}`}
                           onClick={() => {
                             setSelectedEvent(ev);
                             setShowEventDetails(true);
                           }}
-                          className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                          className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors break-words flex-1 pr-2">
@@ -1221,7 +1232,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           {ev.location && (
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
-                                <MapPin className="w-3 h-3" />
+                                <MapPin className="w-3 h-3" aria-hidden="true" />
                                 <span className="truncate">{ev.location}</span>
                               </div>
                               {ev.travel_time_minutes && (
@@ -1229,7 +1240,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               )}
                             </div>
                           )}
-                        </div>
+                        </button>
                       ))}
 
                       {/* Google Calendar Events */}
@@ -1276,7 +1287,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           </div>
                           {ev.location && (
                             <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              <MapPin className="w-3 h-3" />
+                              <MapPin className="w-3 h-3" aria-hidden="true" />
                               <span>{ev.location}</span>
                             </div>
                           )}
@@ -1285,17 +1296,18 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
                       {/* Reminders */}
                       {itemsForSelectedDate.reminders.map((reminder, i) => (
-                        <div
+                        <button
+                          type="button"
                           key={`reminder-${reminder.id}-${i}`}
                           onClick={() => {
                             setSelectedReminder(reminder);
                             setShowEventDetails(true);
                           }}
-                          className="group bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                          className="group bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center space-x-2">
-                              <Bell className="w-4 h-4 text-amber-600" />
+                              <Bell className="w-4 h-4 text-amber-600" aria-hidden="true" />
                               <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
                                 {reminder.title}
                               </h3>
@@ -1306,7 +1318,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                 : 'All day'}
                             </span>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </>
                   )}
@@ -1335,9 +1347,9 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {/* Event form modal */}
         {showEventForm && (
           <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6" role="dialog" aria-modal="true" aria-labelledby="event-form-title">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-xl text-gray-900 dark:text-gray-100">
+                <h4 id="event-form-title" className="font-semibold text-xl text-gray-900 dark:text-gray-100">
                   {selectedEvent ? 'Edit Event' : 'Create Event'}
                 </h4>
                 <button
@@ -1346,8 +1358,9 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     setSelectedEvent(null);
                   }}
                   className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  aria-label="Close dialog"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
               <EventForm
@@ -1363,10 +1376,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {/* Event/Reminder Details Modal */}
         {showEventDetails && (selectedEvent || selectedReminder) && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="event-details-title">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  <h2 id="event-details-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
                     {selectedEvent ? 'Event Details' : 'Reminder Details'}
                   </h2>
                   <button
@@ -1376,8 +1389,9 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                       setSelectedReminder(null);
                     }}
                     className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    aria-label="Close dialog"
                   >
-                    <X className="w-4 h-4 text-gray-600" />
+                    <X className="w-4 h-4 text-gray-600" aria-hidden="true" />
                   </button>
                 </div>
 
@@ -1674,14 +1688,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {/* Camera/Gallery Selection Modal */}
         {showCamera && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full max-h-[60vh] sm:max-h-[520px] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-2xl">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full max-h-[60vh] sm:max-h-[520px] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="camera-modal-title">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Event from Image</h3>
+                <h3 id="camera-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Event from Image</h3>
                 <button
                   onClick={() => setShowCamera(false)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                  aria-label="Close dialog"
                 >
-                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
                 </button>
               </div>
 
@@ -1694,7 +1709,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   onClick={startCamera}
                   className="h-32 bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl font-medium hover:from-rose-600 hover:to-rose-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
                 >
-                  <Camera className="w-8 h-8" />
+                  <Camera className="w-8 h-8" aria-hidden="true" />
                   <span className="text-sm">Camera</span>
                 </button>
 
@@ -1702,7 +1717,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   onClick={() => fileInputRef.current?.click()}
                   className="h-32 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl font-medium hover:from-amber-600 hover:to-amber-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
                 >
-                  <Image className="w-8 h-8" />
+                  <Image className="w-8 h-8" aria-hidden="true" />
                   <span className="text-sm">Gallery</span>
                 </button>
               </div>
@@ -1728,19 +1743,21 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
         {/* Live Camera View Modal */}
         {showCameraView && (
-          <div className="fixed inset-0 bg-black z-50 flex flex-col">
+          <div className="fixed inset-0 bg-black z-50 flex flex-col" role="dialog" aria-modal="true" aria-label="Camera view">
             {/* Camera Header */}
             <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/50 to-transparent">
               <div className="flex items-center justify-between">
                 <button
                   onClick={closeCamera}
                   className="p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition"
+                  aria-label="Close camera"
                 >
-                  <X className="w-6 h-6 text-white" />
+                  <X className="w-6 h-6 text-white" aria-hidden="true" />
                 </button>
                 <button
                   onClick={switchCamera}
                   className="p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition"
+                  aria-label="Switch camera"
                 >
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1767,9 +1784,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                 <button
                   onClick={capturePhoto}
                   className="w-20 h-20 rounded-full bg-white border-4 border-white/30 hover:scale-110 transition-transform shadow-lg"
+                  aria-label="Capture photo"
                 >
                   <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                    <Camera className="w-8 h-8 text-gray-800" />
+                    <Camera className="w-8 h-8 text-gray-800" aria-hidden="true" />
                   </div>
                 </button>
               </div>
@@ -1783,9 +1801,9 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {/* Processing Modal */}
         {isProcessing && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl text-center">
-              <Loader2 className="w-16 h-16 text-rose-500 animate-spin mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Processing Image</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl text-center" role="dialog" aria-modal="true" aria-labelledby="processing-title">
+              <Loader2 className="w-16 h-16 text-rose-500 animate-spin mx-auto mb-4" aria-hidden="true" />
+              <h3 id="processing-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Processing Image</h3>
               <p className="text-gray-600 dark:text-gray-300">AI is analyzing the image for event information...</p>
             </div>
           </div>
@@ -1794,9 +1812,9 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {/* Extracted Info Modal */}
         {extractedInfo && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl max-h-[80vh] overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl max-h-[80vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="extracted-events-title">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Events Found</h3>
+                <h3 id="extracted-events-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">Events Found</h3>
                 <button
                   onClick={toggleSelectAll}
                   className="text-sm font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition"
@@ -1820,6 +1838,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                         type="checkbox"
                         checked={selectedEvents.has(i)}
                         onChange={() => toggleEventSelection(i)}
+                        aria-label={event.title}
                         className="mt-1 w-5 h-5 text-rose-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-rose-500 cursor-pointer"
                       />
                       <div className="flex-1">
@@ -1830,9 +1849,9 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           <button
                             onClick={() => handleEditEvent(event, i)}
                             className="ml-2 p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition"
-                            title="Edit event"
+                            aria-label={`Edit ${event.title}`}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -1889,14 +1908,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {/* Edit Event Modal */}
         {editingEvent && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="edit-event-title">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Event</h3>
+                <h3 id="edit-event-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Event</h3>
                 <button
                   onClick={() => setEditingEvent(null)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                  aria-label="Close dialog"
                 >
-                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
                 </button>
               </div>
 
@@ -1975,12 +1995,12 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {/* No Event Found Modal */}
         {showNoEventFoundModal && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="no-event-title">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Info className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+                  <Info className="w-8 h-8 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 id="no-event-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   No Events Found
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">
@@ -2021,12 +2041,12 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {/* Gift Suggestion Modal */}
         {showGiftSuggestion && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="gift-modal-title">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Gift className="w-8 h-8 text-white" />
+                  <Gift className="w-8 h-8 text-white" aria-hidden="true" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 id="gift-modal-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   Need a Gift?
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">
@@ -2065,6 +2085,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         {toast && (
           <div className="fixed top-4 right-4 z-[70] animate-in slide-in-from-top-2 duration-300">
             <div
+              role="alert"
               className={`flex items-center space-x-3 px-6 py-4 rounded-xl shadow-2xl border ${
                 toast.type === 'success'
                   ? 'bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-700'
@@ -2072,11 +2093,11 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
               }`}
             >
               {toast.type === 'success' ? (
-                <svg className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
-                <svg className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               )}
@@ -2094,12 +2115,13 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     ? 'hover:bg-green-100 dark:hover:bg-green-800'
                     : 'hover:bg-red-100 dark:hover:bg-red-800'
                 }`}
+                aria-label="Dismiss notification"
               >
                 <X className={`w-4 h-4 ${
                   toast.type === 'success'
                     ? 'text-green-600 dark:text-green-400'
                     : 'text-red-600 dark:text-red-400'
-                }`} />
+                }`} aria-hidden="true" />
               </button>
             </div>
           </div>
