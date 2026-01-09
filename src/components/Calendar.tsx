@@ -1493,23 +1493,11 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                 let url;
 
                                 if (selectedEvent.location_lat && selectedEvent.location_lng) {
-                                  // Use coordinates - most reliable format
-                                  const params = new URLSearchParams({
-                                    'action': 'setPickup',
-                                    'pickup': 'my_location',
-                                    'dropoff[latitude]': selectedEvent.location_lat.toString(),
-                                    'dropoff[longitude]': selectedEvent.location_lng.toString(),
-                                    'dropoff[nickname]': location
-                                  });
-                                  url = `https://m.uber.com/ul/?${params.toString()}`;
+                                  // Use coordinates with the correct Uber URL format
+                                  url = `https://m.uber.com/looking?drop-off[0][latitude]=${selectedEvent.location_lat}&drop-off[0][longitude]=${selectedEvent.location_lng}&drop-off[0][nickname]=${encodeURIComponent(location)}&pickup[formatted-address]=Current%20Location`;
                                 } else {
-                                  // Fallback to address
-                                  const params = new URLSearchParams({
-                                    'action': 'setPickup',
-                                    'pickup': 'my_location',
-                                    'dropoff[formatted_address]': location
-                                  });
-                                  url = `https://m.uber.com/ul/?${params.toString()}`;
+                                  // Use address with the correct Uber URL format
+                                  url = `https://m.uber.com/looking?drop-off[0][formatted-address]=${encodeURIComponent(location)}&pickup[formatted-address]=Current%20Location`;
                                 }
 
                                 console.log('Uber URL:', url);
