@@ -1468,7 +1468,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               title="Open in Waze"
                             >
                               <img
-                                src="/1-27dc5bfe.jpg"
+                                src="/waze_logo_2022.png"
                                 alt="Waze"
                                 className="h-10 w-auto object-contain"
                               />
@@ -1482,7 +1482,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               title="Open in Google Maps"
                             >
                               <img
-                                src="/google-maps-logo.jpg"
+                                src="/google-maps-emblem.png"
                                 alt="Google Maps"
                                 className="h-10 w-auto object-contain"
                               />
