@@ -1476,9 +1476,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                             </button>
                             <button
                               onClick={() => {
-                                const address = encodeURIComponent(selectedEvent.location!);
-                                // Uber deep link - using /ul/ path with both formatted_address and nickname
-                                const url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[formatted_address]=${address}&dropoff[nickname]=${address}`;
+                                // Use coordinates if available, otherwise fall back to address
+                                let url;
+                                if (selectedEvent.location_lat && selectedEvent.location_lng) {
+                                  // Uber prefers coordinates for accuracy
+                                  url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${selectedEvent.location_lat}&dropoff[longitude]=${selectedEvent.location_lng}&dropoff[nickname]=${encodeURIComponent(selectedEvent.location!)}`;
+                                } else {
+                                  // Fallback to address-based deep link
+                                  url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(selectedEvent.location!)}`;
+                                }
                                 window.open(url, '_blank', 'noopener,noreferrer');
                               }}
                               className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
