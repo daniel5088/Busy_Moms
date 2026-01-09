@@ -1489,15 +1489,30 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                             </button>
                             <button
                               onClick={() => {
-                                // Use coordinates if available, otherwise fall back to address
+                                const location = selectedEvent.location!;
                                 let url;
+
                                 if (selectedEvent.location_lat && selectedEvent.location_lng) {
-                                  // Uber prefers coordinates for accuracy
-                                  url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${selectedEvent.location_lat}&dropoff[longitude]=${selectedEvent.location_lng}&dropoff[nickname]=${encodeURIComponent(selectedEvent.location!)}`;
+                                  // Use coordinates - most reliable format
+                                  const params = new URLSearchParams({
+                                    'action': 'setPickup',
+                                    'pickup': 'my_location',
+                                    'dropoff[latitude]': selectedEvent.location_lat.toString(),
+                                    'dropoff[longitude]': selectedEvent.location_lng.toString(),
+                                    'dropoff[nickname]': location
+                                  });
+                                  url = `https://m.uber.com/ul/?${params.toString()}`;
                                 } else {
-                                  // Fallback to address-based deep link
-                                  url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(selectedEvent.location!)}`;
+                                  // Fallback to address
+                                  const params = new URLSearchParams({
+                                    'action': 'setPickup',
+                                    'pickup': 'my_location',
+                                    'dropoff[formatted_address]': location
+                                  });
+                                  url = `https://m.uber.com/ul/?${params.toString()}`;
                                 }
+
+                                console.log('Uber URL:', url);
                                 window.open(url, '_blank', 'noopener,noreferrer');
                               }}
                               className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-400 to-pink-400 rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors flex items-center justify-center"
