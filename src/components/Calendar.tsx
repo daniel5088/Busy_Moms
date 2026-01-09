@@ -1482,7 +1482,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               title="Open in Google Maps"
                             >
                               <img
-                                src="/google-maps-emblem.png"
+                                src="/google_maps_logo.svg.png"
                                 alt="Google Maps"
                                 className="h-10 w-auto object-contain"
                               />
