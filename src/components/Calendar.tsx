@@ -1442,37 +1442,50 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                       )}
                     </div>
 
-                    <div className="flex space-x-3 pt-4">
-                      {selectedEvent.location && (() => {
-                        const locationLower = selectedEvent.location.toLowerCase();
-                        const isPrivateLocation = 
-                          locationLower.includes('house') ||
-                          locationLower.includes('home') ||
-                          locationLower.includes("'s place") ||
-                          locationLower.includes('my place') ||
-                          locationLower.match(/\b(at|to) \w+['']s\b/); // matches "at John's" or "to Sarah's"
-                        
-                        if (isPrivateLocation) return null;
-                        
-                        return (
-                          <>
+                    {selectedEvent.location && (() => {
+                      const locationLower = selectedEvent.location.toLowerCase();
+                      const isPrivateLocation =
+                        locationLower.includes('house') ||
+                        locationLower.includes('home') ||
+                        locationLower.includes("'s place") ||
+                        locationLower.includes('my place') ||
+                        locationLower.match(/\b(at|to) \w+['']s\b/); // matches "at John's" or "to Sarah's"
+
+                      if (isPrivateLocation) return null;
+
+                      return (
+                        <div className="pt-4">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">
+                            Open in:
+                          </p>
+                          <div className="flex space-x-3">
                             <button
                               onClick={() => {
                                 const url = `https://waze.com/ul?q=${encodeURIComponent(selectedEvent.location!)}`;
                                 window.open(url, '_blank', 'noopener,noreferrer');
                               }}
-                              className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
+                              className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-400 to-pink-400 rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors flex items-center justify-center"
+                              title="Open in Waze"
                             >
-                              Open in Waze
+                              <img
+                                src="/1-27dc5bfe.jpg"
+                                alt="Waze"
+                                className="h-10 w-auto object-contain"
+                              />
                             </button>
                             <button
                               onClick={() => {
                                 const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.location!)}`;
                                 window.open(url, '_blank', 'noopener,noreferrer');
                               }}
-                              className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
+                              className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-400 to-pink-400 rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors flex items-center justify-center"
+                              title="Open in Google Maps"
                             >
-                              Open in Google Maps
+                              <img
+                                src="/google-maps-logo.jpg"
+                                alt="Google Maps"
+                                className="h-10 w-auto object-contain"
+                              />
                             </button>
                             <button
                               onClick={() => {
@@ -1487,14 +1500,19 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                 }
                                 window.open(url, '_blank', 'noopener,noreferrer');
                               }}
-                              className="flex-1 px-4 py-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors"
+                              className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-400 to-pink-400 rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors flex items-center justify-center"
+                              title="Open in Uber"
                             >
-                              Open in Uber
+                              <img
+                                src="/vecteezy_uber-logo-png-uber-icon-transparent-png_27127451.png"
+                                alt="Uber"
+                                className="h-10 w-auto object-contain"
+                              />
                             </button>
-                          </>
-                        );
-                      })()}
-                    </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex space-x-3 pt-4">
                       <button
