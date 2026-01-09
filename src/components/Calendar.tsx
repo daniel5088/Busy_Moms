@@ -1489,17 +1489,21 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                             </button>
                             <button
                               onClick={() => {
-                                const location = selectedEvent.location!;
-                                let url;
+                                const { location, location_lat, location_lng } = selectedEvent;
 
-                                if (selectedEvent.location_lat && selectedEvent.location_lng) {
-                                  // Use coordinates with the correct Uber URL format
-                                  url = `https://m.uber.com/looking?drop-off[0][latitude]=${selectedEvent.location_lat}&drop-off[0][longitude]=${selectedEvent.location_lng}&drop-off[0][nickname]=${encodeURIComponent(location)}&pickup[formatted-address]=Current%20Location`;
+                                const params = new URLSearchParams();
+
+                                if (location_lat && location_lng) {
+                                  params.append('drop-off[0][latitude]', location_lat.toString());
+                                  params.append('drop-off[0][longitude]', location_lng.toString());
+                                  params.append('drop-off[0][formatted-address]', location!);
                                 } else {
-                                  // Use address with the correct Uber URL format
-                                  url = `https://m.uber.com/looking?drop-off[0][formatted-address]=${encodeURIComponent(location)}&pickup[formatted-address]=Current%20Location`;
+                                  params.append('drop-off[0][formatted-address]', location!);
                                 }
 
+                                params.append('pickup[formatted-address]', 'Current Location');
+
+                                const url = `https://m.uber.com/go/home?${params.toString()}`;
                                 console.log('Uber URL:', url);
                                 window.open(url, '_blank', 'noopener,noreferrer');
                               }}
