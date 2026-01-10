@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Calendar, Users, Menu, MessageCircle } from 'lucide-react';
+import { Home, Calendar, Users, Menu, Mic } from 'lucide-react';
 import { Screen } from '../App';
 
 // Alvaros onlykeyboard - Added keyboard focus styling to navigation tabs
@@ -51,7 +51,7 @@ export function ImprovedNavigation({
             title="AI Voice Assistant"
             aria-label="Open AI Voice Assistant"
           >
-            <MessageCircle className="w-7 h-7" />
+            <Mic className="w-7 h-7" />
           </button>
         )}
       </div>
