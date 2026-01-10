@@ -22,7 +22,8 @@ React Native mobile app for Busy Moms, built with Expo and TypeScript.
 
 1. Install dependencies:
    ```bash
-   npm install
+   cd BusyMoms-mobile
+   npm install --legacy-peer-deps
    ```
 
 2. Create a `.env` file with your Supabase credentials:
@@ -40,6 +41,55 @@ React Native mobile app for Busy Moms, built with Expo and TypeScript.
    - **iOS**: Press `i` or scan QR code with Camera app
    - **Android**: Press `a` or scan QR code with Expo Go app
    - **Web**: Press `w`
+
+## Running with Expo Go
+
+Expo Go is the easiest way to test your mobile app without building native binaries.
+
+### Prerequisites
+
+1. Install Expo Go on your mobile device:
+   - [iOS App Store](https://apps.apple.com/app/expo-go/id982107779)
+   - [Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+
+2. Ensure your computer and mobile device are on the same WiFi network
+
+### Steps
+
+1. Navigate to the mobile app directory:
+   ```bash
+   cd BusyMoms-mobile
+   ```
+
+2. Start the Expo development server:
+   ```bash
+   npm start
+   ```
+
+3. You'll see a QR code in your terminal
+
+4. Scan the QR code:
+   - **iOS**: Open the Camera app and point it at the QR code. A notification will appear to open in Expo Go
+   - **Android**: Open the Expo Go app and tap "Scan QR Code"
+
+5. The app will load on your device!
+
+### Troubleshooting
+
+- **Can't connect?** Make sure both devices are on the same WiFi network
+- **QR code not working?** Try pressing `s` in the terminal to switch connection types
+- **Build errors?** Run `npm install --legacy-peer-deps` again
+- **Supabase errors?** Check your `.env` file has correct credentials
+
+### Tunnel Mode (for different networks)
+
+If your computer and phone are on different networks, use tunnel mode:
+
+```bash
+npm start -- --tunnel
+```
+
+This creates a public URL but may be slower.
 
 ## Project Structure
 
