@@ -257,13 +257,38 @@ export class CalendarSyncService {
       // All-day event
       event_date = googleEvent.start.date;
     } else if (googleEvent.start?.dateTime) {
+      // Parse the dateTime in the event's timezone (not UTC)
       const startDateTime = new Date(googleEvent.start.dateTime);
-      event_date = startDateTime.toISOString().split('T')[0];
-      start_time = startDateTime.toTimeString().split(' ')[0];
+
+      // Use toLocaleString to get the date/time in the event's timezone
+      const timezone = googleEvent.start.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const dateStr = startDateTime.toLocaleString('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      event_date = dateStr; // Format: YYYY-MM-DD
+
+      const timeStr = startDateTime.toLocaleString('en-US', {
+        timeZone: timezone,
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      start_time = timeStr; // Format: HH:MM:SS
 
       if (googleEvent.end?.dateTime) {
         const endDateTime = new Date(googleEvent.end.dateTime);
-        end_time = endDateTime.toTimeString().split(' ')[0];
+        const endTimeStr = endDateTime.toLocaleString('en-US', {
+          timeZone: timezone,
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        end_time = endTimeStr;
       }
     }
 
