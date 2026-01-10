@@ -2,7 +2,7 @@
  * Geocoding service for converting addresses to coordinates
  */
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+import { getGoogleMapsApiKey } from './googleMapsKeyService';
 
 export interface GeocodeResult {
   lat: number;
@@ -19,16 +19,18 @@ export async function geocodeLocation(location: string): Promise<GeocodeResult |
     return null;
   }
 
-  if (!GOOGLE_MAPS_API_KEY) {
-    console.warn('Google Maps API key not configured, skipping geocoding');
-    return null;
-  }
-
   try {
+    const apiKey = await getGoogleMapsApiKey();
+
+    if (!apiKey) {
+      console.warn('Google Maps API key not configured, skipping geocoding');
+      return null;
+    }
+
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
         location
-      )}&key=${GOOGLE_MAPS_API_KEY}`
+      )}&key=${apiKey}`
     );
 
     if (!response.ok) {

@@ -3,7 +3,7 @@
  * Provides route planning, travel time estimation, and distance calculations
  */
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+import { getGoogleMapsApiKey } from './googleMapsKeyService';
 
 export type TravelMode = 'driving' | 'walking' | 'bicycling' | 'transit';
 export type TrafficModel = 'best_guess' | 'pessimistic' | 'optimistic';
@@ -100,12 +100,14 @@ export async function getDirections(
     alternatives = true,
   } = request;
 
-  if (!GOOGLE_MAPS_API_KEY) {
-    throw new Error('Google Maps API key is not configured');
-  }
-
   if (!origin || !destination) {
     throw new Error('Origin and destination are required');
+  }
+
+  const apiKey = await getGoogleMapsApiKey();
+
+  if (!apiKey) {
+    throw new Error('Google Maps API key is not configured');
   }
 
   // Build URL parameters
@@ -113,7 +115,7 @@ export async function getDirections(
     origin: origin,
     destination: destination,
     mode: mode,
-    key: GOOGLE_MAPS_API_KEY,
+    key: apiKey,
     alternatives: alternatives.toString(),
   });
 
@@ -184,12 +186,14 @@ export async function getDistanceMatrix(
     trafficModel = 'best_guess',
   } = request;
 
-  if (!GOOGLE_MAPS_API_KEY) {
-    throw new Error('Google Maps API key is not configured');
-  }
-
   if (!origins.length || !destinations.length) {
     throw new Error('Origins and destinations are required');
+  }
+
+  const apiKey = await getGoogleMapsApiKey();
+
+  if (!apiKey) {
+    throw new Error('Google Maps API key is not configured');
   }
 
   // Build URL parameters
@@ -197,7 +201,7 @@ export async function getDistanceMatrix(
     origins: origins.join('|'),
     destinations: destinations.join('|'),
     mode: mode,
-    key: GOOGLE_MAPS_API_KEY,
+    key: apiKey,
   });
 
   // Add departure time for traffic-aware calculations

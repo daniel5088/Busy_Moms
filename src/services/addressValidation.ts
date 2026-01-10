@@ -1,6 +1,5 @@
 import type { AddressValidationResult } from '../lib/supabase';
-
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+import { getGoogleMapsApiKey } from './googleMapsKeyService';
 
 interface GoogleGeocodingResult {
   formatted_address: string;
@@ -32,22 +31,6 @@ export const addressValidationService = {
     country: string,
     apartmentUnit?: string
   ): Promise<AddressValidationResult> {
-    if (!GOOGLE_MAPS_API_KEY) {
-      console.warn('Google Maps API key not configured, skipping validation');
-      return {
-        valid: true,
-        formatted_address: this.formatAddressString(
-          streetAddress,
-          apartmentUnit,
-          city,
-          stateProvince,
-          postalCode,
-          country
-        ),
-        error_message: 'Validation skipped: API key not configured',
-      };
-    }
-
     const addressString = this.formatAddressString(
       streetAddress,
       apartmentUnit,
@@ -58,10 +41,21 @@ export const addressValidationService = {
     );
 
     try {
+      const apiKey = await getGoogleMapsApiKey();
+
+      if (!apiKey) {
+        console.warn('Google Maps API key not configured, skipping validation');
+        return {
+          valid: true,
+          formatted_address: addressString,
+          error_message: 'Validation skipped: API key not configured',
+        };
+      }
+
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
           addressString
-        )}&key=${GOOGLE_MAPS_API_KEY}`
+        )}&key=${apiKey}`
       );
 
       if (!response.ok) {
