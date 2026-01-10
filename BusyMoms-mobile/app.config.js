@@ -7,7 +7,6 @@ export default {
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
     scheme: 'busymoms',
-    newArchEnabled: true,
     splash: {
       image: './assets/splash-icon.png',
       resizeMode: 'contain',
@@ -23,8 +22,6 @@ export default {
         backgroundColor: '#3B82F6',
       },
       package: 'com.busymoms.mobile',
-      edgeToEdgeEnabled: true,
-      predictiveBackGestureEnabled: false,
     },
     web: {
       favicon: './assets/favicon.png',
