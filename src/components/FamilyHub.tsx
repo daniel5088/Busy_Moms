@@ -72,7 +72,7 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
               <div
                 className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
               >
-                <feature.icon className="w-7 h-7 text-white" />
+                <feature.icon className="w-7 h-7 text-white" aria-hidden="true" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 {feature.title}
