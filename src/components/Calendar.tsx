@@ -1247,11 +1247,11 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                       {(itemsForSelectedDate.googleEvents || []).map((ev, i) => (
                         <div
                           key={`google-event-${ev.id}-${i}`}
-                          className="group bg-gradient-to-br from-cyan-50 to-teal-50 border-2 border-cyan-200 rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                          className="bg-gradient-to-br from-cyan-50 to-teal-50 border-2 border-cyan-200 rounded-2xl p-4"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center space-x-2 flex-1">
-                              <h3 className="font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">
+                              <h3 className="font-semibold text-gray-900">
                                 {ev.summary || 'Untitled Event'}
                               </h3>
                               <div className="flex items-center space-x-1 px-2 py-0.5 bg-white rounded-full border border-cyan-300">
