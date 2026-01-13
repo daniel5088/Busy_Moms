@@ -1139,7 +1139,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                 ? 'bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 font-bold border-2 border-rose-500 dark:border-rose-400'
                                 : inCurrentMonth
                                   ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                  : 'text-gray-300 dark:text-gray-600'
+                                  : 'text-gray-400 dark:text-gray-600'
                           }
                         `}
                       >
@@ -1196,7 +1196,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   itemsForSelectedDate.reminders.length === 0 &&
                   (itemsForSelectedDate.googleEvents?.length || 0) === 0 ? (
                     <div className="text-center py-12">
-                      <CalendarIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                      <CalendarIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" aria-hidden="true" />
                       <p className="text-gray-500 dark:text-gray-400">No events for this day</p>
                       <button
                         onClick={() => {
@@ -1408,13 +1408,13 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                        <CalendarIcon className="w-4 h-4" />
+                        <CalendarIcon className="w-4 h-4" aria-hidden="true" />
                         <span>{parseLocalDate(selectedEvent.event_date).toLocaleDateString()}</span>
                       </div>
 
                       {(selectedEvent.start_time || selectedEvent.end_time) && (
                         <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Clock className="w-4 h-4" />
+                          <Clock className="w-4 h-4" aria-hidden="true" />
                           <span>
                             {formatTimeRange(selectedEvent.start_time, selectedEvent.end_time)}
                           </span>
@@ -1423,14 +1423,14 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
                       {selectedEvent.location && (
                         <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <MapPin className="w-4 h-4" />
+                          <MapPin className="w-4 h-4" aria-hidden="true" />
                           <span>{selectedEvent.location}</span>
                         </div>
                       )}
 
                       {selectedEvent.participants && selectedEvent.participants.length > 0 && (
                         <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Users className="w-4 h-4" />
+                          <Users className="w-4 h-4" aria-hidden="true" />
                           <span>{selectedEvent.participants.join(', ')}</span>
                         </div>
                       )}
@@ -1466,6 +1466,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               }}
                               className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-400 to-pink-400 rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors flex items-center justify-center"
                               title="Open in Waze"
+                              aria-label="Open location in Waze"
                             >
                               <img
                                 src="/waze_logo_2022.png"
@@ -1480,6 +1481,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               }}
                               className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-400 to-pink-400 rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors flex items-center justify-center"
                               title="Open in Google Maps"
+                              aria-label="Open location in Google Maps"
                             >
                               <img
                                 src="/google_maps_logo.svg.png"
@@ -1509,6 +1511,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               }}
                               className="flex-1 px-4 py-3 bg-gradient-to-r from-rose-400 to-pink-400 rounded-lg hover:from-rose-500 hover:to-pink-500 transition-colors flex items-center justify-center"
                               title="Open in Uber"
+                              aria-label="Request an Uber to this location"
                             >
                               <img
                                 src="/vecteezy_uber-logo-png-uber-icon-transparent-png_27127451.png"
@@ -1628,13 +1631,13 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                        <CalendarIcon className="w-4 h-4" />
+                        <CalendarIcon className="w-4 h-4" aria-hidden="true" />
                         <span>{parseLocalDate(selectedReminder.reminder_date).toLocaleDateString()}</span>
                       </div>
 
                       {selectedReminder.reminder_time && (
                         <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Clock className="w-4 h-4" />
+                          <Clock className="w-4 h-4" aria-hidden="true" />
                           <span>{formatTimeRange(selectedReminder.reminder_time, null)}</span>
                         </div>
                       )}
@@ -1785,9 +1788,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
         {/* Live Camera View Modal */}
         {showCameraView && (
-          <div className="fixed inset-0 bg-black z-50 flex flex-col" role="dialog" aria-modal="true" aria-label="Camera view">
+          <div className="fixed inset-0 bg-black z-50 flex flex-col" role="dialog" aria-modal="true" aria-labelledby="camera-view-title">
             {/* Camera Header */}
             <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/50 to-transparent">
+              <h2 id="camera-view-title" className="sr-only">Camera View</h2>
               <div className="flex items-center justify-between">
                 <button
                   onClick={closeCamera}
