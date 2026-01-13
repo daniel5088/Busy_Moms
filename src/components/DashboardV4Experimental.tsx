@@ -112,10 +112,51 @@ export function DashboardV4Experimental({
   const [autoOpenedSlotIndex, setAutoOpenedSlotIndex] = React.useState<number | null>(null);
   const [affirmationStatus, setAffirmationStatus] = React.useState<string>('');
 
-  // Reminders are already filtered by the hook based on reminderWeekOffset
+  const shouldShowReminder = React.useCallback((reminder: Reminder, now: Date): boolean => {
+    const today = now.toISOString().split('T')[0];
+    const reminderDate = reminder.reminder_date;
+
+    if (reminderDate > today) {
+      return true;
+    }
+
+    if (reminderDate < today) {
+      return false;
+    }
+
+    if (reminderDate === today) {
+      if (!reminder.reminder_time) {
+        return true;
+      }
+
+      const timeMatch = reminder.reminder_time.match(/^(\d{1,2}):(\d{2})/);
+      if (!timeMatch) {
+        return true;
+      }
+
+      const reminderHours = parseInt(timeMatch[1], 10);
+      const reminderMinutes = parseInt(timeMatch[2], 10);
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+
+      if (reminderHours < currentHours) {
+        return false;
+      }
+
+      if (reminderHours === currentHours && reminderMinutes < currentMinutes) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return true;
+  }, []);
+
   const filteredReminders = React.useMemo(() => {
-    return reminders;
-  }, [reminders]);
+    const now = new Date();
+    return reminders.filter(reminder => shouldShowReminder(reminder, now));
+  }, [reminders, shouldShowReminder]);
 
   React.useEffect(() => {
     if (user) {
