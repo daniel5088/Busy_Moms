@@ -13,12 +13,54 @@ import {
   RefreshCw,
   Cloud,
   CloudOff,
+  Smartphone,
 } from 'lucide-react';
 import { ContactForm } from './forms/ContactForm';
 import { Contact, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { googleContactsService, GoogleContact } from '../services/googleContacts';
 import { getCategoryFromGoogleContact, categorizeContact } from '../utils/contactCategorizer';
+
+// Utility functions for duplicate detection
+const normalizePhoneNumber = (phone: string | null): string => {
+  if (!phone) return '';
+  return phone.replace(/\D/g, ''); // Remove all non-digit characters
+};
+
+const normalizeName = (name: string): string => {
+  return name.toLowerCase().trim().replace(/\s+/g, ' ');
+};
+
+const isDuplicateContact = (
+  contact1: { name: string; phone: string | null },
+  contact2: { name: string; phone: string | null }
+): boolean => {
+  const phone1 = normalizePhoneNumber(contact1.phone);
+  const phone2 = normalizePhoneNumber(contact2.phone);
+  
+  // If both have phones and they match (last 10 digits), it's a duplicate
+  if (phone1 && phone2 && phone1.length >= 10 && phone2.length >= 10) {
+    const phone1Last10 = phone1.slice(-10);
+    const phone2Last10 = phone2.slice(-10);
+    if (phone1Last10 === phone2Last10) {
+      return true;
+    }
+  }
+  
+  // If names match exactly (normalized), it's likely a duplicate
+  if (normalizeName(contact1.name) === normalizeName(contact2.name)) {
+    return true;
+  }
+  
+  return false;
+};
+
+// Device contacts interface
+interface DeviceContact {
+  name: string;
+  phoneNumbers?: string[];
+  emails?: string[];
+}
 
 export function Contacts() {
   const { user } = useAuth();
@@ -29,6 +71,7 @@ export function Contacts() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [deviceSyncing, setDeviceSyncing] = useState(false);
 
   React.useEffect(() => {
     loadContacts();
@@ -105,14 +148,13 @@ export function Contacts() {
       setLoading(false);
     }
   };
+
   const handleContactCreated = (newContact: Contact) => {
     if (editingContact) {
-      // Update existing contact
       setContacts((prev) =>
         prev.map((contact) => (contact.id === editingContact.id ? newContact : contact))
       );
     } else {
-      // Add new contact
       setContacts((prev) => [...prev, newContact]);
     }
     setEditingContact(null);
@@ -133,7 +175,6 @@ export function Contacts() {
 
       if (error) throw error;
 
-      // Remove from local state
       setContacts((prev) => prev.filter((contact) => contact.id !== contactId));
     } catch (error) {
       console.error('Error deleting contact:', error);
@@ -190,6 +231,84 @@ export function Contacts() {
     return googleContact;
   };
 
+  const syncWithDevice = async () => {
+    if (!user?.id) return;
+
+    // Check if Contact Picker API is supported
+    if (!('contacts' in navigator && 'ContactsManager' in window)) {
+      alert('Device contacts access is not supported on this browser/device. This feature works best on Chrome for Android.');
+      return;
+    }
+
+    setDeviceSyncing(true);
+    try {
+      const props = ['name', 'tel', 'email'];
+      const opts = { multiple: true };
+
+      // @ts-ignore - ContactsManager API
+      const deviceContacts: any[] = await navigator.contacts.select(props, opts);
+
+      let addedCount = 0;
+      let skippedCount = 0;
+
+      for (const deviceContact of deviceContacts) {
+        const name = deviceContact.name?.[0] || 'Unknown';
+        const phone = deviceContact.tel?.[0] || null;
+        const email = deviceContact.email?.[0] || null;
+
+        // Check for duplicates in existing contacts
+        const isDuplicate = contacts.some((existing) =>
+          isDuplicateContact(
+            { name, phone },
+            { name: existing.name, phone: existing.phone }
+          )
+        );
+
+        if (isDuplicate) {
+          skippedCount++;
+          continue;
+        }
+
+        // Categorize the contact
+        const category = categorizeContact(name, '', '');
+
+        // Add to database
+        const { data, error } = await supabase
+          .from('contacts')
+          .insert({
+            user_id: user.id,
+            name,
+            phone,
+            email,
+            role: 'Contact',
+            category,
+            available: true,
+            sync_status: 'local',
+          })
+          .select()
+          .single();
+
+        if (!error && data) {
+          setContacts((prev) => [...prev, data]);
+          addedCount++;
+        }
+      }
+
+      alert(
+        `Device sync complete!\nAdded: ${addedCount} contacts\nSkipped (duplicates): ${skippedCount} contacts`
+      );
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('User cancelled contact selection');
+      } else {
+        console.error('Error syncing device contacts:', error);
+        alert('Error syncing device contacts. Please try again.');
+      }
+    } finally {
+      setDeviceSyncing(false);
+    }
+  };
+
   const syncWithGoogle = async () => {
     if (!user?.id || !googleConnected) {
       alert('Please connect your Google account in Settings to sync contacts.');
@@ -204,15 +323,25 @@ export function Contacts() {
 
       const googleContacts = googleContactsResponse.connections || [];
 
-      const existingContacts = contacts.filter((c) => c.google_resource_name);
-      const existingResourceNames = new Set(existingContacts.map((c) => c.google_resource_name));
+      let addedFromGoogle = 0;
+      let skippedFromGoogle = 0;
 
-      const newGoogleContacts = googleContacts.filter(
-        (gc) => !existingResourceNames.has(gc.resourceName)
-      );
-
-      for (const googleContact of newGoogleContacts) {
+      // Import from Google
+      for (const googleContact of googleContacts) {
         const localContact = mapGoogleContactToLocal(googleContact);
+
+        // Check for duplicates
+        const isDuplicate = contacts.some((existing) =>
+          isDuplicateContact(
+            { name: localContact.name!, phone: localContact.phone },
+            { name: existing.name, phone: existing.phone }
+          )
+        );
+
+        if (isDuplicate) {
+          skippedFromGoogle++;
+          continue;
+        }
 
         const { data, error } = await supabase
           .from('contacts')
@@ -225,15 +354,34 @@ export function Contacts() {
 
         if (!error && data) {
           setContacts((prev) => [...prev, data]);
+          addedFromGoogle++;
         }
       }
 
+      // Export to Google (only local contacts without google_resource_name)
       const localOnlyContacts = contacts.filter(
         (c) => !c.google_resource_name && c.sync_status !== 'synced'
       );
 
+      let addedToGoogle = 0;
+      let skippedToGoogle = 0;
+
       for (const localContact of localOnlyContacts) {
         try {
+          // Check if it already exists in Google (by phone/name)
+          const isDuplicateInGoogle = googleContacts.some((gc) => {
+            const gcData = mapGoogleContactToLocal(gc);
+            return isDuplicateContact(
+              { name: localContact.name, phone: localContact.phone },
+              { name: gcData.name!, phone: gcData.phone }
+            );
+          });
+
+          if (isDuplicateInGoogle) {
+            skippedToGoogle++;
+            continue;
+          }
+
           const googleContact = mapLocalContactToGoogle(localContact);
           const createdGoogleContact = await googleContactsService.createContact(googleContact);
 
@@ -260,13 +408,14 @@ export function Contacts() {
                 : c
             )
           );
+          addedToGoogle++;
         } catch (error) {
           console.error('Error syncing contact to Google:', error);
         }
       }
 
       alert(
-        `Sync complete! Added ${newGoogleContacts.length} contacts from Google and synced ${localOnlyContacts.length} local contacts.`
+        `Google sync complete!\n\nFrom Google: ${addedFromGoogle} added, ${skippedFromGoogle} skipped (duplicates)\nTo Google: ${addedToGoogle} added, ${skippedToGoogle} skipped (duplicates)`
       );
     } catch (error) {
       console.error('Error syncing contacts:', error);
@@ -315,26 +464,28 @@ export function Contacts() {
               {googleConnected && (
                 <div className="flex items-center space-x-1 text-xs text-green-600">
                   <Cloud className="w-3 h-3" />
-                  <span>Google Contacts Synced</span>
-                </div>
-              )}
-              {!googleConnected && (
-                <div className="flex items-center space-x-1 text-xs text-gray-400">
-                  <CloudOff className="w-3 h-3" />
-                  <span>Google not connected</span>
+                  <span>Google Synced</span>
                 </div>
               )}
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <button
+              onClick={syncWithDevice}
+              disabled={deviceSyncing}
+              className="flex items-center space-x-1 px-3 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors disabled:opacity-50"
+            >
+              <Smartphone className={`w-4 h-4 ${deviceSyncing ? 'animate-pulse' : ''}`} />
+              <span className="hidden sm:inline">{deviceSyncing ? 'Syncing...' : 'Device'}</span>
+            </button>
             {googleConnected && (
               <button
                 onClick={syncWithGoogle}
                 disabled={syncing}
-                className="flex items-center space-x-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center space-x-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Sync to Google'}</span>
+                <span className="hidden sm:inline">{syncing ? 'Syncing...' : 'Google'}</span>
               </button>
             )}
             <button
