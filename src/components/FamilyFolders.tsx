@@ -11,6 +11,7 @@ import {
   User,
   ChevronRight,
   ChevronDown,
+  X,
 } from 'lucide-react';
 import { FamilyMember, Event, Task, Reminder, ShoppingItem, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -202,34 +203,34 @@ export function FamilyFolders() {
 
   if (loading) {
     return (
-      <div className="h-screen overflow-y-auto pb-20 sm:pb-24">
+      <main className="h-screen overflow-y-auto pb-20 sm:pb-24">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" role="status" aria-label="Loading"></div>
           <span className="ml-2 text-gray-600">Loading family data...</span>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="h-screen overflow-y-auto pb-20 sm:pb-24">
+    <main className="h-screen overflow-y-auto pb-20 sm:pb-24">
       {/* Header */}
-      <div className="bg-white p-4 sm:p-6 border-b border-gray-200">
+      <header className="bg-white p-4 sm:p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Family Folders</h1>
             <p className="text-sm sm:text-base text-gray-600">Organize by family member</p>
           </div>
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" aria-hidden="true" />
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="p-4 sm:p-6">
         {familyData.length === 0 ? (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No family members yet</h3>
             <p className="text-gray-600 mb-4">
               Add family members in Settings to organize their activities
@@ -248,7 +249,9 @@ export function FamilyFolders() {
                 >
                   {/* Family Member Header */}
                   <button
+                    type="button"
                     onClick={() => toggleMemberExpansion(data.member.id)}
+                    aria-expanded={isExpanded}
                     className="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center space-x-4">
@@ -287,9 +290,9 @@ export function FamilyFolders() {
                         {itemCount} items
                       </span>
                       {isExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown className="w-5 h-5 text-gray-400" aria-hidden="true" />
                       ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                        <ChevronRight className="w-5 h-5 text-gray-400" aria-hidden="true" />
                       )}
                     </div>
                   </button>
@@ -300,31 +303,35 @@ export function FamilyFolders() {
                       {/* Quick Actions */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                         <button
+                          type="button"
                           onClick={() => openModal('event', data.member)}
                           className="flex items-center space-x-2 p-2 sm:p-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                         >
-                          <Calendar className="w-4 h-4" />
+                          <Calendar className="w-4 h-4" aria-hidden="true" />
                           <span className="text-xs sm:text-sm font-medium">Add Event</span>
                         </button>
                         <button
+                          type="button"
                           onClick={() => openModal('task', data.member)}
                           className="flex items-center space-x-2 p-2 sm:p-3 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
                         >
-                          <CheckSquare className="w-4 h-4" />
+                          <CheckSquare className="w-4 h-4" aria-hidden="true" />
                           <span className="text-xs sm:text-sm font-medium">Add Task</span>
                         </button>
                         <button
+                          type="button"
                           onClick={() => openModal('reminder', data.member)}
                           className="flex items-center space-x-2 p-2 sm:p-3 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-colors"
                         >
-                          <Bell className="w-4 h-4" />
+                          <Bell className="w-4 h-4" aria-hidden="true" />
                           <span className="text-xs sm:text-sm font-medium">Add Reminder</span>
                         </button>
                         <button
+                          type="button"
                           onClick={() => openModal('shopping', data.member)}
                           className="flex items-center space-x-2 p-2 sm:p-3 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
                         >
-                          <ShoppingBag className="w-4 h-4" />
+                          <ShoppingBag className="w-4 h-4" aria-hidden="true" />
                           <span className="text-xs sm:text-sm font-medium">Add Item</span>
                         </button>
                       </div>
@@ -333,7 +340,7 @@ export function FamilyFolders() {
                       {data.events.length > 0 && (
                         <div>
                           <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <Calendar className="w-4 h-4 text-blue-500" aria-hidden="true" />
                             <span>Events ({data.events.length})</span>
                           </h4>
                           <div className="space-y-2">
@@ -354,16 +361,20 @@ export function FamilyFolders() {
                                   </div>
                                   <div className="flex space-x-1">
                                     <button
+                                      type="button"
                                       onClick={() => openModal('event', data.member, event)}
+                                      aria-label={`Edit event: ${event.title}`}
                                       className="p-1 text-blue-600 hover:bg-blue-100 rounded"
                                     >
-                                      <Edit className="w-3 h-3" />
+                                      <Edit className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => deleteItem('event', event.id)}
+                                      aria-label={`Delete event: ${event.title}`}
                                       className="p-1 text-red-600 hover:bg-red-100 rounded"
                                     >
-                                      <Trash2 className="w-3 h-3" />
+                                      <Trash2 className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                   </div>
                                 </div>
@@ -382,7 +393,7 @@ export function FamilyFolders() {
                       {data.tasks.length > 0 && (
                         <div>
                           <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
-                            <CheckSquare className="w-4 h-4 text-purple-500" />
+                            <CheckSquare className="w-4 h-4 text-purple-500" aria-hidden="true" />
                             <span>Tasks ({data.tasks.length})</span>
                           </h4>
                           <div className="space-y-2">
@@ -417,16 +428,20 @@ export function FamilyFolders() {
                                   </div>
                                   <div className="flex space-x-1">
                                     <button
+                                      type="button"
                                       onClick={() => openModal('task', data.member, task)}
+                                      aria-label={`Edit task: ${task.title}`}
                                       className="p-1 text-purple-600 hover:bg-purple-100 rounded"
                                     >
-                                      <Edit className="w-3 h-3" />
+                                      <Edit className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => deleteItem('task', task.id)}
+                                      aria-label={`Delete task: ${task.title}`}
                                       className="p-1 text-red-600 hover:bg-red-100 rounded"
                                     >
-                                      <Trash2 className="w-3 h-3" />
+                                      <Trash2 className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                   </div>
                                 </div>
@@ -445,7 +460,7 @@ export function FamilyFolders() {
                       {data.reminders.length > 0 && (
                         <div>
                           <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
-                            <Bell className="w-4 h-4 text-orange-500" />
+                            <Bell className="w-4 h-4 text-orange-500" aria-hidden="true" />
                             <span>Reminders ({data.reminders.length})</span>
                           </h4>
                           <div className="space-y-2">
@@ -472,16 +487,20 @@ export function FamilyFolders() {
                                   </div>
                                   <div className="flex space-x-1">
                                     <button
+                                      type="button"
                                       onClick={() => openModal('reminder', data.member, reminder)}
+                                      aria-label={`Edit reminder: ${reminder.title}`}
                                       className="p-1 text-orange-600 hover:bg-orange-100 rounded"
                                     >
-                                      <Edit className="w-3 h-3" />
+                                      <Edit className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => deleteItem('reminder', reminder.id)}
+                                      aria-label={`Delete reminder: ${reminder.title}`}
                                       className="p-1 text-red-600 hover:bg-red-100 rounded"
                                     >
-                                      <Trash2 className="w-3 h-3" />
+                                      <Trash2 className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                   </div>
                                 </div>
@@ -500,7 +519,7 @@ export function FamilyFolders() {
                       {data.shoppingItems.length > 0 && (
                         <div>
                           <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
-                            <ShoppingBag className="w-4 h-4 text-green-500" />
+                            <ShoppingBag className="w-4 h-4 text-green-500" aria-hidden="true" />
                             <span>Shopping Items ({data.shoppingItems.length})</span>
                           </h4>
                           <div className="space-y-2">
@@ -530,16 +549,20 @@ export function FamilyFolders() {
                                   </div>
                                   <div className="flex space-x-1">
                                     <button
+                                      type="button"
                                       onClick={() => openModal('shopping', data.member, item)}
+                                      aria-label={`Edit shopping item: ${item.item}`}
                                       className="p-1 text-green-600 hover:bg-green-100 rounded"
                                     >
-                                      <Edit className="w-3 h-3" />
+                                      <Edit className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => deleteItem('shopping', item.id)}
+                                      aria-label={`Delete shopping item: ${item.item}`}
                                       className="p-1 text-red-600 hover:bg-red-100 rounded"
                                     >
-                                      <Trash2 className="w-3 h-3" />
+                                      <Trash2 className="w-3 h-3" aria-hidden="true" />
                                     </button>
                                   </div>
                                 </div>
@@ -557,7 +580,7 @@ export function FamilyFolders() {
                       {/* Empty State */}
                       {itemCount === 0 && (
                         <div className="text-center py-8">
-                          <User className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <User className="w-8 h-8 text-gray-400 mx-auto mb-2" aria-hidden="true" />
                           <p className="text-gray-500 text-sm">
                             No activities yet for {data.member.name}
                           </p>
@@ -578,17 +601,24 @@ export function FamilyFolders() {
       {/* Modals */}
       {activeModal === 'event' && selectedMember && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div
+            className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="event-modal-title"
+          >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 id="event-modal-title" className="text-lg font-bold text-gray-900">
                   {editingItem ? 'Edit Event' : `Add Event for ${selectedMember.name}`}
                 </h3>
                 <button
+                  type="button"
                   onClick={closeModal}
+                  aria-label="Close dialog"
                   className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-600" />
+                  <X className="w-4 h-4 text-gray-600" aria-hidden="true" />
                 </button>
               </div>
               <EventForm event={editingItem} onCancel={closeModal} onSaved={handleItemCreated} />
@@ -624,6 +654,6 @@ export function FamilyFolders() {
           editItem={editingItem}
         />
       )}
-    </div>
+    </main>
   );
 }
