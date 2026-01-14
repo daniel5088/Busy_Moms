@@ -29,6 +29,40 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
     recurring_pattern: editTask?.recurring_pattern || '',
   });
 
+  // Update form data when editTask changes
+  React.useEffect(() => {
+    if (editTask) {
+      setFormData({
+        title: editTask.title || '',
+        description: editTask.description || '',
+        category: editTask.category || 'other',
+        priority: editTask.priority || 'medium',
+        assigned_to: editTask.assigned_to || '',
+        due_date: editTask.due_date || '',
+        due_time: editTask.due_time || '',
+        points: editTask.points || 0,
+        notes: editTask.notes || '',
+        recurring: editTask.recurring || false,
+        recurring_pattern: editTask.recurring_pattern || '',
+      });
+    } else {
+      // Reset form for new task
+      setFormData({
+        title: '',
+        description: '',
+        category: 'other',
+        priority: 'medium',
+        assigned_to: '',
+        due_date: '',
+        due_time: '',
+        points: 0,
+        notes: '',
+        recurring: false,
+        recurring_pattern: '',
+      });
+    }
+  }, [editTask]);
+
   // Load family members when form opens
   React.useEffect(() => {
     if (isOpen && user) {
