@@ -19,6 +19,7 @@ import { EventForm } from './forms/EventForm';
 import { TaskForm } from './forms/TaskForm';
 import { ReminderForm } from './forms/ReminderForm';
 import { ShoppingForm } from './forms/ShoppingForm';
+import { FamilyMemberForm } from './forms/FamilyMemberForm';
 
 interface FamilyData {
   member: FamilyMember;
@@ -38,6 +39,7 @@ export function FamilyFolders() {
     null
   );
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -146,6 +148,11 @@ export function FamilyFolders() {
     loadFamilyData(); // Refresh all data
   };
 
+  const handleFamilyMemberCreated = () => {
+    setShowFamilyMemberForm(false);
+    loadFamilyData(); // Refresh all data
+  };
+
   const deleteItem = async (type: 'event' | 'task' | 'reminder' | 'shopping', itemId: string) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
@@ -221,8 +228,19 @@ export function FamilyFolders() {
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Family Folders</h1>
             <p className="text-sm sm:text-base text-gray-600">Organize by family member</p>
           </div>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" aria-hidden="true" />
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => setShowFamilyMemberForm(true)}
+              className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-sm hover:shadow-md"
+              aria-label="Add family member"
+            >
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              <span className="hidden sm:inline text-sm font-medium">Add Member</span>
+            </button>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" aria-hidden="true" />
+            </div>
           </div>
         </div>
       </header>
@@ -654,6 +672,12 @@ export function FamilyFolders() {
           editItem={editingItem}
         />
       )}
+
+      <FamilyMemberForm
+        isOpen={showFamilyMemberForm}
+        onClose={() => setShowFamilyMemberForm(false)}
+        onMemberCreated={handleFamilyMemberCreated}
+      />
     </main>
   );
 }
