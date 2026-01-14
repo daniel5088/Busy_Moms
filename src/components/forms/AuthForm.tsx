@@ -12,13 +12,14 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [showOTP, setShowOTP] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
     otp: '',
+    newPassword: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +78,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
     }
   };
 
-  const handleSendOTP = async () => {
+  const handleSendPasswordResetOTP = async () => {
     if (!formData.email) {
       alert('Please enter your email address');
       return;
@@ -88,56 +89,59 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       const { error } = await supabase.auth.signInWithOtp({
         email: formData.email,
         options: {
-          shouldCreateUser: true,
+          shouldCreateUser: false, // Don't create new users for password reset
         },
       });
 
       if (error) throw error;
 
       setOtpSent(true);
-      alert('Check your email for the login code!');
+      alert('Check your email for the verification code!');
     } catch (error: any) {
-      alert(error.message || 'Failed to send OTP');
+      alert(error.message || 'Failed to send verification code');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.otp || formData.otp.length !== 6) {
       alert('Please enter a valid 6-digit code');
       return;
     }
 
+    if (!formData.newPassword || formData.newPassword.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
+      // First verify the OTP
+      const { error: verifyError } = await supabase.auth.verifyOtp({
         email: formData.email,
         token: formData.otp,
         type: 'email',
       });
 
-      if (error) throw error;
+      if (verifyError) throw verifyError;
 
-      if (data.user) {
-        // Check if user has a profile (existing user) or needs onboarding (new user)
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+      // Then update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: formData.newPassword,
+      });
 
-        if (profile) {
-          // Existing user - go to dashboard
-          onAuthSuccess();
-        } else {
-          // New user - they'll go through onboarding
-          console.log('New user via OTP, will create profile during onboarding');
-        }
-      }
+      if (updateError) throw updateError;
+
+      alert('Password updated successfully! You can now sign in.');
+      
+      // Reset form and go back to sign in
+      setShowForgotPassword(false);
+      setOtpSent(false);
+      setFormData({ ...formData, otp: '', newPassword: '' });
     } catch (error: any) {
-      alert(error.message || 'Invalid code. Please try again.');
+      alert(error.message || 'Failed to reset password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -151,15 +155,15 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
             <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-            {showOTP 
-              ? (otpSent ? 'Enter Your Code' : 'Sign in with Email') 
+            {showForgotPassword 
+              ? (otpSent ? 'Reset Your Password' : 'Forgot Password') 
               : isSignUp 
                 ? 'Join Busy Moms' 
                 : 'Welcome Back'}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            {showOTP 
-              ? (otpSent ? 'Enter the 6-digit code sent to your email' : 'Get a magic link to sign in') 
+            {showForgotPassword 
+              ? (otpSent ? 'Enter the code and your new password' : 'Enter your email to receive a verification code') 
               : isSignUp 
                 ? 'Create your account to get started' 
                 : 'Sign in to your account'}
@@ -167,11 +171,11 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         </header>
 
         <main>
-          {showOTP ? (
-            // OTP Flow
+          {showForgotPassword ? (
+            // Forgot Password Flow with OTP
             <div className="space-y-3 sm:space-y-4">
               {!otpSent ? (
-                // Step 1: Enter Email
+                // Step 1: Enter Email for Reset
                 <>
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
@@ -189,16 +193,16 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                   </div>
 
                   <button
-                    onClick={handleSendOTP}
+                    onClick={handleSendPasswordResetOTP}
                     disabled={loading}
                     className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
                   >
-                    {loading ? 'Sending...' : 'Send Magic Link'}
+                    {loading ? 'Sending...' : 'Send Verification Code'}
                   </button>
                 </>
               ) : (
-                // Step 2: Enter OTP
-                <form onSubmit={handleVerifyOTP} className="space-y-3 sm:space-y-4">
+                // Step 2: Enter OTP and New Password
+                <form onSubmit={handleResetPassword} className="space-y-3 sm:space-y-4">
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                       6-Digit Code
@@ -209,7 +213,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                       maxLength={6}
                       value={formData.otp}
                       onChange={(e) => setFormData({ ...formData, otp: e.target.value.replace(/\D/g, '') })}
-                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center text-2xl tracking-widest font-mono text-sm sm:text-base"
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center text-2xl tracking-widest font-mono"
                       placeholder="000000"
                     />
                     <p className="text-xs text-gray-500 mt-2">
@@ -217,18 +221,34 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                     </p>
                   </div>
 
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                      <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={formData.newPassword}
+                      onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                      placeholder="Enter new password"
+                      minLength={6}
+                    />
+                  </div>
+
                   <button
                     type="submit"
                     disabled={loading || formData.otp.length !== 6}
                     className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
                   >
-                    {loading ? 'Verifying...' : 'Verify Code'}
+                    {loading ? 'Resetting...' : 'Reset Password'}
                   </button>
 
                   <button
                     onClick={() => {
                       setOtpSent(false);
-                      setFormData({ ...formData, otp: '' });
+                      setFormData({ ...formData, otp: '', newPassword: '' });
                     }}
                     className="w-full text-purple-600 hover:underline text-sm"
                   >
@@ -239,13 +259,13 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
 
               <button
                 onClick={() => {
-                  setShowOTP(false);
+                  setShowForgotPassword(false);
                   setOtpSent(false);
-                  setFormData({ ...formData, otp: '' });
+                  setFormData({ ...formData, otp: '', newPassword: '' });
                 }}
                 className="w-full text-gray-600 hover:underline text-sm sm:text-base"
               >
-                Back to password sign in
+                Back to Sign In
               </button>
             </div>
           ) : (
@@ -309,14 +329,14 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                 </button>
               </form>
 
-              {/* OTP Sign-in Option */}
+              {/* Forgot Password Link - only show on sign in */}
               {!isSignUp && (
                 <div className="mt-3 text-center">
                   <button
-                    onClick={() => setShowOTP(true)}
+                    onClick={() => setShowForgotPassword(true)}
                     className="text-sm text-purple-600 hover:underline"
                   >
-                    Sign in with email code instead
+                    Forgot password?
                   </button>
                 </div>
               )}
