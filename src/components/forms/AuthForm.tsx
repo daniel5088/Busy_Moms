@@ -12,12 +12,13 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [showOTP, setShowOTP] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
+    otp: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,25 +33,18 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
             alert(
               'This email is already registered. Please sign in instead, or use a different email to sign up.'
             );
-            setIsSignUp(false); // Switch to sign-in mode
+            setIsSignUp(false);
             return;
           }
           throw error;
         }
 
-        // Create profile after successful signup
         if (data.user) {
           console.log('User created successfully, profile will be created during onboarding');
         }
-
-        // Don't switch to sign in, let them proceed to onboarding
-        // For new signups, they'll go through onboarding
-        // onAuthSuccess() will be called after onboarding is complete
       } else {
         const { error } = await signIn(formData.email, formData.password);
         if (error) throw error;
-
-        // For existing users signing in, go directly to dashboard
         onAuthSuccess();
       }
     } catch (error: any) {
@@ -74,7 +68,6 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
         return;
       }
       console.log('🚀 Google OAuth redirect initiated...');
-      // OAuth redirect will handle the rest, loading state will be reset on page reload
     } catch (error: any) {
       console.error('Google sign-in error:', error);
       alert(
@@ -84,7 +77,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleSendOTP = async () => {
     if (!formData.email) {
       alert('Please enter your email address');
       return;
@@ -92,16 +85,59 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { error } = await supabase.auth.signInWithOtp({
+        email: formData.email,
+        options: {
+          shouldCreateUser: true,
+        },
       });
 
       if (error) throw error;
 
-      setResetEmailSent(true);
-      alert('Password reset email sent! Please check your inbox.');
+      setOtpSent(true);
+      alert('Check your email for the login code!');
     } catch (error: any) {
-      alert(error.message || 'Failed to send reset email');
+      alert(error.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.otp || formData.otp.length !== 6) {
+      alert('Please enter a valid 6-digit code');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: formData.email,
+        token: formData.otp,
+        type: 'email',
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Check if user has a profile (existing user) or needs onboarding (new user)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile) {
+          // Existing user - go to dashboard
+          onAuthSuccess();
+        } else {
+          // New user - they'll go through onboarding
+          console.log('New user via OTP, will create profile during onboarding');
+        }
+      }
+    } catch (error: any) {
+      alert(error.message || 'Invalid code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -110,186 +146,232 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md p-4 sm:p-8">
-        {/* Alvaro-landmarks: Header section for auth form */}
         <header className="text-center mb-8">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          {/* Alvaro-landmarks: Primary h1 heading for auth form */}
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-            {showForgotPassword ? 'Reset Password' : isSignUp ? 'Join Busy Moms' : 'Welcome Back'}
+            {showOTP 
+              ? (otpSent ? 'Enter Your Code' : 'Sign in with Email') 
+              : isSignUp 
+                ? 'Join Busy Moms' 
+                : 'Welcome Back'}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            {showForgotPassword 
-              ? 'Enter your email to receive a reset link' 
+            {showOTP 
+              ? (otpSent ? 'Enter the 6-digit code sent to your email' : 'Get a magic link to sign in') 
               : isSignUp 
                 ? 'Create your account to get started' 
                 : 'Sign in to your account'}
           </p>
         </header>
 
-        {/* Alvaro-landmarks: Main form content */}
         <main>
-          {showForgotPassword ? (
-            // Forgot Password Form
+          {showOTP ? (
+            // OTP Flow
             <div className="space-y-3 sm:space-y-4">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                  Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                  placeholder="your@email.com"
-                />
-              </div>
+              {!otpSent ? (
+                // Step 1: Enter Email
+                <>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                      <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                      placeholder="your@email.com"
+                    />
+                  </div>
 
-              <button
-                onClick={handleForgotPassword}
-                disabled={loading}
-                className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
-              >
-                {loading ? 'Sending...' : 'Send Reset Link'}
-              </button>
+                  <button
+                    onClick={handleSendOTP}
+                    disabled={loading}
+                    className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
+                  >
+                    {loading ? 'Sending...' : 'Send Magic Link'}
+                  </button>
+                </>
+              ) : (
+                // Step 2: Enter OTP
+                <form onSubmit={handleVerifyOTP} className="space-y-3 sm:space-y-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                      6-Digit Code
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      value={formData.otp}
+                      onChange={(e) => setFormData({ ...formData, otp: e.target.value.replace(/\D/g, '') })}
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center text-2xl tracking-widest font-mono text-sm sm:text-base"
+                      placeholder="000000"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Sent to {formData.email}
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading || formData.otp.length !== 6}
+                    className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
+                  >
+                    {loading ? 'Verifying...' : 'Verify Code'}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setOtpSent(false);
+                      setFormData({ ...formData, otp: '' });
+                    }}
+                    className="w-full text-purple-600 hover:underline text-sm"
+                  >
+                    Use a different email
+                  </button>
+                </form>
+              )}
 
               <button
                 onClick={() => {
-                  setShowForgotPassword(false);
-                  setResetEmailSent(false);
+                  setShowOTP(false);
+                  setOtpSent(false);
+                  setFormData({ ...formData, otp: '' });
                 }}
-                className="w-full text-purple-600 hover:underline text-sm sm:text-base"
+                className="w-full text-gray-600 hover:underline text-sm sm:text-base"
               >
-                Back to Sign In
+                Back to password sign in
               </button>
             </div>
           ) : (
-            // Regular Sign In/Up Form
+            // Regular Password Sign In/Up
             <>
-          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-            {isSignUp && (
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  <User className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                  placeholder="Your full name"
-                />
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+                {isSignUp && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                      placeholder="Your full name"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                    placeholder="your@email.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                    placeholder="Your password"
+                    minLength={6}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
+                >
+                  {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+                </button>
+              </form>
+
+              {/* OTP Sign-in Option */}
+              {!isSignUp && (
+                <div className="mt-3 text-center">
+                  <button
+                    onClick={() => setShowOTP(true)}
+                    className="text-sm text-purple-600 hover:underline"
+                  >
+                    Sign in with email code instead
+                  </button>
+                </div>
+              )}
+
+              {/* Google Sign-In */}
+              <div className="mt-4 sm:mt-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-xs sm:text-sm">
+                    <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={googleLoading || loading}
+                  className="w-full mt-3 sm:mt-4 flex items-center justify-center space-x-2 sm:space-x-3 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  <Chrome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                  <span className="text-gray-700 font-medium text-sm sm:text-base">
+                    {googleLoading
+                      ? 'Connecting...'
+                      : isSignUp
+                        ? 'Sign up with Google'
+                        : 'Sign in with Google'}
+                  </span>
+                </button>
               </div>
-            )}
 
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Email
-              </label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                placeholder="your@email.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                placeholder="Your password"
-                minLength={6}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
-            >
-              {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
-            </button>
-          </form>
-
-          {/* Forgot Password Link - only show on sign in */}
-          {!isSignUp && (
-            <div className="mt-3 text-center">
-              <button
-                onClick={() => setShowForgotPassword(true)}
-                className="text-sm text-purple-600 hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
-          )}
-
-          {/* Google Sign-In */}
-          <div className="mt-4 sm:mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+              <div className="mt-4 sm:mt-6 text-center">
+                <button
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-purple-600 hover:underline text-sm sm:text-base"
+                >
+                  {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
+                </button>
               </div>
-              <div className="relative flex justify-center text-xs sm:text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+
+              {/* OAuth Diagnostics Link */}
+              <div className="mt-3 text-center space-y-1">
+                <a
+                  href="?diagnostics=true"
+                  className="block text-xs text-gray-500 hover:text-gray-700 underline"
+                >
+                  OAuth Configuration Diagnostics
+                </a>
+                <a
+                  href="?signout=true"
+                  className="block text-xs text-gray-500 hover:text-gray-700 underline"
+                >
+                  Clear Session & Sign Out
+                </a>
               </div>
-            </div>
-
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={googleLoading || loading}
-              className="w-full mt-3 sm:mt-4 flex items-center justify-center space-x-2 sm:space-x-3 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              <Chrome className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              <span className="text-gray-700 font-medium text-sm sm:text-base">
-                {googleLoading
-                  ? 'Connecting...'
-                  : isSignUp
-                    ? 'Sign up with Google'
-                    : 'Sign in with Google'}
-              </span>
-            </button>
-          </div>
-
-          <div className="mt-4 sm:mt-6 text-center">
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-purple-600 hover:underline text-sm sm:text-base"
-            >
-              {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
-            </button>
-          </div>
-
-          {/* OAuth Diagnostics Link */}
-          <div className="mt-3 text-center space-y-1">
-            <a
-              href="?diagnostics=true"
-              className="block text-xs text-gray-500 hover:text-gray-700 underline"
-            >
-              OAuth Configuration Diagnostics
-            </a>
-            <a
-              href="?signout=true"
-              className="block text-xs text-gray-500 hover:text-gray-700 underline"
-            >
-              Clear Session & Sign Out
-            </a>
-          </div>
             </>
           )}
         </main>
