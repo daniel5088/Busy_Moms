@@ -96,6 +96,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     id: crypto.randomUUID(),
                     name: '',
                     relationship: '',
+                    gender: 'Other',
+                    school: '',
+                    grade: '',
+                    allergies: [],
+                    medical_notes: '',
                     color: ALL_COLORS[0],
                   };
                   setFamilyMembers([newMember]);
@@ -139,6 +144,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     id: crypto.randomUUID(),
                     name: '',
                     relationship: '',
+                    gender: 'Other',
+                    school: '',
+                    grade: '',
+                    allergies: [],
+                    medical_notes: '',
                     color: availableColor,
                   };
                   setFamilyMembers((prev) => [...prev, newMember]);
@@ -318,6 +328,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             name: m.name,
             relationship: m.relationship,
             age: m.age,
+            gender: m.gender || 'Other',
+            school: m.school || '',
+            grade: m.grade || '',
+            allergies: m.allergies || [],
+            medical_notes: m.medical_notes || '',
             color: m.color,
           }));
 
