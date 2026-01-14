@@ -40,6 +40,7 @@ export function FamilyFolders() {
   );
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showFamilyMemberForm, setShowFamilyMemberForm] = useState(false);
+  const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -150,7 +151,13 @@ export function FamilyFolders() {
 
   const handleFamilyMemberCreated = () => {
     setShowFamilyMemberForm(false);
+    setEditingMember(null);
     loadFamilyData(); // Refresh all data
+  };
+
+  const handleEditMember = (member: FamilyMember) => {
+    setEditingMember(member);
+    setShowFamilyMemberForm(true);
   };
 
   const deleteItem = async (type: 'event' | 'task' | 'reminder' | 'shopping', itemId: string) => {
@@ -266,13 +273,13 @@ export function FamilyFolders() {
                   className="bg-white border border-gray-200 rounded-xl overflow-hidden"
                 >
                   {/* Family Member Header */}
-                  <button
-                    type="button"
-                    onClick={() => toggleMemberExpansion(data.member.id)}
-                    aria-expanded={isExpanded}
-                    className="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center space-x-4">
+                  <div className="p-4 sm:p-6 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => toggleMemberExpansion(data.member.id)}
+                      aria-expanded={isExpanded}
+                      className="flex-1 flex items-center space-x-4 hover:opacity-80 transition-opacity"
+                    >
                       <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-semibold text-lg sm:text-xl">
                           {data.member.name
@@ -281,7 +288,7 @@ export function FamilyFolders() {
                             .join('')}
                         </span>
                       </div>
-                      <div className="text-left">
+                      <div className="text-left flex-1">
                         <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                           {data.member.name}
                         </h3>
@@ -291,9 +298,6 @@ export function FamilyFolders() {
                               {data.member.relationship}
                             </span>
                           )}
-                          {data.member.age && <span>Age {data.member.age}</span>}
-                          {data.member.gender && <span>{data.member.gender}</span>}
-                          {data.member.school && <span>{data.member.school}</span>}
                         </div>
                         <div className="flex items-center space-x-4 mt-2 text-xs sm:text-sm text-gray-500">
                           <span>{data.events.length} events</span>
@@ -302,22 +306,92 @@ export function FamilyFolders() {
                           <span>{data.shoppingItems.length} shopping items</span>
                         </div>
                       </div>
-                    </div>
+                    </button>
                     <div className="flex items-center space-x-2">
-                      <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                        {itemCount} items
-                      </span>
-                      {isExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400" aria-hidden="true" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400" aria-hidden="true" />
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditMember(data.member);
+                        }}
+                        className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        aria-label={`Edit ${data.member.name}`}
+                      >
+                        <Edit className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleMemberExpansion(data.member.id)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="w-5 h-5 text-gray-400" aria-hidden="true" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-gray-400" aria-hidden="true" />
+                        )}
+                      </button>
                     </div>
-                  </button>
+                  </div>
 
                   {/* Expanded Content */}
                   {isExpanded && (
                     <div className="border-t border-gray-200 p-4 sm:p-6 space-y-6">
+                      {/* Member Details */}
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center space-x-2">
+                          <User className="w-4 h-4 text-purple-500" aria-hidden="true" />
+                          <span>Member Details</span>
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                          {data.member.age && (
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">Age:</span>
+                              <span className="ml-2 text-gray-900 dark:text-gray-100">{data.member.age} years</span>
+                            </div>
+                          )}
+                          {data.member.gender && (
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">Gender:</span>
+                              <span className="ml-2 text-gray-900 dark:text-gray-100">{data.member.gender}</span>
+                            </div>
+                          )}
+                          {data.member.school && (
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">School:</span>
+                              <span className="ml-2 text-gray-900 dark:text-gray-100">{data.member.school}</span>
+                            </div>
+                          )}
+                          {data.member.grade && (
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">Grade:</span>
+                              <span className="ml-2 text-gray-900 dark:text-gray-100">{data.member.grade}</span>
+                            </div>
+                          )}
+                        </div>
+                        {data.member.allergies && data.member.allergies.length > 0 && (
+                          <div className="mt-3">
+                            <span className="text-gray-600 dark:text-gray-400 font-medium text-sm">Allergies:</span>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {data.member.allergies.map((allergy, index) => (
+                                <span
+                                  key={index}
+                                  className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full text-xs font-medium"
+                                >
+                                  {allergy}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {data.member.medical_notes && (
+                          <div className="mt-3">
+                            <span className="text-gray-600 dark:text-gray-400 font-medium text-sm">Medical Notes:</span>
+                            <p className="mt-1 text-gray-900 dark:text-gray-100 text-sm">{data.member.medical_notes}</p>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Quick Actions */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                         <button
@@ -675,8 +749,12 @@ export function FamilyFolders() {
 
       <FamilyMemberForm
         isOpen={showFamilyMemberForm}
-        onClose={() => setShowFamilyMemberForm(false)}
+        onClose={() => {
+          setShowFamilyMemberForm(false);
+          setEditingMember(null);
+        }}
         onMemberCreated={handleFamilyMemberCreated}
+        editMember={editingMember}
       />
     </main>
   );
