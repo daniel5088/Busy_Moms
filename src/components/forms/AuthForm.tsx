@@ -12,6 +12,8 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -82,6 +84,29 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      alert('Please enter your email address');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      setResetEmailSent(true);
+      alert('Password reset email sent! Please check your inbox.');
+    } catch (error: any) {
+      alert(error.message || 'Failed to send reset email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md p-4 sm:p-8">
@@ -92,15 +117,58 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
           </div>
           {/* Alvaro-landmarks: Primary h1 heading for auth form */}
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-            {isSignUp ? 'Join Busy Moms' : 'Welcome Back'}
+            {showForgotPassword ? 'Reset Password' : isSignUp ? 'Join Busy Moms' : 'Welcome Back'}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            {isSignUp ? 'Create your account to get started' : 'Sign in to your account'}
+            {showForgotPassword 
+              ? 'Enter your email to receive a reset link' 
+              : isSignUp 
+                ? 'Create your account to get started' 
+                : 'Sign in to your account'}
           </p>
         </header>
 
         {/* Alvaro-landmarks: Main form content */}
         <main>
+          {showForgotPassword ? (
+            // Forgot Password Form
+            <div className="space-y-3 sm:space-y-4">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                  placeholder="your@email.com"
+                />
+              </div>
+
+              <button
+                onClick={handleForgotPassword}
+                disabled={loading}
+                className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm sm:text-base"
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setResetEmailSent(false);
+                }}
+                className="w-full text-purple-600 hover:underline text-sm sm:text-base"
+              >
+                Back to Sign In
+              </button>
+            </div>
+          ) : (
+            // Regular Sign In/Up Form
+            <>
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             {isSignUp && (
               <div>
@@ -159,6 +227,18 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
             </button>
           </form>
 
+          {/* Forgot Password Link - only show on sign in */}
+          {!isSignUp && (
+            <div className="mt-3 text-center">
+              <button
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-purple-600 hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
           {/* Google Sign-In */}
           <div className="mt-4 sm:mt-6">
             <div className="relative">
@@ -210,6 +290,8 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
               Clear Session & Sign Out
             </a>
           </div>
+            </>
+          )}
         </main>
       </div>
     </div>
