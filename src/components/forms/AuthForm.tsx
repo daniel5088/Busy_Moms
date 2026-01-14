@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Mail, Lock, User, Chrome } from 'lucide-react';
+import { Heart, Mail, Lock, User, Chrome, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
@@ -14,6 +14,8 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -100,7 +102,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       if (error) throw error;
 
       setOtpSent(true);
-      alert('Password reset code sent!\n\nCheck your email for a message from Busy Moms Assistant AI with your 6-digit verification code.');
+      alert('Password reset code sent! Check your email for the 6-digit code.');
     } catch (error: any) {
       alert(error.message || 'Failed to send verification code');
     } finally {
@@ -166,10 +168,10 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                 : 'Welcome Back'}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            {showForgotPassword
-              ? (otpSent ? 'Check your email for the 6-digit code' : "We'll send you a verification code")
-              : isSignUp
-                ? 'Create your account to get started'
+            {showForgotPassword 
+              ? (otpSent ? 'Enter the code and your new password' : 'Enter your email to receive a verification code') 
+              : isSignUp 
+                ? 'Create your account to get started' 
                 : 'Sign in to your account'}
           </p>
         </header>
@@ -221,7 +223,6 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                       placeholder="000000"
                     />
                     <p className="text-xs text-gray-500 mt-2">
-                      Check your email for "Password Reset for Busy Moms Assistant AI"<br />
                       Sent to {formData.email}
                     </p>
                   </div>
@@ -231,15 +232,28 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                       <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                       New Password
                     </label>
-                    <input
-                      type="password"
-                      required
-                      value={formData.newPassword}
-                      onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                      placeholder="Enter new password"
-                      minLength={6}
-                    />
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        required
+                        value={formData.newPassword}
+                        onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                        placeholder="Enter new password"
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showNewPassword ? (
+                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                        ) : (
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <button
@@ -314,15 +328,28 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                     <Lock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                     Password
                   </label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                    placeholder="Your password"
-                    minLength={6}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                      placeholder="Your password"
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                      ) : (
+                        <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <button
