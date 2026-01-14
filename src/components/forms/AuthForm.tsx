@@ -89,14 +89,18 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       const { error } = await supabase.auth.signInWithOtp({
         email: formData.email,
         options: {
-          shouldCreateUser: false, // Don't create new users for password reset
+          shouldCreateUser: false,
+          emailRedirectTo: undefined, // No redirect, just send OTP
+          data: {
+            purpose: 'password_reset'
+          }
         },
       });
 
       if (error) throw error;
 
       setOtpSent(true);
-      alert('Check your email for the verification code!');
+      alert('Password reset code sent! Check your email for the 6-digit code.');
     } catch (error: any) {
       alert(error.message || 'Failed to send verification code');
     } finally {
