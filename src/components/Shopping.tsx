@@ -319,9 +319,9 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
   ]; */
 
   return (
-    <div className="h-screen overflow-y-auto pb-20 sm:pb-24 bg-gray-50 dark:bg-gray-900">
+    <main className="h-screen overflow-y-auto pb-20 sm:pb-24 bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -331,13 +331,13 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
               Smart lists and suggestions
             </p>
           </div>
-          <button className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" onClick={() => setShowShoppingForm(true)} />
+          <button type="button" onClick={() => setShowShoppingForm(true)} aria-label="Add new item" className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-0.5 sm:space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+        <div className="flex space-x-0.5 sm:space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1" role="tablist" aria-label="Shopping sections">
           {[
             { id: 'list', label: 'Shopping List', icon: ShoppingCart },
             { id: 'recipes', label: 'Recipes', icon: ChefHat },
@@ -346,26 +346,30 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
             // { id: 'auto', label: 'Auto-Reorder', icon: Repeat },
           ].map((tab) => (
             <button
+              type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`${tab.id}-panel`}
               className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 py-1.5 sm:py-2 px-1 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-white dark:bg-gray-900 text-green-600 dark:text-green-400 shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
-              <tab.icon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <tab.icon className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
               <span className="hidden sm:inline">{tab.label}</span>
               <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
             </button>
           ))}
         </div>
-      </div>
+      </header>
 
       <div className="p-4 sm:p-6">
         {/* Shopping List Tab */}
         {activeTab === 'list' && (
-          <div className="space-y-4">
+          <div className="space-y-4" id="list-panel" role="tabpanel" aria-labelledby="list-tab">
             {/* Provider Filter Tabs */}
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-2">
               <div className="flex flex-wrap gap-2">
@@ -388,6 +392,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                   },
                 ].map((filter) => (
                   <button
+                    type="button"
                     key={filter.id || 'null'}
                     onClick={() => setProviderFilter(filter.id)}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -396,7 +401,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    <Filter className="w-4 h-4" />
+                    <Filter className="w-4 h-4" aria-hidden="true" />
                     <span>{filter.label}</span>
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs ${
@@ -415,6 +420,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
               <div className="flex flex-wrap gap-3">
                 {selectedItems.size > 0 && (
                   <button
+                    type="button"
                     onClick={clearSelection}
                     className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
@@ -423,6 +429,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                 )}
                 {selectedItems.size === 0 && getFilteredItems().length > 0 && (
                   <button
+                    type="button"
                     onClick={selectAllItems}
                     className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
@@ -437,11 +444,12 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                   showCount={selectedItems.size > 0 ? selectedItems.size : undefined}
                 />
                 <button
+                  type="button"
                   onClick={() => handleSendToProvider('amazon')}
                   disabled={getItemsToSend().length === 0}
                   className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4" aria-hidden="true" />
                   <span>Send to Amazon</span>
                   {selectedItems.size > 0 && <span>({selectedItems.size})</span>}
                 </button>
@@ -450,7 +458,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
 
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-500"></div>
+                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-green-500" role="status" aria-label="Loading shopping list"></div>
                 <span className="ml-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
                   Loading shopping list...
                 </span>
@@ -478,6 +486,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                           type="checkbox"
                           checked={selectedItems.has(item.id)}
                           onChange={() => toggleItemSelection(item.id)}
+                          aria-label={`Select ${item.item}`}
                           className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 rounded focus:ring-green-500 mt-1"
                         />
                         <div className="flex-1 min-w-0">
@@ -488,26 +497,28 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                             <div className="flex items-center gap-2">
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                 <button
+                                  type="button"
                                   onClick={() => handleEditItem(item)}
+                                  aria-label={`Edit ${item.item}`}
                                   className="p-1.5 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
-                                  title="Edit item"
                                 >
-                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => handleDeleteItem(item.id)}
+                                  aria-label={`Delete ${item.item}`}
                                   className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
-                                  title="Delete item"
                                 >
-                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
                                 </button>
                               </div>
                               <input
                                 type="checkbox"
                                 checked={item.completed || false}
                                 onChange={() => toggleItemCompleted(item.id)}
+                                aria-label={`Mark ${item.item} as ${item.completed ? 'incomplete' : 'complete'}`}
                                 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 rounded focus:ring-green-500 flex-shrink-0"
-                                title="Mark as completed"
                               />
                             </div>
                           </div>
@@ -525,12 +536,13 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                                 {providerBadge.type === 'logo' ? (
                                   <img
                                     src={providerBadge.logo}
-                                    alt="Instacart"
+                                    alt=""
+                                    aria-hidden="true"
                                     className="h-4 w-auto object-contain"
                                   />
                                 ) : (
                                   <>
-                                    <Package className="w-3 h-3" />
+                                    <Package className="w-3 h-3" aria-hidden="true" />
                                     <span>{providerBadge.text}</span>
                                   </>
                                 )}
@@ -545,7 +557,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                                     : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                 }`}
                               >
-                                <Store className="w-3 h-3" />
+                                <Store className="w-3 h-3" aria-hidden="true" />
                                 <span>
                                   {item.provider_metadata.retailer_name}
                                   {preferredRetailer?.retailer_key ===
@@ -565,9 +577,10 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                                 href={item.provider_metadata.cart_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                aria-label={`View cart for ${item.item}`}
                                 className="inline-flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                               >
-                                <ShoppingCart className="w-3 h-3" />
+                                <ShoppingCart className="w-3 h-3" aria-hidden="true" />
                                 <span>View Cart</span>
                               </a>
                             )}
@@ -582,6 +595,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
 
             {!loading && (
               <button
+                type="button"
                 onClick={() => setShowShoppingForm(true)}
                 className="w-full py-3 sm:py-4 border-2 border-dashed border-gray-300 rounded-xl text-sm sm:text-base text-gray-600 hover:border-green-400 hover:text-green-600 transition-all"
               >
@@ -591,7 +605,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
 
             {!loading && shoppingList.filter((item) => !item.completed).length === 0 && (
               <div className="text-center py-12">
-                <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
+                <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
                 <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                   Your shopping list is empty
                 </h3>
@@ -599,6 +613,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                   Add items to get started with smart shopping
                 </p>
                 <button
+                  type="button"
                   onClick={() => setShowShoppingForm(true)}
                   className="px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors text-sm sm:text-base"
                 >
@@ -611,12 +626,14 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
 
         {/* Recipes Tab */}
         {activeTab === 'recipes' && (
-          <RecipeBrowser onRecipeSelect={(recipe) => setSelectedRecipe(recipe)} />
+          <div id="recipes-panel" role="tabpanel" aria-labelledby="recipes-tab">
+            <RecipeBrowser onRecipeSelect={(recipe) => setSelectedRecipe(recipe)} />
+          </div>
         )}
 
         {/* Gift Ideas Tab */}
         {activeTab === 'gifts' && (
-          <div className="space-y-6">
+          <div className="space-y-6" id="gifts-panel" role="tabpanel" aria-labelledby="gifts-tab">
             {giftSuggestions.map((eventGifts) => (
               <div
                 key={eventGifts.id}
@@ -640,7 +657,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                       className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 bg-gray-50 rounded-lg"
                     >
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-pink-400 to-purple-400 rounded-lg flex items-center justify-center">
-                        <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                        <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-white" aria-hidden="true" />
                       </div>
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900 text-sm sm:text-base">
@@ -649,13 +666,13 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                         <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-600">
                           <span className="font-semibold text-green-600">{gift.price}</span>
                           <div className="flex items-center space-x-1">
-                            <Star className="w-2 h-2 sm:w-3 sm:h-3 fill-yellow-400 text-yellow-400" />
+                            <Star className="w-2 h-2 sm:w-3 sm:h-3 fill-yellow-400 text-yellow-400" aria-hidden="true" />
                             <span>{gift.rating}</span>
                           </div>
                         </div>
                       </div>
-                      <button className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-600 transition-colors flex items-center space-x-1">
-                        <ExternalLink className="w-2 h-2 sm:w-3 sm:h-3" />
+                      <button type="button" aria-label={`Buy ${gift.name}`} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-600 transition-colors flex items-center space-x-1">
+                        <ExternalLink className="w-2 h-2 sm:w-3 sm:h-3" aria-hidden="true" />
                         <span>Buy</span>
                       </button>
                     </div>
@@ -669,6 +686,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                 No upcoming events requiring gifts
               </p>
               <button
+                type="button"
                 onClick={() => setShowGiftFinderModal(true)}
                 className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all text-sm sm:text-base"
               >
@@ -760,6 +778,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
       )}
 
       <GiftFinderModal isOpen={showGiftFinderModal} onClose={() => setShowGiftFinderModal(false)} />
-    </div>
+    </main>
   );
 }
