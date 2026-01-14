@@ -25,7 +25,7 @@ export interface OpenAIRealtimeConfig {
   model: string;
   wakeWord?: string; // e.g. "hey sara"
   vadThreshold?: number; // amplitude gate
-  voice?: 'ash' | 'echo' | 'coral' | 'sage' | 'verse' | 'shimmer';
+  voice?: 'ash' | 'echo' | 'coral' | 'sage' | 'marin' | 'shimmer';
   instructions?: string;
 }
 

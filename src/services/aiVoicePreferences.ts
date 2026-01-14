@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-export type AIVoice = 'ash' | 'echo' | 'coral' | 'sage' | 'verse' | 'shimmer';
+export type AIVoice = 'ash' | 'echo' | 'coral' | 'sage' | 'marin' | 'shimmer';
 export type AIPersonality = 'friendly' | 'professional' | 'humorous';
 
 export interface AIVoicePreferences {
@@ -17,7 +17,7 @@ export const VOICE_OPTIONS = [
   { value: 'echo' as AIVoice, label: 'Echo', description: 'Calm and steady' },
   { value: 'coral' as AIVoice, label: 'Coral', description: 'Warm and expressive' },
   { value: 'sage' as AIVoice, label: 'Sage', description: 'Deep and authoritative' },
-  { value: 'verse' as AIVoice, label: 'Verse', description: 'Energetic and bright' },
+  { value: 'marin' as AIVoice, label: 'Marin', description: 'Energetic and bright' },
   { value: 'shimmer' as AIVoice, label: 'Shimmer', description: 'Soft and gentle' },
 ];
 
