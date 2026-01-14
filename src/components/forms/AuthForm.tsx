@@ -195,38 +195,6 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
             </button>
           </div>
 
-          {/* Demo Account */}
-          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg">
-            <p className="text-xs sm:text-sm text-blue-800 mb-2">Demo Account:</p>
-            <div className="text-xs text-blue-600 mb-2 sm:mb-3">
-              <p>Email: !demo@busymoms.app</p>
-              <p>Password: demo123456</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setFormData({ ...formData, email: 'demo@busymoms.app', password: 'demo123456' });
-              }}
-              className="px-2 py-1 sm:px-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
-            >
-              Use Demo Credentials
-            </button>
-          </div>
-
-          {/* Demo Bypass Button */}
-          <div className="mt-3 sm:mt-4">
-            <button
-              type="button"
-              onClick={onAuthSuccess}
-              className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-medium hover:shadow-lg transition-all text-sm sm:text-base"
-            >
-              🚀 Skip Sign-In (Demo Mode)
-            </button>
-            <p className="text-xs text-gray-500 text-center mt-2">
-              Bypass authentication for demonstration purposes
-            </p>
-          </div>
-
           {/* OAuth Diagnostics Link */}
           <div className="mt-3 text-center space-y-1">
             <a
