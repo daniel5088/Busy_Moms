@@ -100,7 +100,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       if (error) throw error;
 
       setOtpSent(true);
-      alert('Password reset code sent! Check your email for the 6-digit code.');
+      alert('Password reset code sent!\n\nCheck your email for a message from Busy Moms Assistant AI with your 6-digit verification code.');
     } catch (error: any) {
       alert(error.message || 'Failed to send verification code');
     } finally {
@@ -166,10 +166,10 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                 : 'Welcome Back'}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            {showForgotPassword 
-              ? (otpSent ? 'Enter the code and your new password' : 'Enter your email to receive a verification code') 
-              : isSignUp 
-                ? 'Create your account to get started' 
+            {showForgotPassword
+              ? (otpSent ? 'Check your email for the 6-digit code' : "We'll send you a verification code")
+              : isSignUp
+                ? 'Create your account to get started'
                 : 'Sign in to your account'}
           </p>
         </header>
@@ -221,6 +221,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                       placeholder="000000"
                     />
                     <p className="text-xs text-gray-500 mt-2">
+                      Check your email for "Password Reset for Busy Moms Assistant AI"<br />
                       Sent to {formData.email}
                     </p>
                   </div>
