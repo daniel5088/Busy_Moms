@@ -58,8 +58,11 @@ export function FamilyMemberForm({
     }
   }, [editMember]);
 
-  // Determine if school/grade fields should be shown
-  const showSchoolFields = formData.relationship === 'Child' || formData.relationship === 'Extended Family';
+  // Determine if school/grade fields should be shown (hide for Parent, Spouse, Grandparent)
+  const showSchoolFields =
+    formData.relationship !== 'Parent' &&
+    formData.relationship !== 'Spouse' &&
+    formData.relationship !== 'Grandparent';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,8 +210,8 @@ export function FamilyMemberForm({
                   onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
                   className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                 >
-                  <option value="Boy">Male</option>
-                  <option value="Girl">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
