@@ -2,6 +2,7 @@ import { aiAssistantService } from './aiAssistantService';
 import { sendToInstacart } from './instacartAgentService';
 import { supabase } from "../lib/supabase";
 import { IngredientParser } from '../utils/ingredientParser';
+import { aiVoicePreferencesService, AIPersonality } from './aiVoicePreferences';
 
 // Fallback minimal speech types (safe for TS projects without full lib.dom)
 interface MinimalSpeechResult { transcript: string }
@@ -84,6 +85,14 @@ export class OpenAIRealtimeService extends Emitter {
     this.vadThreshold = config.vadThreshold ?? 0.03;
   }
 
+  updateConfig(newConfig: Partial<OpenAIRealtimeConfig>) {
+    this.config = { ...this.config, ...newConfig };
+    if (this.sessionConfigured && this.dc && this.dc.readyState === 'open') {
+      this.sessionConfigured = false;
+      this.configureSession();
+    }
+  }
+
   // == Public API expected by UI ==
   onEvent(cb: (event: RealtimeEvent) => void) { this.onEventCb = cb; }
   offEvent(_cb?: (event: RealtimeEvent) => void) { this.onEventCb = undefined; } // single-subscriber is fine here
@@ -96,6 +105,23 @@ export class OpenAIRealtimeService extends Emitter {
 
   async initialize(userId: string) {
     this.currentUserId = userId;
+
+    try {
+      const prefs = await aiVoicePreferencesService.getOrCreatePreferences(userId);
+      if (prefs) {
+        const personalityInstructions = aiVoicePreferencesService.getPersonalityInstructions(prefs.personality as AIPersonality);
+        const baseInstructions = this.config.instructions || '';
+        const updatedInstructions = `${personalityInstructions}\n\n${baseInstructions}`;
+
+        this.updateConfig({
+          voice: prefs.voice as any,
+          instructions: updatedInstructions,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading AI voice preferences:', error);
+    }
+
     await this.connectRealtime();
     await this.startWakeWordDetection();
   }

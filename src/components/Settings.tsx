@@ -43,6 +43,14 @@ import { googleCalendarService } from '../services/googleCalendar';
 import { useCalendarSync } from '../hooks/useCalendarSync';
 import { measurementPreferencesService } from '../services/measurementPreferencesService';
 import type { UserMeasurementPreferences } from '../lib/supabase';
+import {
+  aiVoicePreferencesService,
+  AIVoicePreferences,
+  AIVoice,
+  AIPersonality,
+  VOICE_OPTIONS,
+  PERSONALITY_OPTIONS
+} from '../services/aiVoicePreferences';
 
 interface SettingsProps {
   darkMode: boolean;
@@ -75,6 +83,7 @@ export function Settings({
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [syncingGoogle, setSyncingGoogle] = useState(false);
   const [measurementPrefs, setMeasurementPrefs] = useState<UserMeasurementPreferences | null>(null);
+  const [aiVoicePrefs, setAiVoicePrefs] = useState<AIVoicePreferences | null>(null);
   const [notifications, setNotifications] = useState({
     events: true,
     shopping: true,
@@ -197,6 +206,43 @@ export function Settings({
     }
   };
 
+  const loadAIVoicePreferences = React.useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const prefs = await aiVoicePreferencesService.getOrCreatePreferences(user.id);
+      setAiVoicePrefs(prefs);
+    } catch (error) {
+      console.error('Error loading AI voice preferences:', error);
+    }
+  }, [user]);
+
+  const updateVoice = async (voice: AIVoice) => {
+    if (!user) return;
+
+    try {
+      const updated = await aiVoicePreferencesService.updatePreferences(user.id, { voice });
+      if (updated) {
+        setAiVoicePrefs(updated);
+      }
+    } catch (error) {
+      console.error('Error updating voice:', error);
+    }
+  };
+
+  const updatePersonalityPreference = async (personality: AIPersonality) => {
+    if (!user) return;
+
+    try {
+      const updated = await aiVoicePreferencesService.updatePreferences(user.id, { personality });
+      if (updated) {
+        setAiVoicePrefs(updated);
+      }
+    } catch (error) {
+      console.error('Error updating personality:', error);
+    }
+  };
+
   // Load data on component mount and when user changes
   React.useEffect(() => {
     let mounted = true;
@@ -209,6 +255,7 @@ export function Settings({
         loadCurrentProfile(),
         checkGoogleConnection(),
         loadMeasurementPreferences(),
+        loadAIVoicePreferences(),
       ]);
     };
 
@@ -223,6 +270,7 @@ export function Settings({
     loadCurrentProfile,
     checkGoogleConnection,
     loadMeasurementPreferences,
+    loadAIVoicePreferences,
   ]);
 
   // Scroll to Google Calendar section if requested
@@ -551,25 +599,63 @@ export function Settings({
       </div>
 
       <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
-        {/* AI Personality Setting */}
+        {/* AI Assistant Settings */}
         <div className="mb-4 sm:mb-6 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 border border-rose-200 dark:border-gray-600 rounded-xl p-3 sm:p-4">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-sm sm:text-base">
-            AI Assistant Personality
-          </h3>
-          <div className="grid grid-cols-3 gap-1 sm:gap-2">
-            {['Friendly', 'Professional', 'Humorous'].map((personality) => (
-              <button
-                key={personality}
-                className={`py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                  personality === (currentProfile?.ai_personality || 'Friendly')
-                    ? 'bg-rose-500 text-white'
-                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-rose-100 dark:hover:bg-gray-600'
-                }`}
-                onClick={() => updatePersonality(personality)}
-              >
-                {personality}
-              </button>
-            ))}
+          {/* Personality Selector */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm sm:text-base flex items-center space-x-2">
+              <Sparkles className="w-4 h-4" />
+              <span>AI Assistant Personality</span>
+            </h3>
+            <div className="grid grid-cols-3 gap-1 sm:gap-2">
+              {PERSONALITY_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  className={`py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                    option.value === (aiVoicePrefs?.personality || 'friendly')
+                      ? 'bg-rose-500 text-white shadow-md'
+                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-rose-100 dark:hover:bg-gray-600'
+                  }`}
+                  onClick={() => updatePersonalityPreference(option.value)}
+                  title={option.description}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Voice Selector */}
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm sm:text-base flex items-center space-x-2">
+              <Volume2 className="w-4 h-4" />
+              <span>AI Voice</span>
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {VOICE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  className={`p-2 sm:p-3 rounded-lg text-left transition-all ${
+                    option.value === (aiVoicePrefs?.voice || 'shimmer')
+                      ? 'bg-rose-500 text-white shadow-md'
+                      : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-rose-100 dark:hover:bg-gray-600'
+                  }`}
+                  onClick={() => updateVoice(option.value)}
+                >
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Volume2 className="w-3 h-3" />
+                    <span className="font-medium text-xs sm:text-sm">{option.label}</span>
+                  </div>
+                  <p className={`text-xs ${
+                    option.value === (aiVoicePrefs?.voice || 'shimmer')
+                      ? 'text-rose-100'
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`}>
+                    {option.description}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
