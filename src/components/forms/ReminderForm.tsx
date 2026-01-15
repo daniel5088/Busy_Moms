@@ -84,6 +84,20 @@ export function ReminderForm({
 
     setLoading(true);
     try {
+      // Get the assigner's name
+      let assignerName = user.email || 'Unknown';
+      if (formData.family_member_email) {
+        const { data: memberData } = await supabase
+          .from('family_members')
+          .select('name')
+          .eq('Email', user.email)
+          .single();
+        
+        if (memberData?.name) {
+          assignerName = memberData.name;
+        }
+      }
+
       const reminderData = {
         title: formData.title,
         description: formData.description || '',
@@ -91,6 +105,7 @@ export function ReminderForm({
         reminder_time: formData.reminder_time || null,
         priority: formData.priority,
         family_member_email: formData.family_member_email || null,
+        assigned_by_name: formData.family_member_email ? assignerName : null,
         recurring: formData.recurring,
         recurring_pattern: formData.recurring ? formData.recurring_pattern || null : null,
         user_id: user.id,
