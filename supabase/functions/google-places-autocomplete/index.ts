@@ -26,6 +26,7 @@ Deno.serve(async (req: Request) => {
 
     const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
     if (!apiKey) {
+      console.error('GOOGLE_MAPS_API_KEY not found in environment');
       return new Response(
         JSON.stringify({ error: 'API key not configured' }),
         {
@@ -46,12 +47,14 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log('Calling Google Places API with input:', input);
     const url = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
     url.searchParams.set('input', input);
     url.searchParams.set('key', apiKey);
 
     const response = await fetch(url.toString());
     const data = await response.json();
+    console.log('Google Places API response:', JSON.stringify(data));
 
     if (data.status === 'OK' || data.status === 'ZERO_RESULTS') {
       return new Response(

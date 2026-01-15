@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { useGoogleMaps } from '../hooks/useGoogleMaps';
+import { getGoogleMapsApiKey } from '../services/googleMapsKeyService';
 
 type PlaceSelection = {
   name: string;
@@ -13,11 +14,29 @@ interface Props {
 }
 
 export function LocationAutocomplete({ value, onChange, onSelect }: Props) {
+  const [apiKey, setApiKey] = useState<string>('');
   const [predictions, setPredictions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const debounceRef = useRef<number | null>(null);
   const justSelectedRef = useRef<boolean>(false);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+
+  const mapsLoaded = useGoogleMaps(apiKey);
+
+  useEffect(() => {
+    getGoogleMapsApiKey().then((key) => {
+      if (key) {
+        setApiKey(key);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (mapsLoaded && window.google?.maps?.places) {
+      autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+    }
+  }, [mapsLoaded]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -40,48 +59,27 @@ export function LocationAutocomplete({ value, onChange, onSelect }: Props) {
       return;
     }
 
+    if (!autocompleteServiceRef.current) {
+      return;
+    }
+
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
     }
 
-    debounceRef.current = window.setTimeout(async () => {
+    debounceRef.current = window.setTimeout(() => {
       setLoading(true);
-      console.log('[LocationAutocomplete] Fetching predictions for:', value);
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-
-        if (!token) {
-          console.warn('[LocationAutocomplete] No access token available');
-          setPredictions([]);
+      autocompleteServiceRef.current?.getPlacePredictions(
+        { input: value },
+        (results, status) => {
           setLoading(false);
-          return;
-        }
-
-        console.log('[LocationAutocomplete] Calling edge function...');
-        const { data, error } = await supabase.functions.invoke('google-places-autocomplete', {
-          body: { input: value },
-          headers: {
-            Authorization: `Bearer ${token}`
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+            setPredictions(results);
+          } else {
+            setPredictions([]);
           }
-        });
-
-        if (error) {
-          console.error('[LocationAutocomplete] Error:', error);
-          setPredictions([]);
-        } else if (data && data.predictions) {
-          console.log('[LocationAutocomplete] Received predictions:', data.predictions.length);
-          setPredictions(data.predictions);
-        } else {
-          console.log('[LocationAutocomplete] No predictions in response:', data);
-          setPredictions([]);
         }
-      } catch (err) {
-        console.error('[LocationAutocomplete] Exception:', err);
-        setPredictions([]);
-      } finally {
-        setLoading(false);
-      }
+      );
     }, 300);
   }, [value]);
 
