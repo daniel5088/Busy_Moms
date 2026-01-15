@@ -65,7 +65,7 @@ export function FamilyFolders() {
       // Load data for each family member
       const familyDataPromises = (members || []).map(async (member) => {
         const [eventsResult, tasksResult, remindersResult, shoppingResult] = await Promise.all([
-          // Events
+          // Events - check if member name is in participants array
           supabase
             .from('events')
             .select('*')
@@ -73,28 +73,25 @@ export function FamilyFolders() {
             .contains('participants', [member.name])
             .order('event_date', { ascending: false }),
 
-          // Tasks
+          // Tasks - FIXED: use assigned_to_email instead of assigned_to
           supabase
             .from('tasks')
             .select('*')
-            .eq('user_id', user.id)
-            .eq('assigned_to', member.id)
+            .or(`assigned_to_email.eq.${member.Email},assigned_to.eq.${member.id}`)
             .order('created_at', { ascending: false }),
 
-          // Reminders
+          // Reminders - FIXED: use family_member_email instead of family_member_id
           supabase
             .from('reminders')
             .select('*')
-            .eq('user_id', user.id)
-            .eq('family_member_id', member.id)
+            .or(`family_member_email.eq.${member.Email},family_member_id.eq.${member.id}`)
             .order('reminder_date', { ascending: false }),
 
-          // Shopping items
+          // Shopping items - FIXED: use assigned_to_email instead of assigned_to
           supabase
             .from('shopping_lists')
             .select('*')
-            .eq('user_id', user.id)
-            .eq('assigned_to', member.id)
+            .or(`assigned_to_email.eq.${member.Email},assigned_to.eq.${member.id}`)
             .order('created_at', { ascending: false }),
         ]);
 
