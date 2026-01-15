@@ -19,6 +19,7 @@ export interface FamilyMember {
   id: UUID;
   user_id: UUID;
   name: string;
+  Email: string;
   age?: number | null;
   gender?: 'Boy' | 'Girl' | 'Other' | null;
   relationship?: string | null;
