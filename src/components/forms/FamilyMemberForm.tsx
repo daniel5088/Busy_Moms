@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Heart, School } from 'lucide-react';
+import { X, User, Heart, School, Mail } from 'lucide-react';
 import { supabase, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -21,6 +21,7 @@ export function FamilyMemberForm({
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
+    Email: '',
     relationship: 'Child',
     age: '',
     gender: 'Other',
@@ -35,6 +36,7 @@ export function FamilyMemberForm({
     if (editMember) {
       setFormData({
         name: editMember.name || '',
+        Email: editMember.Email || '',
         relationship: editMember.relationship || 'Child',
         age: editMember.age?.toString() || '',
         gender: editMember.gender || 'Other',
@@ -47,6 +49,7 @@ export function FamilyMemberForm({
       // Reset form for new member
       setFormData({
         name: '',
+        Email: '',
         relationship: 'Child',
         age: '',
         gender: 'Other',
@@ -113,6 +116,7 @@ export function FamilyMemberForm({
       // Reset form
       setFormData({
         name: '',
+        Email: '',
         relationship: 'Child',
         age: '',
         gender: 'Other',
@@ -167,6 +171,23 @@ export function FamilyMemberForm({
                 className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                 placeholder="Family member's name"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                Email
+              </label>
+              <input
+                type="email"
+                value={formData.Email}
+                onChange={(e) => setFormData({ ...formData, Email: e.target.value })}
+                className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                placeholder="email@example.com (for sharing tasks/events)"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Add email to assign and share items with this family member
+              </p>
             </div>
 
             <div>

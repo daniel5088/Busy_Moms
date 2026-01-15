@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
-import { supabase, Event } from '../../lib/supabase';
+import { Calendar, Clock, MapPin, Users, UserCheck } from 'lucide-react';
+import { supabase, Event, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 import { geocodeLocation } from '../../services/geocoding';
 import { getTravelTime } from '../../services/googleDirections';
 import { useDefaultAddress } from '../../hooks/useDefaultAddress';
+import { EmailRequiredPopup } from '../shared/EmailRequiredPopup';
 import {
   FormField,
   TextInput,
@@ -27,6 +28,9 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const [loading, setLoading] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [showEmailPopup, setShowEmailPopup] = useState(false);
+  const [selectedMemberName, setSelectedMemberName] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -38,7 +42,22 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
     participants: '',
     rsvp_required: false,
     rsvp_status: 'pending' as const,
+    assigned_to: '',
   });
+
+  // Load family members
+  useEffect(() => {
+    const loadFamilyMembers = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('family_members')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name');
+      if (data) setFamilyMembers(data);
+    };
+    loadFamilyMembers();
+  }, [user]);
 
   // Update form data when defaultDate or event changes
   useEffect(() => {
@@ -54,6 +73,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         participants: event.participants?.join(', ') || '',
         rsvp_required: event.rsvp_required || false,
         rsvp_status: event.rsvp_status || 'pending',
+        assigned_to: (event as any).assigned_to || '',
       });
     } else if (defaultDate) {
       setFormData((prev) => ({
@@ -73,9 +93,22 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         participants: '',
         rsvp_required: false,
         rsvp_status: 'pending',
+        assigned_to: '',
       });
     }
   }, [event, defaultDate]);
+
+  const handleAssignmentChange = (memberId: string) => {
+    if (memberId) {
+      const member = familyMembers.find((m) => m.id === memberId);
+      if (member && !member.Email) {
+        setSelectedMemberName(member.name);
+        setShowEmailPopup(true);
+        return;
+      }
+    }
+    setFormData({ ...formData, assigned_to: memberId });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +173,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         location_lng: locationLng,
         travel_time_minutes: travelTimeMinutes,
         travel_time_updated_at: travelTimeMinutes ? new Date().toISOString() : null,
+        assigned_to: formData.assigned_to || null,
       };
 
       let result;
@@ -247,6 +281,22 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         />
       </FormField>
 
+      {familyMembers.length > 0 && (
+        <FormField label="Assign To" icon={UserCheck}>
+          <SelectInput
+            value={formData.assigned_to}
+            onChange={handleAssignmentChange}
+            options={[
+              { value: '', label: 'None (visible to everyone)' },
+              ...familyMembers.map((member) => ({
+                value: member.id,
+                label: member.Email ? member.name : `${member.name} (no email)`,
+              })),
+            ]}
+          />
+        </FormField>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
         <CheckboxInput
           checked={formData.rsvp_required}
@@ -273,6 +323,13 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         onCancel={onCancel}
         loading={loading}
         submitLabel={event ? 'Update Event' : 'Create Event'}
+      />
+
+      <EmailRequiredPopup
+        isOpen={showEmailPopup}
+        onClose={() => setShowEmailPopup(false)}
+        memberName={selectedMemberName}
+        itemType="event"
       />
     </form>
   );
