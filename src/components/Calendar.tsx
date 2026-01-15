@@ -115,6 +115,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedInfo, setExtractedInfo] = useState<ExtractedCalendarEvent[] | null>(null);
   const [editingEvent, setEditingEvent] = useState<ExtractedCalendarEvent | null>(null);
+  const [editingEventIndex, setEditingEventIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [showCameraView, setShowCameraView] = useState(false);
@@ -758,19 +759,20 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     }
   };
 
-  const handleEditEvent = (event: ExtractedCalendarEvent, _index: number) => {
+  const handleEditEvent = (event: ExtractedCalendarEvent, index: number) => {
     setEditingEvent({ ...event });
+    setEditingEventIndex(index);
   };
 
   const handleSaveEditedEvent = () => {
-    if (!editingEvent || !extractedInfo) return;
+    if (!editingEvent || !extractedInfo || editingEventIndex === null) return;
 
-    const updatedEvents = extractedInfo.map((ev) =>
-      ev === editingEvent ? { ...editingEvent } : ev
-    );
+    const updatedEvents = [...extractedInfo];
+    updatedEvents[editingEventIndex] = { ...editingEvent };
 
     setExtractedInfo(updatedEvents);
     setEditingEvent(null);
+    setEditingEventIndex(null);
   };
 
   const onKeyDown = useCallback(
@@ -1973,7 +1975,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
               <div className="flex items-center justify-between mb-6">
                 <h3 id="edit-event-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Event</h3>
                 <button
-                  onClick={() => setEditingEvent(null)}
+                  onClick={() => {
+                    setEditingEvent(null);
+                    setEditingEventIndex(null);
+                  }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                   aria-label="Close dialog"
                 >
@@ -2038,7 +2043,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
               <div className="flex gap-3 mt-6">
                 <button
-                  onClick={() => setEditingEvent(null)}
+                  onClick={() => {
+                    setEditingEvent(null);
+                    setEditingEventIndex(null);
+                  }}
                   className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 >
                   Cancel
