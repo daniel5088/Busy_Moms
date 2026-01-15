@@ -22,11 +22,6 @@ export function TaskAssignmentDisplay({ task, familyMembers }: TaskAssignmentDis
     member => member.Email === task.assigned_to_email
   );
   
-  // Find the creator's name from family members (for when assignee views it)
-  const creator = familyMembers.find(
-    member => member.id === task.user_id
-  );
-  
   // If task is not assigned to anyone, don't show anything
   if (!task.assigned_to_email) {
     return null;
@@ -47,12 +42,13 @@ export function TaskAssignmentDisplay({ task, familyMembers }: TaskAssignmentDis
         </>
       ) : isAssignee ? (
         // Assignee view: "Assigned by [Name]"
+        // Use assigned_by_name which is saved when the task is created
         <>
           <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
           <span>
             Assigned by{' '}
             <span className="font-medium text-blue-600 dark:text-blue-400">
-              {task.assigned_by_name || creator?.name || 'Unknown'}
+              {task.assigned_by_name || 'Unknown'}
             </span>
           </span>
         </>
