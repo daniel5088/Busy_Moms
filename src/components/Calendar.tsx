@@ -765,7 +765,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     if (!editingEvent || !extractedInfo) return;
 
     const updatedEvents = extractedInfo.map((ev) =>
-      ev.date === editingEvent.date && ev.title === editingEvent.title ? editingEvent : ev
+      ev === editingEvent ? { ...editingEvent } : ev
     );
 
     setExtractedInfo(updatedEvents);
@@ -1860,13 +1860,17 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl max-h-[80vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="extracted-events-title">
               <div className="flex items-center justify-between mb-4">
-                <h3 id="extracted-events-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">Events Found</h3>
-                <button
-                  onClick={toggleSelectAll}
-                  className="text-sm font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition"
-                >
-                  {selectedEvents.size === extractedInfo.length ? 'Deselect All' : 'Select All'}
-                </button>
+                <h3 id="extracted-events-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {extractedInfo.length === 1 ? 'Event Found' : 'Events Found'}
+                </h3>
+                {extractedInfo.length > 1 && (
+                  <button
+                    onClick={toggleSelectAll}
+                    className="text-sm font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition"
+                  >
+                    {selectedEvents.size === extractedInfo.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                )}
               </div>
 
               <div className="space-y-4 mb-6">
@@ -1880,13 +1884,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedEvents.has(i)}
-                        onChange={() => toggleEventSelection(i)}
-                        aria-label={event.title}
-                        className="mt-1 w-5 h-5 text-rose-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-rose-500 cursor-pointer"
-                      />
+                      {extractedInfo.length > 1 && (
+                        <input
+                          type="checkbox"
+                          checked={selectedEvents.has(i)}
+                          onChange={() => toggleEventSelection(i)}
+                          aria-label={event.title}
+                          className="mt-1 w-5 h-5 text-rose-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-rose-500 cursor-pointer"
+                        />
+                      )}
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <h4 className="text-gray-900 dark:text-gray-100 font-semibold flex-1">
@@ -1928,7 +1934,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
               </div>
 
               <div className="space-y-3">
-                {selectedEvents.size > 0 && (
+                {extractedInfo.length === 1 ? (
+                  <button
+                    onClick={() => addEventFromImage(extractedInfo[0])}
+                    className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-semibold hover:from-rose-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>Add to Calendar</span>
+                  </button>
+                ) : selectedEvents.size > 0 ? (
                   <button
                     onClick={() => addMultipleEventsFromImage(Array.from(selectedEvents))}
                     className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-semibold hover:from-rose-500 hover:to-pink-500 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
@@ -1936,7 +1950,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     <Plus className="w-5 h-5" />
                     <span>Add Selected ({selectedEvents.size})</span>
                   </button>
-                )}
+                ) : null}
                 <button
                   onClick={() => {
                     setExtractedInfo(null);
