@@ -113,8 +113,6 @@ export function DashboardV4Experimental({
   const [affirmationStatus, setAffirmationStatus] = React.useState<string>('');
   const [showAboutMenu, setShowAboutMenu] = React.useState(false);
 
-  const aboutMenuRef = React.useRef<HTMLDivElement>(null);
-
   const shouldShowReminder = React.useCallback((reminder: Reminder, now: Date): boolean => {
     const today = now.toISOString().split('T')[0];
     const reminderDate = reminder.reminder_date;
@@ -185,17 +183,6 @@ export function DashboardV4Experimental({
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [affirmationStage, showAboutMenu]);
-
-  // Click outside handler for about menu
-  React.useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (showAboutMenu && aboutMenuRef.current && !aboutMenuRef.current.contains(e.target as Node)) {
-        setShowAboutMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showAboutMenu]);
 
   const loadTodayAffirmation = async () => {
     setAffirmationLoading(true);
@@ -577,43 +564,13 @@ export function DashboardV4Experimental({
               >
                 <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               </button>
-              <div ref={aboutMenuRef} className="relative">
-                <button
-                  onClick={() => setShowAboutMenu(!showAboutMenu)}
-                  className="w-8 h-8 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
-                  aria-label="About BMA"
-                  aria-haspopup="true"
-                  aria-expanded={showAboutMenu}
-                >
-                  <Heart className="w-4 h-4 sm:w-6 sm:h-6" aria-hidden="true" />
-                </button>
-
-                {showAboutMenu && (
-                  <div
-                    className="absolute top-full right-0 mt-2 w-64 sm:w-72 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50"
-                    role="menu"
-                    aria-label="About BMA information"
-                  >
-                    <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-                      <p>BMA helps families stay organized with shared reminders, tasks, and planning.</p>
-                      <p>We're currently in alpha testing and improving fast based on feedback.</p>
-                      <hr className="border-gray-200 dark:border-gray-700" />
-                      <div>
-                        <p className="mb-2 font-medium">To contact the team:</p>
-                        <a
-                          href="http://www.linkhelpbma.com"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setShowAboutMenu(false)}
-                          className="text-rose-500 dark:text-rose-400 hover:underline focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded"
-                        >
-                          www.linkhelpbma.com
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={() => setShowAboutMenu(!showAboutMenu)}
+                className="w-8 h-8 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
+                aria-label="About BMA"
+              >
+                <Heart className="w-4 h-4 sm:w-6 sm:h-6" aria-hidden="true" />
+              </button>
             </div>
           </div>
 
@@ -939,6 +896,56 @@ export function DashboardV4Experimental({
       >
         <RemindersList reminders={reminders} onDelete={reload} />
       </DashboardPopup>
+
+      {/* About BMA Modal */}
+      {showAboutMenu && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="about-dialog-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowAboutMenu(false)}
+          />
+
+          <div className="relative bg-white dark:bg-gray-800 p-8 sm:p-12 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setShowAboutMenu(false)}
+              className="absolute top-4 right-4 z-20 w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5 text-gray-600 dark:text-gray-300" aria-hidden="true" />
+            </button>
+
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-rose-100 dark:bg-rose-900 rounded-full mb-6">
+                <Heart className="w-8 h-8 text-rose-500 dark:text-rose-400" />
+              </div>
+
+              <h2
+                id="about-dialog-title"
+                className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6"
+              >
+                About BMA
+              </h2>
+
+              <div className="space-y-4 text-gray-600 dark:text-gray-400 text-base sm:text-lg leading-relaxed">
+                <p>BMA helps families stay organized with shared reminders, tasks, and planning.</p>
+                <p>We're currently in alpha testing and improving fast based on feedback.</p>
+
+                <hr className="border-gray-200 dark:border-gray-700 my-6" />
+
+                <div>
+                  <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">To contact the team:</p>
+                  <p className="text-gray-600 dark:text-gray-400">www.linkhelpbma.com</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
