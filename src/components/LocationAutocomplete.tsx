@@ -20,6 +20,7 @@ interface Props {
 
 export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Props) {
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [predictions, setPredictions] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const serviceRef = useRef<any | null>(null);
@@ -62,16 +63,37 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
       const checkInterval = setInterval(() => {
         if (window.google?.maps?.places) {
           setLoaded(true);
+          setLoadError(false);
           clearInterval(checkInterval);
         }
       }, 50);
-      setTimeout(() => clearInterval(checkInterval), 5000);
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (!window.google?.maps?.places) {
+          console.error('Google Maps failed to load - likely due to API key restrictions');
+          setLoadError(true);
+        }
+      }, 5000);
     };
     script.onerror = () => {
       console.error('Failed to load Google Maps script');
+      setLoadError(true);
     };
 
     document.head.appendChild(script);
+
+    // Listen for Google Maps errors
+    const errorHandler = (event: ErrorEvent) => {
+      if (event.message && event.message.includes('RefererNotAllowedMapError')) {
+        console.error('Google Maps API key is restricted. Please update your API key settings.');
+        setLoadError(true);
+      }
+    };
+    window.addEventListener('error', errorHandler);
+
+    return () => {
+      window.removeEventListener('error', errorHandler);
+    };
   }, [apiKey]);
 
   // Close dropdown when clicking outside
@@ -155,15 +177,22 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
     }
   };
 
-  // If script hasn’t loaded (or key missing), fall back to plain input
-  if (!loaded || !apiKey) {
+  // If script hasn't loaded (or key missing), fall back to plain input
+  if (!loaded || !apiKey || loadError) {
     return (
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Event location"
-        className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-      />
+      <div className="w-full">
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Event location"
+          className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+        />
+        {loadError && (
+          <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+            Location autocomplete unavailable. Please type location manually.
+          </p>
+        )}
+      </div>
     );
   }
 
