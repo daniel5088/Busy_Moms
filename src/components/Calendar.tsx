@@ -23,6 +23,7 @@ import { ConflictResolutionModal } from './ConflictResolutionModal';
 import { CalendarSkeleton } from './CalendarSkeleton';
 import { DirectionsButton } from './DirectionsButton';
 import { TravelTimeIndicator, TravelTimeBadge } from './TravelTimeIndicator';
+import { LocationAutocomplete } from './LocationAutocomplete';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
 import { supabase } from '../lib/supabase';
 import type { Event as DbEvent } from '../lib/supabase';
@@ -114,6 +115,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedInfo, setExtractedInfo] = useState<ExtractedCalendarEvent[] | null>(null);
   const [editingEvent, setEditingEvent] = useState<{ event: ExtractedCalendarEvent; index: number } | null>(null);
+  const [apiKey, setApiKey] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [showCameraView, setShowCameraView] = useState(false);
@@ -271,6 +273,39 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       }
     }
   }, [openCalendarCamera, onCalendarCameraOpened]);
+
+  // Fetch API key from Edge Function for location autocomplete
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+
+        if (!token) return;
+
+        const { data, error } = await supabase.functions.invoke('get-google-maps-key', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (error) {
+          console.error('[Calendar] Edge Function error:', error);
+          return;
+        }
+
+        if (data && data.apiKey) {
+          setApiKey(data.apiKey);
+        }
+      } catch (err) {
+        console.error('[Calendar] Error fetching API key:', err);
+      }
+    };
+
+    if (user) {
+      fetchApiKey();
+    }
+  }, [user]);
 
   const loadGoogleEvents = async () => {
     if (!user?.id) return;
