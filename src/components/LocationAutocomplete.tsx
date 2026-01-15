@@ -46,16 +46,19 @@ export function LocationAutocomplete({ value, onChange, onSelect }: Props) {
 
     debounceRef.current = window.setTimeout(async () => {
       setLoading(true);
+      console.log('[LocationAutocomplete] Fetching predictions for:', value);
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
 
         if (!token) {
+          console.warn('[LocationAutocomplete] No access token available');
           setPredictions([]);
           setLoading(false);
           return;
         }
 
+        console.log('[LocationAutocomplete] Calling edge function...');
         const { data, error } = await supabase.functions.invoke('google-places-autocomplete', {
           body: { input: value },
           headers: {
@@ -67,8 +70,10 @@ export function LocationAutocomplete({ value, onChange, onSelect }: Props) {
           console.error('[LocationAutocomplete] Error:', error);
           setPredictions([]);
         } else if (data && data.predictions) {
+          console.log('[LocationAutocomplete] Received predictions:', data.predictions.length);
           setPredictions(data.predictions);
         } else {
+          console.log('[LocationAutocomplete] No predictions in response:', data);
           setPredictions([]);
         }
       } catch (err) {

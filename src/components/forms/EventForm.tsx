@@ -27,7 +27,6 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const [loading, setLoading] = useState(false);
-  const [apiKey, setApiKey] = useState<string>('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -40,45 +39,6 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
     rsvp_required: false,
     rsvp_status: 'pending' as const,
   });
-
-  // Fetch API key from Edge Function
-  useEffect(() => {
-    const fetchApiKey = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-
-        if (!token) {
-          console.warn('[EventForm] No access token available');
-          return;
-        }
-
-        const { data, error } = await supabase.functions.invoke('get-google-maps-key', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        if (error) {
-          console.error('[EventForm] Edge Function error:', error);
-          return;
-        }
-
-        if (data && data.apiKey) {
-          setApiKey(data.apiKey);
-        } else {
-          console.warn('[EventForm] No API key in response:', data);
-        }
-      } catch (err) {
-        console.error('[EventForm] Error fetching API key:', err);
-      }
-    };
-    
-    // Only fetch if user is authenticated
-    if (user) {
-      fetchApiKey();
-    }
-  }, [user]);
 
   // Update form data when defaultDate or event changes
   useEffect(() => {
@@ -272,7 +232,6 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         <LocationAutocomplete
           value={formData.location}
           onChange={(value: string) => setFormData((prev) => ({ ...prev, location: value }))}
-          apiKey={apiKey}
           onSelect={(place: any) => {
             const name = place.name || place.description || '';
             setFormData((prev) => ({ ...prev, location: name || prev.location }));
