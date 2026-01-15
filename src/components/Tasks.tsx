@@ -36,22 +36,53 @@ export function Tasks() {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const { data: tasksData, error } = await supabase
+
+      // First, check if current user's email matches any family member
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .single();
+
+      let myFamilyMemberId = null;
+      let parentUserId = null;
+
+      if (profile?.email) {
+        const { data: familyMember } = await supabase
+          .from('family_members')
+          .select('id, user_id')
+          .eq('Email', profile.email)
+          .maybeSingle();
+
+        if (familyMember) {
+          myFamilyMemberId = familyMember.id;
+          parentUserId = familyMember.user_id;
+        }
+      }
+
+      // Build query to get tasks
+      let query = supabase
         .from('tasks')
         .select(
           `
           *,
           assigned_family_member:family_members(id, name, age)
         `
-        )
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        );
+
+      // Tasks I created OR tasks assigned to me OR family-visible tasks from my family
+      if (myFamilyMemberId && parentUserId) {
+        query = query.or(`user_id.eq.${user.id},and(assigned_to.eq.${myFamilyMemberId}),and(visible_to_family.eq.true,user_id.eq.${parentUserId})`);
+      } else {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data: tasksData, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setTasks(tasksData || []);
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      // Show user-friendly error message
       alert(`Error loading tasks: ${error.message || 'Please try again.'}`);
     } finally {
       setLoading(false);
