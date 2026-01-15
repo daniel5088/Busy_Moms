@@ -76,6 +76,7 @@ export interface Task {
   user_id: UUID;
   assigned_to?: UUID | null;
   assigned_to_email?: string | null;
+  assigned_by_name?: string;
   title: string;
   description?: string | null;
   category?: string | null;
