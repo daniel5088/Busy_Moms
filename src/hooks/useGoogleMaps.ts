@@ -13,6 +13,9 @@ export function useGoogleMaps(apiKey: string) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Don't try to load the script until we have a valid API key
+    if (!apiKey || apiKey.trim() === '') return;
+
     if (window.google?.maps) {
       setLoaded(true);
       return;
