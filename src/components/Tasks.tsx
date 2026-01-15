@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Plus,
   CheckSquare,
-  User,
   Calendar,
   Clock,
   Star,
@@ -11,6 +10,7 @@ import {
   Target,
 } from 'lucide-react';
 import { TaskForm } from './forms/TaskForm';
+import { TaskAssignmentDisplay } from './TaskAssignmentDisplay';
 import { Task, FamilyMember, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { googleTasksService } from '../services/googleTasks';
@@ -352,6 +352,8 @@ export function Tasks() {
                       )}
                     </div>
 
+                    <TaskAssignmentDisplay task={task} familyMembers={familyMembers} />
+
                     {task.description && (
                       <p
                         className={`text-xs sm:text-sm mb-2 ${task.status === 'completed' ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}
@@ -361,13 +363,6 @@ export function Tasks() {
                     )}
 
                     <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                      {task.assigned_to_email && (
-                        <div className="flex items-center space-x-1">
-                          <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span>Assigned to {task.assigned_to_email}</span>
-                        </div>
-                      )}
-
                       {task.due_date && (
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -450,6 +445,7 @@ export function Tasks() {
         onClose={handleCloseForm}
         onTaskCreated={handleTaskCreated}
         editTask={editingTask}
+        currentUserName={user?.email}
       />
     </div>
   );
