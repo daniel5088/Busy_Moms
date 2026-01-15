@@ -27,7 +27,7 @@ export function ReminderForm({
     reminder_date: editReminder?.reminder_date || '',
     reminder_time: editReminder?.reminder_time || '',
     priority: editReminder?.priority || 'medium',
-    family_member_id: editReminder?.family_member_id || preselectedMember?.id || '',
+    family_member_email: editReminder?.family_member_email || preselectedMember?.Email || '',
     recurring: editReminder?.recurring || false,
     recurring_pattern: editReminder?.recurring_pattern || '',
   });
@@ -48,14 +48,14 @@ export function ReminderForm({
         reminder_date: editReminder.reminder_date || '',
         reminder_time: editReminder.reminder_time || '',
         priority: editReminder.priority || 'medium',
-        family_member_id: editReminder.family_member_id || '',
+        family_member_email: editReminder.family_member_email || '',
         recurring: editReminder.recurring || false,
         recurring_pattern: editReminder.recurring_pattern || '',
       });
     } else if (preselectedMember) {
       setFormData((prev) => ({
         ...prev,
-        family_member_id: preselectedMember.id,
+        family_member_email: preselectedMember.Email,
       }));
     }
   }, [editReminder, preselectedMember]);
@@ -90,7 +90,7 @@ export function ReminderForm({
         reminder_date: formData.reminder_date,
         reminder_time: formData.reminder_time || null,
         priority: formData.priority,
-        family_member_id: formData.family_member_id || null,
+        family_member_email: formData.family_member_email || null,
         recurring: formData.recurring,
         recurring_pattern: formData.recurring ? formData.recurring_pattern || null : null,
         user_id: user.id,
@@ -119,7 +119,7 @@ export function ReminderForm({
         reminder_date: '',
         reminder_time: '',
         priority: 'medium',
-        family_member_id: preselectedMember?.id || '',
+        family_member_email: preselectedMember?.Email || '',
         recurring: false,
         recurring_pattern: '',
       });
@@ -230,14 +230,14 @@ export function ReminderForm({
                   Family Member
                 </label>
                 <select
-                  value={formData.family_member_id}
-                  onChange={(e) => setFormData({ ...formData, family_member_id: e.target.value })}
+                  value={formData.family_member_email}
+                  onChange={(e) => setFormData({ ...formData, family_member_email: e.target.value })}
                   className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base"
                 >
                   <option value="">General reminder</option>
                   {familyMembers.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name} {member.age && `(${member.age})`}
+                    <option key={member.id} value={member.Email}>
+                      {member.Email}
                     </option>
                   ))}
                 </select>

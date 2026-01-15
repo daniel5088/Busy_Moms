@@ -65,6 +65,8 @@ export interface Reminder {
   recurring?: boolean | null;
   recurring_pattern?: string | null;
   family_member_id?: UUID | null;
+  family_member_email?: string | null;
+  visible_to_family?: boolean | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -160,6 +162,7 @@ export interface ShoppingItem {
   notes?: string | null;
   completed?: boolean | null;
   assigned_to?: UUID | null;
+  assigned_to_email?: string | null;
   recipe_id?: UUID | null;
   provider_name?: ProviderName;
   purchase_status?: PurchaseStatus;
@@ -167,6 +170,7 @@ export interface ShoppingItem {
   provider_metadata?: ProviderMetadata | null;
   provider_synced_at?: string | null;
   urgent?: boolean | null;
+  visible_to_family?: boolean | null;
   created_at?: string;
   updated_at?: string;
 }
