@@ -170,39 +170,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     setLoading(true);
     setError(null);
     try {
-      // Check if current user's email matches any family member
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', user.id)
-        .single();
-
-      let myFamilyMemberId = null;
-      let parentUserId = null;
-
-      if (profile?.email) {
-        const { data: familyMember } = await supabase
-          .from('family_members')
-          .select('id, user_id')
-          .eq('Email', profile.email)
-          .maybeSingle();
-
-        if (familyMember) {
-          myFamilyMemberId = familyMember.id;
-          parentUserId = familyMember.user_id;
-        }
-      }
-
-      // Load events
-      let eventsQuery = supabase.from('events').select('*');
-
-      if (myFamilyMemberId && parentUserId) {
-        eventsQuery = eventsQuery.or(`user_id.eq.${user.id},and(assigned_to.eq.${myFamilyMemberId}),and(visible_to_family.eq.true,user_id.eq.${parentUserId})`);
-      } else {
-        eventsQuery = eventsQuery.eq('user_id', user.id);
-      }
-
-      const { data: eventsData, error: eventsErr } = await eventsQuery
+      // Load events - RLS will filter based on user access
+      const { data: eventsData, error: eventsErr } = await supabase
+        .from('events')
+        .select('*')
         .gte('event_date', toLocalISODate(monthStart))
         .lte('event_date', toLocalISODate(monthEnd))
         .order('event_date', { ascending: true })
@@ -211,16 +182,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       if (eventsErr) throw eventsErr;
       setEvents(eventsData ?? []);
 
-      // Load reminders for the same date range
-      let remindersQuery = supabase.from('reminders').select('*');
-
-      if (myFamilyMemberId && parentUserId) {
-        remindersQuery = remindersQuery.or(`user_id.eq.${user.id},and(family_member_id.eq.${myFamilyMemberId}),and(visible_to_family.eq.true,user_id.eq.${parentUserId})`);
-      } else {
-        remindersQuery = remindersQuery.eq('user_id', user.id);
-      }
-
-      const { data: remindersData, error: remindersErr } = await remindersQuery
+      // Load reminders - RLS will filter based on user access
+      const { data: remindersData, error: remindersErr } = await supabase
+        .from('reminders')
+        .select('*')
         .gte('reminder_date', toLocalISODate(monthStart))
         .lte('reminder_date', toLocalISODate(monthEnd))
         .eq('completed', false)

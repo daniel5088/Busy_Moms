@@ -99,41 +99,10 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
     try {
       setLoading(true);
 
-      // Check if current user's email matches any family member
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', user.id)
-        .single();
-
-      let myFamilyMemberId = null;
-      let parentUserId = null;
-
-      if (profile?.email) {
-        const { data: familyMember } = await supabase
-          .from('family_members')
-          .select('id, user_id')
-          .eq('Email', profile.email)
-          .maybeSingle();
-
-        if (familyMember) {
-          myFamilyMemberId = familyMember.id;
-          parentUserId = familyMember.user_id;
-        }
-      }
-
-      // Build query for shopping items
-      let query = supabase.from('shopping_lists').select('*');
-
-      if (myFamilyMemberId && parentUserId) {
-        query = query.or(`user_id.eq.${user.id},and(assigned_to.eq.${myFamilyMemberId}),and(visible_to_family.eq.true,user_id.eq.${parentUserId})`);
-      } else {
-        query = query.eq('user_id', user.id);
-      }
-
-      const { data: shoppingData, error: shoppingError } = await query.order('created_at', {
-        ascending: false,
-      });
+      const { data: shoppingData, error: shoppingError } = await supabase
+        .from('shopping_lists')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (shoppingError) throw shoppingError;
       setShoppingList(shoppingData || []);
