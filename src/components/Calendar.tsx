@@ -23,7 +23,6 @@ import { ConflictResolutionModal } from './ConflictResolutionModal';
 import { CalendarSkeleton } from './CalendarSkeleton';
 import { DirectionsButton } from './DirectionsButton';
 import { TravelTimeIndicator, TravelTimeBadge } from './TravelTimeIndicator';
-import { LocationAutocomplete } from './LocationAutocomplete';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
 import { supabase } from '../lib/supabase';
 import type { Event as DbEvent } from '../lib/supabase';
@@ -114,8 +113,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [showCamera, setShowCamera] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedInfo, setExtractedInfo] = useState<ExtractedCalendarEvent[] | null>(null);
-  const [editingEvent, setEditingEvent] = useState<{ event: ExtractedCalendarEvent; index: number } | null>(null);
-  const [apiKey, setApiKey] = useState<string>('');
+  const [editingEvent, setEditingEvent] = useState<ExtractedCalendarEvent | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [showCameraView, setShowCameraView] = useState(false);
@@ -273,39 +271,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       }
     }
   }, [openCalendarCamera, onCalendarCameraOpened]);
-
-  // Fetch API key from Edge Function for location autocomplete
-  useEffect(() => {
-    const fetchApiKey = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-
-        if (!token) return;
-
-        const { data, error } = await supabase.functions.invoke('get-google-maps-key', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (error) {
-          console.error('[Calendar] Edge Function error:', error);
-          return;
-        }
-
-        if (data && data.apiKey) {
-          setApiKey(data.apiKey);
-        }
-      } catch (err) {
-        console.error('[Calendar] Error fetching API key:', err);
-      }
-    };
-
-    if (user) {
-      fetchApiKey();
-    }
-  }, [user]);
 
   const loadGoogleEvents = async () => {
     if (!user?.id) return;
@@ -792,15 +757,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     }
   };
 
-  const handleEditEvent = (event: ExtractedCalendarEvent, index: number) => {
-    setEditingEvent({ event: { ...event }, index });
+  const handleEditEvent = (event: ExtractedCalendarEvent, _index: number) => {
+    setEditingEvent({ ...event });
   };
 
   const handleSaveEditedEvent = () => {
     if (!editingEvent || !extractedInfo) return;
 
-    const updatedEvents = [...extractedInfo];
-    updatedEvents[editingEvent.index] = editingEvent.event;
+    const updatedEvents = extractedInfo.map((ev) =>
+      ev === editingEvent ? { ...editingEvent } : ev
+    );
 
     setExtractedInfo(updatedEvents);
     setEditingEvent(null);
@@ -2019,8 +1985,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
                   <input
                     type="text"
-                    value={editingEvent.event.title}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, title: e.target.value } })}
+                    value={editingEvent.title}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   />
                 </div>
@@ -2029,8 +1995,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
                   <input
                     type="date"
-                    value={editingEvent.event.date}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, date: e.target.value } })}
+                    value={editingEvent.date}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   />
                 </div>
@@ -2039,30 +2005,28 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time (optional)</label>
                   <input
                     type="time"
-                    value={editingEvent.event.time || ''}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, time: e.target.value || null } })}
+                    value={editingEvent.time || ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, time: e.target.value || null })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location (optional)</label>
-                  <LocationAutocomplete
-                    value={editingEvent.event.location || ''}
-                    onChange={(value: string) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, location: value || null } })}
-                    apiKey={apiKey}
-                    onSelect={(place: any) => {
-                      const name = place.name || place.description || '';
-                      setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, location: name || editingEvent.event.location } });
-                    }}
+                  <input
+                    type="text"
+                    value={editingEvent.location || ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value || null })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    placeholder="Add location"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (optional)</label>
                   <textarea
-                    value={editingEvent.event.description || ''}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, description: e.target.value || null } })}
+                    value={editingEvent.description || ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value || null })}
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Add description"
