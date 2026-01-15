@@ -109,16 +109,17 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUser
       // Get the assigner's name (current user's name)
       let assignerName = currentUserName || user.email || 'Unknown';
       
-      // If no currentUserName provided, try to fetch it
-      if (!currentUserName) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('name, full_name')
-          .eq('id', user.id)
+      // If currentUserName is just an email, try to get the actual name
+      if (!currentUserName || currentUserName.includes('@')) {
+        const { data: memberData } = await supabase
+          .from('family_members')
+          .select('name')
+          .eq('user_id', user.id)
+          .eq('Email', user.email)
           .single();
         
-        if (userData) {
-          assignerName = userData.name || userData.full_name || user.email || 'Unknown';
+        if (memberData?.name) {
+          assignerName = memberData.name;
         }
       }
 
