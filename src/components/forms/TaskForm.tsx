@@ -20,7 +20,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
     description: editTask?.description || '',
     category: editTask?.category || 'other',
     priority: editTask?.priority || 'medium',
-    assigned_to: editTask?.assigned_to || '',
+    assigned_to_email: editTask?.assigned_to_email || '',
     due_date: editTask?.due_date || '',
     due_time: editTask?.due_time || '',
     points: editTask?.points || 0,
@@ -37,7 +37,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         description: editTask.description || '',
         category: editTask.category || 'other',
         priority: editTask.priority || 'medium',
-        assigned_to: editTask.assigned_to || '',
+        assigned_to_email: editTask.assigned_to_email || '',
         due_date: editTask.due_date || '',
         due_time: editTask.due_time || '',
         points: editTask.points || 0,
@@ -52,7 +52,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         description: '',
         category: 'other',
         priority: 'medium',
-        assigned_to: '',
+        assigned_to_email: '',
         due_date: '',
         due_time: '',
         points: 0,
@@ -99,7 +99,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         description: formData.description || '',
         category: formData.category,
         priority: formData.priority,
-        assigned_to: formData.assigned_to || null,
+        assigned_to_email: formData.assigned_to_email || null,
         due_date: formData.due_date || null,
         due_time: formData.due_time || null,
         points: formData.points || 0,
@@ -116,23 +116,13 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
           .from('tasks')
           .update(taskData)
           .eq('id', editTask.id)
-          .select(
-            `
-            *,
-            assigned_family_member:family_members(id, name, age)
-          `
-          )
+          .select('*')
           .single();
       } else {
         result = await supabase
           .from('tasks')
           .insert([taskData])
-          .select(
-            `
-            *,
-            assigned_family_member:family_members(id, name, age)
-          `
-          )
+          .select('*')
           .single();
       }
 
@@ -150,7 +140,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         description: '',
         category: 'other',
         priority: 'medium',
-        assigned_to: '',
+        assigned_to_email: '',
         due_date: '',
         due_time: '',
         points: 0,
@@ -254,14 +244,14 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
                 Assign to Family Member
               </label>
               <select
-                value={formData.assigned_to}
-                onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
+                value={formData.assigned_to_email}
+                onChange={(e) => setFormData({ ...formData, assigned_to_email: e.target.value })}
                 className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
               >
                 <option value="">No assignment</option>
                 {familyMembers.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name} {member.age && `(${member.age})`}
+                  <option key={member.id} value={member.Email}>
+                    {member.Email}
                   </option>
                 ))}
               </select>

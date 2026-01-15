@@ -73,6 +73,7 @@ export interface Task {
   id: UUID;
   user_id: UUID;
   assigned_to?: UUID | null;
+  assigned_to_email?: string | null;
   title: string;
   description?: string | null;
   category?: string | null;
@@ -85,6 +86,7 @@ export interface Task {
   points?: number | null;
   notes?: string | null;
   completed_at?: string | null;
+  visible_to_family?: boolean | null;
   created_at?: string;
   updated_at?: string;
 }

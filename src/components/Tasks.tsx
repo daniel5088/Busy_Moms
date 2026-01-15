@@ -155,7 +155,7 @@ export function Tasks() {
 
     // Filter by family member
     if (selectedMember !== 'all') {
-      filtered = filtered.filter((task) => task.assigned_to === selectedMember);
+      filtered = filtered.filter((task) => task.assigned_to_email === selectedMember);
     }
 
     return filtered;
@@ -284,8 +284,8 @@ export function Tasks() {
               <option value="all">All Family Members</option>
               <option value="">Unassigned</option>
               {familyMembers.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
+                <option key={member.id} value={member.Email}>
+                  {member.Email}
                 </option>
               ))}
             </select>
@@ -361,10 +361,10 @@ export function Tasks() {
                     )}
 
                     <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                      {(task as any).assigned_family_member && (
+                      {task.assigned_to_email && (
                         <div className="flex items-center space-x-1">
                           <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span>Assigned to {(task as any).assigned_family_member.name}</span>
+                          <span>Assigned to {task.assigned_to_email}</span>
                         </div>
                       )}
 
