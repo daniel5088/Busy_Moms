@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { X, CheckSquare, User, Calendar, Clock, Star, Hash } from 'lucide-react';
-import { supabase, Task, FamilyMember } from '../../lib/supabase';
+import { Task, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { taskSyncOrchestrator } from '../../services/taskSyncOrchestrator';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 interface TaskFormProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface TaskFormProps {
 
 export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormProps) {
   const { user } = useAuth();
+  const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [formData, setFormData] = useState({
@@ -90,10 +92,21 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      alert('You must be logged in to create tasks');
+      return;
+    }
 
     setLoading(true);
     try {
+      // Get current session to ensure we're authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        alert('Session expired. Please log in again.');
+        return;
+      }
+
       const taskData = {
         title: formData.title,
         description: formData.description || '',
@@ -106,7 +119,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         notes: formData.notes || '',
         recurring: formData.recurring,
         recurring_pattern: formData.recurring ? formData.recurring_pattern || null : null,
-        user_id: user.id,
+        user_id: session.user.id,
         status: 'pending' as const,
       };
 
