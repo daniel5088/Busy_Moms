@@ -25,13 +25,39 @@ export function Tasks() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<string>('all');
+  const [currentUserName, setCurrentUserName] = useState<string>('');
 
   useEffect(() => {
     if (user) {
       fetchTasks();
       fetchFamilyMembers();
+      fetchCurrentUserName();
     }
   }, [user]);
+
+  const fetchCurrentUserName = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Try to get user's name from family_members table first
+      const { data: memberData } = await supabase
+        .from('family_members')
+        .select('name')
+        .eq('user_id', user.id)
+        .eq('Email', user.email)
+        .single();
+
+      if (memberData?.name) {
+        setCurrentUserName(memberData.name);
+      } else {
+        // Fallback to email if no name found
+        setCurrentUserName(user.email || 'Unknown');
+      }
+    } catch (error) {
+      console.error('Error fetching user name:', error);
+      setCurrentUserName(user.email || 'Unknown');
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -285,7 +311,7 @@ export function Tasks() {
               <option value="">Unassigned</option>
               {familyMembers.map((member) => (
                 <option key={member.id} value={member.Email}>
-                  {member.Email}
+                  {member.name || member.Email}
                 </option>
               ))}
             </select>
@@ -445,7 +471,7 @@ export function Tasks() {
         onClose={handleCloseForm}
         onTaskCreated={handleTaskCreated}
         editTask={editingTask}
-        currentUserName={user?.email}
+        currentUserName={currentUserName}
       />
     </div>
   );
