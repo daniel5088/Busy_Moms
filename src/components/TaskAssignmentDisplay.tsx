@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, UserCheck } from 'lucide-react';
-import { Task, FamilyMember } from '../../lib/supabase';
-import { useAuth } from '../../hooks/useAuth';
+import { Task, FamilyMember } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
 
 interface TaskAssignmentDisplayProps {
   task: Task;
@@ -33,7 +33,7 @@ export function TaskAssignmentDisplay({ task, familyMembers }: TaskAssignmentDis
   }
   
   return (
-    <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+    <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">
       {isCreator && !isAssignee ? (
         // Creator view: "Assigned to [Name]"
         <>
