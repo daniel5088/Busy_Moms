@@ -43,6 +43,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
     rsvp_required: false,
     rsvp_status: 'pending' as const,
     assigned_to: '',
+    visible_to_family: false,
   });
 
   // Load family members
@@ -62,6 +63,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
   // Update form data when defaultDate or event changes
   useEffect(() => {
     if (event) {
+      const eventData = event as any;
       setFormData({
         title: event.title || '',
         description: event.description || '',
@@ -73,7 +75,8 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         participants: event.participants?.join(', ') || '',
         rsvp_required: event.rsvp_required || false,
         rsvp_status: event.rsvp_status || 'pending',
-        assigned_to: (event as any).assigned_to || '',
+        assigned_to: eventData.visible_to_family ? 'family' : (eventData.assigned_to || ''),
+        visible_to_family: eventData.visible_to_family || false,
       });
     } else if (defaultDate) {
       setFormData((prev) => ({
@@ -94,20 +97,25 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         rsvp_required: false,
         rsvp_status: 'pending',
         assigned_to: '',
+        visible_to_family: false,
       });
     }
   }, [event, defaultDate]);
 
-  const handleAssignmentChange = (memberId: string) => {
-    if (memberId) {
-      const member = familyMembers.find((m) => m.id === memberId);
+  const handleAssignmentChange = (value: string) => {
+    if (value === 'family') {
+      setFormData({ ...formData, assigned_to: 'family', visible_to_family: true });
+    } else if (value) {
+      const member = familyMembers.find((m) => m.id === value);
       if (member && !member.Email) {
         setSelectedMemberName(member.name);
         setShowEmailPopup(true);
         return;
       }
+      setFormData({ ...formData, assigned_to: value, visible_to_family: false });
+    } else {
+      setFormData({ ...formData, assigned_to: '', visible_to_family: false });
     }
-    setFormData({ ...formData, assigned_to: memberId });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,7 +181,8 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         location_lng: locationLng,
         travel_time_minutes: travelTimeMinutes,
         travel_time_updated_at: travelTimeMinutes ? new Date().toISOString() : null,
-        assigned_to: formData.assigned_to || null,
+        assigned_to: formData.assigned_to === 'family' ? null : (formData.assigned_to || null),
+        visible_to_family: formData.visible_to_family,
       };
 
       let result;
@@ -281,21 +290,20 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         />
       </FormField>
 
-      {familyMembers.length > 0 && (
-        <FormField label="Assign To" icon={UserCheck}>
-          <SelectInput
-            value={formData.assigned_to}
-            onChange={handleAssignmentChange}
-            options={[
-              { value: '', label: 'None (visible to everyone)' },
-              ...familyMembers.map((member) => ({
-                value: member.id,
-                label: member.Email ? member.name : `${member.name} (no email)`,
-              })),
-            ]}
-          />
-        </FormField>
-      )}
+      <FormField label="Visibility" icon={UserCheck}>
+        <SelectInput
+          value={formData.assigned_to}
+          onChange={handleAssignmentChange}
+          options={[
+            { value: '', label: 'Just me' },
+            { value: 'family', label: 'Family (everyone)' },
+            ...familyMembers.map((member) => ({
+              value: member.id,
+              label: member.Email ? `${member.name} (assigned)` : `${member.name} (no email)`,
+            })),
+          ]}
+        />
+      </FormField>
 
       <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
         <CheckboxInput
