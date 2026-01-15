@@ -1,10 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-
-declare global {
-  interface Window {
-    google: any;
-  }
-}
+import { supabase } from '../lib/supabase';
 
 type PlaceSelection = {
   name: string;
@@ -14,89 +9,16 @@ type PlaceSelection = {
 interface Props {
   value: string;
   onChange: (value: string) => void;
-  apiKey?: string; // ✅ key comes in as a prop
   onSelect?: (place: PlaceSelection) => void;
 }
 
-export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Props) {
-  const [loaded, setLoaded] = useState(false);
-  const [loadError, setLoadError] = useState(false);
+export function LocationAutocomplete({ value, onChange, onSelect }: Props) {
   const [predictions, setPredictions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const serviceRef = useRef<any | null>(null);
   const debounceRef = useRef<number | null>(null);
   const justSelectedRef = useRef<boolean>(false);
 
-  // Load Google Maps script ONCE, using the apiKey prop
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    if (!apiKey) {
-      console.warn(
-        '[LocationAutocomplete] No Google Maps API key provided. Autocomplete disabled.'
-      );
-      return;
-    }
-
-    if (window.google?.maps?.places) {
-      setLoaded(true);
-      return;
-    }
-
-    if (document.getElementById('google-maps-js')) {
-      const checkInterval = setInterval(() => {
-        if (window.google?.maps?.places) {
-          setLoaded(true);
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      setTimeout(() => clearInterval(checkInterval), 5000);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.id = 'google-maps-js';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      const checkInterval = setInterval(() => {
-        if (window.google?.maps?.places) {
-          setLoaded(true);
-          setLoadError(false);
-          clearInterval(checkInterval);
-        }
-      }, 50);
-      setTimeout(() => {
-        clearInterval(checkInterval);
-        if (!window.google?.maps?.places) {
-          console.error('Google Maps failed to load - likely due to API key restrictions');
-          setLoadError(true);
-        }
-      }, 5000);
-    };
-    script.onerror = () => {
-      console.error('Failed to load Google Maps script');
-      setLoadError(true);
-    };
-
-    document.head.appendChild(script);
-
-    // Listen for Google Maps errors
-    const errorHandler = (event: ErrorEvent) => {
-      if (event.message && event.message.includes('RefererNotAllowedMapError')) {
-        console.error('Google Maps API key is restricted. Please update your API key settings.');
-        setLoadError(true);
-      }
-    };
-    window.addEventListener('error', errorHandler);
-
-    return () => {
-      window.removeEventListener('error', errorHandler);
-    };
-  }, [apiKey]);
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (!containerRef.current?.contains(e.target as Node)) {
@@ -107,19 +29,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch predictions with debounce
   useEffect(() => {
-    if (!loaded || !window.google?.maps?.places) return;
-
-    if (!serviceRef.current) {
-      try {
-        serviceRef.current = new window.google.maps.places.AutocompleteService();
-      } catch (error) {
-        console.error('Failed to initialize Google Places Autocomplete:', error);
-        return;
-      }
-    }
-
     if (!value || value.trim().length < 2) {
       setPredictions([]);
       return;
@@ -134,21 +44,41 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
       window.clearTimeout(debounceRef.current);
     }
 
-    debounceRef.current = window.setTimeout(() => {
-      serviceRef.current.getPlacePredictions(
-        { input: value },
-        (results: any[] | null, status: string) => {
-          if (status !== 'OK' || !results) {
-            setPredictions([]);
-            return;
-          }
+    debounceRef.current = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
 
-          const unique = Array.from(new Map(results.map((p) => [p.place_id, p])).values());
-          setPredictions(unique);
+        if (!token) {
+          setPredictions([]);
+          setLoading(false);
+          return;
         }
-      );
-    }, 200);
-  }, [value, loaded]);
+
+        const { data, error } = await supabase.functions.invoke('google-places-autocomplete', {
+          body: { input: value },
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (error) {
+          console.error('[LocationAutocomplete] Error:', error);
+          setPredictions([]);
+        } else if (data && data.predictions) {
+          setPredictions(data.predictions);
+        } else {
+          setPredictions([]);
+        }
+      } catch (err) {
+        console.error('[LocationAutocomplete] Exception:', err);
+        setPredictions([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+  }, [value]);
 
   const handleSelect = (p: any) => {
     const name = p.description || '';
@@ -165,7 +95,6 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
     }
   };
 
-  // Manual add handler
   const handleAddManually = () => {
     justSelectedRef.current = true;
     setPredictions([]);
@@ -177,26 +106,7 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
     }
   };
 
-  // If script hasn't loaded (or key missing), fall back to plain input
-  if (!loaded || !apiKey || loadError) {
-    return (
-      <div className="w-full">
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Event location"
-          className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-        />
-        {loadError && (
-          <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-            Location autocomplete unavailable. Please type location manually.
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  const showDropdown = predictions.length > 0;
+  const showDropdown = predictions.length > 0 || (loading && value.trim().length >= 2);
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -210,7 +120,13 @@ export function LocationAutocomplete({ value, onChange, apiKey, onSelect }: Prop
 
       {showDropdown && (
         <ul className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
-          {value.trim().length > 0 && (
+          {loading && predictions.length === 0 && (
+            <li className="px-3 py-2 text-gray-500 dark:text-gray-400 italic">
+              Searching...
+            </li>
+          )}
+
+          {!loading && value.trim().length > 0 && (
             <li
               className="px-3 py-2 text-rose-700 dark:text-rose-400 font-medium hover:bg-rose-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600"
               onMouseDown={(e) => {

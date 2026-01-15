@@ -23,6 +23,7 @@ import { ConflictResolutionModal } from './ConflictResolutionModal';
 import { CalendarSkeleton } from './CalendarSkeleton';
 import { DirectionsButton } from './DirectionsButton';
 import { TravelTimeIndicator, TravelTimeBadge } from './TravelTimeIndicator';
+import { LocationAutocomplete } from './LocationAutocomplete';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
 import { supabase } from '../lib/supabase';
 import type { Event as DbEvent } from '../lib/supabase';
@@ -2013,12 +2014,13 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location (optional)</label>
-                  <input
-                    type="text"
+                  <LocationAutocomplete
                     value={editingEvent.location || ''}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value || null })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Add location"
+                    onChange={(value: string) => setEditingEvent({ ...editingEvent, location: value || null })}
+                    onSelect={(place: any) => {
+                      const name = place.name || place.description || '';
+                      setEditingEvent({ ...editingEvent, location: name || editingEvent.location });
+                    }}
                   />
                 </div>
 
