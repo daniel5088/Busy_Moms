@@ -112,36 +112,14 @@ Deno.serve(async (req: Request) => {
           'Authorization': `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o', // or 'gpt-4-vision-preview'
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'user',
               content: [
                 {
                   type: 'text',
-                  text: `Analyze this image and extract any calendar event information. Look for dates, times, event names, locations, or any scheduling information. 
-
-IMPORTANT DATE RULES:
-- If a date has NO YEAR specified, assume it's for the current year (2025)
-- If the date has already passed in the current year, assume it's for NEXT YEAR (2026)
-- For example, if today is December 25, 2025 and you see "December 20", that means December 20, 2026
-- If you see "January 15" in December 2025, that means January 15, 2026
-
-Return ONLY a JSON object with this structure:
-{
-  "events": [
-    {
-      "title": "event name",
-      "date": "YYYY-MM-DD",
-      "time": "HH:MM" or null,
-      "description": "any additional details",
-      "location": "location if mentioned" or null
-    }
-  ]
-}
-If no event information is found, return {"events": []}
-
-Current date for reference: ${new Date().toISOString().split('T')[0]}`,
+                  text: `Analyze this image and extract any calendar event information. Look for dates, times, event names, locations, or any scheduling information.\n\nIMPORTANT DATE RULES:\n- If a date has NO YEAR specified, assume it's for the current year (2025)\n- If the date has already passed in the current year, assume it's for NEXT YEAR (2026)\n- For example, if today is December 25, 2025 and you see "December 20", that means December 20, 2026\n- If you see "January 15" in December 2025, that means January 15, 2026\n\nReturn ONLY a JSON object with this structure:\n{\n  "events": [\n    {\n      "title": "event name",\n      "date": "YYYY-MM-DD",\n      "time": "HH:MM" or null,\n      "description": "any additional details",\n      "location": "location if mentioned" or null\n    }\n  ]\n}\nIf no event information is found, return {"events": []}\n\nCurrent date for reference: ${new Date().toISOString().split('T')[0]}`,
                 },
                 {
                   type: 'image_url',
@@ -152,7 +130,7 @@ Current date for reference: ${new Date().toISOString().split('T')[0]}`,
               ],
             },
           ],
-          max_tokens: 1000,
+          max_tokens: 500,
         }),
       });
 

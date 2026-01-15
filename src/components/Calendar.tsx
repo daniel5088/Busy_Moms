@@ -113,7 +113,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [showCamera, setShowCamera] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedInfo, setExtractedInfo] = useState<ExtractedCalendarEvent[] | null>(null);
-  const [editingEvent, setEditingEvent] = useState<ExtractedCalendarEvent | null>(null);
+  const [editingEvent, setEditingEvent] = useState<{ event: ExtractedCalendarEvent; index: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [showCameraView, setShowCameraView] = useState(false);
@@ -757,16 +757,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     }
   };
 
-  const handleEditEvent = (event: ExtractedCalendarEvent, _index: number) => {
-    setEditingEvent({ ...event });
+  const handleEditEvent = (event: ExtractedCalendarEvent, index: number) => {
+    setEditingEvent({ event: { ...event }, index });
   };
 
   const handleSaveEditedEvent = () => {
     if (!editingEvent || !extractedInfo) return;
 
-    const updatedEvents = extractedInfo.map((ev) =>
-      ev === editingEvent ? { ...editingEvent } : ev
-    );
+    const updatedEvents = [...extractedInfo];
+    updatedEvents[editingEvent.index] = editingEvent.event;
 
     setExtractedInfo(updatedEvents);
     setEditingEvent(null);
@@ -1985,8 +1984,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
                   <input
                     type="text"
-                    value={editingEvent.title}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                    value={editingEvent.event.title}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, title: e.target.value } })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   />
                 </div>
@@ -1995,8 +1994,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
                   <input
                     type="date"
-                    value={editingEvent.date}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                    value={editingEvent.event.date}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, date: e.target.value } })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   />
                 </div>
@@ -2005,28 +2004,30 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time (optional)</label>
                   <input
                     type="time"
-                    value={editingEvent.time || ''}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, time: e.target.value || null })}
+                    value={editingEvent.event.time || ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, time: e.target.value || null } })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location (optional)</label>
-                  <input
-                    type="text"
-                    value={editingEvent.location || ''}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value || null })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    placeholder="Add location"
+                  <LocationAutocomplete
+                    value={editingEvent.event.location || ''}
+                    onChange={(value: string) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, location: value || null } })}
+                    apiKey={apiKey}
+                    onSelect={(place: any) => {
+                      const name = place.name || place.description || '';
+                      setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, location: name || editingEvent.event.location } });
+                    }}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (optional)</label>
                   <textarea
-                    value={editingEvent.description || ''}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value || null })}
+                    value={editingEvent.event.description || ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, event: { ...editingEvent.event, description: e.target.value || null } })}
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                     placeholder="Add description"
