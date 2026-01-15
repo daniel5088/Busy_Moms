@@ -159,6 +159,19 @@ export function DashboardV4Experimental({
     return reminders.filter(reminder => shouldShowReminder(reminder, now));
   }, [reminders, shouldShowReminder]);
 
+  // Filter reminders to only show ones assigned TO the current user
+  const myAssignedReminders = React.useMemo(() => {
+    const now = new Date();
+    return reminders.filter(reminder => {
+      // Only show reminders assigned to me (not ones I created for others)
+      if (reminder.family_member_email !== user?.email) {
+        return false;
+      }
+      
+      return shouldShowReminder(reminder, now);
+    });
+  }, [reminders, shouldShowReminder, user?.email]);
+
   React.useEffect(() => {
     if (user) {
       loadTodayAffirmation();
@@ -817,9 +830,9 @@ export function DashboardV4Experimental({
                 </button>
               </div>
             </div>
-            {filteredReminders.length > 0 ? (
+            {myAssignedReminders.length > 0 ? (
               <div className="space-y-2">
-                {filteredReminders.map((reminder) => (
+                {myAssignedReminders.map((reminder) => (
                   <div
                     key={reminder.id}
                     className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors cursor-pointer"
@@ -836,6 +849,11 @@ export function DashboardV4Experimental({
                       <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {formatReminderDate(reminder.reminder_date)}
                         {reminder.reminder_time && ` at ${formatEventTime(reminder.reminder_time)}`}
+                        {reminder.assigned_by_name && (
+                          <span className="ml-2 text-blue-600 dark:text-blue-400">
+                            • From {reminder.assigned_by_name}
+                          </span>
+                        )}
                       </div>
                       {reminder.description && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
@@ -855,7 +873,7 @@ export function DashboardV4Experimental({
               <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 text-center">
                 <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" aria-hidden="true" />
                 <p className="text-gray-500 dark:text-gray-400">
-                  No reminders for {getWeekLabel(reminderWeekOffset).toLowerCase()}
+                  No reminders assigned to you for {getWeekLabel(reminderWeekOffset).toLowerCase()}
                 </p>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Ask Sarah to set a reminder for you</p>
               </div>
