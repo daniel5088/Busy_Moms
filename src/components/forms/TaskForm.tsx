@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckSquare, User, Calendar, Clock, Star, Hash } from 'lucide-react';
+import { X, CheckSquare, User, Calendar, Clock, Star } from 'lucide-react';
 import { Task, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { taskSyncOrchestrator } from '../../services/taskSyncOrchestrator';
@@ -10,9 +10,10 @@ interface TaskFormProps {
   onClose: () => void;
   onTaskCreated: (task: Task) => void;
   editTask?: Task | null;
+  currentUserName?: string; // NEW: Pass the current user's name
 }
 
-export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormProps) {
+export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUserName }: TaskFormProps) {
   const { user } = useAuth();
   const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
@@ -48,7 +49,6 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         recurring_pattern: editTask.recurring_pattern || '',
       });
     } else {
-      // Reset form for new task
       setFormData({
         title: '',
         description: '',
@@ -99,12 +99,27 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
 
     setLoading(true);
     try {
-      // Get current session to ensure we're authenticated
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         alert('Session expired. Please log in again.');
         return;
+      }
+
+      // Get the assigner's name (current user's name)
+      let assignerName = currentUserName || user.email || 'Unknown';
+      
+      // If no currentUserName provided, try to fetch it
+      if (!currentUserName) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('name, full_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (userData) {
+          assignerName = userData.name || userData.full_name || user.email || 'Unknown';
+        }
       }
 
       const taskData = {
@@ -113,6 +128,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
         category: formData.category,
         priority: formData.priority,
         assigned_to_email: formData.assigned_to_email || null,
+        assigned_by_name: formData.assigned_to_email ? assignerName : null, // NEW: Save assigner's name
         due_date: formData.due_date || null,
         due_time: formData.due_time || null,
         points: formData.points || 0,
@@ -264,7 +280,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask }: TaskFormP
                 <option value="">No assignment</option>
                 {familyMembers.map((member) => (
                   <option key={member.id} value={member.Email}>
-                    {member.Email}
+                    {member.name || member.Email}
                   </option>
                 ))}
               </select>
