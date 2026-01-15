@@ -36,22 +36,23 @@ export function Tasks() {
   }, [user]);
 
   const fetchCurrentUserName = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !user?.email) return;
 
     try {
-      // Try to get user's name from family_members table first
-      const { data: memberData } = await supabase
+      // Try to get user's name from family_members table
+      const { data: memberData, error } = await supabase
         .from('family_members')
-        .select('name')
-        .eq('user_id', user.id)
+        .select('name, Email')
         .eq('Email', user.email)
         .single();
 
-      if (memberData?.name) {
+      if (!error && memberData?.name) {
+        console.log('Found user name:', memberData.name);
         setCurrentUserName(memberData.name);
       } else {
+        console.log('No name found, using email:', user.email);
         // Fallback to email if no name found
-        setCurrentUserName(user.email || 'Unknown');
+        setCurrentUserName(user.email);
       }
     } catch (error) {
       console.error('Error fetching user name:', error);
