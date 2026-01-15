@@ -67,6 +67,7 @@ export interface Reminder {
   recurring_pattern?: string | null;
   family_member_id?: UUID | null;
   family_member_email?: string | null;
+  assigned_by_name?: string;
   visible_to_family?: boolean | null;
   created_at?: string;
   updated_at?: string;
