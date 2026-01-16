@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Bell, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
 import { supabase, Reminder, FamilyMember } from '../../lib/supabase';
+import { EmailRequiredPopup } from '../shared/EmailRequiredPopup';
 import { useAuth } from '../../hooks/useAuth';
 
 interface ReminderFormProps {
@@ -21,6 +22,8 @@ export function ReminderForm({
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [showEmailPopup, setShowEmailPopup] = useState(false);
+  const [selectedMemberName, setSelectedMemberName] = useState('');
   const [formData, setFormData] = useState({
     title: editReminder?.title || '',
     description: editReminder?.description || '',
@@ -251,13 +254,26 @@ export function ReminderForm({
                 </label>
                 <select
                   value={formData.family_member_email}
-                  onChange={(e) => setFormData({ ...formData, family_member_email: e.target.value })}
+                  onChange={(e) => {
+                    const sel = e.target.value;
+                    if (!sel) {
+                      setFormData({ ...formData, family_member_email: '' });
+                      return;
+                    }
+                    const member = familyMembers.find((m) => m.Email === sel);
+                    if (!member || !member.Email) {
+                      setSelectedMemberName(member?.name || 'Selected member');
+                      setShowEmailPopup(true);
+                      return;
+                    }
+                    setFormData({ ...formData, family_member_email: sel });
+                  }}
                   className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base"
                 >
                   <option value="">General reminder</option>
                   {familyMembers.map((member) => (
-                    <option key={member.id} value={member.Email}>
-                      {member.Email}
+                    <option key={member.id} value={member.Email || ''}>
+                      {member.Email ? `${member.name || member.Email} (assigned)` : `${member.name} (no email)`}
                     </option>
                   ))}
                 </select>
@@ -311,6 +327,12 @@ export function ReminderForm({
           </form>
         </div>
       </div>
+      <EmailRequiredPopup
+        isOpen={showEmailPopup}
+        onClose={() => setShowEmailPopup(false)}
+        memberName={selectedMemberName}
+        itemType="reminder"
+      />
     </div>
   );
 }
