@@ -1279,14 +1279,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
                         >
                           {/* Assignment info row */}
-                          {(ev.assigned_by_name || ev.assigned_to_email) && (
+                          {(ev.assigned_by_name || ev.assigned_to_email) && user && (
                             <div className="flex items-center flex-wrap gap-2 mb-2 text-xs">
-                              {ev.assigned_by_name && (
+                              {/* Show "By" if current user is the receiver */}
+                              {ev.assigned_by_name && ev.user_id !== user.id && (
                                 <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full font-medium">
                                   By: {ev.assigned_by_name}
                                 </span>
                               )}
-                              {ev.assigned_to_email && (
+                              {/* Show "To" if current user is the sender */}
+                              {ev.assigned_to_email && ev.user_id === user.id && (
                                 <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full font-medium">
                                   To: {ev.assigned_to_email.split('@')[0]}
                                 </span>
@@ -1379,7 +1381,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           className="group bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900 dark:to-yellow-900 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
                         >
                           {/* Assignment info row */}
-                          {reminder.family_member_email && (
+                          {reminder.family_member_email && user && reminder.user_id === user.id && (
                             <div className="flex items-center flex-wrap gap-2 mb-2 text-xs">
                               <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full font-medium">
                                 To: {reminder.family_member_email.split('@')[0]}
