@@ -88,12 +88,18 @@ export function ReminderForm({
       let assignerName = null;
       if (formData.family_member_email) {
         // Try to get current user's name from family_members
-        const { data: memberData } = await supabase
+        // Use .maybeSingle() instead of .single() to handle 0 or 1 results gracefully
+        const { data: memberData, error: memberError } = await supabase
           .from('family_members')
           .select('name')
           .eq('Email', user.email)
-          .single();
+          .maybeSingle();
         
+        if (memberError && !memberError.message.includes('No rows found')) {
+          console.error('Error fetching family member:', memberError);
+        }
+        
+        // Fallback: use member name if found, otherwise use email, then 'Unknown'
         assignerName = memberData?.name || user.email || 'Unknown';
       }
 
