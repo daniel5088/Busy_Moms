@@ -1501,9 +1501,9 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                             By: {selectedEvent.assigned_by_name}
                           </div>
                         )}
-                        {selectedEvent.assigned_to_email && (
-                          <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-                            To: {selectedEvent.assigned_to_email}
+                        {selectedEvent.assigned_to_name && (
+                          <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
+                            To: {selectedEvent.assigned_to_name}
                           </div>
                         )}
                       </div>
@@ -1714,7 +1714,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         {selectedReminder.title}
                       </h3>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 flex-wrap gap-2">
                         <div
                           className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
                             selectedReminder.priority === 'high'
@@ -1729,6 +1729,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                         <div className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
                           Reminder
                         </div>
+                        {selectedReminder.assigned_by_name && (
+                          <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                            By: {selectedReminder.assigned_by_name}
+                          </div>
+                        )}
+                        {selectedReminder.assigned_to_name && (
+                          <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
+                            To: {selectedReminder.assigned_to_name}
+                          </div>
+                        )}
                       </div>
                     </div>
 
