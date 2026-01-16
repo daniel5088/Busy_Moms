@@ -547,7 +547,7 @@ export function DashboardV4Experimental({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold">
-                Hello g,{' '}
+                Hello,{' '}
                 {profile?.full_name ||
                   user?.user_metadata?.full_name ||
                   user?.user_metadata?.name ||
