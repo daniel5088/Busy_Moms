@@ -159,18 +159,25 @@ export function DashboardV4Experimental({
     return reminders.filter(reminder => shouldShowReminder(reminder, now));
   }, [reminders, shouldShowReminder]);
 
-  // Filter reminders to only show ones assigned TO the current user
+  // Filter reminders to show:
+  // 1. Reminders I created with no assignment (for me)
+  // 2. Reminders assigned TO me by others
   const myAssignedReminders = React.useMemo(() => {
     const now = new Date();
     return reminders.filter(reminder => {
-      // Only show reminders assigned to me (not ones I created for others)
-      if (reminder.family_member_email !== user?.email) {
-        return false;
+      // Show reminders I created that aren't assigned to anyone
+      if (reminder.user_id === user?.id && !reminder.family_member_email) {
+        return shouldShowReminder(reminder, now);
       }
       
-      return shouldShowReminder(reminder, now);
+      // Show reminders assigned to me by others
+      if (reminder.family_member_email === user?.email && reminder.user_id !== user?.id) {
+        return shouldShowReminder(reminder, now);
+      }
+      
+      return false;
     });
-  }, [reminders, shouldShowReminder, user?.email]);
+  }, [reminders, shouldShowReminder, user?.email, user?.id]);
 
   React.useEffect(() => {
     if (user) {
