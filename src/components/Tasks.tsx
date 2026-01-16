@@ -13,6 +13,7 @@ import { TaskForm } from './forms/TaskForm';
 import { TaskAssignmentDisplay } from './TaskAssignmentDisplay';
 import { Task, FamilyMember, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { formatDate } from '../utils/timeFormatters';
 import { googleTasksService } from '../services/googleTasks';
 import { taskSyncOrchestrator } from '../services/taskSyncOrchestrator';
 
@@ -25,40 +26,13 @@ export function Tasks() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<string>('all');
-  const [currentUserName, setCurrentUserName] = useState<string>('');
 
   useEffect(() => {
     if (user) {
       fetchTasks();
       fetchFamilyMembers();
-      fetchCurrentUserName();
     }
   }, [user]);
-
-  const fetchCurrentUserName = async () => {
-    if (!user?.id || !user?.email) return;
-
-    try {
-      // Try to get user's name from family_members table
-      const { data: memberData, error } = await supabase
-        .from('family_members')
-        .select('name, Email')
-        .eq('Email', user.email)
-        .single();
-
-      if (!error && memberData?.name) {
-        console.log('Found user name:', memberData.name);
-        setCurrentUserName(memberData.name);
-      } else {
-        console.log('No name found, using email:', user.email);
-        // Fallback to email if no name found
-        setCurrentUserName(user.email);
-      }
-    } catch (error) {
-      console.error('Error fetching user name:', error);
-      setCurrentUserName(user.email || 'Unknown');
-    }
-  };
 
   const fetchTasks = async () => {
     try {
@@ -312,7 +286,7 @@ export function Tasks() {
               <option value="">Unassigned</option>
               {familyMembers.map((member) => (
                 <option key={member.id} value={member.Email}>
-                  {member.name || member.Email}
+                  {member.Email}
                 </option>
               ))}
             </select>
@@ -394,7 +368,7 @@ export function Tasks() {
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span>
-                            Due {new Date(task.due_date).toLocaleDateString()}
+                            Due {formatDate(task.due_date)}
                             {task.due_time && ` at ${task.due_time}`}
                           </span>
                         </div>
@@ -472,7 +446,7 @@ export function Tasks() {
         onClose={handleCloseForm}
         onTaskCreated={handleTaskCreated}
         editTask={editingTask}
-        currentUserName={currentUserName}
+        currentUserName={user?.email}
       />
     </div>
   );
