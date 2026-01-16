@@ -287,20 +287,27 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUser
                     setFormData({ ...formData, assigned_to_email: '' });
                     return;
                   }
-                  const member = familyMembers.find((m) => m.Email === sel);
-                  if (!member || !member.Email) {
+                  if (sel.startsWith('NO_EMAIL:')) {
+                    const memberId = sel.replace('NO_EMAIL:', '');
+                    const member = familyMembers.find((m) => String(m.id) === memberId);
                     setSelectedMemberName(member?.name || 'Selected member');
                     setShowEmailPopup(true);
                     return;
                   }
+                  // sel is an email
                   setFormData({ ...formData, assigned_to_email: sel });
                 }}
                 className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
               >
                 <option value="">No assignment</option>
                 {familyMembers.map((member) => (
-                  <option key={member.id} value={member.Email || ''}>
-                    {member.Email ? `${member.name || member.Email} (assigned)` : `${member.name} (no email)`}
+                  <option
+                    key={member.id}
+                    value={member.Email ? member.Email : `NO_EMAIL:${member.id}`}
+                  >
+                    {member.Email
+                      ? `${member.name || member.Email} (assigned)`
+                      : `${member.name} (no email)`}
                   </option>
                 ))}
               </select>
