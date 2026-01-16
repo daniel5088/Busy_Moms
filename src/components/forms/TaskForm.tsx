@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckSquare, User, Calendar, Clock, Star } from 'lucide-react';
 import { Task, FamilyMember } from '../../lib/supabase';
+import { EmailRequiredPopup } from '../shared/EmailRequiredPopup';
 import { useAuth } from '../../hooks/useAuth';
 import { taskSyncOrchestrator } from '../../services/taskSyncOrchestrator';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
@@ -18,6 +19,8 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUser
   const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [showEmailPopup, setShowEmailPopup] = useState(false);
+  const [selectedMemberName, setSelectedMemberName] = useState('');
   const [formData, setFormData] = useState({
     title: editTask?.title || '',
     description: editTask?.description || '',
@@ -278,13 +281,26 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUser
               </label>
               <select
                 value={formData.assigned_to_email}
-                onChange={(e) => setFormData({ ...formData, assigned_to_email: e.target.value })}
+                onChange={(e) => {
+                  const sel = e.target.value;
+                  if (!sel) {
+                    setFormData({ ...formData, assigned_to_email: '' });
+                    return;
+                  }
+                  const member = familyMembers.find((m) => m.Email === sel);
+                  if (!member || !member.Email) {
+                    setSelectedMemberName(member?.name || 'Selected member');
+                    setShowEmailPopup(true);
+                    return;
+                  }
+                  setFormData({ ...formData, assigned_to_email: sel });
+                }}
                 className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
               >
                 <option value="">No assignment</option>
                 {familyMembers.map((member) => (
-                  <option key={member.id} value={member.Email}>
-                    {member.name || member.Email}
+                  <option key={member.id} value={member.Email || ''}>
+                    {member.Email ? `${member.name || member.Email} (assigned)` : `${member.name} (no email)`}
                   </option>
                 ))}
               </select>
@@ -399,6 +415,12 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUser
           </form>
         </div>
       </div>
+      <EmailRequiredPopup
+        isOpen={showEmailPopup}
+        onClose={() => setShowEmailPopup(false)}
+        memberName={selectedMemberName}
+        itemType="task"
+      />
     </div>
   );
 }
