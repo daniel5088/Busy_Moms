@@ -161,12 +161,12 @@ export function DashboardV4Experimental({
 
   // Filter reminders to show:
   // 1. Reminders I created with no assignment (for me)
-  // 2. Reminders assigned TO me by others
+  // 2. Reminders assigned TO me (by others or myself)
   const myAssignedReminders = React.useMemo(() => {
     const now = new Date();
     return reminders.filter(reminder => {
-      // Show reminders I created that aren't assigned to anyone
-      if (reminder.user_id === user?.id && !reminder.family_member_email) {
+      // Show reminders I created that aren't assigned or are assigned to me
+      if (reminder.user_id === user?.id && (!reminder.family_member_email || reminder.family_member_email === user?.email)) {
         return shouldShowReminder(reminder, now);
       }
       
