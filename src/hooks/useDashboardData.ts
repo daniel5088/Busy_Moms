@@ -85,7 +85,7 @@ export function useDashboardData(): DashboardData {
   }, [user?.id, user?.email, reminderWeekOffset]);
 
   const loadDashboardData = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id || !user?.email) return;
 
     setLoading(true);
     setError(null);
@@ -94,11 +94,14 @@ export function useDashboardData(): DashboardData {
       const today = getTodayISO();
       const nextWeek = getDateInDays(7);
 
-      // Load upcoming events for next 7 days
+      // ✅ FIXED: Load events I created OR events assigned to me
+      // This query will fetch:
+      // 1. Events created by me (user_id = my ID)
+      // 2. Events assigned to me by others (assigned_to_email = my email)
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},assigned_to_email.eq.${user.email}`)
         .gte('event_date', today)
         .lte('event_date', nextWeek)
         .order('event_date', { ascending: true });
