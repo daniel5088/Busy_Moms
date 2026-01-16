@@ -166,86 +166,25 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
   // --- Data loading: only load the visible month to reduce payload -----------
   const loadEvents = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id || !user?.email) return;
     setLoading(true);
     setError(null);
     try {
-      // Identify the current user's family member ID (if any)
-      let myMemberId: string | null = null;
-      try {
-        const { data: meMember, error: meErr } = await supabase
-          .from('family_members')
-          .select('id')
-          .eq('Email', user.email)
-          .maybeSingle();
-        if (!meErr && meMember?.id) {
-          myMemberId = meMember.id as string;
-        }
-      } catch (fmErr) {
-        console.warn('⚠️ Could not resolve family member for current user:', fmErr);
-      }
-
-      // Load events
-      const { data: allEventsData, error: eventsErr } = await supabase
+      // Load events - RLS will filter based on user access
+      // Include both:
+      // 1. Events the user created (user_id matches)
+      // 2. Events assigned to the user (assigned_to_email matches)
+      const { data: eventsData, error: eventsErr } = await supabase
         .from('events')
         .select('*')
         .gte('event_date', toLocalISODate(monthStart))
         .lte('event_date', toLocalISODate(monthEnd))
+        .or(`user_id.eq.${user?.id},assigned_to_email.eq.${user?.email}`)
         .order('event_date', { ascending: true })
         .order('start_time', { ascending: true });
 
       if (eventsErr) throw eventsErr;
-
-      // Filter to show:
-      // 1) Events I created that are NOT assigned to someone else
-      // 2) Events assigned to me
-      // 3) Events visible to family
-      const eventsData = (allEventsData ?? []).filter((ev: any) => {
-        const isMyEvent = ev.user_id === user.id;
-        const isAssignedToMe = myMemberId && ev.assigned_to === myMemberId;
-        const isFamilyVisible = ev.visible_to_family === true;
-        const isAssignedToOther = ev.assigned_to && ev.assigned_to !== myMemberId;
-
-        // Show if: (my event AND not assigned to someone else) OR assigned to me OR family visible
-        return (isMyEvent && !isAssignedToOther) || isAssignedToMe || isFamilyVisible;
-      });
-
-      if (eventsErr) throw eventsErr;
       setEvents(eventsData ?? []);
-
-      // Load assigner names for events assigned to me
-      const assignedEventIds = eventsData.filter((ev: any) => ev.user_id !== user.id && ev.assigned_to).map((ev: any) => ev.user_id);
-      if (assignedEventIds.length > 0) {
-        const { data: assigners } = await supabase
-          .from('family_members')
-          .select('user_id, name, Email')
-          .in('user_id', assignedEventIds);
-        
-        if (assigners) {
-          // Attach assigner name to events
-          eventsData.forEach((ev: any) => {
-            if (ev.user_id !== user.id) {
-              const assigner = assigners.find((a: any) => a.user_id === ev.user_id);
-              if (assigner) {
-                ev.assigned_by_name = assigner.name || assigner.Email;
-              }
-            }
-          });
-        }
-      }
-
-      // Debug breakdown for visibility
-      try {
-        const createdByMe = (eventsData ?? []).filter((ev: any) => ev.user_id === user.id).length;
-        const assignedToMe = (eventsData ?? []).filter((ev: any) => ev.assigned_to && ev.assigned_to === myMemberId).length;
-        const familyVisible = (eventsData ?? []).filter((ev: any) => ev.visible_to_family === true).length;
-        console.log('📊 Calendar events loaded:', {
-          total: eventsData?.length ?? 0,
-          createdByMe,
-          assignedToMe,
-          familyVisible,
-        });
-      } catch {}
 
       // Load reminders - Filter to show only reminders relevant to current user
       // 1. Reminders I created (whether assigned or not)
@@ -279,7 +218,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     } finally {
       setLoading(false);
     }
-  }, [user?.id, monthStart, monthEnd, supabase]);
+  }, [user?.id, user?.email, monthStart, monthEnd, supabase]);
 
   useEffect(() => {
     if (user?.id) loadEvents();
@@ -1280,47 +1219,53 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   ) : (
                     <>
                       {/* Events */}
-                      {itemsForSelectedDate.events.map((ev, i) => {
-                        const evAny = ev as any;
-                        const isAssignedToMe = evAny.assigned_to && evAny.user_id !== user?.id;
-                        
-                        return (
-                          <button
-                            type="button"
-                            key={`event-${ev.id}-${i}`}
-                            onClick={() => {
-                              setSelectedEvent(ev);
-                              setShowEventDetails(true);
-                            }}
-                            className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors break-words flex-1 pr-2">
-                                {ev.title}
-                              </h3>
-                              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap flex-shrink-0">
-                                {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
-                              </span>
+                      {itemsForSelectedDate.events.map((ev, i) => (
+                        <button
+                          type="button"
+                          key={`event-${ev.id}-${i}`}
+                          onClick={() => {
+                            setSelectedEvent(ev);
+                            setShowEventDetails(true);
+                          }}
+                          className="group bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900 dark:to-pink-900 border border-orange-200 dark:border-orange-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
+                        >
+                          {/* Assignment info row */}
+                          {(ev.assigned_by_name || ev.assigned_to_email) && (
+                            <div className="flex items-center justify-between mb-2 text-xs">
+                              {ev.assigned_by_name && (
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  <span className="font-medium">By:</span> {ev.assigned_by_name}
+                                </span>
+                              )}
+                              {ev.assigned_to_email && (
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  <span className="font-medium">To:</span> {ev.assigned_to_email.split('@')[0]}
+                                </span>
+                              )}
                             </div>
-                            {isAssignedToMe && evAny.assigned_by_name && (
-                              <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                                Assigned by {evAny.assigned_by_name}
+                          )}
+                          
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors break-words flex-1 pr-2">
+                              {ev.title}
+                            </h3>
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap flex-shrink-0">
+                              {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
+                            </span>
+                          </div>
+                          {ev.location && (
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
+                                <MapPin className="w-3 h-3" aria-hidden="true" />
+                                <span className="truncate">{ev.location}</span>
                               </div>
-                            )}
-                            {ev.location && (
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
-                                  <MapPin className="w-3 h-3" aria-hidden="true" />
-                                  <span className="truncate">{ev.location}</span>
-                                </div>
-                                {ev.travel_time_minutes && (
-                                  <TravelTimeBadge travelMinutes={ev.travel_time_minutes} />
-                                )}
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
+                              {ev.travel_time_minutes && (
+                                <TravelTimeBadge travelMinutes={ev.travel_time_minutes} />
+                              )}
+                            </div>
+                          )}
+                        </button>
+                      ))}
 
                       {/* Google Calendar Events */}
                       {(itemsForSelectedDate.googleEvents || []).map((ev, i) => (
@@ -1480,8 +1425,20 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         {selectedEvent.title}
                       </h3>
-                      <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-rose-100 text-rose-700">
-                        {selectedEvent.event_type}
+                      <div className="flex items-center space-x-2 flex-wrap gap-2">
+                        <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-rose-100 text-rose-700">
+                          {selectedEvent.event_type}
+                        </div>
+                        {selectedEvent.assigned_by_name && (
+                          <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                            By: {selectedEvent.assigned_by_name}
+                          </div>
+                        )}
+                        {selectedEvent.assigned_to_email && (
+                          <div className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                            To: {selectedEvent.assigned_to_email}
+                          </div>
+                        )}
                       </div>
                     </div>
 
