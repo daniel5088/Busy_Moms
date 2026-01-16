@@ -178,13 +178,29 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         .from('events')
         .select('*')
         .gte('event_date', toLocalISODate(monthStart))
-        .lte('event_date', toLocalISODate(monthEnd))
-        .or(`user_id.eq.${user?.id},assigned_to_email.eq.${user?.email}`)
-        .order('event_date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .lte('event_date', toLocalISODate(monthEnd));
 
       if (eventsErr) throw eventsErr;
-      setEvents(eventsData ?? []);
+      
+      // Filter on the client side to show:
+      // - Events the user created
+      // - Events assigned to the user
+      const filteredEvents = (eventsData ?? []).filter(
+        (ev) => ev.user_id === user.id || ev.assigned_to_email === user.email
+      );
+      
+      setEvents(filteredEvents);
+      
+      console.log('📅 Loaded events:', {
+        total: eventsData?.length,
+        filtered: filteredEvents.length,
+        userEmail: user.email,
+        sample: filteredEvents.slice(0, 2).map((e) => ({
+          title: e.title,
+          creator: e.user_id === user.id ? 'me' : 'other',
+          assignedTo: e.assigned_to_email,
+        })),
+      });
 
       // Load reminders - Filter to show only reminders relevant to current user
       // 1. Reminders I created (whether assigned or not)
