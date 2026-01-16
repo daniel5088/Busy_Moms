@@ -64,6 +64,12 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
   useEffect(() => {
     if (event) {
       const eventData = event as any;
+      // When loading existing event, find the family member by email if assigned
+      let assignedTo = '';
+      if (eventData.assigned_to_email) {
+        const member = familyMembers.find((m) => m.Email === eventData.assigned_to_email);
+        assignedTo = member ? member.id : eventData.assigned_to_email;
+      }
       setFormData({
         title: event.title || '',
         description: event.description || '',
@@ -75,8 +81,8 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         participants: event.participants?.join(', ') || '',
         rsvp_required: event.rsvp_required || false,
         rsvp_status: event.rsvp_status || 'pending',
-        assigned_to: eventData.visible_to_family ? 'family' : (eventData.assigned_to || ''),
-        visible_to_family: eventData.visible_to_family || false,
+        assigned_to: assignedTo,
+        visible_to_family: false,
       });
     } else if (defaultDate) {
       setFormData((prev) => ({
@@ -100,7 +106,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         visible_to_family: false,
       });
     }
-  }, [event, defaultDate]);
+  }, [event, defaultDate, familyMembers]);
 
   const handleAssignmentChange = (value: string) => {
     if (value === 'family') {
@@ -112,6 +118,7 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         setShowEmailPopup(true);
         return;
       }
+      // Store the member ID, we'll convert to email on submit
       setFormData({ ...formData, assigned_to: value, visible_to_family: false });
     } else {
       setFormData({ ...formData, assigned_to: '', visible_to_family: false });
@@ -187,7 +194,10 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         rsvp_required: formData.rsvp_required,
         rsvp_status: formData.rsvp_status,
         // Map assigned_to to the new database columns
-        assigned_to_email: formData.assigned_to && formData.assigned_to !== 'family' ? formData.assigned_to : null,
+        // Convert family member ID to email
+        assigned_to_email: formData.assigned_to && formData.assigned_to !== 'family' 
+          ? familyMembers.find((m) => m.id === formData.assigned_to)?.Email || null
+          : null,
         assigned_by_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
         // Keep user_id as the creator of the event
         user_id: user.id,
