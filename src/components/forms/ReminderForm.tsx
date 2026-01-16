@@ -87,23 +87,35 @@ export function ReminderForm({
 
     setLoading(true);
     try {
-      // Get the assigner's name if assigning to someone
+      // Get the assigner's name and assignee's name if assigning to someone
       let assignerName = null;
+      let assigneeName = null;
       if (formData.family_member_email) {
-        // Try to get current user's name from family_members
-        // Use .maybeSingle() instead of .single() to handle 0 or 1 results gracefully
-        const { data: memberData, error: memberError } = await supabase
+        // Get current user's name (assigner)
+        const { data: assignerData, error: assignerError } = await supabase
           .from('family_members')
           .select('name')
           .eq('Email', user.email)
           .maybeSingle();
-        
-        if (memberError && !memberError.message.includes('No rows found')) {
-          console.error('Error fetching family member:', memberError);
+
+        if (assignerError && !assignerError.message.includes('No rows found')) {
+          console.error('Error fetching assigner:', assignerError);
         }
-        
-        // Fallback: use member name if found, otherwise use email, then 'Unknown'
-        assignerName = memberData?.name || user.email || 'Unknown';
+
+        assignerName = assignerData?.name || user.email || 'Unknown';
+
+        // Get assignee's name
+        const { data: assigneeData, error: assigneeError } = await supabase
+          .from('family_members')
+          .select('name')
+          .eq('Email', formData.family_member_email)
+          .maybeSingle();
+
+        if (assigneeError && !assigneeError.message.includes('No rows found')) {
+          console.error('Error fetching assignee:', assigneeError);
+        }
+
+        assigneeName = assigneeData?.name || formData.family_member_email.split('@')[0] || 'Unknown';
       }
 
       const reminderData = {
@@ -114,6 +126,7 @@ export function ReminderForm({
         priority: formData.priority,
         family_member_email: formData.family_member_email || null,
         assigned_by_name: assignerName,
+        assigned_to_name: assigneeName,
         recurring: formData.recurring,
         recurring_pattern: formData.recurring ? formData.recurring_pattern || null : null,
         user_id: user.id,

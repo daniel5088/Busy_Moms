@@ -222,14 +222,14 @@ export function RemindersList({
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {formatDate(reminder.reminder_date)}
                 {reminder.reminder_time && ` at ${formatEventTime(reminder.reminder_time)}`}
-                {(reminder as any).assigned_by_name && (reminder as any).user_id !== user?.id && (
+                {reminder.assigned_by_name && reminder.user_id !== user?.id && (
                   <span className="ml-2 text-blue-600 dark:text-blue-400">
-                    • By {(reminder as any).assigned_by_name}
+                    • By {reminder.assigned_by_name}
                   </span>
                 )}
-                {(reminder as any).family_member_email && (reminder as any).user_id === user?.id && (
+                {reminder.assigned_to_name && reminder.user_id === user?.id && (
                   <span className="ml-2 text-purple-600 dark:text-purple-400">
-                    • To {(reminder as any).family_member_email.split('@')[0]}
+                    • To {reminder.assigned_to_name}
                   </span>
                 )}
               </p>

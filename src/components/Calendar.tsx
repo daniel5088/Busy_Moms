@@ -1381,17 +1381,17 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           className="group bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900 dark:to-yellow-900 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
                         >
                           {/* Assignment info row */}
-                          {reminder.family_member_email && user && reminder.user_id === user.id && (
+                          {reminder.assigned_to_name && user && reminder.user_id === user.id && (
                             <div className="flex items-center flex-wrap gap-2 mb-2 text-xs">
                               <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full font-medium">
-                                To: {reminder.family_member_email.split('@')[0]}
+                                To: {reminder.assigned_to_name}
                               </span>
                             </div>
                           )}
-                          {(reminder as any).assigned_by_name && user && reminder.user_id !== user.id && (
+                          {reminder.assigned_by_name && user && reminder.user_id !== user.id && (
                             <div className="flex items-center flex-wrap gap-2 mb-2 text-xs">
                               <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full font-medium">
-                                By: {(reminder as any).assigned_by_name}
+                                By: {reminder.assigned_by_name}
                               </span>
                             </div>
                           )}

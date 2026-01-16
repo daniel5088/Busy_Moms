@@ -888,9 +888,9 @@ export function DashboardV4Experimental({
                             • By {reminder.assigned_by_name}
                           </span>
                         )}
-                        {reminder.family_member_email && reminder.user_id === user?.id && (
+                        {reminder.assigned_to_name && reminder.user_id === user?.id && (
                           <span className="ml-2 text-purple-600 dark:text-purple-400">
-                            • To {reminder.family_member_email.split('@')[0]}
+                            • To {reminder.assigned_to_name}
                           </span>
                         )}
                       </div>
