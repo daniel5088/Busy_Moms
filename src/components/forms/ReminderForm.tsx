@@ -260,8 +260,9 @@ export function ReminderForm({
                       setFormData({ ...formData, family_member_email: '' });
                       return;
                     }
-                    const member = familyMembers.find((m) => m.Email === sel);
-                    if (!member || !member.Email) {
+                    if (sel.startsWith('NO_EMAIL:')) {
+                      const memberId = sel.replace('NO_EMAIL:', '');
+                      const member = familyMembers.find((m) => String(m.id) === memberId);
                       setSelectedMemberName(member?.name || 'Selected member');
                       setShowEmailPopup(true);
                       return;
@@ -272,7 +273,10 @@ export function ReminderForm({
                 >
                   <option value="">General reminder</option>
                   {familyMembers.map((member) => (
-                    <option key={member.id} value={member.Email || ''}>
+                    <option
+                      key={member.id}
+                      value={member.Email ? member.Email : `NO_EMAIL:${member.id}`}
+                    >
                       {member.Email ? `${member.name || member.Email} (assigned)` : `${member.name} (no email)`}
                     </option>
                   ))}
