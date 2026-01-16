@@ -170,53 +170,90 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     setLoading(true);
     setError(null);
     try {
-      // Load events - RLS will filter based on user access
-      // Include both:
-      // 1. Events the user created (user_id matches)
-      // 2. Events assigned to the user (assigned_to_email matches)
+      // Load events - use explicit OR to ensure assigned events are fetched
       const { data: eventsData, error: eventsErr } = await supabase
         .from('events')
         .select('*')
         .gte('event_date', toLocalISODate(monthStart))
-        .lte('event_date', toLocalISODate(monthEnd));
+        .lte('event_date', toLocalISODate(monthEnd))
+        .or(`user_id.eq.${user?.id},assigned_to_email.ilike.${user?.email}`);
 
       if (eventsErr) throw eventsErr;
       
-      // Filter on the client side to show:
-      // - Events the user created
-      // - Events assigned to the user
-      const filteredEvents = (eventsData ?? []).filter(
-        (ev) => ev.user_id === user.id || ev.assigned_to_email === user.email
-      );
+      // Client-side filtering to show:
+      // 1. Events I created that aren't delegated or are delegated to me
+      // 2. Events others assigned to me
+      // This hides events I delegated to someone else
+      const filteredEvents = (eventsData ?? []).filter((ev) => {
+        // If I created this event
+        if (ev.user_id === user.id) {
+          // Show it only if it's not assigned to anyone else, or assigned to me
+          return !ev.assigned_to_email || ev.assigned_to_email.toLowerCase() === user.email.toLowerCase();
+        }
+        // If I didn't create it, show it only if it's assigned to me
+        return ev.assigned_to_email && ev.assigned_to_email.toLowerCase() === user.email.toLowerCase();
+      }).sort((a, b) => {
+        const aDate = new Date(a.event_date);
+        const bDate = new Date(b.event_date);
+        if (aDate.getTime() !== bDate.getTime()) return aDate.getTime() - bDate.getTime();
+        
+        const aTime = a.start_time ? parseInt(a.start_time.replace(/:/g, '')) : 2400;
+        const bTime = b.start_time ? parseInt(b.start_time.replace(/:/g, '')) : 2400;
+        return aTime - bTime;
+      });
       
       setEvents(filteredEvents);
       
-      console.log('📅 Loaded events:', {
-        total: eventsData?.length,
+      console.log('📅 Events Loaded:', {
+        total: eventsData?.length || 0,
         filtered: filteredEvents.length,
         userEmail: user.email,
-        sample: filteredEvents.slice(0, 2).map((e) => ({
+        debugSample: filteredEvents.slice(0, 3).map((e) => ({
           title: e.title,
-          creator: e.user_id === user.id ? 'me' : 'other',
+          createdByMe: e.user_id === user.id,
           assignedTo: e.assigned_to_email,
+          showReason: e.user_id === user.id 
+            ? (!e.assigned_to_email ? 'My event (unassigned)' : 'My event (assigned to me)')
+            : 'Assigned to me by other',
         })),
       });
 
-      // Load reminders - Filter to show only reminders relevant to current user
-      // 1. Reminders I created (whether assigned or not)
-      // 2. Reminders assigned to me by others
+      // Load reminders with the same logic
       const { data: remindersData, error: remindersErr } = await supabase
         .from('reminders')
         .select('*')
         .gte('reminder_date', toLocalISODate(monthStart))
         .lte('reminder_date', toLocalISODate(monthEnd))
-        .eq('completed', false)
-        .or(`user_id.eq.${user?.id},family_member_email.eq.${user?.email}`)
-        .order('reminder_date', { ascending: true })
-        .order('reminder_time', { ascending: true });
+        .eq('completed', false);
 
       if (remindersErr) throw remindersErr;
-      setReminders(remindersData ?? []);
+      
+      // Filter reminders: show my reminders (unassigned or assigned to me) + reminders assigned to me
+      const filteredReminders = (remindersData ?? []).filter((rem) => {
+        // If I created this reminder
+        if (rem.user_id === user.id) {
+          // Show it only if it's not assigned to anyone else, or assigned to me
+          return !rem.family_member_email || rem.family_member_email.toLowerCase() === user.email.toLowerCase();
+        }
+        // If I didn't create it, show it only if it's assigned to me
+        return rem.family_member_email && rem.family_member_email.toLowerCase() === user.email.toLowerCase();
+      }).sort((a, b) => {
+        const aDate = new Date(a.reminder_date);
+        const bDate = new Date(b.reminder_date);
+        if (aDate.getTime() !== bDate.getTime()) return aDate.getTime() - bDate.getTime();
+        
+        const aTime = a.reminder_time ? parseInt(a.reminder_time.replace(/:/g, '')) : 2400;
+        const bTime = b.reminder_time ? parseInt(b.reminder_time.replace(/:/g, '')) : 2400;
+        return aTime - bTime;
+      });
+      
+      setReminders(filteredReminders);
+
+      console.log('🔔 Reminders Loaded:', {
+        total: remindersData?.length || 0,
+        filtered: filteredReminders.length,
+        userEmail: user.email,
+      });
 
       // Load sync mappings to identify which Google events are already in local DB
       const { data: mappingsData, error: mappingsErr } = await supabase
