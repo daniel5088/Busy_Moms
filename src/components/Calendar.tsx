@@ -1388,6 +1388,13 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               </span>
                             </div>
                           )}
+                          {(reminder as any).assigned_by_name && user && reminder.user_id !== user.id && (
+                            <div className="flex items-center flex-wrap gap-2 mb-2 text-xs">
+                              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full font-medium">
+                                By: {(reminder as any).assigned_by_name}
+                              </span>
+                            </div>
+                          )}
 
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center space-x-2">
