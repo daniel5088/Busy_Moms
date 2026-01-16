@@ -32,7 +32,7 @@ export function useDashboardData(): DashboardData {
   const [reminderWeekOffset, setReminderWeekOffset] = useState(0);
 
   const loadReminders = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id || !user?.email) return;
 
     try {
       const today = getTodayISO();
@@ -62,10 +62,14 @@ export function useDashboardData(): DashboardData {
         reminderEnd = getDateInDays(7 + weeksAhead * 7 - 1);
       }
 
+      // ✅ FIXED: Load reminders I created OR reminders assigned to me
+      // This query will fetch:
+      // 1. Reminders created by me (user_id = my ID)
+      // 2. Reminders assigned to me by others (family_member_email = my email)
       const { data: remindersData, error: remindersError } = await supabase
         .from('reminders')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},family_member_email.eq.${user.email}`)
         .eq('completed', false)
         .gte('reminder_date', reminderStart)
         .lte('reminder_date', reminderEnd)
@@ -78,7 +82,7 @@ export function useDashboardData(): DashboardData {
     } catch (err: any) {
       console.error('Error loading reminders:', err);
     }
-  }, [user?.id, reminderWeekOffset]);
+  }, [user?.id, user?.email, reminderWeekOffset]);
 
   const loadDashboardData = useCallback(async () => {
     if (!user?.id) return;
@@ -123,11 +127,11 @@ export function useDashboardData(): DashboardData {
 
       setThisWeekEvents(thisWeekEventsFiltered);
 
-      // Load incomplete shopping items (tasks)
+      // ✅ FIXED: Load shopping items I created OR assigned to me
       const { data: tasksData, error: tasksError } = await supabase
         .from('shopping_lists')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},assigned_to_email.eq.${user.email}`)
         .eq('completed', false)
         .order('created_at', { ascending: false });
 
@@ -140,7 +144,7 @@ export function useDashboardData(): DashboardData {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.email]);
 
   useEffect(() => {
     if (user) {
@@ -153,7 +157,7 @@ export function useDashboardData(): DashboardData {
     if (user) {
       loadReminders();
     }
-  }, [user, reminderWeekOffset]);
+  }, [user, reminderWeekOffset, loadReminders]);
 
   useEffect(() => {
     const handleDataUpdate = () => {
@@ -165,7 +169,7 @@ export function useDashboardData(): DashboardData {
     return () => {
       window.removeEventListener('dashboard-data-updated', handleDataUpdate);
     };
-  }, []);
+  }, [loadDashboardData]);
 
   return {
     events,
