@@ -164,19 +164,39 @@ export function DashboardV4Experimental({
   // 2. Reminders assigned TO me (by others or myself)
   const myAssignedReminders = React.useMemo(() => {
     const now = new Date();
-    return reminders.filter(reminder => {
+    const userEmail = user?.email?.toLowerCase();
+    
+    const filtered = reminders.filter(reminder => {
       // Show reminders I created that aren't assigned or are assigned to me
-      if (reminder.user_id === user?.id && (!reminder.family_member_email || reminder.family_member_email === user?.email)) {
+      if (reminder.user_id === user?.id && (!reminder.family_member_email || reminder.family_member_email?.toLowerCase() === userEmail)) {
         return shouldShowReminder(reminder, now);
       }
       
       // Show reminders assigned to me by others
-      if (reminder.family_member_email === user?.email && reminder.user_id !== user?.id) {
+      if (reminder.family_member_email?.toLowerCase() === userEmail && reminder.user_id !== user?.id) {
         return shouldShowReminder(reminder, now);
       }
       
       return false;
     });
+    
+    // Debug log
+    if (reminders.length > 0) {
+      console.log('Smart Reminders Debug:', {
+        currentUserEmail: user?.email,
+        totalReminders: reminders.length,
+        displayedReminders: filtered.length,
+        sampleReminders: reminders.slice(0, 3).map(r => ({
+          id: r.id,
+          title: r.title,
+          user_id: r.user_id,
+          family_member_email: r.family_member_email,
+          assigned_by_name: r.assigned_by_name,
+        }))
+      });
+    }
+    
+    return filtered;
   }, [reminders, shouldShowReminder, user?.email, user?.id]);
 
   React.useEffect(() => {
