@@ -170,13 +170,12 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     setLoading(true);
     setError(null);
     try {
-      // Load events - use explicit OR to ensure assigned events are fetched
+      // Load events - let RLS handle access control (same as reminders)
       const { data: eventsData, error: eventsErr } = await supabase
         .from('events')
         .select('*')
         .gte('event_date', toLocalISODate(monthStart))
-        .lte('event_date', toLocalISODate(monthEnd))
-        .or(`user_id.eq.${user?.id},assigned_to_email.ilike.${user?.email}`);
+        .lte('event_date', toLocalISODate(monthEnd));
 
       if (eventsErr) throw eventsErr;
       
