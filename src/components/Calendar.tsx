@@ -1378,7 +1378,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                             setSelectedReminder(reminder);
                             setShowEventDetails(true);
                           }}
-                          className="group bg-gradient-to-br from-stone-50 to-amber-50 dark:from-stone-800 dark:to-amber-900 border border-stone-200 dark:border-stone-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
+                          className="group bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900 dark:to-yellow-900 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
                         >
                           {/* Assignment info row */}
                           {reminder.family_member_email && user && reminder.user_id === user.id && (
@@ -1398,12 +1398,12 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center space-x-2">
-                              <Bell className="w-4 h-4 text-stone-600 dark:text-stone-400" aria-hidden="true" />
-                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-stone-600 dark:group-hover:text-stone-400 transition-colors">
+                              <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                                 {reminder.title}
                               </h3>
                             </div>
-                            <span className="text-xs bg-stone-100 text-stone-700 px-2 py-1 rounded-full font-medium">
+                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
                               {reminder.reminder_time
                                 ? formatTimeRange(reminder.reminder_time, null)
                                 : 'All day'}
