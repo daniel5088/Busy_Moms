@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { FamilyMember, Event, Task, Reminder, ShoppingItem, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { formatDate } from '../utils/timeFormatters';
 import { EventForm } from './forms/EventForm';
 import { TaskForm } from './forms/TaskForm';
 import { ReminderForm } from './forms/ReminderForm';
@@ -178,13 +179,7 @@ export function FamilyFolders() {
     );
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
