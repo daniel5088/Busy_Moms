@@ -180,14 +180,12 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       if (eventsErr) throw eventsErr;
       
       // Client-side filtering to show:
-      // 1. Events I created that aren't delegated or are delegated to me
+      // 1. All events I created (including those assigned to others)
       // 2. Events others assigned to me
-      // This hides events I delegated to someone else
       const filteredEvents = (eventsData ?? []).filter((ev) => {
-        // If I created this event
+        // If I created this event, always show it (regardless of assignment)
         if (ev.user_id === user.id) {
-          // Show it only if it's not assigned to anyone else, or assigned to me
-          return !ev.assigned_to_email || ev.assigned_to_email.toLowerCase() === user.email.toLowerCase();
+          return true;
         }
         // If I didn't create it, show it only if it's assigned to me
         return ev.assigned_to_email && ev.assigned_to_email.toLowerCase() === user.email.toLowerCase();
@@ -211,8 +209,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
           title: e.title,
           createdByMe: e.user_id === user.id,
           assignedTo: e.assigned_to_email,
-          showReason: e.user_id === user.id 
-            ? (!e.assigned_to_email ? 'My event (unassigned)' : 'My event (assigned to me)')
+          showReason: e.user_id === user.id
+            ? (!e.assigned_to_email ? 'My event (unassigned)' : `My event (assigned to ${e.assigned_to_email})`)
             : 'Assigned to me by other',
         })),
       });
@@ -227,12 +225,11 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
       if (remindersErr) throw remindersErr;
       
-      // Filter reminders: show my reminders (unassigned or assigned to me) + reminders assigned to me
+      // Filter reminders: show all my reminders (including those assigned to others) + reminders assigned to me
       const filteredReminders = (remindersData ?? []).filter((rem) => {
-        // If I created this reminder
+        // If I created this reminder, always show it (regardless of assignment)
         if (rem.user_id === user.id) {
-          // Show it only if it's not assigned to anyone else, or assigned to me
-          return !rem.family_member_email || rem.family_member_email.toLowerCase() === user.email.toLowerCase();
+          return true;
         }
         // If I didn't create it, show it only if it's assigned to me
         return rem.family_member_email && rem.family_member_email.toLowerCase() === user.email.toLowerCase();
