@@ -160,15 +160,16 @@ export function DashboardV4Experimental({
   }, [reminders, shouldShowReminder]);
 
   // Filter reminders to show:
-  // 1. Reminders I created with no assignment (for me)
-  // 2. Reminders assigned TO me (by others or myself)
+  // 1. ALL reminders I created (whether assigned or not)
+  // 2. Reminders assigned TO me (by others)
+  // Separate tracking to show which category each falls into
   const myAssignedReminders = React.useMemo(() => {
     const now = new Date();
     const userEmail = user?.email?.toLowerCase();
     
     const filtered = reminders.filter(reminder => {
-      // Show reminders I created that aren't assigned or are assigned to me
-      if (reminder.user_id === user?.id && (!reminder.family_member_email || reminder.family_member_email?.toLowerCase() === userEmail)) {
+      // Show ALL reminders I created
+      if (reminder.user_id === user?.id) {
         return shouldShowReminder(reminder, now);
       }
       
@@ -184,14 +185,20 @@ export function DashboardV4Experimental({
     if (reminders.length > 0) {
       console.log('Smart Reminders Debug:', {
         currentUserEmail: user?.email,
+        currentUserId: user?.id,
         totalReminders: reminders.length,
         displayedReminders: filtered.length,
+        breakdown: {
+          created: filtered.filter(r => r.user_id === user?.id).length,
+          assignedToMe: filtered.filter(r => r.family_member_email?.toLowerCase() === userEmail && r.user_id !== user?.id).length,
+        },
         sampleReminders: reminders.slice(0, 3).map(r => ({
           id: r.id,
           title: r.title,
           user_id: r.user_id,
           family_member_email: r.family_member_email,
           assigned_by_name: r.assigned_by_name,
+          willDisplay: filtered.some(f => f.id === r.id)
         }))
       });
     }
