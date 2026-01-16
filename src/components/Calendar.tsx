@@ -1280,15 +1280,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                         >
                           {/* Assignment info row */}
                           {(ev.assigned_by_name || ev.assigned_to_email) && (
-                            <div className="flex items-center justify-between mb-2 text-xs">
+                            <div className="flex items-center flex-wrap gap-2 mb-2 text-xs">
                               {ev.assigned_by_name && (
-                                <span className="text-gray-600 dark:text-gray-400">
-                                  <span className="font-medium">By:</span> {ev.assigned_by_name}
+                                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full font-medium">
+                                  By: {ev.assigned_by_name}
                                 </span>
                               )}
                               {ev.assigned_to_email && (
-                                <span className="text-gray-600 dark:text-gray-400">
-                                  <span className="font-medium">To:</span> {ev.assigned_to_email.split('@')[0]}
+                                <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full font-medium">
+                                  To: {ev.assigned_to_email.split('@')[0]}
                                 </span>
                               )}
                             </div>
@@ -1376,12 +1376,21 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                             setSelectedReminder(reminder);
                             setShowEventDetails(true);
                           }}
-                          className="group bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
+                          className="group bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900 dark:to-yellow-900 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 hover:shadow-md transition-all w-full text-left"
                         >
+                          {/* Assignment info row */}
+                          {reminder.family_member_email && (
+                            <div className="flex items-center flex-wrap gap-2 mb-2 text-xs">
+                              <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full font-medium">
+                                To: {reminder.family_member_email.split('@')[0]}
+                              </span>
+                            </div>
+                          )}
+
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center space-x-2">
-                              <Bell className="w-4 h-4 text-amber-600" aria-hidden="true" />
-                              <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
+                              <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                                 {reminder.title}
                               </h3>
                             </div>
