@@ -168,10 +168,13 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
       }
 
       const eventData = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        event_date: formData.event_date,
         start_time: formData.start_time || null,
         end_time: formData.end_time || null,
-        user_id: user.id,
+        location: formData.location,
+        event_type: formData.event_type,
         participants: formData.participants
           .split(',')
           .map((p) => p.trim())
@@ -181,8 +184,13 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
         location_lng: locationLng,
         travel_time_minutes: travelTimeMinutes,
         travel_time_updated_at: travelTimeMinutes ? new Date().toISOString() : null,
-        assigned_to: formData.assigned_to === 'family' ? null : (formData.assigned_to || null),
-        visible_to_family: formData.visible_to_family,
+        rsvp_required: formData.rsvp_required,
+        rsvp_status: formData.rsvp_status,
+        // Map assigned_to to the new database columns
+        assigned_to_email: formData.assigned_to && formData.assigned_to !== 'family' ? formData.assigned_to : null,
+        assigned_by_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
+        // Keep user_id as the creator of the event
+        user_id: user.id,
       };
 
       let result;
