@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Event as DbEvent } from '../lib/supabase';
+import { formatDate } from '../utils/timeFormatters';
 
 export interface CalendarContext {
   todayEvents: DbEvent[];
@@ -308,7 +309,7 @@ export class CalendarContextService {
     const parts: string[] = [];
 
     parts.push(
-      `Today is ${new Date(today).toLocaleDateString('en-US', {
+      `Today is ${formatDate(today, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -330,7 +331,7 @@ export class CalendarContextService {
       const nextFewDays = upcomingEvents.slice(0, 5);
       parts.push(`\nUpcoming events (next 7 days):`);
       nextFewDays.forEach((event) => {
-        const date = new Date(event.event_date).toLocaleDateString('en-US', {
+        const date = formatDate(event.event_date, {
           weekday: 'short',
           month: 'short',
           day: 'numeric',
