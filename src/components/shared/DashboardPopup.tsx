@@ -2,6 +2,7 @@ import React from 'react';
 import { Event, ShoppingItem, Reminder } from '../../lib/supabase';
 import { formatEventTime, formatDate } from '../../utils/timeFormatters';
 import { User, X } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface DashboardPopupProps {
   isOpen: boolean;
@@ -65,6 +66,8 @@ interface EventsListProps {
  * List component for displaying events in a popup
  */
 export function EventsList({ events, emptyMessage = 'No upcoming events' }: EventsListProps) {
+  const { user } = useAuth();
+
   if (events.length === 0) {
     return <p className="text-gray-500 dark:text-gray-400 text-center py-8">{emptyMessage}</p>;
   }
@@ -79,6 +82,16 @@ export function EventsList({ events, emptyMessage = 'No upcoming events' }: Even
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             {formatDate(event.event_date)}
             {event.start_time && ` at ${formatEventTime(event.start_time)}`}
+            {(event as any).assigned_by_name && event.user_id !== user?.id && (
+              <span className="ml-2 text-blue-600 dark:text-blue-400">
+                • By {(event as any).assigned_by_name}
+              </span>
+            )}
+            {(event as any).assigned_to_email && event.user_id === user?.id && (
+              <span className="ml-2 text-purple-600 dark:text-purple-400">
+                • To {(event as any).assigned_to_email.split('@')[0]}
+              </span>
+            )}
           </p>
           {event.location && (
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{event.location}</p>
@@ -98,6 +111,8 @@ interface TasksListProps {
  * List component for displaying shopping/task items in a popup
  */
 export function TasksList({ tasks, emptyMessage = 'No pending items' }: TasksListProps) {
+  const { user } = useAuth();
+
   if (tasks.length === 0) {
     return <p className="text-gray-500 dark:text-gray-400 text-center py-8">{emptyMessage}</p>;
   }
@@ -122,6 +137,13 @@ export function TasksList({ tasks, emptyMessage = 'No pending items' }: TasksLis
               <div className="flex items-center space-x-1 mt-1">
                 <User className="w-3 h-3" />
                 <span className="text-xs">For {(task as any).assigned_family_member.name}</span>
+              </div>
+            )}
+            {task.assigned_to_email && user && task.user_id === user.id && (
+              <div className="flex items-center space-x-1 mt-1">
+                <span className="text-xs text-purple-600 dark:text-purple-400">
+                  To: {task.assigned_to_email.split('@')[0]}
+                </span>
               </div>
             )}
           </div>
@@ -150,6 +172,7 @@ export function RemindersList({
   emptyMessage = 'No upcoming reminders',
   onDelete,
 }: RemindersListProps) {
+  const { user } = useAuth();
   const [reminderToDelete, setReminderToDelete] = React.useState<number | null>(null);
 
   const handleDelete = async (reminderId: number) => {
@@ -199,6 +222,16 @@ export function RemindersList({
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {formatDate(reminder.reminder_date)}
                 {reminder.reminder_time && ` at ${formatEventTime(reminder.reminder_time)}`}
+                {(reminder as any).assigned_by_name && (reminder as any).user_id !== user?.id && (
+                  <span className="ml-2 text-blue-600 dark:text-blue-400">
+                    • By {(reminder as any).assigned_by_name}
+                  </span>
+                )}
+                {(reminder as any).family_member_email && (reminder as any).user_id === user?.id && (
+                  <span className="ml-2 text-purple-600 dark:text-purple-400">
+                    • To {(reminder as any).family_member_email.split('@')[0]}
+                  </span>
+                )}
               </p>
               {reminder.description && (
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">

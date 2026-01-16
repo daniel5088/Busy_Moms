@@ -883,9 +883,14 @@ export function DashboardV4Experimental({
                       <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {formatReminderDate(reminder.reminder_date)}
                         {reminder.reminder_time && ` at ${formatEventTime(reminder.reminder_time)}`}
-                        {reminder.assigned_by_name && (
+                        {reminder.assigned_by_name && reminder.user_id !== user?.id && (
                           <span className="ml-2 text-blue-600 dark:text-blue-400">
-                            • From {reminder.assigned_by_name}
+                            • By {reminder.assigned_by_name}
+                          </span>
+                        )}
+                        {reminder.family_member_email && reminder.user_id === user?.id && (
+                          <span className="ml-2 text-purple-600 dark:text-purple-400">
+                            • To {reminder.family_member_email.split('@')[0]}
                           </span>
                         )}
                       </div>
