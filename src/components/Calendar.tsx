@@ -182,13 +182,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       if (eventsErr) throw eventsErr;
       setEvents(eventsData ?? []);
 
-      // Load reminders - RLS will filter based on user access
+      // Load reminders - Filter to show only reminders relevant to current user
+      // 1. Reminders I created (whether assigned or not)
+      // 2. Reminders assigned to me by others
       const { data: remindersData, error: remindersErr } = await supabase
         .from('reminders')
         .select('*')
         .gte('reminder_date', toLocalISODate(monthStart))
         .lte('reminder_date', toLocalISODate(monthEnd))
         .eq('completed', false)
+        .or(`user_id.eq.${user?.id},family_member_email.eq.${user?.email}`)
         .order('reminder_date', { ascending: true })
         .order('reminder_time', { ascending: true });
 
