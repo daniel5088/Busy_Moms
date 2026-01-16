@@ -10,6 +10,7 @@ import {
   GitMerge,
 } from 'lucide-react';
 import type { SyncConflict } from '../services/calendarSync';
+import { formatDate } from '../utils/timeFormatters';
 
 interface ConflictResolutionModalProps {
   conflicts: SyncConflict[];
@@ -76,13 +77,15 @@ export function ConflictResolutionModal({
     }
   };
 
-  const formatDate = (dateStr: string | null | undefined) => {
+  const safeFormatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return 'Not set';
     try {
-      // Handles either date or datetime strings
-      const d = new Date(dateStr);
-      if (Number.isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString();
+      // Extract date part if datetime string (format: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
+      const datePart = dateStr.split('T')[0] || dateStr.split(' ')[0];
+      if (datePart && /^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        return formatDate(datePart);
+      }
+      return dateStr;
     } catch {
       return dateStr;
     }
@@ -136,7 +139,7 @@ export function ConflictResolutionModal({
                 <div>
                   <h3 className="font-semibold text-gray-900">Local Calendar</h3>
                   <p className="text-xs text-gray-500">
-                    Modified: {formatDate(currentConflict.local_modified_at)}
+                    Modified: {safeFormatDate(currentConflict.local_modified_at)}
                   </p>
                 </div>
               </div>
@@ -162,7 +165,7 @@ export function ConflictResolutionModal({
                   <label className="text-xs font-medium text-gray-600">Date</label>
                   <div className="flex items-center space-x-2 text-sm text-gray-700">
                     <Calendar className="w-3 h-3" />
-                    <span>{formatDate(localData.event_date)}</span>
+                    <span>{safeFormatDate(localData.event_date)}</span>
                   </div>
                 </div>
 
@@ -210,7 +213,7 @@ export function ConflictResolutionModal({
                 <div>
                   <h3 className="font-semibold text-gray-900">Google Calendar</h3>
                   <p className="text-xs text-gray-500">
-                    Modified: {formatDate(currentConflict.google_modified_at)}
+                    Modified: {safeFormatDate(currentConflict.google_modified_at)}
                   </p>
                 </div>
               </div>
@@ -238,8 +241,8 @@ export function ConflictResolutionModal({
                     <Calendar className="w-3 h-3" />
                     <span>
                       {googleData.start?.date
-                        ? formatDate(googleData.start.date)
-                        : formatDate(googleData.start?.dateTime)}
+                        ? safeFormatDate(googleData.start.date)
+                        : safeFormatDate(googleData.start?.dateTime)}
                     </span>
                   </div>
                 </div>
