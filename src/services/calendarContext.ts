@@ -399,7 +399,7 @@ export class CalendarContextService {
 
         parts.push(event.title);
 
-        const date = new Date(event.event_date).toLocaleDateString('en-US', {
+        const date = formatDate(event.event_date, {
           weekday: 'short',
           month: 'short',
           day: 'numeric',
