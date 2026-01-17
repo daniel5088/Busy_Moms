@@ -121,6 +121,7 @@ export class SyncOrchestrator {
         );
         result.eventsCreated += googleResult.created;
         result.eventsUpdated += googleResult.updated;
+        result.eventsDeleted += googleResult.deleted;
         result.conflictsDetected += googleResult.conflicts;
         result.errors.push(...googleResult.errors);
       }
@@ -134,6 +135,7 @@ export class SyncOrchestrator {
         );
         result.eventsCreated += localResult.created;
         result.eventsUpdated += localResult.updated;
+        result.eventsDeleted += localResult.deleted;
         result.conflictsDetected += localResult.conflicts;
         result.errors.push(...localResult.errors);
       }
@@ -194,8 +196,10 @@ export class SyncOrchestrator {
     googleEvents: GoogleCalendarEvent[],
     localEvents: Event[],
     mappingsByGoogleId: Map<string, any>
-  ): Promise<{ created: number; updated: number; conflicts: number; errors: string[] }> {
-    const result = { created: 0, updated: 0, conflicts: 0, errors: [] as string[] };
+  ): Promise<{ created: number; updated: number; deleted: number; conflicts: number; errors: string[] }> {
+    const result = { created: 0, updated: 0, deleted: 0, conflicts: 0, errors: [] as string[] };
+
+    const googleEventIds = new Set(googleEvents.map(e => e.id).filter(Boolean));
 
     for (const googleEvent of googleEvents) {
       if (!googleEvent.id) continue;
@@ -297,6 +301,70 @@ export class SyncOrchestrator {
       }
     }
 
+    // Detect deletions: mappings where Google event no longer exists
+    for (const [googleEventId, mapping] of mappingsByGoogleId) {
+      if (!googleEventIds.has(googleEventId) && mapping.local_event_id) {
+        try {
+          // Google event was deleted - check local event
+          const { data: localEvent, error: fetchError } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', mapping.local_event_id)
+            .maybeSingle();
+
+          if (fetchError) {
+            result.errors.push(`Failed to fetch local event for deletion check: ${mapping.local_event_id}`);
+            continue;
+          }
+
+          if (!localEvent) {
+            // Local event already deleted - just clean up mapping
+            await calendarSyncService.deleteSyncMappingByGoogleId(userId, googleEventId);
+            continue;
+          }
+
+          const currentLocalHash = calendarSyncService.generateEventHash(localEvent);
+
+          if (currentLocalHash !== mapping.local_hash) {
+            // Local event was modified - create deletion conflict
+            console.log('⚠️ Deletion conflict detected:', localEvent.title);
+
+            await calendarSyncService.createConflict({
+              user_id: userId,
+              local_event_id: mapping.local_event_id,
+              google_event_id: googleEventId,
+              conflict_type: 'deletion',
+              local_event_data: localEvent,
+              google_event_data: null,
+              local_modified_at: localEvent.updated_at,
+              google_modified_at: null,
+            });
+
+            result.conflicts++;
+          } else {
+            // Local event unchanged - safe to delete
+            const { error: deleteError } = await supabase
+              .from('events')
+              .delete()
+              .eq('id', mapping.local_event_id);
+
+            if (deleteError) {
+              result.errors.push(`Failed to delete local event: ${deleteError.message}`);
+              continue;
+            }
+
+            // Clean up mapping
+            await calendarSyncService.deleteSyncMappingByGoogleId(userId, googleEventId);
+
+            result.deleted++;
+            console.log(`🗑️ Deleted local event (removed from Google): ${localEvent.title}`);
+          }
+        } catch (error) {
+          result.errors.push(`Error processing deletion for Google event ${googleEventId}: ${error}`);
+        }
+      }
+    }
+
     return result;
   }
 
@@ -308,10 +376,11 @@ export class SyncOrchestrator {
     localEvents: Event[],
     googleEvents: GoogleCalendarEvent[],
     mappingsByLocalId: Map<string, any>
-  ): Promise<{ created: number; updated: number; conflicts: number; errors: string[] }> {
-    const result = { created: 0, updated: 0, conflicts: 0, errors: [] as string[] };
+  ): Promise<{ created: number; updated: number; deleted: number; conflicts: number; errors: string[] }> {
+    const result = { created: 0, updated: 0, deleted: 0, conflicts: 0, errors: [] as string[] };
 
     const googleEventsById = new Map(googleEvents.map((e) => [e.id!, e]));
+    const localEventIds = new Set(localEvents.map(e => e.id));
 
     for (const localEvent of localEvents) {
       try {
@@ -409,6 +478,57 @@ export class SyncOrchestrator {
         }
       } catch (error) {
         result.errors.push(`Error processing local event ${localEvent.id}: ${error}`);
+      }
+    }
+
+    // Detect deletions: mappings where local event no longer exists
+    for (const [localEventId, mapping] of mappingsByLocalId) {
+      if (!localEventIds.has(localEventId)) {
+        try {
+          // Local event was deleted - check Google event
+          const googleEvent = googleEventsById.get(mapping.google_event_id);
+
+          if (!googleEvent) {
+            // Google event already deleted - just clean up mapping
+            await calendarSyncService.deleteSyncMappingByLocalId(userId, localEventId);
+            continue;
+          }
+
+          const currentGoogleHash = calendarSyncService.generateEventHash(googleEvent);
+
+          if (currentGoogleHash !== mapping.google_hash) {
+            // Google event was modified - create deletion conflict
+            console.log('⚠️ Deletion conflict detected (local deleted, Google modified):', googleEvent.summary);
+
+            await calendarSyncService.createConflict({
+              user_id: userId,
+              local_event_id: localEventId,
+              google_event_id: mapping.google_event_id,
+              conflict_type: 'deletion',
+              local_event_data: null,
+              google_event_data: googleEvent,
+              local_modified_at: null,
+              google_modified_at: googleEvent.updated,
+            });
+
+            result.conflicts++;
+          } else {
+            // Google event unchanged - safe to delete
+            try {
+              await googleCalendarService.deleteEvent(mapping.google_event_id);
+
+              // Clean up mapping
+              await calendarSyncService.deleteSyncMappingByLocalId(userId, localEventId);
+
+              result.deleted++;
+              console.log(`🗑️ Deleted Google event (removed locally): ${googleEvent.summary}`);
+            } catch (error) {
+              result.errors.push(`Failed to delete Google event: ${error}`);
+            }
+          }
+        } catch (error) {
+          result.errors.push(`Error processing deletion for local event ${localEventId}: ${error}`);
+        }
       }
     }
 

@@ -1673,12 +1673,39 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                         onClick={async () => {
                           if (confirm('Are you sure you want to delete this event?')) {
                             try {
+                              // Check if this event is synced with Google Calendar
+                              const { data: mapping } = await supabase
+                                .from('calendar_sync_mappings')
+                                .select('google_event_id')
+                                .eq('local_event_id', selectedEvent.id)
+                                .eq('user_id', userId!)
+                                .maybeSingle();
+
+                              // Delete from local database
                               const { error } = await supabase
                                 .from('events')
                                 .delete()
                                 .eq('id', selectedEvent.id);
 
                               if (!error) {
+                                // If synced with Google, delete from Google Calendar too
+                                if (mapping?.google_event_id) {
+                                  try {
+                                    await googleCalendarService.deleteEvent(mapping.google_event_id);
+
+                                    // Clean up the sync mapping
+                                    await supabase
+                                      .from('calendar_sync_mappings')
+                                      .delete()
+                                      .eq('local_event_id', selectedEvent.id)
+                                      .eq('user_id', userId!);
+
+                                    console.log('✅ Deleted event from both local and Google Calendar');
+                                  } catch (googleError) {
+                                    console.error('Failed to delete from Google Calendar:', googleError);
+                                  }
+                                }
+
                                 setShowEventDetails(false);
                                 setSelectedEvent(null);
                                 loadEvents(); // Refresh events list

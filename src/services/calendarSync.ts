@@ -621,6 +621,75 @@ export class CalendarSyncService {
   }
 
   /**
+   * Delete a sync mapping
+   */
+  async deleteSyncMapping(userId: string, mappingId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('calendar_sync_mappings')
+        .delete()
+        .eq('id', mappingId)
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error deleting sync mapping:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteSyncMapping:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete sync mapping by Google event ID
+   */
+  async deleteSyncMappingByGoogleId(userId: string, googleEventId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('calendar_sync_mappings')
+        .delete()
+        .eq('user_id', userId)
+        .eq('google_event_id', googleEventId);
+
+      if (error) {
+        console.error('Error deleting sync mapping by Google ID:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteSyncMappingByGoogleId:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete sync mapping by local event ID
+   */
+  async deleteSyncMappingByLocalId(userId: string, localEventId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('calendar_sync_mappings')
+        .delete()
+        .eq('user_id', userId)
+        .eq('local_event_id', localEventId);
+
+      if (error) {
+        console.error('Error deleting sync mapping by local ID:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteSyncMappingByLocalId:', error);
+      return false;
+    }
+  }
+
+  /**
    * Get all pending conflicts for a user
    */
   async getPendingConflicts(userId: string): Promise<SyncConflict[]> {
