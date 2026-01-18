@@ -603,7 +603,7 @@ export function DashboardV4Experimental({
                 className="w-8 h-8 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
                 aria-label="About BMA"
               >
-                <img src="/bma-logo.png" alt="" className="w-6 h-6 object-contain" />
+                <img src="/bmalogo.png" alt="" className="w-6 h-6 object-contain" />
               </button>
             </div>
           </div>
