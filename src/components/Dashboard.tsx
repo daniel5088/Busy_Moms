@@ -938,7 +938,7 @@ export function Dashboard({
             </button>
 
             <div className="text-center">
-              <img src="/bmalogo3.png" alt="" className="h-13 w-auto object-contain mb-6 mx-auto" />
+              <img src="/bmalogo3.png" alt="" className="h-12 w-auto object-contain mb-6 mx-auto" />
 
               <h2
                 id="about-dialog-title"
