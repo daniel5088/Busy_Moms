@@ -978,12 +978,13 @@ export function DashboardV4Experimental({
               <div className="space-y-4 text-gray-600 dark:text-gray-400 text-base sm:text-lg leading-relaxed">
                 <p>BMA helps families stay organized with shared reminders, tasks, and planning.</p>
                 <p>We're currently in alpha testing and improving fast based on feedback.</p>
-                <p>If you have any questions, ask the guy who showed you the app.</p>
+                <p>If you have any questions, please reach out to the person who introduced you to the app.</p>
 
 
                 <hr className="border-gray-200 dark:border-gray-700 my-6" />
 
                 <div className="text-center">
+                  <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">Link to report a bug:</p>
                   <a
                     href="https://forms.office.com/Pages/ResponsePage.aspx?id=FqzrK_LZBEicaaNhjeeB6nQIHTzhQi1FkSfPlx9GeRlUNVczSUxKMkJCNUJRWjNBU0VVVFE5Slk2Ui4u"
                     target="_blank"
