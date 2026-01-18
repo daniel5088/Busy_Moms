@@ -347,10 +347,10 @@ export function Tasks() {
                       >
                         {task.priority}
                       </span>
-                      {task.points && task.points > 0 && task.assigned_to_email === user?.email && (
+                      {task.points && task.points > 0 && (
                         <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded-full text-xs font-medium flex items-center space-x-1">
                           <Star className="w-2 h-2 sm:w-3 sm:h-3" />
-                          <span>{task.points}</span>
+                          <span>{task.points} pts</span>
                         </span>
                       )}
                     </div>
