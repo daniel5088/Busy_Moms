@@ -390,12 +390,22 @@ IMPORTANT DATE CONTEXT:
 DAY NAME TO DATE MAPPING (next 14 days):
 ${dayNameMapping}
 
-IMPORTANT: When user says "for [name] to [action]":
-- "for rio to clean his room" → title: "for rio to clean his room" (NOT assigned_to: "rio")
-- "for emma to do homework" → title: "for emma to do homework" (NOT assigned_to: "emma")
-- ONLY use assigned_to when user explicitly says "remind [name]", "tell [name]", "assign [name]", "[name] needs to"
-- Examples of assignment: "remind Jack to clean" → assigned_to: "Jack", title: "clean"
-- Examples of NOT assignment: "task for Jack to clean" → title: "for Jack to clean"
+CRITICAL ASSIGNMENT PARSING RULES:
+1. "for [name] to [action]" pattern:
+   - "task for rio to clean his room" → assigned_to: "rio", title: "clean his room"
+   - "for emma to do homework" → assigned_to: "emma", title: "do homework"
+   - Extract the name after "for" and the action after "to"
+   - Remove "his/her/their" possessive pronouns from the title
+
+2. Other assignment patterns:
+   - "remind [name] to [action]" → assigned_to: "[name]", title: "[action]"
+   - "[name] needs to [action]" → assigned_to: "[name]", title: "[action]"
+   - "assign [name] to [action]" → assigned_to: "[name]", title: "[action]"
+
+3. Examples:
+   - "task for Jack to clean his room" → assigned_to: "Jack", title: "clean his room"
+   - "remind Jack to clean his room" → assigned_to: "Jack", title: "clean his room"
+   - "rio needs to do homework" → assigned_to: "rio", title: "do homework"
 
 When parsing dates:
 - "jan 17", "january 17", "1/17" → "${currentYear}-01-17" (use the ACTUAL date, NOT relative terms)
@@ -452,9 +462,10 @@ EXAMPLES:
 "remind me on Sunday to take out the dog at 5pm" → {"type": "reminder", "details": {"title": "take out the dog", "date": "[USE DATE FROM MAPPING]", "time": "5pm"}}
 "remind Jack to do his homework" → {"type": "reminder", "details": {"title": "do his homework", "date": "${today}", "assigned_to": "Jack"}}
 "schedule piano lesson with Emma on Saturday at 4pm" → {"type": "calendar", "details": {"title": "piano lesson", "date": "[USE DATE FROM MAPPING]", "time": "4pm", "participants": "Emma"}}
-"add task for rio to clean his room" → {"type": "task", "details": {"title": "for rio to clean his room", "category": "chores"}}
-"task for Jack to clean his room" → {"type": "task", "details": {"title": "for Jack to clean his room", "category": "chores"}}
+"add task for rio to clean his room" → {"type": "task", "details": {"title": "clean his room", "assigned_to": "rio", "category": "chores"}}
+"task for Jack to clean his room" → {"type": "task", "details": {"title": "clean his room", "assigned_to": "Jack", "category": "chores"}}
 "remind Jack to clean" → {"type": "reminder", "details": {"title": "clean", "assigned_to": "Jack", "date": "${today}"}}
+"for emma to do homework on Friday" → {"type": "task", "details": {"title": "do homework", "assigned_to": "emma", "date": "[USE DATE FROM MAPPING]", "category": "homework"}}
 "share the dentist appointment with Emma" → {"type": "calendar_share", "details": {"search_term": "dentist appointment", "recipient_name": "Emma"}}
 "share the homework reminder with Jack" → {"type": "reminder_share", "details": {"search_term": "homework", "recipient_name": "Jack"}}
 "What's my schedule today?" → {"type": "schedule_query", "details": {"query_type": "today"}}
@@ -569,15 +580,27 @@ function fallbackClassify(message: string): IntentResult {
     /\b(task|todo|to\s+do|assign)\b/.test(lower) ||
     /\bcreate\s+(?:a\s+)?task\b/.test(lower)
   ) {
-    const titleMatch = lower.match(
-      /(?:create|add|make)\s+(?:a\s+)?(?:new\s+)?task\s+(?:called|named)?\s*([^.!?]+)|^(.+)$/,
-    );
-    const title =
-      titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
+    // Check for "for [name] to [action]" pattern
+    const assignmentMatch = lower.match(/\bfor\s+(\w+)\s+to\s+(.+?)(?:\s+on\s+|\s+at\s+|$)/);
+
+    let title = message;
+    let assigned_to = undefined;
+
+    if (assignmentMatch) {
+      assigned_to = assignmentMatch[1];
+      title = assignmentMatch[2]
+        .replace(/\b(his|her|their)\s+/gi, '')
+        .trim();
+    } else {
+      const titleMatch = lower.match(
+        /(?:create|add|make)\s+(?:a\s+)?(?:new\s+)?task\s+(?:called|named)?\s*([^.!?]+)|^(.+)$/,
+      );
+      title = titleMatch?.[1]?.trim() || titleMatch?.[2]?.trim() || message;
+    }
 
     const date = toISODate(
       lower.match(
-        /\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/,
+        /\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/i,
       )?.[0],
     );
     const time = toISOTime(
@@ -586,7 +609,7 @@ function fallbackClassify(message: string): IntentResult {
       )?.[0],
     );
 
-    return { type: 'task', details: { title, date, time } };
+    return { type: 'task', details: { title, assigned_to, date, time } };
   }
 
   // Calendar patterns
