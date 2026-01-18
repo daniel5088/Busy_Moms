@@ -978,11 +978,13 @@ export function DashboardV4Experimental({
               <div className="space-y-4 text-gray-600 dark:text-gray-400 text-base sm:text-lg leading-relaxed">
                 <p>BMA helps families stay organized with shared reminders, tasks, and planning.</p>
                 <p>We're currently in alpha testing and improving fast based on feedback.</p>
+                <p>If you have any questions, ask the guy who showed you the app.</p>
+
 
                 <hr className="border-gray-200 dark:border-gray-700 my-6" />
 
                 <div>
-                  <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">To contact the team:</p>
+                  <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">Link to report a bug:</p>
                   <p className="text-gray-600 dark:text-gray-400">www.linkhelpbma.com</p>
                 </div>
               </div>
