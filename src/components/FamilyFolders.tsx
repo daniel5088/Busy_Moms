@@ -296,6 +296,11 @@ export function FamilyFolders() {
                           <span>{data.tasks.length} tasks</span>
                           <span>{data.reminders.length} reminders</span>
                           <span>{data.shoppingItems.length} shopping items</span>
+                          {data.tasks.some(t => t.points && t.points > 0) && (
+                            <span className="font-bold text-yellow-600">
+                              {data.tasks.reduce((sum, t) => sum + (t.points || 0), 0)} pts
+                            </span>
+                          )}
                         </div>
                       </div>
                     </button>
