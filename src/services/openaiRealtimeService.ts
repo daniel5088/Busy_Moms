@@ -200,7 +200,7 @@ export class OpenAIRealtimeService extends Emitter {
             end_time: { type: 'string', description: 'The end time in HH:MM format or natural language like "3pm", "15:30"' },
             location: { type: 'string', description: 'The location of the event' },
             participants: { type: 'array', items: { type: 'string' }, description: 'List of participants' },
-            assigned_to: { type: 'string', description: 'Name of family member to assign this event to (e.g., "Jack", "Sarah")' }
+            assigned_to: { type: 'string', description: 'CRITICAL: Name of family member to assign this event to. Extract from patterns like: "schedule [EVENT] for [NAME]" → NAME, "[NAME]\'s [EVENT]" → NAME. Examples: "schedule dentist appointment for Jack" → assigned_to: "Jack", "Sarah\'s piano recital" → assigned_to: "Sarah"' }
           },
           required: ['title', 'date']
         }
@@ -279,7 +279,7 @@ export class OpenAIRealtimeService extends Emitter {
             },
             assigned_to: {
               type: 'string',
-              description: 'Name of the family member to assign this reminder to (e.g., "Jack", "Cody", "Sarah"). Extract from phrases like "remind Jack", "tell Cody", "remind Sarah"'
+              description: 'CRITICAL: Name of the family member to assign this reminder to. ALWAYS extract the name from patterns like: "remind [NAME]" → NAME, "tell [NAME]" → NAME, "[NAME] needs to" → NAME. Examples: "remind Rio to..." → assigned_to: "Rio", "remind Jack to..." → assigned_to: "Jack", "tell Cody to..." → assigned_to: "Cody". If phrase is "remind me", leave this field null.'
             }
           },
           required: ['title', 'date']
@@ -300,7 +300,7 @@ export class OpenAIRealtimeService extends Emitter {
             },
             quantity: { type: 'number', description: 'Quantity number (extracted from title if needed)' },
             unit: { type: 'string', description: 'Unit of measurement (e.g., gallons, pounds, cups, each)' },
-            assigned_to: { type: 'string', description: 'Name of family member to assign this shopping item to (e.g., "Cody", "Jack", "Sarah")' }
+            assigned_to: { type: 'string', description: 'CRITICAL: Name of family member to assign this shopping item to. Extract from patterns like: "tell [NAME] to get..." → NAME, "remind [NAME] to buy..." → NAME. Examples: "tell Cody to get bread" → assigned_to: "Cody", "remind Jack to buy milk" → assigned_to: "Jack"' }
           },
           required: ['title']
         }
@@ -324,7 +324,7 @@ export class OpenAIRealtimeService extends Emitter {
               enum: ['low', 'medium', 'high'],
               description: 'Priority level of the task'
             },
-            assigned_to: { type: 'string', description: 'Name of family member to assign this task to (e.g., "John", "Sarah", "Jack"). REQUIRED when creating tasks.' },
+            assigned_to: { type: 'string', description: 'CRITICAL: Name of family member to assign this task to. Extract from patterns like: "tell [NAME] to..." → NAME, "assign [NAME] to..." → NAME, "create task for [NAME]" → NAME. Examples: "tell Jack to clean his room" → assigned_to: "Jack", "assign Sarah to do homework" → assigned_to: "Sarah", "create task for John to mow lawn" → assigned_to: "John"' },
             due_date: { type: 'string', description: 'Due date in YYYY-MM-DD format or natural language like "today", "tomorrow"' },
             due_time: { type: 'string', description: 'Due time in HH:MM format or natural language like "2pm", "14:30"' },
             points: { type: 'number', description: 'Points awarded for completing this task (for gamification)' },
@@ -1108,13 +1108,20 @@ ACTION TRIGGERS - When user says these phrases, CALL THE FUNCTION:
 - "schedule" / "add to calendar" / "create event" / "schedule for Sarah" → CALL create_calendar_event (with assigned_to if name mentioned)
 - "create a task" / "assign task to John" / "tell Jack to clean" → CALL create_task (with assigned_to if name mentioned)
 
-ASSIGNMENT PATTERNS - Extract family member names from these patterns:
-- "remind [NAME] to..." → assigned_to: NAME
-- "tell [NAME] to..." → assigned_to: NAME
+ASSIGNMENT PATTERNS - CRITICAL: ALWAYS extract family member names from these patterns:
+- "remind [NAME] to..." → assigned_to: NAME (e.g., "remind Rio to do homework" → assigned_to: "Rio")
+- "tell [NAME] to..." → assigned_to: NAME (e.g., "tell Cody to get bread" → assigned_to: "Cody")
 - "assign [NAME] to..." → assigned_to: NAME
 - "[NAME] needs to..." → assigned_to: NAME
 - "create task for [NAME]" → assigned_to: NAME
 - "schedule for [NAME]" → assigned_to: NAME
+- "[NAME]'s [TASK/EVENT]" → assigned_to: NAME (e.g., "Jack's dentist appointment" → assigned_to: "Jack")
+
+EXTRACTION RULES:
+- The name always comes IMMEDIATELY AFTER "remind", "tell", or "for"
+- Extract the FIRST proper name after these keywords
+- Names can be: Jack, Cody, Rio, Sarah, John, or any other family member name
+- If user says "remind me", do NOT set assigned_to (it's for the user themselves)
 
 Current date context: Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}.
 
