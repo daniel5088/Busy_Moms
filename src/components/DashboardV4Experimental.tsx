@@ -975,8 +975,7 @@ export function DashboardV4Experimental({
                 About BMA
               </h2>
 
-              <div className="space-y-4 text-gray-600 dark:text-gray-400 text-base sm:text-lg leading-relaxed">
-                <p>BMA helps families stay organized with shared reminders, tasks, and planning.</p>
+              <div className="space-y-4 text-gray-900 dark:text-gray-700 text-base sm:text-lg leading-relaxed">
                 <p>We're currently in alpha testing and improving fast based on feedback.</p>
                 <p>If you have any questions, please reach out to the person who introduced you to the app.</p>
 
