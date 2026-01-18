@@ -485,11 +485,19 @@ export function FamilyFolders() {
                               <div key={task.id} className="p-3 bg-purple-50 rounded-lg">
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1">
-                                    <h5
-                                      className={`font-medium text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}
-                                    >
-                                      {task.title}
-                                    </h5>
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      {task.points && task.points > 0 && (
+                                        <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold flex items-center space-x-1">
+                                          <span>{task.points}</span>
+                                          <span>pts</span>
+                                        </span>
+                                      )}
+                                      <h5
+                                        className={`font-medium text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                                      >
+                                        {task.points && task.points > 0 ? `${data.member.name} - ${task.title}` : task.title}
+                                      </h5>
+                                    </div>
                                     <div className="flex items-center space-x-2 text-xs mt-1">
                                       <span
                                         className={`px-2 py-0.5 rounded-full font-medium ${getStatusColor(task.status || 'pending')}`}
