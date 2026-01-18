@@ -472,6 +472,8 @@ EXAMPLES:
 "Show me my schedule for tomorrow" → {"type": "schedule_query", "details": {"query_type": "tomorrow"}}
 "What do I have on Friday?" → {"type": "schedule_query", "details": {"query_type": "date", "date": "[USE DATE FROM MAPPING]"}}
 "What do I have today?" → {"type": "schedule_query", "details": {"query_type": "today"}}
+"What's on my calendar on Saturday?" → {"type": "schedule_query", "details": {"query_type": "date", "date": "[USE DATE FROM MAPPING]"}}
+"Show me my calendar for tomorrow" → {"type": "schedule_query", "details": {"query_type": "tomorrow"}}
 "What's on my shopping list?" → {"type": "shopping_query", "details": {"query_type": "pending"}}`;
 
   try {
@@ -553,7 +555,9 @@ function fallbackClassify(message: string): IntentResult {
   if (
     /\bwhat('?s|\s+is)?\s+(my|the)?\s*schedule\b/.test(lower) ||
     /\bshow\s+(me\s+)?(my\s+)?schedule\b/.test(lower) ||
-    /\bwhat\s+do\s+i\s+have\s+(today|tomorrow|on)\b/.test(lower)
+    /\bwhat\s+do\s+i\s+have\s+(today|tomorrow|on)\b/.test(lower) ||
+    /\bwhat('?s|\s+is)?\s+on\s+(my|the)?\s*calendar\b/.test(lower) ||
+    /\bshow\s+(me\s+)?(my\s+)?calendar\b/.test(lower)
   ) {
     let queryType = 'today';
     let date = null;
