@@ -21,7 +21,9 @@ import { calendarContextService } from './calendarContext';
 export interface AIAction {
   type:
     | 'calendar'
+    | 'calendar_share'
     | 'reminder'
+    | 'reminder_share'
     | 'shopping'
     | 'shopping_query'
     | 'shopping_update'
@@ -42,7 +44,9 @@ type IntentType =
   | 'calendar_query'
   | 'calendar_update'
   | 'calendar_delete'
+  | 'calendar_share'
   | 'reminder'
+  | 'reminder_share'
   | 'shopping'
   | 'shopping_query'
   | 'shopping_update'
@@ -355,7 +359,7 @@ async function classifyMessage(
   console.log('📅 Next 7 days mapping:', next7Days);
 
   const systemPrompt = `You are a smart assistant that classifies user messages into actions.
-Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query|calendar_update|calendar_delete|reminder|shopping|shopping_query|shopping_update|shopping_delete|task|task_query|task_update|task_delete|family|family_query|family_update|family_delete|chat", "details": {...}}
+Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query|calendar_update|calendar_delete|calendar_share|reminder|reminder_share|shopping|shopping_query|shopping_update|shopping_delete|task|task_query|task_update|task_delete|family|family_query|family_update|family_delete|chat", "details": {...}}
 
 IMPORTANT DATE CONTEXT:
 - Today is ${today} (${todayFormatted})
@@ -395,8 +399,10 @@ For family queries: {"type": "family_query", "details": {"query_type": "all|sear
 For family updates: {"type": "family_update", "details": {"search_term": "name to find", "updates": {"age": number, "school": "school name", "grade": "grade level"}}}
 For family deletion: {"type": "family_delete", "details": {"search_term": "name to delete"}}
 
-For reminders: {"type": "reminder", "details": {"title": "reminder text", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm"}}
-For calendar creation: {"type": "calendar", "details": {"title": "event name", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm", "location": "place"}}
+For reminders: {"type": "reminder", "details": {"title": "reminder text", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm", "assigned_to": "person name"}}
+For reminder sharing: {"type": "reminder_share", "details": {"search_term": "reminder to find", "recipient_name": "person name"}}
+For calendar creation: {"type": "calendar", "details": {"title": "event name", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm", "location": "place", "participants": "person name or list of names"}}
+For calendar sharing: {"type": "calendar_share", "details": {"search_term": "event to find", "recipient_name": "person name"}}
 For calendar queries: {"type": "calendar_query", "details": {"query_type": "today|week|availability|search|next", "date": "YYYY-MM-DD", "search_term": "keyword"}}
 For calendar updates: {"type": "calendar_update", "details": {"search_term": "event to find", "updates": {"date": "new date", "time": "new time", "location": "new location"}}}
 For calendar deletion: {"type": "calendar_delete", "details": {"search_term": "event to delete", "date": "YYYY-MM-DD"}}
@@ -410,7 +416,14 @@ EXAMPLES:
 "remind me to refill the ice tomorrow at 6pm" → {"type": "reminder", "details": {"title": "refill the ice", "date": "${tomorrow}", "time": "6pm"}}
 "add dentist appointment on jan 20 at 2:30pm" → {"type": "calendar", "details": {"title": "dentist appointment", "date": "${currentYear}-01-20", "time": "2:30pm"}}
 "remind me to call mom tomorrow" → {"type": "reminder", "details": {"title": "call mom", "date": "${tomorrow}"}}
-"remind me on Sunday to take out the dog at 5pm" → {"type": "reminder", "details": {"title": "take out the dog", "date": "${next7Days.find(d => d.dayName === 'Sunday')?.date || tomorrow}", "time": "5pm"}}`;
+"remind me on Sunday to take out the dog at 5pm" → {"type": "reminder", "details": {"title": "take out the dog", "date": "${next7Days.find(d => d.dayName === 'Sunday')?.date || tomorrow}", "time": "5pm"}}
+"remind Jack to do his homework" → {"type": "reminder", "details": {"title": "do his homework", "date": "${today}", "assigned_to": "Jack"}}
+"schedule piano lesson with Emma on Saturday at 4pm" → {"type": "calendar", "details": {"title": "piano lesson", "date": "${next7Days.find(d => d.dayName === 'Saturday')?.date || tomorrow}", "time": "4pm", "participants": "Emma"}}
+"share the dentist appointment with Emma" → {"type": "calendar_share", "details": {"search_term": "dentist appointment", "recipient_name": "Emma"}}
+"share the homework reminder with Jack" → {"type": "reminder_share", "details": {"search_term": "homework", "recipient_name": "Jack"}}
+"What's my schedule today?" → {"type": "calendar_query", "details": {"query_type": "today"}}
+"Show me my schedule for tomorrow" → {"type": "calendar_query", "details": {"query_type": "today", "date": "${tomorrow}"}}
+"What do I have on Friday?" → {"type": "calendar_query", "details": {"query_type": "today", "date": "YYYY-MM-DD"}}`;
 
   try {
     const response = await openaiService.chat([
@@ -702,8 +715,12 @@ class AIAssistantService {
           return this.handleCalendarUpdate(intent.details || {}, userId);
         case 'calendar_delete':
           return this.handleCalendarDelete(intent.details || {}, userId);
+        case 'calendar_share':
+          return this.handleCalendarShare(intent.details || {}, userId);
         case 'reminder':
           return this.handleReminderAction(intent.details || {}, userId);
+        case 'reminder_share':
+          return this.handleReminderShare(intent.details || {}, userId);
         case 'shopping':
           return this.handleShoppingAction(intent.details || {}, userId);
         case 'shopping_query':
@@ -732,6 +749,7 @@ class AIAssistantService {
           return this.handleChatAction(
             intent.details || {},
             message,
+            userId,
             calendarContext,
             conversationHistory,
           );
@@ -827,6 +845,22 @@ class AIAssistantService {
     return this.handleReminderAction(details, userId);
   }
 
+  /** Share calendar event with family member */
+  async shareCalendarEvent(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    return this.handleCalendarShare(details, userId);
+  }
+
+  /** Share reminder with family member */
+  async shareReminder(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    return this.handleReminderShare(details, userId);
+  }
+
   /** Calendar Creation */
   private async handleCalendarAction(
     details: Record<string, unknown>,
@@ -838,9 +872,16 @@ class AIAssistantService {
     const date = toISODate(details.date);
     const start_time = toISOTime(details.time || details.start_time);
     const end_time = toISOTime(details.end_time);
-    const participants = Array.isArray(details.participants)
-      ? details.participants.map((p: unknown) => String(p))
-      : null;
+    
+    // Handle participants - can be a single name or array of names
+    let participants: string[] | null = null;
+    if (details.participants) {
+      if (Array.isArray(details.participants)) {
+        participants = details.participants.map((p: unknown) => String(p));
+      } else {
+        participants = [String(details.participants)];
+      }
+    }
     const location = details.location ? String(details.location) : null;
 
     if (!date) {
@@ -912,10 +953,15 @@ class AIAssistantService {
         timeMsg = ` at ${start_time.slice(0, 5)}`;
       }
 
+      let participantsMsg = '';
+      if (participants && participants.length > 0) {
+        participantsMsg = ` with ${participants.join(', ')}`;
+      }
+
       return {
         type: 'calendar',
         success: true,
-        message: `✅ Scheduled: ${title} on ${date}${timeMsg}`,
+        message: `✅ Scheduled: ${title} on ${date}${timeMsg}${participantsMsg}`,
         data: result,
       };
     } catch (error) {
@@ -1307,6 +1353,134 @@ class AIAssistantService {
     }
   }
 
+  /** Calendar Share - Share event with family member */
+  private async handleCalendarShare(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    console.log('📤 Sharing calendar event with details:', details);
+
+    const searchTerm = String(details.search_term || '');
+    const recipientName = String(details.recipient_name || '');
+    const date = details.date ? toISODate(details.date) : null;
+
+    if (!searchTerm) {
+      return {
+        type: 'calendar',
+        success: false,
+        message: 'Please specify which event you want to share.',
+      };
+    }
+
+    if (!recipientName) {
+      return {
+        type: 'calendar',
+        success: false,
+        message: 'Please specify which family member to share with.',
+      };
+    }
+
+    try {
+      // Find the family member
+      const { data: members, error: memberError } = await supabase
+        .from('family_members')
+        .select('id, name')
+        .eq('user_id', userId)
+        .ilike('name', `%${recipientName}%`);
+
+      if (memberError) throw memberError;
+
+      if (!members || members.length === 0) {
+        return {
+          type: 'calendar',
+          success: false,
+          message: `No family member found with name "${recipientName}". Please add them first.`,
+        };
+      }
+
+      if (members.length > 1) {
+        const memberList = members.map((m: any) => m.name).join(', ');
+        return {
+          type: 'calendar',
+          success: false,
+          message: `Multiple family members found: ${memberList}. Please be more specific.`,
+          data: { members },
+        };
+      }
+
+      const recipient = members[0];
+
+      // Find the event
+      let events: DbEvent[];
+      if (date) {
+        const allEvents = await calendarContextService.searchEvents(
+          userId,
+          searchTerm,
+        );
+        events = allEvents.filter((e: any) => e.event_date === date);
+      } else {
+        events = await calendarContextService.searchEvents(userId, searchTerm);
+      }
+
+      if (events.length === 0) {
+        return {
+          type: 'calendar',
+          success: false,
+          message: `No events found matching "${searchTerm}".`,
+        };
+      }
+
+      if (events.length > 1) {
+        const formatted =
+          calendarContextService.formatEventsAsNaturalLanguage(events);
+        return {
+          type: 'calendar',
+          success: false,
+          message: `Multiple events found. Please be more specific:\n${formatted}`,
+          data: { events },
+        };
+      }
+
+      const event = events[0];
+
+      // Update event to add participant
+      const currentParticipants = (event as any).participants || [];
+      const updatedParticipants = [...currentParticipants];
+      
+      if (!updatedParticipants.includes(recipient.name)) {
+        updatedParticipants.push(recipient.name);
+      }
+
+      const { data: updatedEvent, error: updateError } = await supabase
+        .from('events')
+        .update({ 
+          participants: updatedParticipants,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', (event as any).id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      return {
+        type: 'calendar',
+        success: true,
+        message: `✅ Shared "${(event as any).title}" with ${recipient.name}!`,
+        data: { event: updatedEvent, recipient },
+      };
+    } catch (error) {
+      console.error('❌ Calendar share error:', error);
+      return {
+        type: 'calendar',
+        success: false,
+        message: `Failed to share event: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      };
+    }
+  }
+
   /** Reminders */
   private async handleReminderAction(
     details: Record<string, unknown>,
@@ -1315,6 +1489,9 @@ class AIAssistantService {
     const title = String(details.title ?? 'Reminder');
     const date = toISODate(details.date);
     const time = toISOTime(details.time);
+    const familyMemberName = details.family_member
+      ? String(details.family_member)
+      : null;
 
     if (!date) {
       return {
@@ -1326,6 +1503,28 @@ class AIAssistantService {
     }
 
     try {
+      let family_member_id: string | null = null;
+      let family_member_email: string | null = null;
+      let recipientName: string | null = null;
+
+      // Find family member if specified
+      if (familyMemberName) {
+        const { data: members, error: memberError } = await supabase
+          .from('family_members')
+          .select('id, name, Email')
+          .eq('user_id', userId)
+          .ilike('name', `%${familyMemberName}%`);
+
+        if (memberError) throw memberError;
+
+        if (members && members.length > 0) {
+          const member = members[0];
+          family_member_id = member.id;
+          family_member_email = member.Email;
+          recipientName = member.name;
+        }
+      }
+
       const { data, error } = await supabase
         .from('reminders')
         .insert([
@@ -1339,7 +1538,8 @@ class AIAssistantService {
             completed: false,
             recurring: false,
             recurring_pattern: null,
-            family_member_id: null,
+            family_member_id,
+            family_member_email,
           },
         ])
         .select()
@@ -1359,10 +1559,11 @@ class AIAssistantService {
       }));
 
       const timeDisplay = time ? ` at ${formatTimeForDisplay(time)}` : '';
+      const forWhom = recipientName ? ` for ${recipientName}` : '';
       return {
         type: 'reminder',
         success: true,
-        message: `✅ Reminder set for ${date}${timeDisplay}: ${title}`,
+        message: `✅ Reminder set${forWhom} for ${date}${timeDisplay}: ${title}`,
         data,
       };
     } catch (error) {
@@ -1371,6 +1572,131 @@ class AIAssistantService {
         type: 'reminder',
         success: false,
         message: `Failed to create reminder: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      };
+    }
+  }
+
+  /** Reminder Share - Share reminder with family member */
+  private async handleReminderShare(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    console.log('📤 Sharing reminder with details:', details);
+
+    const searchTerm = String(details.search_term || '');
+    const recipientName = String(details.recipient_name || '');
+
+    if (!searchTerm) {
+      return {
+        type: 'reminder',
+        success: false,
+        message: 'Please specify which reminder you want to share.',
+      };
+    }
+
+    if (!recipientName) {
+      return {
+        type: 'reminder',
+        success: false,
+        message: 'Please specify which family member to share with.',
+      };
+    }
+
+    try {
+      // Find the family member
+      const { data: members, error: memberError } = await supabase
+        .from('family_members')
+        .select('id, name')
+        .eq('user_id', userId)
+        .ilike('name', `%${recipientName}%`);
+
+      if (memberError) throw memberError;
+
+      if (!members || members.length === 0) {
+        return {
+          type: 'reminder',
+          success: false,
+          message: `No family member found with name "${recipientName}". Please add them first.`,
+        };
+      }
+
+      if (members.length > 1) {
+        const memberList = members.map((m: any) => m.name).join(', ');
+        return {
+          type: 'reminder',
+          success: false,
+          message: `Multiple family members found: ${memberList}. Please be more specific.`,
+          data: { members },
+        };
+      }
+
+      const recipient = members[0];
+
+      // Find the reminder
+      const { data: reminders, error: searchError } = await supabase
+        .from('reminders')
+        .select('*')
+        .eq('user_id', userId)
+        .ilike('title', `%${searchTerm}%`)
+        .eq('completed', false)
+        .order('reminder_date', { ascending: true });
+
+      if (searchError) throw searchError;
+
+      if (!reminders || reminders.length === 0) {
+        return {
+          type: 'reminder',
+          success: false,
+          message: `No reminders found matching "${searchTerm}".`,
+        };
+      }
+
+      if (reminders.length > 1) {
+        const reminderList = reminders
+          .map((r: any) => `${r.title} (${r.reminder_date})`)
+          .join(', ');
+        return {
+          type: 'reminder',
+          success: false,
+          message: `Multiple reminders found: ${reminderList}. Please be more specific.`,
+          data: { reminders },
+        };
+      }
+
+      const reminder = reminders[0];
+
+      // Update reminder to assign to family member
+      const { data: updatedReminder, error: updateError } = await supabase
+        .from('reminders')
+        .update({
+          family_member_id: recipient.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', (reminder as any).id)
+        .select(
+          `
+        *,
+        family_member:family_members(id, name, age)
+      `,
+        )
+        .single();
+
+      if (updateError) throw updateError;
+
+      return {
+        type: 'reminder',
+        success: true,
+        message: `✅ Shared reminder "${(reminder as any).title}" with ${recipient.name}!`,
+        data: { reminder: updatedReminder, recipient },
+      };
+    } catch (error) {
+      console.error('❌ Reminder share error:', error);
+      return {
+        type: 'reminder',
+        success: false,
+        message: `Failed to share reminder: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`,
       };
@@ -1388,6 +1714,22 @@ class AIAssistantService {
     const category = String(details.category ?? details.list ?? 'other');
     const quantity = coerceInt(details.quantity ?? 1, 1) ?? 1;
 
+    let assigned_to: string | null = null;
+    let assigned_to_email: string | null = null;
+    if (details.assigned_to) {
+      const memberName = String(details.assigned_to).toLowerCase();
+      const { data: members } = await supabase
+        .from('family_members')
+        .select('id, name, Email')
+        .eq('user_id', userId)
+        .ilike('name', `%${memberName}%`);
+
+      if (members && members.length > 0) {
+        assigned_to = members[0].id;
+        assigned_to_email = members[0].Email || null;
+      }
+    }
+
     try {
       const { data, error } = await supabase
         .from('shopping_lists')
@@ -1399,6 +1741,8 @@ class AIAssistantService {
             quantity,
             completed: false,
             urgent: false,
+            assigned_to,
+            assigned_to_email,
           },
         ])
         .select()
@@ -1419,12 +1763,17 @@ class AIAssistantService {
         detail: { type: 'shopping', action: 'created' }
       }));
 
+      let message = `✅ Added to shopping list: ${title}${
+        quantity > 1 ? ` x${quantity}` : ''
+      }`;
+      if ((data as any).assigned_to_email) {
+        message += ` assigned to ${(data as any).assigned_to_email}`;
+      }
+
       return {
         type: 'shopping',
         success: true,
-        message: `✅ Added to shopping list: ${title}${
-          quantity > 1 ? ` x${quantity}` : ''
-        }`,
+        message,
         data,
       };
     } catch (error) {
@@ -1462,16 +1811,18 @@ class AIAssistantService {
     const notes = details.notes ? String(details.notes) : null;
 
     let assigned_to: string | null = null;
+    let assigned_to_email: string | null = null;
     if (details.assigned_to) {
       const memberName = String(details.assigned_to).toLowerCase();
       const { data: members } = await supabase
         .from('family_members')
-        .select('id, name')
+        .select('id, name, Email')
         .eq('user_id', userId)
         .ilike('name', `%${memberName}%`);
 
       if (members && members.length > 0) {
         assigned_to = members[0].id;
+        assigned_to_email = members[0].Email || null;
       }
     }
 
@@ -1491,6 +1842,7 @@ class AIAssistantService {
             points,
             notes,
             assigned_to,
+            assigned_to_email,
           },
         ])
         .select(
@@ -2368,9 +2720,308 @@ class AIAssistantService {
   }
 
   /** Chat - Handle general conversation */
+  /** Get comprehensive schedule for a specific date */
+  private async getScheduleOverview(
+    userId: UUID,
+    date: string,
+  ): Promise<{
+    date: string;
+    items: Array<{
+      time: string;
+      type: 'event' | 'task' | 'reminder';
+      title: string;
+      details: string;
+      priority?: string;
+      location?: string;
+      assignedTo?: string;
+    }>;
+  }> {
+    console.log('📅 Getting schedule overview for:', date);
+
+    try {
+      // Fetch all data for the specified date in parallel
+      const [eventsResult, tasksResult, remindersResult] = await Promise.all([
+        // Events for this date
+        supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('event_date', date)
+          .order('start_time', { ascending: true }),
+
+        // Tasks due on this date
+        supabase
+          .from('tasks')
+          .select(`
+            *,
+            assigned_family_member:family_members(name)
+          `)
+          .eq('user_id', userId)
+          .eq('due_date', date)
+          .neq('status', 'completed')
+          .order('due_time', { ascending: true }),
+
+        // Reminders for this date
+        supabase
+          .from('reminders')
+          .select(`
+            *,
+            family_member:family_members(name)
+          `)
+          .eq('user_id', userId)
+          .eq('reminder_date', date)
+          .eq('completed', false)
+          .order('reminder_time', { ascending: true }),
+      ]);
+
+      const events = eventsResult.data || [];
+      const tasks = tasksResult.data || [];
+      const reminders = remindersResult.data || [];
+
+      // Combine all items with their times
+      const allItems: Array<{
+        time: string;
+        sortTime: string;
+        type: 'event' | 'task' | 'reminder';
+        title: string;
+        details: string;
+        priority?: string;
+        location?: string;
+        assignedTo?: string;
+      }> = [];
+
+      // Add events
+      events.forEach((event: any) => {
+        const time = event.start_time || '00:00:00';
+        const timeDisplay = formatTimeForDisplay(time);
+        let details = '';
+        if (event.location) details += `📍 ${event.location}`;
+        if (event.participants && event.participants.length > 0) {
+          if (details) details += ' • ';
+          details += `👥 ${event.participants.join(', ')}`;
+        }
+
+        allItems.push({
+          time: timeDisplay,
+          sortTime: time,
+          type: 'event',
+          title: event.title,
+          details,
+          location: event.location,
+        });
+      });
+
+      // Add tasks
+      tasks.forEach((task: any) => {
+        const time = task.due_time || '23:59:00';
+        const timeDisplay = task.due_time ? formatTimeForDisplay(task.due_time) : 'All day';
+        let details = task.category ? `📁 ${task.category}` : '';
+        if (task.assigned_family_member?.name) {
+          if (details) details += ' • ';
+          details += `👤 ${task.assigned_family_member.name}`;
+        }
+
+        allItems.push({
+          time: timeDisplay,
+          sortTime: time,
+          type: 'task',
+          title: task.title,
+          details,
+          priority: task.priority,
+          assignedTo: task.assigned_family_member?.name,
+        });
+      });
+
+      // Add reminders
+      reminders.forEach((reminder: any) => {
+        const time = reminder.reminder_time || '23:59:00';
+        const timeDisplay = reminder.reminder_time ? formatTimeForDisplay(reminder.reminder_time) : 'All day';
+        let details = '';
+        if (reminder.family_member?.name) {
+          details = `👤 ${reminder.family_member.name}`;
+        }
+
+        allItems.push({
+          time: timeDisplay,
+          sortTime: time,
+          type: 'reminder',
+          title: reminder.title,
+          details,
+          priority: reminder.priority,
+          assignedTo: reminder.family_member?.name,
+        });
+      });
+
+      // Sort by time
+      allItems.sort((a, b) => a.sortTime.localeCompare(b.sortTime));
+
+      return {
+        date,
+        items: allItems,
+      };
+    } catch (error) {
+      console.error('❌ Error getting schedule overview:', error);
+      return {
+        date,
+        items: [],
+      };
+    }
+  }
+
+  /** Format schedule overview as natural language */
+  private formatScheduleOverview(schedule: {
+    date: string;
+    items: Array<{
+      time: string;
+      type: 'event' | 'task' | 'reminder';
+      title: string;
+      details: string;
+      priority?: string;
+      assignedTo?: string;
+    }>;
+  }): string {
+    if (schedule.items.length === 0) {
+      return `You have nothing scheduled for ${schedule.date}. Your day is clear! 🎉`;
+    }
+
+    const dateObj = new Date(schedule.date + 'T00:00:00');
+    const dateFormatted = dateObj.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    let message = `📅 Here's your schedule for ${dateFormatted}:\n\n`;
+
+    schedule.items.forEach((item, index) => {
+      const icon = item.type === 'event' ? '📅' : item.type === 'task' ? '✓' : '🔔';
+      const priorityTag = item.priority === 'high' ? ' 🔥' : item.priority === 'medium' ? ' ⚠️' : '';
+      
+      message += `${icon} ${item.time} - ${item.title}${priorityTag}\n`;
+      if (item.details) {
+        message += `   ${item.details}\n`;
+      }
+      
+      // Add spacing between items except the last one
+      if (index < schedule.items.length - 1) {
+        message += '\n';
+      }
+    });
+
+    // Add summary
+    const eventCount = schedule.items.filter(i => i.type === 'event').length;
+    const taskCount = schedule.items.filter(i => i.type === 'task').length;
+    const reminderCount = schedule.items.filter(i => i.type === 'reminder').length;
+
+    message += `\n\n📊 Total: ${eventCount} event${eventCount !== 1 ? 's' : ''}, ${taskCount} task${taskCount !== 1 ? 's' : ''}, ${reminderCount} reminder${reminderCount !== 1 ? 's' : ''}`;
+
+    return message;
+  }
+
+  /** Get shopping list summary */
+  private async getShoppingListSummary(userId: UUID, filterCompleted: boolean = false): Promise<string> {
+    try {
+      let query = supabase
+        .from('shopping_lists')
+        .select(`
+          *,
+          assigned_family_member:family_members(name)
+        `)
+        .eq('user_id', userId)
+        .order('urgent', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (filterCompleted) {
+        query = query.eq('completed', false);
+      }
+
+      const { data: items, error } = await query;
+
+      if (error) throw error;
+
+      if (!items || items.length === 0) {
+        return '🛒 Your shopping list is empty!';
+      }
+
+      const pendingItems = items.filter((item: any) => !item.completed);
+      const completedItems = items.filter((item: any) => item.completed);
+
+      let message = `🛒 Shopping List (${pendingItems.length} pending):\n\n`;
+
+      // Group by category
+      const categories: Record<string, any[]> = {};
+      pendingItems.forEach((item: any) => {
+        const category = item.category || 'other';
+        if (!categories[category]) {
+          categories[category] = [];
+        }
+        categories[category].push(item);
+      });
+
+      // Display by category
+      Object.keys(categories).forEach((category) => {
+        message += `📁 ${category.charAt(0).toUpperCase() + category.slice(1)}:\n`;
+        categories[category].forEach((item: any) => {
+          const urgentTag = item.urgent ? ' 🔥' : '';
+          const assignedTag = item.assigned_family_member?.name ? ` (${item.assigned_family_member.name})` : '';
+          const qty = item.quantity > 1 ? ` x${item.quantity}` : '';
+          message += `  • ${item.item}${qty}${urgentTag}${assignedTag}\n`;
+        });
+        message += '\n';
+      });
+
+      if (completedItems.length > 0) {
+        message += `✅ ${completedItems.length} item${completedItems.length !== 1 ? 's' : ''} completed`;
+      }
+
+      return message;
+    } catch (error) {
+      console.error('❌ Error getting shopping list:', error);
+      return '❌ Failed to load shopping list.';
+    }
+  }
+
+  /** Get reminders summary for today */
+  private async getRemindersSummary(userId: UUID, date: string): Promise<string> {
+    try {
+      const { data: reminders, error } = await supabase
+        .from('reminders')
+        .select(`
+          *,
+          family_member:family_members(name)
+        `)
+        .eq('user_id', userId)
+        .eq('reminder_date', date)
+        .eq('completed', false)
+        .order('reminder_time', { ascending: true });
+
+      if (error) throw error;
+
+      if (!reminders || reminders.length === 0) {
+        return `🔔 No reminders for ${date}`;
+      }
+
+      let message = `🔔 Reminders for ${date}:\n\n`;
+
+      reminders.forEach((reminder: any) => {
+        const time = reminder.reminder_time ? formatTimeForDisplay(reminder.reminder_time) : 'All day';
+        const forWhom = reminder.family_member?.name ? ` for ${reminder.family_member.name}` : '';
+        const priorityTag = reminder.priority === 'high' ? ' 🔥' : '';
+        
+        message += `  ${time} - ${reminder.title}${forWhom}${priorityTag}\n`;
+      });
+
+      return message;
+    } catch (error) {
+      console.error('❌ Error getting reminders:', error);
+      return '❌ Failed to load reminders.';
+    }
+  }
+
   private async handleChatAction(
     details: Record<string, unknown>,
     originalMessage: string,
+    userId: UUID,
     calendarContext?: any,
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   ): Promise<AIAction> {
@@ -2385,6 +3036,82 @@ class AIAssistantService {
         ? `\n\nCurrent Calendar Context:\n${calendarContext.summary}`
         : '';
 
+      // Check if this is a schedule overview request
+      const lowerQuery = originalMessage.toLowerCase();
+      const isScheduleQuery = 
+        /what('s| is) (on )?my schedule/i.test(lowerQuery) ||
+        /show (me )?my schedule/i.test(lowerQuery) ||
+        /what do i have/i.test(lowerQuery) ||
+        /what('s| is) coming up/i.test(lowerQuery);
+
+      if (isScheduleQuery) {
+        // Determine which date to show
+        let targetDate: string | null = null;
+        const today = getLocalISODate(new Date());
+        const tomorrow = getLocalISODate((() => {
+          const d = new Date();
+          d.setDate(d.getDate() + 1);
+          return d;
+        })());
+
+        if (/today/i.test(lowerQuery)) {
+          targetDate = today;
+        } else if (/tomorrow/i.test(lowerQuery)) {
+          targetDate = tomorrow;
+        } else if (/this week/i.test(lowerQuery)) {
+          // Show today's schedule for "this week" queries
+          targetDate = today;
+        } else {
+          // Try to extract a date from the query
+          const dateMatch = lowerQuery.match(
+            /(?:on |for )?(monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{4}-\d{2}-\d{2}|\d{1,2}[\/-]\d{1,2})/i
+          );
+          if (dateMatch) {
+            targetDate = toISODate(dateMatch[1]);
+          } else {
+            // Default to today
+            targetDate = today;
+          }
+        }
+
+        if (targetDate) {
+          const schedule = await this.getScheduleOverview(userId, targetDate);
+          const formattedSchedule = this.formatScheduleOverview(schedule);
+
+          return {
+            type: 'chat',
+            success: true,
+            message: formattedSchedule,
+            data: { schedule, query: originalMessage },
+          };
+        }
+      }
+
+      // Check if this is a shopping list query
+      if (/show (me )?(my )?shopping( list)?/i.test(lowerQuery) || 
+          /what('s| is) on (my )?shopping( list)?/i.test(lowerQuery)) {
+        const summary = await this.getShoppingListSummary(userId, true);
+        return {
+          type: 'chat',
+          success: true,
+          message: summary,
+          data: { query: originalMessage },
+        };
+      }
+
+      // Check if this is a reminders query
+      if (/show (me )?(my )?reminders( for)? today/i.test(lowerQuery) ||
+          /what reminders (do i have )?today/i.test(lowerQuery)) {
+        const today = getLocalISODate(new Date());
+        const summary = await this.getRemindersSummary(userId, today);
+        return {
+          type: 'chat',
+          success: true,
+          message: summary,
+          data: { query: originalMessage },
+        };
+      }
+
       const messages: Array<{
         role: 'system' | 'user' | 'assistant';
         content: string;
@@ -2398,16 +3125,17 @@ Keep responses concise, practical, and empathetic. Always consider the busy life
 You have full access to the user's calendar, tasks, shopping list, and family members. You can:
 
 CALENDAR:
-- Answer questions about their schedule ("What's on my calendar today?")
+- Answer questions about their schedule ("What's on my calendar today?", "What's my schedule?", "What do I have coming up?")
 - Check availability ("Am I free tomorrow afternoon?")
 - Find specific events ("When is my dentist appointment?")
 - Create new events ("Schedule a meeting tomorrow at 2pm")
 - Update existing events ("Move my dentist appointment to next week")
 - Delete events ("Cancel my meeting tomorrow")
+- Share events with family members ("Share the dentist appointment with Emma")
 
 TASKS:
 - View all tasks or filter by status ("What tasks do I have?", "Show pending tasks")
-- Create new tasks for family members ("Create a task for Sarah to clean her room")
+- Create new tasks for family members ("Create a task for Sarah to clean her room", "Assign John to do his homework")
 - Update task details ("Change homework task priority to high")
 - Mark tasks as complete ("Mark the homework task as done")
 - Delete tasks ("Delete the grocery shopping task")
@@ -2415,6 +3143,7 @@ TASKS:
 SHOPPING LIST:
 - View shopping list ("What's on my shopping list?", "Show me pending items")
 - Add items to shopping list ("Add milk to the shopping list", "Add 2 loaves of bread")
+- Assign items to family members ("Remind Cody to get bread", "Tell Emma to pick up milk")
 - Mark items as purchased ("Mark milk as bought")
 - Update item quantities ("Change milk quantity to 2")
 - Remove items ("Remove bread from shopping list", "Delete milk from list")
@@ -2426,8 +3155,8 @@ FAMILY MEMBERS:
 - Remove family members ("Remove Jack from family list")
 
 OTHER:
-- Set reminders ("remind me to call mom tomorrow at 3pm")
-- Answer general questions about parenting and family management
+- Set reminders for yourself or family members ("remind me to call mom tomorrow at 3pm", "Remind Jack to do his homework tonight at 5pm", "Tell Emma to practice piano tomorrow")
+- Share reminders with family members ("Share the dentist reminder with Emma", "Send the homework reminder to Jack")
 
 When answering questions, reference the calendar, task, shopping, and family context when relevant. If the user mentions planning something, check for conflicts proactively.
 
