@@ -944,7 +944,7 @@ export function Dashboard({
                 id="about-dialog-title"
                 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6"
               >
-                About BMA
+                About Busy Moms Assistant AI
               </h2>
 
               <div className="space-y-4 text-gray-900 dark:text-gray-700 text-base sm:text-lg leading-relaxed">
