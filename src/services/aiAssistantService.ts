@@ -872,7 +872,7 @@ class AIAssistantService {
     const date = toISODate(details.date);
     const start_time = toISOTime(details.time || details.start_time);
     const end_time = toISOTime(details.end_time);
-    
+
     // Handle participants - can be a single name or array of names
     let participants: string[] | null = null;
     if (details.participants) {
@@ -883,6 +883,23 @@ class AIAssistantService {
       }
     }
     const location = details.location ? String(details.location) : null;
+
+    // Handle assignment to family member
+    let assigned_to: string | null = null;
+    let assigned_to_name: string | null = null;
+    if (details.assigned_to) {
+      const memberName = String(details.assigned_to).toLowerCase();
+      const { data: members } = await supabase
+        .from('family_members')
+        .select('id, name')
+        .eq('user_id', userId)
+        .ilike('name', `%${memberName}%`);
+
+      if (members && members.length > 0) {
+        assigned_to = members[0].id;
+        assigned_to_name = members[0].name;
+      }
+    }
 
     if (!date) {
       return {
@@ -928,6 +945,7 @@ class AIAssistantService {
       participants: participants ?? undefined,
       location: location ?? undefined,
       source: 'ai',
+      assigned_to: assigned_to ?? undefined,
     };
 
     try {
@@ -958,10 +976,15 @@ class AIAssistantService {
         participantsMsg = ` with ${participants.join(', ')}`;
       }
 
+      let assignmentMsg = '';
+      if (assigned_to_name) {
+        assignmentMsg = ` and assigned it to ${assigned_to_name}`;
+      }
+
       return {
         type: 'calendar',
         success: true,
-        message: `✅ Scheduled: ${title} on ${date}${timeMsg}${participantsMsg}`,
+        message: `✅ Scheduled: ${title} on ${date}${timeMsg}${participantsMsg}${assignmentMsg}`,
         data: result,
       };
     } catch (error) {
@@ -1489,8 +1512,8 @@ class AIAssistantService {
     const title = String(details.title ?? 'Reminder');
     const date = toISODate(details.date);
     const time = toISOTime(details.time);
-    const familyMemberName = details.family_member
-      ? String(details.family_member)
+    const familyMemberName = (details.assigned_to || details.family_member)
+      ? String(details.assigned_to || details.family_member)
       : null;
 
     if (!date) {

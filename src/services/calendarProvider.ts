@@ -11,6 +11,7 @@ export interface CalendarEventInput {
   participants?: string[] | null;
   type?: string | null; // e.g., 'other'
   source?: string | null; // e.g., 'ai'
+  assigned_to?: string | null; // family member ID
 }
 
 export interface CalendarCreateResult {
@@ -76,6 +77,7 @@ export class LocalCalendarProvider implements ICalendarProvider {
       participants,
       event_type,
       source,
+      assigned_to: event.assigned_to ?? null,
     };
 
     const { data, error } = await supabase.from('events').insert([payload]).select('*').single();

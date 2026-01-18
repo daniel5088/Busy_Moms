@@ -190,7 +190,7 @@ export class OpenAIRealtimeService extends Emitter {
       {
         type: 'function',
         name: 'create_calendar_event',
-        description: 'Create a new calendar event/meeting/appointment',
+        description: 'Create a new calendar event/meeting/appointment. Can be assigned to family members by name.',
         parameters: {
           type: 'object',
           properties: {
@@ -199,7 +199,8 @@ export class OpenAIRealtimeService extends Emitter {
             start_time: { type: 'string', description: 'The start time in HH:MM format or natural language like "2pm", "14:30"' },
             end_time: { type: 'string', description: 'The end time in HH:MM format or natural language like "3pm", "15:30"' },
             location: { type: 'string', description: 'The location of the event' },
-            participants: { type: 'array', items: { type: 'string' }, description: 'List of participants' }
+            participants: { type: 'array', items: { type: 'string' }, description: 'List of participants' },
+            assigned_to: { type: 'string', description: 'Name of family member to assign this event to (e.g., "Jack", "Sarah")' }
           },
           required: ['title', 'date']
         }
@@ -260,13 +261,13 @@ export class OpenAIRealtimeService extends Emitter {
       {
         type: 'function',
         name: 'create_reminder',
-        description: 'CRITICAL: ALWAYS call this function when user asks to be reminded of something. DO NOT just respond with text - ACTUALLY CREATE the reminder by calling this function. Examples: "remind me to drink water", "set a reminder to call mom", "don\'t let me forget to take medicine"',
+        description: 'CRITICAL: ALWAYS call this function when user asks to be reminded of something OR to remind a family member. DO NOT just respond with text - ACTUALLY CREATE the reminder by calling this function. Examples: "remind me to drink water", "remind Jack to do homework", "remind Cody to get bread", "set a reminder for Sarah to call mom"',
         parameters: {
           type: 'object',
           properties: {
             title: {
               type: 'string',
-              description: 'What to be reminded about (extract from user\'s request, e.g., "drink water", "call mom", "take out trash")'
+              description: 'What to be reminded about (extract from user\'s request, e.g., "drink water", "do homework", "get bread", "take out trash")'
             },
             date: {
               type: 'string',
@@ -275,6 +276,10 @@ export class OpenAIRealtimeService extends Emitter {
             time: {
               type: 'string',
               description: 'Time for the reminder in formats like "4pm", "16:00", "2:30pm". Extract from user\'s request if specified.'
+            },
+            assigned_to: {
+              type: 'string',
+              description: 'Name of the family member to assign this reminder to (e.g., "Jack", "Cody", "Sarah"). Extract from phrases like "remind Jack", "tell Cody", "remind Sarah"'
             }
           },
           required: ['title', 'date']
@@ -283,18 +288,19 @@ export class OpenAIRealtimeService extends Emitter {
       {
         type: 'function',
         name: 'add_shopping_item',
-        description: 'Add an item to the shopping list. Parse the full item description to extract quantity, unit, and item name.',
+        description: 'Add an item to the shopping list and optionally assign to a family member. Parse the full item description to extract quantity, unit, and item name. Examples: "add bread", "remind Cody to get bread", "tell Jack to buy milk"',
         parameters: {
           type: 'object',
           properties: {
-            title: { type: 'string', description: 'The complete item description including quantity and unit (e.g., "5 gallons of water", "2 pounds chicken")' },
+            title: { type: 'string', description: 'The complete item description including quantity and unit (e.g., "5 gallons of water", "2 pounds chicken", "bread")' },
             category: {
               type: 'string',
               enum: ['dairy', 'produce', 'meat', 'bakery', 'baby', 'household', 'other'],
               description: 'Category of the item'
             },
             quantity: { type: 'number', description: 'Quantity number (extracted from title if needed)' },
-            unit: { type: 'string', description: 'Unit of measurement (e.g., gallons, pounds, cups, each)' }
+            unit: { type: 'string', description: 'Unit of measurement (e.g., gallons, pounds, cups, each)' },
+            assigned_to: { type: 'string', description: 'Name of family member to assign this shopping item to (e.g., "Cody", "Jack", "Sarah")' }
           },
           required: ['title']
         }
@@ -302,11 +308,11 @@ export class OpenAIRealtimeService extends Emitter {
       {
         type: 'function',
         name: 'create_task',
-        description: 'Create a new task or todo item for family members',
+        description: 'Create a new task or todo item for family members. Examples: "create a task for John to clean his room", "assign homework task to Sarah", "tell Jack to mow the lawn"',
         parameters: {
           type: 'object',
           properties: {
-            title: { type: 'string', description: 'The title/name of the task' },
+            title: { type: 'string', description: 'The title/name of the task (e.g., "clean room", "do homework", "mow lawn")' },
             description: { type: 'string', description: 'Detailed description of the task' },
             category: {
               type: 'string',
@@ -318,7 +324,7 @@ export class OpenAIRealtimeService extends Emitter {
               enum: ['low', 'medium', 'high'],
               description: 'Priority level of the task'
             },
-            assigned_to: { type: 'string', description: 'Name of family member to assign this task to' },
+            assigned_to: { type: 'string', description: 'Name of family member to assign this task to (e.g., "John", "Sarah", "Jack"). REQUIRED when creating tasks.' },
             due_date: { type: 'string', description: 'Due date in YYYY-MM-DD format or natural language like "today", "tomorrow"' },
             due_time: { type: 'string', description: 'Due time in HH:MM format or natural language like "2pm", "14:30"' },
             points: { type: 'number', description: 'Points awarded for completing this task (for gamification)' },
@@ -890,7 +896,8 @@ export class OpenAIRealtimeService extends Emitter {
       start_time: args.start_time || args.time,
       end_time: args.end_time,
       location: args.location,
-      participants: args.participants
+      participants: args.participants,
+      assigned_to: args.assigned_to
     };
 
     return await aiAssistantService.createCalendarEvent(details, this.currentUserId!);
@@ -942,7 +949,8 @@ export class OpenAIRealtimeService extends Emitter {
     return await aiAssistantService.createReminder({
       title: args.title,
       date: args.date,
-      time: args.time
+      time: args.time,
+      assigned_to: args.assigned_to
     }, this.currentUserId!);
   }
 
@@ -959,6 +967,25 @@ export class OpenAIRealtimeService extends Emitter {
       const itemName = parsed.ingredient;
       const category = args.category ?? 'other';
 
+      let assigned_to: string | null = null;
+      let assigned_to_email: string | null = null;
+      let assigned_to_name: string | null = null;
+
+      if (args.assigned_to) {
+        const memberName = String(args.assigned_to).toLowerCase();
+        const { data: members } = await supabase
+          .from('family_members')
+          .select('id, name, Email')
+          .eq('user_id', this.currentUserId)
+          .ilike('name', `%${memberName}%`);
+
+        if (members && members.length > 0) {
+          assigned_to = members[0].id;
+          assigned_to_email = members[0].Email || null;
+          assigned_to_name = members[0].name;
+        }
+      }
+
       const itemData = {
         item: itemName,
         category,
@@ -966,7 +993,8 @@ export class OpenAIRealtimeService extends Emitter {
         unit,
         user_id: this.currentUserId,
         completed: false,
-        assigned_to: null,
+        assigned_to,
+        assigned_to_email,
         purchase_status: 'not_sent',
       };
 
@@ -981,9 +1009,14 @@ export class OpenAIRealtimeService extends Emitter {
         return { success: false, message: `Failed to add ${itemName} to shopping list` };
       }
 
+      let message = `Added ${quantity} ${unit} of ${itemName} to your shopping list`;
+      if (assigned_to_name) {
+        message += ` and assigned it to ${assigned_to_name}`;
+      }
+
       return {
         success: true,
-        message: `Added ${quantity} ${unit} of ${itemName} to your shopping list`,
+        message,
         data
       };
     } catch (error) {
@@ -1070,10 +1103,18 @@ WRONG: User says "schedule meeting tomorrow at 2pm" → You respond "I'll schedu
 RIGHT: User says "schedule meeting tomorrow at 2pm" → You CALL create_calendar_event function ✅
 
 ACTION TRIGGERS - When user says these phrases, CALL THE FUNCTION:
-- "remind me" / "set a reminder" / "don't let me forget" → CALL create_reminder
-- "add to shopping list" / "buy" / "get" → CALL add_shopping_item
-- "schedule" / "add to calendar" / "create event" → CALL create_calendar_event
-- "create a task" / "add task" → CALL create_task
+- "remind me" / "remind Jack" / "set a reminder" / "don't let me forget" → CALL create_reminder (with assigned_to if name mentioned)
+- "add to shopping list" / "buy" / "get" / "tell Cody to get bread" → CALL add_shopping_item (with assigned_to if name mentioned)
+- "schedule" / "add to calendar" / "create event" / "schedule for Sarah" → CALL create_calendar_event (with assigned_to if name mentioned)
+- "create a task" / "assign task to John" / "tell Jack to clean" → CALL create_task (with assigned_to if name mentioned)
+
+ASSIGNMENT PATTERNS - Extract family member names from these patterns:
+- "remind [NAME] to..." → assigned_to: NAME
+- "tell [NAME] to..." → assigned_to: NAME
+- "assign [NAME] to..." → assigned_to: NAME
+- "[NAME] needs to..." → assigned_to: NAME
+- "create task for [NAME]" → assigned_to: NAME
+- "schedule for [NAME]" → assigned_to: NAME
 
 Current date context: Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}.
 
