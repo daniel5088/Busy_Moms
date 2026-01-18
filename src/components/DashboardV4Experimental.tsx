@@ -600,10 +600,10 @@ export function DashboardV4Experimental({
               </button>
               <button
                 onClick={() => setShowAboutMenu(!showAboutMenu)}
-                className="w-8 h-8 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
+                className="hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                 aria-label="About BMA"
               >
-                <img src="/bmalogo.png" alt="" className="w-6 h-6 object-contain" />
+                <img src="/bmalogo.png" alt="" className="h-8 w-auto object-contain" />
               </button>
             </div>
           </div>
