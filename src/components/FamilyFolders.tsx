@@ -296,7 +296,7 @@ export function FamilyFolders() {
                           <span>{data.tasks.length} tasks</span>
                           <span>{data.reminders.length} reminders</span>
                           <span>{data.shoppingItems.length} shopping items</span>
-                          {data.tasks.some(t => t.status === 'completed' && t.points && t.points > 0) && (
+                          {data.tasks.some(t => t.status === 'completed' && t.points != null && t.points > 0) && (
                             <span className="font-bold text-yellow-600">
                               {data.tasks.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.points || 0), 0)} pts
                             </span>
@@ -491,7 +491,7 @@ export function FamilyFolders() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-1">
-                                      {task.points && task.points > 0 && (
+                                      {task.points != null && task.points > 0 && (
                                         <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold flex items-center space-x-1">
                                           <span>{task.points}</span>
                                           <span>pts</span>
@@ -500,7 +500,7 @@ export function FamilyFolders() {
                                       <h5
                                         className={`font-medium text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}
                                       >
-                                        {task.points && task.points > 0 ? `${data.member.name} - ${task.title}` : task.title}
+                                        {task.points != null && task.points > 0 ? `${data.member.name} - ${task.title}` : task.title}
                                       </h5>
                                     </div>
                                     <div className="flex items-center space-x-2 text-xs mt-1">
