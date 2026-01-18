@@ -1563,6 +1563,7 @@ class AIAssistantService {
             recurring_pattern: null,
             family_member_id,
             family_member_email,
+            assigned_to_name: recipientName,
           },
         ])
         .select()
@@ -1739,6 +1740,7 @@ class AIAssistantService {
 
     let assigned_to: string | null = null;
     let assigned_to_email: string | null = null;
+    let assigned_to_name: string | null = null;
     if (details.assigned_to) {
       const memberName = String(details.assigned_to).toLowerCase();
       const { data: members } = await supabase
@@ -1750,6 +1752,7 @@ class AIAssistantService {
       if (members && members.length > 0) {
         assigned_to = members[0].id;
         assigned_to_email = members[0].Email || null;
+        assigned_to_name = members[0].name;
       }
     }
 
@@ -1766,6 +1769,7 @@ class AIAssistantService {
             urgent: false,
             assigned_to,
             assigned_to_email,
+            assigned_to_name,
           },
         ])
         .select()
@@ -1789,8 +1793,8 @@ class AIAssistantService {
       let message = `✅ Added to shopping list: ${title}${
         quantity > 1 ? ` x${quantity}` : ''
       }`;
-      if ((data as any).assigned_to_email) {
-        message += ` assigned to ${(data as any).assigned_to_email}`;
+      if (assigned_to_name) {
+        message += ` assigned to ${assigned_to_name}`;
       }
 
       return {
@@ -1835,6 +1839,7 @@ class AIAssistantService {
 
     let assigned_to: string | null = null;
     let assigned_to_email: string | null = null;
+    let assigned_to_name: string | null = null;
     if (details.assigned_to) {
       const memberName = String(details.assigned_to).toLowerCase();
       const { data: members } = await supabase
@@ -1846,6 +1851,7 @@ class AIAssistantService {
       if (members && members.length > 0) {
         assigned_to = members[0].id;
         assigned_to_email = members[0].Email || null;
+        assigned_to_name = members[0].name;
       }
     }
 
@@ -1866,6 +1872,7 @@ class AIAssistantService {
             notes,
             assigned_to,
             assigned_to_email,
+            assigned_to_name,
           },
         ])
         .select(

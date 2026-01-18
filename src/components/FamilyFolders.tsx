@@ -66,33 +66,33 @@ export function FamilyFolders() {
       // Load data for each family member
       const familyDataPromises = (members || []).map(async (member) => {
         const [eventsResult, tasksResult, remindersResult, shoppingResult] = await Promise.all([
-          // Events - check if member name is in participants array
+          // Events - check assigned_to_name, assigned_to, or participants array
           supabase
             .from('events')
             .select('*')
             .eq('user_id', user.id)
-            .contains('participants', [member.name])
+            .or(`assigned_to_name.eq.${member.name},assigned_to.eq.${member.id},participants.cs.{${member.name}}`)
             .order('event_date', { ascending: false }),
 
-          // Tasks - FIXED: use assigned_to_email instead of assigned_to
+          // Tasks - use assigned_to_name, assigned_to, or assigned_to_email
           supabase
             .from('tasks')
             .select('*')
-            .or(`assigned_to_email.eq.${member.Email},assigned_to.eq.${member.id}`)
+            .or(`assigned_to_name.eq.${member.name},assigned_to.eq.${member.id},assigned_to_email.eq.${member.Email}`)
             .order('created_at', { ascending: false }),
 
-          // Reminders - FIXED: use family_member_email instead of family_member_id
+          // Reminders - use assigned_to_name, family_member_id, or family_member_email
           supabase
             .from('reminders')
             .select('*')
-            .or(`family_member_email.eq.${member.Email},family_member_id.eq.${member.id}`)
+            .or(`assigned_to_name.eq.${member.name},family_member_id.eq.${member.id},family_member_email.eq.${member.Email}`)
             .order('reminder_date', { ascending: false }),
 
-          // Shopping items - FIXED: use assigned_to_email instead of assigned_to
+          // Shopping items - use assigned_to_name, assigned_to, or assigned_to_email
           supabase
             .from('shopping_lists')
             .select('*')
-            .or(`assigned_to_email.eq.${member.Email},assigned_to.eq.${member.id}`)
+            .or(`assigned_to_name.eq.${member.name},assigned_to.eq.${member.id},assigned_to_email.eq.${member.Email}`)
             .order('created_at', { ascending: false }),
         ]);
 
