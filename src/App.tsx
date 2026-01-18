@@ -4,12 +4,6 @@ import { useAuth } from './hooks/useAuth';
 import { AuthForm } from './components/forms/AuthForm';
 import { Onboarding } from './components/Onboarding';
 import { Dashboard } from './components/Dashboard';
-//Alvaro-dashboardv2: Import experimental Dashboard V2
-import { DashboardV2Experimental } from './components/DashboardV2Experimental';
-//Alvaro-dashboardv3: Import experimental Dashboard V3
-import { DashboardV3Experimental } from './components/DashboardV3Experimental';
-//Alvaros - V4: Import experimental Dashboard V4
-import { DashboardV4Experimental } from './components/DashboardV4Experimental';
 import { ImprovedNavigation } from './components/ImprovedNavigation';
 import { FamilyHub } from './components/FamilyHub';
 import { MoreMenu } from './components/MoreMenu';
@@ -35,14 +29,8 @@ import { Diagnostics } from './pages/Diagnostics';
 import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks component
 import { useDarkMode } from './hooks/useDarkMode';
 
-//Alvaro-dashboardv2: Add 'dashboard-v2' to Screen type
-//Alvaro-dashboardv3: Add 'dashboard-v3' to Screen type
-//Alvaros - V4: Add 'dashboard-v4' to Screen type
 export type Screen =
   | 'dashboard'
-  | 'dashboard-v2'
-  | 'dashboard-v3'
-  | 'dashboard-v4'
   | 'calendar'
   | 'calendar-camera'
   | 'family'
@@ -59,7 +47,7 @@ function App() {
   const session = useSessionContext();
   const supabaseClient = useSupabaseClient();
   const { user, loading, signOut } = useAuth();
-  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard-v4');
+  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
   const [currentSubScreen, setCurrentSubScreen] = useState<SubScreen | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
@@ -356,40 +344,6 @@ function App() {
               {currentScreen === 'dashboard' && (
                 <FeatureErrorBoundary featureName="Dashboard">
                   <Dashboard
-                    onNavigate={setCurrentScreen}
-                    onNavigateToSubScreen={setCurrentSubScreen}
-                    onVoiceChatOpen={() => setShowVoiceChat(true)}
-                    onNavigateToEvent={(eventDate: string) => {
-                      setSelectedEventDate(eventDate);
-                      setCurrentScreen('calendar');
-                    }}
-                  />
-                </FeatureErrorBoundary>
-              )}
-              {/* Alvaro-dashboardv2: Add Dashboard V2 Experimental routing */}
-              {currentScreen === 'dashboard-v2' && (
-                <FeatureErrorBoundary featureName="Dashboard V2">
-                  <DashboardV2Experimental
-                    onNavigate={setCurrentScreen}
-                    onNavigateToSubScreen={setCurrentSubScreen}
-                    onVoiceChatOpen={() => setShowVoiceChat(true)}
-                  />
-                </FeatureErrorBoundary>
-              )}
-              {/* Alvaro-dashboardv3: Add Dashboard V3 Experimental routing */}
-              {currentScreen === 'dashboard-v3' && (
-                <FeatureErrorBoundary featureName="Dashboard V3">
-                  <DashboardV3Experimental
-                    onNavigate={setCurrentScreen}
-                    onNavigateToSubScreen={setCurrentSubScreen}
-                    onVoiceChatOpen={() => setShowVoiceChat(true)}
-                  />
-                </FeatureErrorBoundary>
-              )}
-              {/* Alvaros - V4: Add Dashboard V4 Experimental routing */}
-              {currentScreen === 'dashboard-v4' && (
-                <FeatureErrorBoundary featureName="Dashboard V4">
-                  <DashboardV4Experimental
                     onNavigate={setCurrentScreen}
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onVoiceChatOpen={() => setShowVoiceChat(true)}
