@@ -80,3 +80,43 @@ export function getDateInDays(days: number): string {
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Formats a date string for display with relative context
+ * @param dateString - ISO date string (YYYY-MM-DD)
+ * @returns Formatted date with context (e.g., "Today, January 18", "Tomorrow, January 19", "Monday, January 20")
+ */
+export function formatDateForDisplay(dateString: string): string {
+  const today = getTodayISO();
+  const tomorrow = getDateInDays(1);
+
+  if (dateString === today) {
+    return `Today, ${formatDate(dateString, { month: 'long', day: 'numeric' })}`;
+  } else if (dateString === tomorrow) {
+    return `Tomorrow, ${formatDate(dateString, { month: 'long', day: 'numeric' })}`;
+  } else {
+    return formatDate(dateString, { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+}
+
+/**
+ * Alias for formatEventTime for consistency
+ */
+export function formatTimeForDisplay(timeString: string | null | undefined): string {
+  return formatEventTime(timeString);
+}
+
+/**
+ * Parses a time string to minutes since midnight for sorting
+ * @param timeString - Time string in HH:MM format
+ * @returns Minutes since midnight
+ */
+export function parseTimeToMinutes(timeString: string | null | undefined): number {
+  if (!timeString) return 0;
+  try {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+  } catch {
+    return 0;
+  }
+}

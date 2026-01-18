@@ -207,6 +207,25 @@ export class OpenAIRealtimeService extends Emitter {
       },
       {
         type: 'function',
+        name: 'get_schedule',
+        description: 'CRITICAL: Get comprehensive schedule including events, tasks, and reminders organized by time. ALWAYS use this when user asks "what\'s my schedule", "what do I have today/tomorrow", "what\'s on my calendar". This is the PRIMARY schedule query function.',
+        parameters: {
+          type: 'object',
+          properties: {
+            date: {
+              type: 'string',
+              description: 'Date to get schedule for. Can be "today", "tomorrow", or a specific date like "2026-01-20" or "Monday". REQUIRED.'
+            },
+            include_shopping: {
+              type: 'boolean',
+              description: 'Whether to include shopping list overview. Default: false'
+            }
+          },
+          required: ['date']
+        }
+      },
+      {
+        type: 'function',
         name: 'query_calendar',
         description: 'Query the calendar for events or check availability',
         parameters: {
@@ -825,6 +844,9 @@ export class OpenAIRealtimeService extends Emitter {
         case 'create_calendar_event':
           result = await this.handleCreateCalendarEvent(args);
           break;
+        case 'get_schedule':
+          result = await this.handleGetSchedule(args);
+          break;
         case 'query_calendar':
           result = await this.handleQueryCalendar(args);
           break;
@@ -901,6 +923,13 @@ export class OpenAIRealtimeService extends Emitter {
     };
 
     return await aiAssistantService.createCalendarEvent(details, this.currentUserId!);
+  }
+
+  private async handleGetSchedule(args: any) {
+    return await aiAssistantService.getSchedule({
+      date: args.date,
+      include_shopping: args.include_shopping || false
+    }, this.currentUserId!);
   }
 
   private async handleQueryCalendar(args: any) {
@@ -1103,6 +1132,7 @@ WRONG: User says "schedule meeting tomorrow at 2pm" → You respond "I'll schedu
 RIGHT: User says "schedule meeting tomorrow at 2pm" → You CALL create_calendar_event function ✅
 
 ACTION TRIGGERS - When user says these phrases, CALL THE FUNCTION:
+- "what's my schedule" / "what do I have today" / "what's on my calendar" / "what do I have tomorrow" / "show me my schedule" → CALL get_schedule (PRIMARY schedule query)
 - "remind me" / "remind Jack" / "set a reminder" / "don't let me forget" → CALL create_reminder (with assigned_to if name mentioned)
 - "add to shopping list" / "buy" / "get" / "tell Cody to get bread" → CALL add_shopping_item (with assigned_to if name mentioned)
 - "schedule" / "add to calendar" / "create event" / "schedule for Sarah" → CALL create_calendar_event (with assigned_to if name mentioned)

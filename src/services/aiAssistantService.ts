@@ -16,6 +16,7 @@ import {
   CalendarEventInput,
 } from './calendarProvider';
 import { calendarContextService } from './calendarContext';
+import { formatTimeForDisplay, formatDateForDisplay, parseTimeToMinutes } from '../utils/timeFormatters';
 
 /** Central brain for "Sara" — routes natural language to concrete app actions. */
 export interface AIAction {
@@ -29,6 +30,7 @@ export interface AIAction {
     | 'shopping_update'
     | 'shopping_delete'
     | 'task'
+    | 'schedule'
     | 'family'
     | 'family_query'
     | 'family_update'
@@ -805,6 +807,14 @@ class AIAssistantService {
     return this.handleCalendarDelete(details, userId);
   }
 
+  /** Get comprehensive schedule for a date including events, tasks, and reminders */
+  async getSchedule(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    return this.handleScheduleQuery(details, userId);
+  }
+
   /** Direct task creation with structured data (for voice AI, etc.) */
   async createTask(
     details: Record<string, unknown>,
@@ -1370,6 +1380,171 @@ class AIAssistantService {
         type: 'calendar',
         success: false,
         message: `Failed to delete event: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      };
+    }
+  }
+
+  /** Schedule Query - Get all events, tasks, and reminders for a date */
+  private async handleScheduleQuery(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    console.log('📅 Querying schedule with details:', details);
+
+    const dateInput = String(details.date || 'today');
+    const includeShopping = Boolean(details.include_shopping);
+    const targetDate = toISODate(dateInput);
+
+    if (!targetDate) {
+      return {
+        type: 'schedule',
+        success: false,
+        message: 'Please provide a valid date (e.g., "today", "tomorrow", "2026-01-20")',
+      };
+    }
+
+    try {
+      // Query all three types of items for the date
+      const [eventsResult, tasksResult, remindersResult, shoppingResult] = await Promise.all([
+        supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('event_date', targetDate)
+          .order('start_time', { ascending: true, nullsFirst: false }),
+
+        supabase
+          .from('tasks')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('due_date', targetDate)
+          .order('due_time', { ascending: true, nullsFirst: false }),
+
+        supabase
+          .from('reminders')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('reminder_date', targetDate)
+          .eq('completed', false)
+          .order('reminder_time', { ascending: true, nullsFirst: false }),
+
+        includeShopping ? supabase
+          .from('shopping_lists')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('completed', false)
+          .order('created_at', { ascending: false }) : null
+      ]);
+
+      const events = eventsResult.data || [];
+      const tasks = tasksResult.data || [];
+      const reminders = remindersResult.data || [];
+      const shopping = shoppingResult?.data || [];
+
+      // Combine and sort all items by time
+      interface ScheduleItem {
+        type: 'event' | 'task' | 'reminder';
+        time: string | null;
+        title: string;
+        details: string;
+        assigned?: string;
+        rawTime: number; // for sorting
+      }
+
+      const scheduleItems: ScheduleItem[] = [];
+
+      // Add events
+      events.forEach((event: any) => {
+        const time = event.start_time || null;
+        const timeStr = time ? formatTimeForDisplay(time) : 'All day';
+        scheduleItems.push({
+          type: 'event',
+          time: timeStr,
+          title: event.title,
+          details: event.location ? `at ${event.location}` : '',
+          assigned: event.assigned_to_name || (event.participants?.length > 0 ? `with ${event.participants.join(', ')}` : ''),
+          rawTime: time ? parseTimeToMinutes(time) : 0
+        });
+      });
+
+      // Add tasks
+      tasks.forEach((task: any) => {
+        const time = task.due_time || null;
+        const timeStr = time ? formatTimeForDisplay(time) : 'No time set';
+        scheduleItems.push({
+          type: 'task',
+          time: timeStr,
+          title: task.title,
+          details: task.priority ? `${task.priority} priority` : '',
+          assigned: task.assigned_to_name || '',
+          rawTime: time ? parseTimeToMinutes(time) : 1440 // Put tasks without time at end of day
+        });
+      });
+
+      // Add reminders
+      reminders.forEach((reminder: any) => {
+        const time = reminder.reminder_time || null;
+        const timeStr = time ? formatTimeForDisplay(time) : 'No time set';
+        scheduleItems.push({
+          type: 'reminder',
+          time: timeStr,
+          title: reminder.title,
+          details: '',
+          assigned: reminder.assigned_to_name || '',
+          rawTime: time ? parseTimeToMinutes(time) : 1440
+        });
+      });
+
+      // Sort by time
+      scheduleItems.sort((a, b) => a.rawTime - b.rawTime);
+
+      // Format the response
+      const dateDisplay = formatDateForDisplay(targetDate);
+      let message = `📅 Your schedule for ${dateDisplay}:\n\n`;
+
+      if (scheduleItems.length === 0) {
+        message += '🎉 You have nothing scheduled! Enjoy your free time.';
+      } else {
+        scheduleItems.forEach((item) => {
+          const icon = item.type === 'event' ? '📅' : item.type === 'task' ? '✅' : '🔔';
+          const assignedText = item.assigned ? ` (${item.assigned})` : '';
+          const detailsText = item.details ? ` - ${item.details}` : '';
+          message += `${icon} ${item.time} - ${item.title}${assignedText}${detailsText}\n`;
+        });
+      }
+
+      // Add shopping list if requested
+      if (includeShopping && shopping.length > 0) {
+        message += `\n\n🛒 Shopping List (${shopping.length} items):\n`;
+        shopping.slice(0, 5).forEach((item: any) => {
+          const assignedText = item.assigned_to_name ? ` - ${item.assigned_to_name}` : '';
+          message += `  • ${item.item}${assignedText}\n`;
+        });
+        if (shopping.length > 5) {
+          message += `  ...and ${shopping.length - 5} more items\n`;
+        }
+      }
+
+      return {
+        type: 'schedule',
+        success: true,
+        message,
+        data: {
+          date: targetDate,
+          events,
+          tasks,
+          reminders,
+          shopping: includeShopping ? shopping : []
+        }
+      };
+    } catch (error) {
+      console.error('❌ Schedule query error:', error);
+      return {
+        type: 'schedule',
+        success: false,
+        message: `Failed to get schedule: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`,
       };
