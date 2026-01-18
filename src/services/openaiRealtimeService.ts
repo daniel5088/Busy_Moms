@@ -319,7 +319,7 @@ export class OpenAIRealtimeService extends Emitter {
           properties: {
             title: {
               type: 'string',
-              description: 'What to be reminded about (extract from user\'s request, e.g., "drink water", "do homework", "get bread", "take out trash")'
+              description: 'What to be reminded about. CRITICAL: Extract as a clean action without possessive pronouns or articles. REMOVE "his", "her", "their", "the", "a", "an" from the title. Examples: "remind Rio to do his homework" → "do homework" (NOT "do his homework"), "remind Jack to take his medicine" → "take medicine" (NOT "take his medicine"), "tell Sarah to finish her project" → "finish project" (NOT "finish her project")'
             },
             date: {
               type: 'string',
