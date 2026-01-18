@@ -4,7 +4,6 @@ import {
   ShoppingBag,
   MessageCircle,
   Clock,
-  Heart,
   Users,
   LogOut,
   Sparkles,
@@ -939,9 +938,7 @@ export function Dashboard({
             </button>
 
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-rose-100 dark:bg-rose-900 rounded-full mb-6">
-                <Heart className="w-8 h-8 text-rose-500 dark:text-rose-400" />
-              </div>
+              <img src="/bmalogo3.png" alt="" className="h-12 w-auto object-contain mb-6 mx-auto" />
 
               <h2
                 id="about-dialog-title"
