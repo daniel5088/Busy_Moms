@@ -599,9 +599,9 @@ export function Dashboard({
               <button
                 onClick={() => setShowAboutMenu(!showAboutMenu)}
                 className="hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                aria-label="About BMA"
+                aria-label="About Busy Moms Assistant AI"
               >
-                <img src="/bmalogo3.png" alt="" className="h-10 w-auto object-contain" />
+                <img src="/bmalogo3.png" alt="" className="h-12 w-auto object-contain" />
               </button>
             </div>
           </div>
