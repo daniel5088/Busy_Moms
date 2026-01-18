@@ -353,7 +353,7 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUser
               <input
                 type="number"
                 min="0"
-                value={formData.points}
+                value={formData.points || ''}
                 onChange={(e) =>
                   setFormData({ ...formData, points: parseInt(e.target.value) || 0 })
                 }
