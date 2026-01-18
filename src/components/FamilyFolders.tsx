@@ -212,7 +212,7 @@ export function FamilyFolders() {
       <main className="h-screen overflow-y-auto pb-20 sm:pb-24">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" role="status" aria-label="Loading"></div>
-          <span className="ml-2 text-gray-600">Loading family data...</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading family data...</span>
         </div>
       </main>
     );
@@ -221,11 +221,11 @@ export function FamilyFolders() {
   return (
     <main className="h-screen overflow-y-auto pb-20 sm:pb-24">
       {/* Header */}
-      <header className="bg-white p-4 sm:p-6 border-b border-gray-200">
+      <header className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Family Folders</h1>
-            <p className="text-sm sm:text-base text-gray-600">Organize by family member</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Family Folders</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Organize by family member</p>
           </div>
           <div className="flex items-center space-x-3">
             <button
@@ -247,9 +247,9 @@ export function FamilyFolders() {
       <div className="p-4 sm:p-6">
         {familyData.length === 0 ? (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No family members yet</h3>
-            <p className="text-gray-600 mb-4">
+            <Users className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" aria-hidden="true" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No family members yet</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               Add family members in Settings to organize their activities
             </p>
           </div>
@@ -262,7 +262,7 @@ export function FamilyFolders() {
               return (
                 <div
                   key={data.member.id}
-                  className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden"
                 >
                   {/* Family Member Header */}
                   <div className="p-4 sm:p-6 flex items-center justify-between">
@@ -281,17 +281,17 @@ export function FamilyFolders() {
                         </span>
                       </div>
                       <div className="text-left flex-1">
-                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
                           {data.member.name}
                         </h3>
-                        <div className="flex items-center space-x-3 text-sm text-gray-600">
+                        <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-400">
                           {data.member.relationship && (
-                            <span className="font-medium text-purple-600">
+                            <span className="font-medium text-purple-600 dark:text-purple-400">
                               {data.member.relationship}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center space-x-4 mt-2 text-xs sm:text-sm text-gray-500">
+                        <div className="flex items-center space-x-4 mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           <span>{data.events.length} events</span>
                           <span>{data.tasks.length} tasks</span>
                           <span>{data.reminders.length} reminders</span>
@@ -333,7 +333,7 @@ export function FamilyFolders() {
 
                   {/* Expanded Content */}
                   {isExpanded && (
-                    <div className="border-t border-gray-200 p-4 sm:p-6 space-y-6">
+                    <div className="border-t border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-6">
                       {/* Member Details */}
                       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                         <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center space-x-2">
@@ -428,19 +428,19 @@ export function FamilyFolders() {
                       {/* Events Section */}
                       {data.events.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center space-x-2">
                             <Calendar className="w-4 h-4 text-blue-500" aria-hidden="true" />
                             <span>Events ({data.events.length})</span>
                           </h4>
                           <div className="space-y-2">
                             {data.events.slice(0, 3).map((event) => (
-                              <div key={event.id} className="p-3 bg-blue-50 rounded-lg">
+                              <div key={event.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1">
-                                    <h5 className="font-medium text-gray-900 text-sm">
+                                    <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                       {event.title}
                                     </h5>
-                                    <div className="flex items-center space-x-3 text-xs text-gray-600 mt-1">
+                                    <div className="flex items-center space-x-3 text-xs text-gray-600 dark:text-gray-400 mt-1">
                                       <span>{formatDate(event.event_date)}</span>
                                       {event.start_time && (
                                         <span>{event.start_time.slice(0, 5)}</span>
@@ -481,13 +481,13 @@ export function FamilyFolders() {
                       {/* Tasks Section */}
                       {data.tasks.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center space-x-2">
                             <CheckSquare className="w-4 h-4 text-purple-500" aria-hidden="true" />
                             <span>Tasks ({data.tasks.length})</span>
                           </h4>
                           <div className="space-y-2">
                             {data.tasks.slice(0, 3).map((task) => (
-                              <div key={task.id} className="p-3 bg-purple-50 rounded-lg">
+                              <div key={task.id} className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-1">
@@ -498,7 +498,7 @@ export function FamilyFolders() {
                                         </span>
                                       )}
                                       <h5
-                                        className={`font-medium text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                                        className={`font-medium text-sm ${task.status === 'completed' ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}
                                       >
                                         {task.points != null && task.points > 0 ? `${data.member.name} - ${task.title}` : task.title}
                                       </h5>
@@ -556,19 +556,19 @@ export function FamilyFolders() {
                       {/* Reminders Section */}
                       {data.reminders.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center space-x-2">
                             <Bell className="w-4 h-4 text-orange-500" aria-hidden="true" />
                             <span>Reminders ({data.reminders.length})</span>
                           </h4>
                           <div className="space-y-2">
                             {data.reminders.slice(0, 3).map((reminder) => (
-                              <div key={reminder.id} className="p-3 bg-orange-50 rounded-lg">
+                              <div key={reminder.id} className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1">
-                                    <h5 className="font-medium text-gray-900 text-sm">
+                                    <h5 className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                       {reminder.title}
                                     </h5>
-                                    <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
+                                    <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400 mt-1">
                                       <span>{formatDate(reminder.reminder_date)}</span>
                                       {reminder.reminder_time && (
                                         <span>{reminder.reminder_time.slice(0, 5)}</span>
@@ -615,7 +615,7 @@ export function FamilyFolders() {
                       {/* Shopping Items Section */}
                       {data.shoppingItems.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center space-x-2">
                             <ShoppingBag className="w-4 h-4 text-green-500" aria-hidden="true" />
                             <span>Shopping Items ({data.shoppingItems.length})</span>
                           </h4>
@@ -623,16 +623,16 @@ export function FamilyFolders() {
                             {data.shoppingItems.slice(0, 3).map((item) => (
                               <div
                                 key={item.id}
-                                className={`p-3 rounded-lg ${item.completed ? 'bg-gray-50' : 'bg-green-50'}`}
+                                className={`p-3 rounded-lg ${item.completed ? 'bg-gray-50 dark:bg-gray-800' : 'bg-green-50 dark:bg-green-900/20'}`}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1">
                                     <h5
-                                      className={`font-medium text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                                      className={`font-medium text-sm ${item.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}
                                     >
                                       {item.item}
                                     </h5>
-                                    <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
+                                    <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400 mt-1">
                                       <span className="capitalize">{item.category}</span>
                                       {item.quantity && item.quantity > 1 && (
                                         <span>Qty: {item.quantity}</span>
@@ -677,11 +677,11 @@ export function FamilyFolders() {
                       {/* Empty State */}
                       {itemCount === 0 && (
                         <div className="text-center py-8">
-                          <User className="w-8 h-8 text-gray-400 mx-auto mb-2" aria-hidden="true" />
-                          <p className="text-gray-500 text-sm">
+                          <User className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" aria-hidden="true" />
+                          <p className="text-gray-500 dark:text-gray-400 text-sm">
                             No activities yet for {data.member.name}
                           </p>
-                          <p className="text-gray-400 text-xs">
+                          <p className="text-gray-400 dark:text-gray-500 text-xs">
                             Use the buttons above to add events, tasks, reminders, or shopping items
                           </p>
                         </div>
@@ -699,23 +699,23 @@ export function FamilyFolders() {
       {activeModal === 'event' && selectedMember && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div
-            className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
             role="dialog"
             aria-modal="true"
             aria-labelledby="event-modal-title"
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 id="event-modal-title" className="text-lg font-bold text-gray-900">
+                <h3 id="event-modal-title" className="text-lg font-bold text-gray-900 dark:text-gray-100">
                   {editingItem ? 'Edit Event' : `Add Event for ${selectedMember.name}`}
                 </h3>
                 <button
                   type="button"
                   onClick={closeModal}
                   aria-label="Close dialog"
-                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-600" aria-hidden="true" />
+                  <X className="w-4 h-4 text-gray-600 dark:text-gray-300" aria-hidden="true" />
                 </button>
               </div>
               <EventForm event={editingItem} onCancel={closeModal} onSaved={handleItemCreated} />
