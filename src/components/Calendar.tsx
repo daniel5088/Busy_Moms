@@ -1678,7 +1678,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                 .from('calendar_sync_mappings')
                                 .select('google_event_id')
                                 .eq('local_event_id', selectedEvent.id)
-                                .eq('user_id', userId!)
+                                .eq('user_id', user?.id!)
                                 .maybeSingle();
 
                               // Delete from local database
@@ -1698,7 +1698,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                       .from('calendar_sync_mappings')
                                       .delete()
                                       .eq('local_event_id', selectedEvent.id)
-                                      .eq('user_id', userId!);
+                                      .eq('user_id', user?.id!);
 
                                     console.log('✅ Deleted event from both local and Google Calendar');
                                   } catch (googleError) {
