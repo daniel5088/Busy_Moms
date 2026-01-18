@@ -27,6 +27,7 @@ export interface OpenAIRealtimeConfig {
   vadThreshold?: number; // amplitude gate
   voice?: 'ash' | 'echo' | 'coral' | 'sage' | 'marin' | 'shimmer';
   instructions?: string;
+  detectedLanguage?: string;
 }
 
 export interface RealtimeEvent {
@@ -73,6 +74,7 @@ export class OpenAIRealtimeService extends Emitter {
   private lastUserTranscript: string = '';
   private lastUserAudio: string = '';
   private audioTranscriptBuffer: string = '';
+  private detectedLanguage: string = 'en';
 
   // Callbacks required by UI
   private onEventCb?: (event: RealtimeEvent) => void;
@@ -87,10 +89,41 @@ export class OpenAIRealtimeService extends Emitter {
 
   updateConfig(newConfig: Partial<OpenAIRealtimeConfig>) {
     this.config = { ...this.config, ...newConfig };
+    if (newConfig.detectedLanguage) {
+      this.detectedLanguage = newConfig.detectedLanguage;
+    }
     if (this.sessionConfigured && this.dc && this.dc.readyState === 'open') {
       this.sessionConfigured = false;
       this.configureSession();
     }
+  }
+
+  getDetectedLanguage(): string {
+    return this.detectedLanguage;
+  }
+
+  private detectLanguage(text: string): string {
+    const lowerText = text.toLowerCase().trim();
+
+    const spanishPatterns = /\b(hola|buenos días|buenas tardes|buenas noches|gracias|por favor|sí|no|cómo|qué|cuándo|dónde|quién|necesito|quiero|ayuda|hacer|tener)\b/i;
+    const frenchPatterns = /\b(bonjour|bonsoir|merci|s'il vous plaît|oui|non|comment|quoi|quand|où|qui|besoin|veux|aide|faire|avoir)\b/i;
+    const germanPatterns = /\b(hallo|guten morgen|guten tag|guten abend|danke|bitte|ja|nein|wie|was|wann|wo|wer|brauche|will|hilfe|machen|haben)\b/i;
+    const italianPatterns = /\b(ciao|buongiorno|buonasera|grazie|per favore|sì|no|come|cosa|quando|dove|chi|bisogno|voglio|aiuto|fare|avere)\b/i;
+    const portuguesePatterns = /\b(olá|bom dia|boa tarde|boa noite|obrigado|obrigada|por favor|sim|não|como|o que|quando|onde|quem|preciso|quero|ajuda|fazer|ter)\b/i;
+    const japanesePatterns = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
+    const koreanPatterns = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+    const chinesePatterns = /[\u4E00-\u9FFF]/;
+
+    if (spanishPatterns.test(lowerText)) return 'es';
+    if (frenchPatterns.test(lowerText)) return 'fr';
+    if (germanPatterns.test(lowerText)) return 'de';
+    if (italianPatterns.test(lowerText)) return 'it';
+    if (portuguesePatterns.test(lowerText)) return 'pt';
+    if (japanesePatterns.test(text)) return 'ja';
+    if (koreanPatterns.test(text)) return 'ko';
+    if (chinesePatterns.test(text)) return 'zh';
+
+    return 'en';
   }
 
   // == Public API expected by UI ==
@@ -424,6 +457,22 @@ export class OpenAIRealtimeService extends Emitter {
     ];
   }
 
+  private getLanguageInstruction(): string {
+    const languageMap: Record<string, string> = {
+      'en': 'Respond in English.',
+      'es': 'CRITICAL: Respond ONLY in Spanish (español). Never respond in English.',
+      'fr': 'CRITICAL: Respond ONLY in French (français). Never respond in English.',
+      'de': 'CRITICAL: Respond ONLY in German (Deutsch). Never respond in English.',
+      'it': 'CRITICAL: Respond ONLY in Italian (italiano). Never respond in English.',
+      'pt': 'CRITICAL: Respond ONLY in Portuguese (português). Never respond in English.',
+      'ja': 'CRITICAL: Respond ONLY in Japanese (日本語). Never respond in English.',
+      'ko': 'CRITICAL: Respond ONLY in Korean (한국어). Never respond in English.',
+      'zh': 'CRITICAL: Respond ONLY in Chinese (中文). Never respond in English.'
+    };
+
+    return languageMap[this.detectedLanguage] || languageMap['en'];
+  }
+
   private configureSession() {
     if (!this.dc || this.dc.readyState !== 'open') {
       console.error('Cannot configure session - data channel not ready');
@@ -437,11 +486,14 @@ export class OpenAIRealtimeService extends Emitter {
 
     const tools = this.getFunctionTools();
 
+    const languageInstruction = this.getLanguageInstruction();
+    const instructionsWithLanguage = `${languageInstruction}\n\n${this.config.instructions}`;
+
     const sessionConfig = {
       type: 'session.update',
       session: {
         modalities: ['text', 'audio'],
-        instructions: this.config.instructions,
+        instructions: instructionsWithLanguage,
         voice: this.config.voice || 'alloy',
         input_audio_format: 'pcm16',
         output_audio_format: 'pcm16',
@@ -464,6 +516,7 @@ export class OpenAIRealtimeService extends Emitter {
     try {
       this.dc.send(JSON.stringify(sessionConfig));
       this.sessionConfigured = true;
+      console.log(`🌐 Session configured for language: ${this.detectedLanguage}`);
     } catch (error) {
       console.error('Failed to send session configuration:', error);
       this.sessionConfigured = false;
@@ -720,6 +773,17 @@ export class OpenAIRealtimeService extends Emitter {
 
         if (transcript) {
           console.log('💬 You said:', transcript);
+
+          const newLanguage = this.detectLanguage(transcript);
+          if (newLanguage !== this.detectedLanguage) {
+            console.log(`🌐 Language detected: ${newLanguage}`);
+            this.detectedLanguage = newLanguage;
+            this.emitUI({ type: 'language.detected', language: newLanguage });
+
+            this.sessionConfigured = false;
+            this.configureSession();
+          }
+
           const lower = transcript.toLowerCase();
 
           // Only trigger Instacart for explicit mentions
@@ -1118,6 +1182,15 @@ export const openaiRealtimeService = new OpenAIRealtimeService({
   vadThreshold: 0.03,
   voice: 'shimmer',
   instructions: `You are Sara, a helpful AI assistant for busy parents embedded in a family organizer app.
+
+🌐 CRITICAL LANGUAGE RULE:
+ALWAYS respond in the SAME LANGUAGE that the user is currently speaking. Do NOT switch languages unless the user switches languages first.
+- If the user speaks Spanish, respond ONLY in Spanish
+- If the user speaks French, respond ONLY in French
+- If the user speaks German, respond ONLY in German
+- If the user speaks any other language, respond in that language
+- NEVER randomly switch to a different language
+- Match the user's language exactly on every response
 
 ⚠️ CRITICAL FUNCTION CALLING RULES - READ CAREFULLY:
 When a user asks you to DO something (create, add, set, schedule, remind, etc.), you MUST call the appropriate function - DO NOT just respond with text saying you'll do it.
