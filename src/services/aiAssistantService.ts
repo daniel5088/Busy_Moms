@@ -825,6 +825,7 @@ class AIAssistantService {
         case 'task_delete':
           return this.handleTaskDelete(intent.details || {}, userId);
         case 'schedule':
+        case 'schedule_query':
           return this.handleScheduleQuery(intent.details || {}, userId);
         case 'family':
           return this.handleFamilyAction(intent.details || {}, userId);
@@ -1480,7 +1481,21 @@ class AIAssistantService {
   ): Promise<AIAction> {
     console.log('📅 Querying schedule with details:', details);
 
-    const dateInput = String(details.date || 'today');
+    let dateInput = 'today';
+
+    if (details.query_type) {
+      const queryType = String(details.query_type);
+      if (queryType === 'today') {
+        dateInput = 'today';
+      } else if (queryType === 'tomorrow') {
+        dateInput = 'tomorrow';
+      } else if (queryType === 'date' && details.date) {
+        dateInput = String(details.date);
+      }
+    } else if (details.date) {
+      dateInput = String(details.date);
+    }
+
     const includeShopping = Boolean(details.include_shopping);
     const targetDate = toISODate(dateInput);
 
