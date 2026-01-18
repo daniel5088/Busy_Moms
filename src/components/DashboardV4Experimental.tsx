@@ -27,7 +27,7 @@ import { useProfile } from '../hooks/useProfile';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { Affirmation } from '../lib/supabase';
 import { affirmationService } from '../services/affirmationService';
-import { formatEventTime, formatEventTimeRange, formatDate } from '../utils/timeFormatters';
+import { formatEventTime, formatEventTimeRange, formatDate, getTodayISO } from '../utils/timeFormatters';
 import {
   DashboardPopup,
   EventsList,
@@ -114,8 +114,14 @@ export function DashboardV4Experimental({
   const [showAboutMenu, setShowAboutMenu] = React.useState(false);
 
   const shouldShowReminder = React.useCallback((reminder: Reminder, now: Date): boolean => {
-    const today = now.toISOString().split('T')[0];
+    const today = getTodayISO();
     const reminderDate = reminder.reminder_date;
+
+    console.log(`🔍 Checking reminder "${reminder.title}":`, {
+      reminderDate,
+      today,
+      comparison: reminderDate === today ? 'TODAY' : reminderDate > today ? 'FUTURE' : 'PAST'
+    });
 
     if (reminderDate > today) {
       return true;
