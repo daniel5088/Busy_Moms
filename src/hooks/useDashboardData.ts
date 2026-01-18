@@ -62,6 +62,13 @@ export function useDashboardData(): DashboardData {
         reminderEnd = getDateInDays(7 + weeksAhead * 7 - 1);
       }
 
+      console.log('🔍 Loading reminders:', {
+        userId: user.id,
+        userEmail: user.email,
+        weekOffset: reminderWeekOffset,
+        dateRange: { start: reminderStart, end: reminderEnd }
+      });
+
       // ✅ FIXED: Load reminders I created OR reminders assigned to me
       // This query will fetch:
       // 1. Reminders created by me (user_id = my ID)
@@ -77,6 +84,17 @@ export function useDashboardData(): DashboardData {
         .order('reminder_time', { ascending: true });
 
       if (remindersError) throw remindersError;
+
+      console.log('✅ Reminders loaded:', {
+        count: remindersData?.length || 0,
+        reminders: remindersData?.map(r => ({
+          id: r.id,
+          title: r.title,
+          date: r.reminder_date,
+          userId: r.user_id,
+          assignedEmail: r.family_member_email
+        }))
+      });
 
       setReminders(remindersData || []);
     } catch (err: any) {

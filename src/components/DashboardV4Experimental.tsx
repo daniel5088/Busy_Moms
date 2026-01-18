@@ -144,19 +144,44 @@ export function DashboardV4Experimental({
   const myAssignedReminders = React.useMemo(() => {
     const now = new Date();
     const userEmail = user?.email?.toLowerCase();
-    
+
+    console.log('📋 Filtering reminders:', {
+      totalReminders: reminders.length,
+      userId: user?.id,
+      userEmail: user?.email,
+      reminders: reminders.map(r => ({
+        id: r.id,
+        title: r.title,
+        date: r.reminder_date,
+        creatorId: r.user_id,
+        assignedEmail: r.family_member_email,
+        matchesCreator: r.user_id === user?.id,
+        matchesAssignee: r.family_member_email?.toLowerCase() === userEmail && r.user_id !== user?.id
+      }))
+    });
+
     const filtered = reminders.filter(reminder => {
       // Show ALL reminders I created
       if (reminder.user_id === user?.id) {
-        return shouldShowReminder(reminder, now);
+        const shouldShow = shouldShowReminder(reminder, now);
+        console.log(`✓ Reminder "${reminder.title}" - Created by me, shouldShow: ${shouldShow}`);
+        return shouldShow;
       }
-      
+
       // Show reminders assigned to me by others
       if (reminder.family_member_email?.toLowerCase() === userEmail && reminder.user_id !== user?.id) {
-        return shouldShowReminder(reminder, now);
+        const shouldShow = shouldShowReminder(reminder, now);
+        console.log(`✓ Reminder "${reminder.title}" - Assigned to me, shouldShow: ${shouldShow}`);
+        return shouldShow;
       }
-      
+
+      console.log(`✗ Reminder "${reminder.title}" - Does not match criteria`);
       return false;
+    });
+
+    console.log('✅ Filtered reminders:', {
+      count: filtered.length,
+      reminders: filtered.map(r => ({ title: r.title, date: r.reminder_date }))
     });
 
     return filtered;
