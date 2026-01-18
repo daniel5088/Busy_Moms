@@ -57,6 +57,7 @@ type IntentType =
   | 'task_query'
   | 'task_update'
   | 'task_delete'
+  | 'schedule'
   | 'family'
   | 'family_query'
   | 'family_update'
@@ -361,7 +362,7 @@ async function classifyMessage(
   console.log('📅 Next 7 days mapping:', next7Days);
 
   const systemPrompt = `You are a smart assistant that classifies user messages into actions.
-Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query|calendar_update|calendar_delete|calendar_share|reminder|reminder_share|shopping|shopping_query|shopping_update|shopping_delete|task|task_query|task_update|task_delete|family|family_query|family_update|family_delete|chat", "details": {...}}
+Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query|calendar_update|calendar_delete|calendar_share|reminder|reminder_share|shopping|shopping_query|shopping_update|shopping_delete|task|task_query|task_update|task_delete|schedule|family|family_query|family_update|family_delete|chat", "details": {...}}
 
 IMPORTANT DATE CONTEXT:
 - Today is ${today} (${todayFormatted})
@@ -412,6 +413,7 @@ For task creation: {"type": "task", "details": {"title": "task name", "category"
 For task queries: {"type": "task_query", "details": {"query_type": "all|pending|in_progress|completed|search|assigned_to", "search_term": "keyword", "assigned_to": "person name"}}
 For task updates: {"type": "task_update", "details": {"search_term": "task to find", "updates": {"status": "pending|in_progress|completed|cancelled", "priority": "low|medium|high", "date": "new date"}}}
 For task deletion: {"type": "task_delete", "details": {"search_term": "task to delete"}}
+For schedule queries: {"type": "schedule", "details": {"date": "YYYY-MM-DD or today or tomorrow", "include_shopping": true|false}}
 For chat: {"type": "chat", "details": {"query": "user question"}}
 
 EXAMPLES:
@@ -421,11 +423,14 @@ EXAMPLES:
 "remind me on Sunday to take out the dog at 5pm" → {"type": "reminder", "details": {"title": "take out the dog", "date": "${next7Days.find(d => d.dayName === 'Sunday')?.date || tomorrow}", "time": "5pm"}}
 "remind Jack to do his homework" → {"type": "reminder", "details": {"title": "do his homework", "date": "${today}", "assigned_to": "Jack"}}
 "schedule piano lesson with Emma on Saturday at 4pm" → {"type": "calendar", "details": {"title": "piano lesson", "date": "${next7Days.find(d => d.dayName === 'Saturday')?.date || tomorrow}", "time": "4pm", "participants": "Emma"}}
+"add task for Jack to clean his room" → {"type": "task", "details": {"title": "clean his room", "assigned_to": "Jack", "category": "chores"}}
 "share the dentist appointment with Emma" → {"type": "calendar_share", "details": {"search_term": "dentist appointment", "recipient_name": "Emma"}}
 "share the homework reminder with Jack" → {"type": "reminder_share", "details": {"search_term": "homework", "recipient_name": "Jack"}}
-"What's my schedule today?" → {"type": "calendar_query", "details": {"query_type": "today"}}
-"Show me my schedule for tomorrow" → {"type": "calendar_query", "details": {"query_type": "today", "date": "${tomorrow}"}}
-"What do I have on Friday?" → {"type": "calendar_query", "details": {"query_type": "today", "date": "YYYY-MM-DD"}}`;
+"What's my schedule today?" → {"type": "schedule", "details": {"date": "${today}"}}
+"Show me my schedule for tomorrow" → {"type": "schedule", "details": {"date": "${tomorrow}"}}
+"What do I have on Friday?" → {"type": "schedule", "details": {"date": "YYYY-MM-DD"}}
+"What's on my shopping list?" → {"type": "shopping_query", "details": {"query_type": "pending"}}
+"Show me everything I have today including shopping list" → {"type": "schedule", "details": {"date": "${today}", "include_shopping": true}}`;
 
   try {
     const response = await openaiService.chat([
@@ -500,6 +505,21 @@ function fallbackClassify(message: string): IntentResult {
     const title = titleText.trim() || message;
 
     return { type: 'reminder', details: { title, date, time } };
+  }
+
+  // Schedule query patterns (must come before calendar creation)
+  if (
+    /\bwhat('?s|\s+is)?\s+(my|the)?\s*schedule\b/.test(lower) ||
+    /\bshow\s+(me\s+)?(my\s+)?schedule\b/.test(lower) ||
+    /\bwhat\s+do\s+i\s+have\s+(today|tomorrow|on)\b/.test(lower)
+  ) {
+    const dateMatch = lower.match(
+      /\b(today|tomorrow|\d{4}-\d{2}-\d{2}|\d{1,2}[/\-]\d{1,2}(?:[/\-]\d{2,4})?)\b/,
+    );
+    const date = toISODate(dateMatch?.[0]) || 'today';
+    const include_shopping = /shopping|list/.test(lower);
+
+    return { type: 'schedule', details: { date, include_shopping } };
   }
 
   // Task patterns
@@ -739,6 +759,8 @@ class AIAssistantService {
           return this.handleTaskUpdate(intent.details || {}, userId);
         case 'task_delete':
           return this.handleTaskDelete(intent.details || {}, userId);
+        case 'schedule':
+          return this.handleScheduleQuery(intent.details || {}, userId);
         case 'family':
           return this.handleFamilyAction(intent.details || {}, userId);
         case 'family_query':
