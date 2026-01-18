@@ -29,7 +29,7 @@ export function useDashboardData(): DashboardData {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [reminderWeekOffset, setReminderWeekOffset] = useState(0);
+  const [reminderWeekOffset, setReminderWeekOffset] = useState(2);
 
   const loadReminders = useCallback(async () => {
     if (!user?.id || !user?.email) return;
@@ -52,8 +52,8 @@ export function useDashboardData(): DashboardData {
         reminderStart = getDateInDays(1);
         reminderEnd = getDateInDays(1);
       } else if (reminderWeekOffset === 2) {
-        // This week (starting from day after tomorrow through end of week)
-        reminderStart = getDateInDays(2);
+        // This week (starting from today through end of week)
+        reminderStart = today;
         reminderEnd = nextWeek;
       } else {
         // Future weeks

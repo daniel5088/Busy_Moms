@@ -126,28 +126,6 @@ export function DashboardV4Experimental({
     }
 
     if (reminderDate === today) {
-      if (!reminder.reminder_time) {
-        return true;
-      }
-
-      const timeMatch = reminder.reminder_time.match(/^(\d{1,2}):(\d{2})/);
-      if (!timeMatch) {
-        return true;
-      }
-
-      const reminderHours = parseInt(timeMatch[1], 10);
-      const reminderMinutes = parseInt(timeMatch[2], 10);
-      const currentHours = now.getHours();
-      const currentMinutes = now.getMinutes();
-
-      if (reminderHours < currentHours) {
-        return false;
-      }
-
-      if (reminderHours === currentHours && reminderMinutes < currentMinutes) {
-        return false;
-      }
-
       return true;
     }
 
@@ -180,29 +158,7 @@ export function DashboardV4Experimental({
       
       return false;
     });
-    
-    // Debug log
-    if (reminders.length > 0) {
-      console.log('Smart Reminders Debug:', {
-        currentUserEmail: user?.email,
-        currentUserId: user?.id,
-        totalReminders: reminders.length,
-        displayedReminders: filtered.length,
-        breakdown: {
-          created: filtered.filter(r => r.user_id === user?.id).length,
-          assignedToMe: filtered.filter(r => r.family_member_email?.toLowerCase() === userEmail && r.user_id !== user?.id).length,
-        },
-        sampleReminders: reminders.slice(0, 3).map(r => ({
-          id: r.id,
-          title: r.title,
-          user_id: r.user_id,
-          family_member_email: r.family_member_email,
-          assigned_by_name: r.assigned_by_name,
-          willDisplay: filtered.some(f => f.id === r.id)
-        }))
-      });
-    }
-    
+
     return filtered;
   }, [reminders, shouldShowReminder, user?.email, user?.id]);
 
