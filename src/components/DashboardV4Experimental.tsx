@@ -983,9 +983,15 @@ export function DashboardV4Experimental({
 
                 <hr className="border-gray-200 dark:border-gray-700 my-6" />
 
-                <div>
-                  <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">Link to report a bug:</p>
-                  <p className="text-gray-600 dark:text-gray-400">www.linkhelpbma.com</p>
+                <div className="text-center">
+                  <a
+                    href="https://forms.office.com/Pages/ResponsePage.aspx?id=FqzrK_LZBEicaaNhjeeB6nQIHTzhQi1FkSfPlx9GeRlUNVczSUxKMkJCNUJRWjNBU0VVVFE5Slk2Ui4u"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 underline transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 rounded"
+                  >
+                    Report a bug
+                  </a>
                 </div>
               </div>
             </div>
