@@ -427,19 +427,6 @@ export function Settings({
       ],
     },
     {
-      title: 'Calendar',
-      items: [
-        {
-          icon: Calendar,
-          title: 'Google Calendar',
-          description: isGoogleConnected ? 'Connected and syncing' : 'Connect to sync your events',
-          action: isGoogleConnected ? 'Connected' : 'Connect',
-          isConnected: isGoogleConnected,
-          onClick: isGoogleConnected ? undefined : handleGoogleCalendarConnect,
-        },
-      ],
-    },
-    {
       title: 'Location Services',
       items: [
         {
