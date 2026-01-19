@@ -27,7 +27,7 @@ export function useDashboardData(): DashboardData {
   const [thisWeekEvents, setThisWeekEvents] = useState<Event[]>([]);
   const [tasks, setTasks] = useState<ShoppingItem[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [reminderWeekOffset, setReminderWeekOffset] = useState(2);
 
