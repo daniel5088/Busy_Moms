@@ -569,6 +569,7 @@ export function Settings({
             onClick={() => setShowProfileForm(true)}
             className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-colors"
             title="Edit Profile"
+            aria-label="Edit profile"
           >
             <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -592,11 +593,11 @@ export function Settings({
         <div className="mb-4 sm:mb-6 bg-gradient-to-r from-rose-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 border border-rose-200 dark:border-gray-600 rounded-xl p-3 sm:p-4">
           {/* Personality Selector */}
           <div className="mb-4">
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm sm:text-base flex items-center space-x-2">
+            <h3 id="personality-heading" className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm sm:text-base flex items-center space-x-2">
               <Sparkles className="w-4 h-4" />
               <span>AI Assistant Personality</span>
             </h3>
-            <div className="grid grid-cols-3 gap-1 sm:gap-2">
+            <div className="grid grid-cols-3 gap-1 sm:gap-2" role="group" aria-labelledby="personality-heading">
               {PERSONALITY_OPTIONS.map((option) => (
                 <button
                   key={option.value}
@@ -616,11 +617,11 @@ export function Settings({
 
           {/* Voice Selector */}
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm sm:text-base flex items-center space-x-2">
+            <h3 id="voice-heading" className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm sm:text-base flex items-center space-x-2">
               <Volume2 className="w-4 h-4" />
               <span>AI Voice</span>
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" role="group" aria-labelledby="voice-heading">
               {VOICE_OPTIONS.map((option) => (
                 <button
                   key={option.value}
@@ -678,6 +679,9 @@ export function Settings({
 
                       {item.toggle ? (
                         <button
+                          role="switch"
+                          aria-checked={item.enabled}
+                          aria-label={item.title}
                           onClick={() => {
                             if (item.onClick) {
                               item.onClick();
@@ -716,6 +720,7 @@ export function Settings({
                         <button
                           onClick={() => setShowFamilyForm(true)}
                           className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors ml-2"
+                          aria-label="Add family member"
                         >
                           <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                         </button>
@@ -862,13 +867,14 @@ export function Settings({
             <button
               onClick={() => setShowFamilyForm(true)}
               className="w-8 h-8 sm:w-10 sm:h-10 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors"
+              aria-label="Add family member"
             >
               <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
             </button>
           </div>
 
           {loadingMembers ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-8" role="status" aria-live="polite">
               <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-rose-500" />
               <span className="ml-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
                 Loading family members...
@@ -1037,9 +1043,9 @@ export function Settings({
       />
 
       {showErrorDashboard && (
-        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
+        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900" role="dialog" aria-modal="true" aria-labelledby="error-dashboard-title">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Error Dashboard</h2>
+            <h2 id="error-dashboard-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">Error Dashboard</h2>
             <button
               onClick={() => setShowErrorDashboard(false)}
               className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -1064,15 +1070,16 @@ export function Settings({
       <TaskSyncSettings isOpen={showTaskSyncSettings} onClose={() => setShowTaskSyncSettings(false)} />
 
       {showRetailerSearch && user && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="retailer-modal-title">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <h2 id="retailer-modal-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Manage Retailers
               </h2>
               <button
                 onClick={() => setShowRetailerSearch(false)}
                 className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                aria-label="Close retailer search"
               >
                 <XCircle className="w-6 h-6" />
               </button>
@@ -1085,15 +1092,16 @@ export function Settings({
       )}
 
       {showAddressManager && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="address-modal-title">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <h2 id="address-modal-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Manage Addresses
               </h2>
               <button
                 onClick={() => setShowAddressManager(false)}
                 className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                aria-label="Close address manager"
               >
                 <XCircle className="w-6 h-6" />
               </button>
