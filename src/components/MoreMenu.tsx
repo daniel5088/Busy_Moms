@@ -76,7 +76,8 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
         {
           icon: HelpCircle,
           title: 'Help & Support',
-          description: 'Get help and contact support'
+          description: 'Get help and contact support',
+          onClick: () => window.dispatchEvent(new CustomEvent('open-about-dialog')),
         },
         {
           icon: Info,
