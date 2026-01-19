@@ -534,8 +534,8 @@ export function Settings({
         {
           icon: CreditCard,
           title: 'Subscription',
-          description: 'Premium Plan - $9.99/month',
-          action: 'Manage',
+          description: 'Premium Plan - $?.??/month',
+          action: 'Coming Soon',
         },
         {
           icon: HelpCircle,
