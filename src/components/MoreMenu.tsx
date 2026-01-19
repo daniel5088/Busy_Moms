@@ -96,7 +96,7 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
         {userName && (
           <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 dark:border dark:border-gray-700 text-white rounded-2xl p-6 mb-6">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <div aria-hidden="true" className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <span className="text-2xl font-bold">{userName.charAt(0).toUpperCase()}</span>
               </div>
               <div>
@@ -114,27 +114,31 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
                 {section.title}
               </h3>
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
-                {section.items.map((item, itemIndex) => (
-                  <button
-                    key={itemIndex}
-                    onClick={() => {
-                      if (item.action) {
-                        item.action();
-                      } else if ('id' in item) {
-                        onNavigateToSubScreen(item.id);
-                      }
-                    }}
-                    className="w-full px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left flex items-center space-x-4 group"
-                  >
-                    <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center group-hover:bg-rose-100 dark:group-hover:bg-rose-900 transition-colors">
-                      <item.icon className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
-                    </div>
-                  </button>
-                ))}
+                {section.items.map((item, itemIndex) => {
+                  const descriptionId = `menu-item-desc-${sectionIndex}-${itemIndex}`;
+                  return (
+                    <button
+                      key={itemIndex}
+                      onClick={() => {
+                        if (item.action) {
+                          item.action();
+                        } else if ('id' in item) {
+                          onNavigateToSubScreen(item.id);
+                        }
+                      }}
+                      aria-describedby={descriptionId}
+                      className="w-full px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left flex items-center space-x-4 group"
+                    >
+                      <div aria-hidden="true" className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center group-hover:bg-rose-100 dark:group-hover:bg-rose-900 transition-colors">
+                        <item.icon className="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h4>
+                        <p id={descriptionId} className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -144,7 +148,7 @@ export function MoreMenu({ onNavigateToSubScreen, onSignOut, userName, userEmail
           onClick={onSignOut}
           className="w-full mt-8 px-6 py-4 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-2xl font-semibold hover:bg-red-100 dark:hover:bg-red-800 transition-colors flex items-center justify-center space-x-2 border border-red-200 dark:border-red-700"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut aria-hidden="true" className="w-5 h-5" />
           <span>Sign Out</span>
         </button>
       </div>
