@@ -473,12 +473,12 @@ export function Settings({
           onClick: () => setShowRetailerSearch(true),
         },
         // TEMP: WhatsApp feature exists but is not exposed yet. Showing "Coming Soon" until wired up.
-        {
-          icon: MessageCircle,
-          title: 'WhatsApp Integration',
-          description: 'Parse messages and images for events',
-          action: 'Coming Soon',
-        },
+        //{
+        //  icon: MessageCircle,
+        //  title: 'WhatsApp Integration',
+        //  description: 'Parse messages and images for events',
+        //  action: 'Coming Soon',
+        // },
         // TEMP: removed (no implementation). Re-enable by uncommenting.
         // {
         //   icon: Smartphone,
