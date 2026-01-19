@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   User,
   Bell,
-  Shield,
   Smartphone,
   MessageCircle,
   CreditCard,
@@ -88,7 +87,6 @@ export function Settings({
     events: true,
     shopping: true,
     reminders: true,
-    whatsapp: false,
   });
 
   const checkGoogleConnection = React.useCallback(async () => {
@@ -385,12 +383,13 @@ export function Settings({
           action: 'Add',
           showAddButton: false,
         },
-        {
-          icon: Shield,
-          title: 'Privacy & Safety',
-          description: 'Allergies, medical info, emergency contacts',
-          action: 'Manage',
-        },
+        // TEMP: removed (no implementation). Re-enable by uncommenting.
+        // {
+        //   icon: Shield,
+        //   title: 'Privacy & Safety',
+        //   description: 'Allergies, medical info, emergency contacts',
+        //   action: 'Manage',
+        // },
       ],
     },
     {
@@ -484,20 +483,20 @@ export function Settings({
           action: 'Manage',
           onClick: () => setShowRetailerSearch(true),
         },
+        // TEMP: WhatsApp feature exists but is not exposed yet. Showing "Coming Soon" until wired up.
         {
           icon: MessageCircle,
           title: 'WhatsApp Integration',
           description: 'Parse messages and images for events',
-          toggle: true,
-          enabled: notifications.whatsapp,
-          onClick: () => toggleNotification('whatsapp'),
+          action: 'Coming Soon',
         },
-        {
-          icon: Smartphone,
-          title: 'Smartwatch',
-          description: 'Apple Watch connected',
-          action: 'Paired',
-        },
+        // TEMP: removed (no implementation). Re-enable by uncommenting.
+        // {
+        //   icon: Smartphone,
+        //   title: 'Smartwatch',
+        //   description: 'Apple Watch connected',
+        //   action: 'Paired',
+        // },
       ],
     },
     {
@@ -692,8 +691,6 @@ export function Settings({
                           onClick={() => {
                             if (item.onClick) {
                               item.onClick();
-                            } else if (item.title.includes('Smart Messages')) {
-                              toggleNotification('whatsapp');
                             } else if (item.title.includes('Event')) {
                               toggleNotification('events');
                             } else {
