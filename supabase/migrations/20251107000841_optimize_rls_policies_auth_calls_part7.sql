@@ -131,11 +131,21 @@ CREATE POLICY "Users can delete own measurement overrides"
   USING (user_id = (select auth.uid()));
 
 -- onboarding_state table policy
-DROP POLICY IF EXISTS "Users can manage own onboarding_state" ON onboarding_state;
+-- Only create policy if table exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_state'
+  ) THEN
+    DROP POLICY IF EXISTS "Users can manage own onboarding_state" ON onboarding_state;
 
-CREATE POLICY "Users can manage own onboarding_state"
-  ON onboarding_state
-  FOR ALL
-  TO authenticated
-  USING (user_id = (select auth.uid()))
-  WITH CHECK (user_id = (select auth.uid()));
+    CREATE POLICY "Users can manage own onboarding_state"
+      ON onboarding_state
+      FOR ALL
+      TO authenticated
+      USING (user_id = (select auth.uid()))
+      WITH CHECK (user_id = (select auth.uid()));
+  END IF;
+END $$;
