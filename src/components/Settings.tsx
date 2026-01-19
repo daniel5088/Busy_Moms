@@ -457,7 +457,7 @@ export function Settings({
           icon: Ruler,
           title: 'Measurement System',
           description: measurementPrefs
-            ? `Using ${measurementPrefs.preferred_system === 'metric' ? 'Metric (g, ml, kg)' : 'Imperial (cups, lbs, oz)'}`
+            ? `Using ${measurementPrefs.preferred_system === 'metric' ? 'Metric (grams, mililiters, kilograms)' : 'Imperial (cups, pounds, ounces)'}`
             : 'Loading...',
           toggle: true,
           enabled: measurementPrefs?.preferred_system === 'metric',
