@@ -31,6 +31,7 @@ import { useDarkMode } from './hooks/useDarkMode';
 
 export type Screen =
   | 'dashboard'
+  | 'dashboard-v4'
   | 'calendar'
   | 'calendar-camera'
   | 'family'
@@ -47,7 +48,7 @@ function App() {
   const session = useSessionContext();
   const supabaseClient = useSupabaseClient();
   const { user, loading, signOut } = useAuth();
-  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
+  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard-v4');
   const [currentSubScreen, setCurrentSubScreen] = useState<SubScreen | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
@@ -244,7 +245,7 @@ function App() {
   // Listen for 'open-about-dialog' event from Settings
   useEffect(() => {
     const handleOpenAboutDialog = () => {
-      setCurrentScreen('dashboard');
+      setCurrentScreen('dashboard-v4');
       setCurrentSubScreen(null);
       setOpenAboutDialog(true);
     };
@@ -357,7 +358,7 @@ function App() {
             </>
           ) : (
             <>
-              {currentScreen === 'dashboard' && (
+              {(currentScreen === 'dashboard' || currentScreen === 'dashboard-v4') && (
                 <FeatureErrorBoundary featureName="Dashboard">
                   <Dashboard
                     onNavigate={setCurrentScreen}
