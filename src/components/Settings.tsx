@@ -534,7 +534,7 @@ export function Settings({
         {
           icon: CreditCard,
           title: 'Subscription',
-          description: 'Premium Plan - $?.??/month',
+          description: 'Premium Plan - $?/month',
           action: 'Coming Soon',
         },
         {
