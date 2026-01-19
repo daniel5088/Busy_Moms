@@ -18,7 +18,7 @@ export function ImprovedNavigation({
   onVoiceChatOpen,
 }: NavigationProps) {
   const navItems = [
-    { id: 'dashboard-v4' as Screen, icon: Home, label: 'Home' },
+    { id: 'dashboard' as Screen, icon: Home, label: 'Home' },
     { id: 'calendar' as Screen, icon: Calendar, label: 'Calendar' },
     { id: 'family' as Screen, icon: Users, label: 'Family' },
     { id: 'more' as Screen, icon: Menu, label: 'More' },
