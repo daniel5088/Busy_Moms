@@ -519,11 +519,11 @@ export function Settings({
       title: 'Account',
       items: [
         {
-          icon: CreditCard,
-          title: 'Subscription',
-          description: 'Premium Plan - $?/month',
-          action: 'Coming Soon',
-        },
+        //  icon: CreditCard,
+        //  title: 'Subscription',
+        //  description: 'Premium Plan - $?/month',
+        //  action: 'Coming Soon',
+        //},
         {
           icon: HelpCircle,
           title: 'Help & Support',
