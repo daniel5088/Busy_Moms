@@ -986,8 +986,8 @@ export function Settings({
           )}
         </div>
 
-        {/* Background Check History */}
-        <div className="mt-4 sm:mt-6">
+        {/* TEMP: removed (background check history not used). Re-enable by uncommenting. */}
+        {/* <div className="mt-4 sm:mt-6">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
             Background Check History
           </h2>
@@ -1011,7 +1011,7 @@ export function Settings({
               View Full Report
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Sign Out */}
         <button
