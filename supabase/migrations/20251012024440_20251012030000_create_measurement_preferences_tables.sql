@@ -49,18 +49,21 @@ CREATE TABLE IF NOT EXISTS user_measurement_preferences (
 
 ALTER TABLE user_measurement_preferences ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own measurement preferences" ON user_measurement_preferences;
 CREATE POLICY "Users can view own measurement preferences"
   ON user_measurement_preferences
   FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own measurement preferences" ON user_measurement_preferences;
 CREATE POLICY "Users can insert own measurement preferences"
   ON user_measurement_preferences
   FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own measurement preferences" ON user_measurement_preferences;
 CREATE POLICY "Users can update own measurement preferences"
   ON user_measurement_preferences
   FOR UPDATE
@@ -68,6 +71,7 @@ CREATE POLICY "Users can update own measurement preferences"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own measurement preferences" ON user_measurement_preferences;
 CREATE POLICY "Users can delete own measurement preferences"
   ON user_measurement_preferences
   FOR DELETE
@@ -92,18 +96,21 @@ CREATE TABLE IF NOT EXISTS measurement_overrides (
 
 ALTER TABLE measurement_overrides ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own measurement overrides" ON measurement_overrides;
 CREATE POLICY "Users can view own measurement overrides"
   ON measurement_overrides
   FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own measurement overrides" ON measurement_overrides;
 CREATE POLICY "Users can insert own measurement overrides"
   ON measurement_overrides
   FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own measurement overrides" ON measurement_overrides;
 CREATE POLICY "Users can update own measurement overrides"
   ON measurement_overrides
   FOR UPDATE
@@ -111,6 +118,7 @@ CREATE POLICY "Users can update own measurement overrides"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own measurement overrides" ON measurement_overrides;
 CREATE POLICY "Users can delete own measurement overrides"
   ON measurement_overrides
   FOR DELETE

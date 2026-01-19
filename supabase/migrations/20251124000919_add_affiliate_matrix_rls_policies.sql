@@ -17,37 +17,41 @@
     - No write permissions are granted (only admins should modify this table)
 */
 
--- Enable RLS on affiliate_matrix table
-ALTER TABLE affiliate_matrix ENABLE ROW LEVEL SECURITY;
-
--- Policy for authenticated users to read affiliate matrix
-DO $$ 
+-- Enable RLS on affiliate_matrix table only if it exists
+DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE tablename = 'affiliate_matrix' 
-    AND policyname = 'affiliate_matrix_select_authenticated'
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'affiliate_matrix'
   ) THEN
-    CREATE POLICY "affiliate_matrix_select_authenticated"
-    ON affiliate_matrix
-    FOR SELECT
-    TO authenticated
-    USING (true);
-  END IF;
-END $$;
+    -- Enable RLS on affiliate_matrix table
+    ALTER TABLE affiliate_matrix ENABLE ROW LEVEL SECURITY;
 
--- Policy for anonymous users to read affiliate matrix
-DO $$ 
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE tablename = 'affiliate_matrix' 
-    AND policyname = 'affiliate_matrix_select_anon'
-  ) THEN
-    CREATE POLICY "affiliate_matrix_select_anon"
-    ON affiliate_matrix
-    FOR SELECT
-    TO anon
-    USING (true);
+    -- Policy for authenticated users to read affiliate matrix
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE tablename = 'affiliate_matrix'
+      AND policyname = 'affiliate_matrix_select_authenticated'
+    ) THEN
+      CREATE POLICY "affiliate_matrix_select_authenticated"
+      ON affiliate_matrix
+      FOR SELECT
+      TO authenticated
+      USING (true);
+    END IF;
+
+    -- Policy for anonymous users to read affiliate matrix
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE tablename = 'affiliate_matrix'
+      AND policyname = 'affiliate_matrix_select_anon'
+    ) THEN
+      CREATE POLICY "affiliate_matrix_select_anon"
+      ON affiliate_matrix
+      FOR SELECT
+      TO anon
+      USING (true);
+    END IF;
   END IF;
 END $$;
