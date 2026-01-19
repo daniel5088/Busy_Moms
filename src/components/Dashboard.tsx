@@ -101,6 +101,16 @@ export function Dashboard({
     setReminderWeekOffset,
   } = useDashboardData();
 
+  console.log('🎨 [Dashboard] Render', {
+    loading,
+    eventsCount: events.length,
+    todayEventsCount: todayEvents.length,
+    thisWeekEventsCount: thisWeekEvents.length,
+    tasksCount: tasks.length,
+    remindersCount: reminders.length,
+    userId: user?.id,
+  });
+
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
   const [isAffirmationButtonGlowing, setIsAffirmationButtonGlowing] = React.useState(false);
@@ -430,6 +440,11 @@ export function Dashboard({
 
   return (
     <>
+      {/* DEBUG: Temporary indicator */}
+      <div className="fixed top-20 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold z-[100]">
+        DEBUG: DASHBOARD RENDERING
+      </div>
+
       {/* Screen reader status announcements */}
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {affirmationStatus}

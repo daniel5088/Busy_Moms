@@ -305,6 +305,7 @@ function App() {
         <ImprovedNavigation
           currentScreen={currentScreen}
           onScreenChange={(screen) => {
+            console.log('🔀 [App] Screen change:', { from: currentScreen, to: screen });
             setCurrentScreen(screen);
             setCurrentSubScreen(null);
           }}

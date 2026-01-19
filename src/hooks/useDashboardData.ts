@@ -103,7 +103,17 @@ export function useDashboardData(): DashboardData {
   }, [user?.id, user?.email, reminderWeekOffset]);
 
   const loadDashboardData = useCallback(async () => {
-    if (!user?.id || !user?.email) return;
+    console.log('🔄 [useDashboardData] loadDashboardData called', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+    });
+
+    if (!user?.id || !user?.email) {
+      console.warn('⚠️ [useDashboardData] Early return - no user id/email');
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -168,10 +178,14 @@ export function useDashboardData(): DashboardData {
   }, [user?.id, user?.email]);
 
   useEffect(() => {
-    if (user) {
+    console.log('🔄 [useDashboardData] useEffect triggered', { hasUser: !!user, userId: user?.id });
+    if (user?.id && user?.email) {
       loadDashboardData();
+    } else {
+      console.warn('⚠️ [useDashboardData] No valid user, setting loading to false');
+      setLoading(false);
     }
-  }, [user, loadDashboardData]);
+  }, [user?.id, user?.email, loadDashboardData]);
 
   // Reload reminders when offset changes or initially
   useEffect(() => {
