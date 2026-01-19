@@ -60,6 +60,7 @@ function App() {
   const [openRecipesTab, setOpenRecipesTab] = useState(false);
   const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
   const [scrollToGoogleCalendar, setScrollToGoogleCalendar] = useState(false);
+  const [openAboutDialog, setOpenAboutDialog] = useState(false);
   const { toasts, removeToast } = useToast();
   const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -240,6 +241,21 @@ function App() {
     };
   }, []);
 
+  // Listen for 'open-about-dialog' event from Settings
+  useEffect(() => {
+    const handleOpenAboutDialog = () => {
+      setCurrentScreen('dashboard');
+      setCurrentSubScreen(null);
+      setOpenAboutDialog(true);
+    };
+
+    window.addEventListener('open-about-dialog', handleOpenAboutDialog);
+
+    return () => {
+      window.removeEventListener('open-about-dialog', handleOpenAboutDialog);
+    };
+  }, []);
+
   // Reset scroll to Google Calendar flag when subscreen changes
   useEffect(() => {
     if (currentSubScreen !== 'settings') {
@@ -360,6 +376,8 @@ function App() {
                       setSelectedEventDate(eventDate);
                       setCurrentScreen('calendar');
                     }}
+                    openAboutDialog={openAboutDialog}
+                    onAboutDialogOpened={() => setOpenAboutDialog(false)}
                   />
                 </FeatureErrorBoundary>
               )}

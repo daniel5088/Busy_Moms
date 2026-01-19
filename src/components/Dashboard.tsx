@@ -72,6 +72,8 @@ interface DashboardProps {
   onNavigateToCalendarCamera?: () => void;
   onNavigateToRecipes?: () => void;
   onNavigateToEvent?: (eventDate: string) => void;
+  openAboutDialog?: boolean;
+  onAboutDialogOpened?: () => void;
 }
 
 export function Dashboard({
@@ -82,6 +84,8 @@ export function Dashboard({
   onNavigateToCalendarCamera,
   onNavigateToRecipes,
   onNavigateToEvent,
+  openAboutDialog = false,
+  onAboutDialogOpened,
 }: DashboardProps) {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
@@ -196,6 +200,14 @@ export function Dashboard({
       loadTodayAffirmation();
     }
   }, [user]);
+
+  // Auto-open About dialog when triggered from Settings
+  React.useEffect(() => {
+    if (openAboutDialog) {
+      setShowAboutMenu(true);
+      onAboutDialogOpened?.();
+    }
+  }, [openAboutDialog, onAboutDialogOpened]);
 
   // Keyboard escape handler for affirmation overlay and about menu
   React.useEffect(() => {

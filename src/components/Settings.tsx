@@ -529,6 +529,7 @@ export function Settings({
           title: 'Help & Support',
           description: 'FAQs, contact support',
           action: 'View',
+          onClick: () => window.dispatchEvent(new CustomEvent('open-about-dialog')),
         },
       ],
     },
