@@ -137,10 +137,7 @@ export class MeasurementPreferencesService {
   ): Promise<{ quantity: number; unit: string }> {
     const prefs = await this.getPreferences(userId);
 
-    if (!prefs.auto_convert) {
-      return { quantity, unit };
-    }
-
+    // Auto-convert is now always enabled, so always perform conversion
     const result = MeasurementConverter.convertToSystem(quantity, unit, prefs.preferred_system);
 
     if (result.conversionApplied) {
@@ -176,8 +173,8 @@ export class MeasurementPreferencesService {
   }
 
   async shouldAutoConvert(userId: string): Promise<boolean> {
-    const prefs = await this.getPreferences(userId);
-    return prefs.auto_convert ?? true;
+    // Auto-convert is now always enabled
+    return true;
   }
 
   async getCommonUnits(userId: string): Promise<{

@@ -193,16 +193,17 @@ export function Settings({
     }
   };
 
-  const toggleAutoConvert = async () => {
-    if (!user) return;
-
-    try {
-      await measurementPreferencesService.toggleAutoConvert(user.id);
-      await loadMeasurementPreferences();
-    } catch (error) {
-      console.error('Error toggling auto-convert:', error);
-    }
-  };
+  // TEMP: removed - auto-convert units is now always enabled
+  // const toggleAutoConvert = async () => {
+  //   if (!user) return;
+  //
+  //   try {
+  //     await measurementPreferencesService.toggleAutoConvert(user.id);
+  //     await loadMeasurementPreferences();
+  //   } catch (error) {
+  //     console.error('Error toggling auto-convert:', error);
+  //   }
+  // };
 
   const loadAIVoicePreferences = React.useCallback(async () => {
     if (!user) return;
@@ -463,14 +464,15 @@ export function Settings({
           enabled: measurementPrefs?.preferred_system === 'metric',
           onClick: toggleMeasurementSystem,
         },
-        {
-          icon: RefreshCw,
-          title: 'Auto-Convert Units',
-          description: 'Automatically convert measurements to your preferred system',
-          toggle: true,
-          enabled: measurementPrefs?.auto_convert ?? true,
-          onClick: toggleAutoConvert,
-        },
+        // TEMP: removed - auto-convert units is now always enabled
+        // {
+        //   icon: RefreshCw,
+        //   title: 'Auto-Convert Units',
+        //   description: 'Automatically convert measurements to your preferred system',
+        //   toggle: true,
+        //   enabled: measurementPrefs?.auto_convert ?? true,
+        //   onClick: toggleAutoConvert,
+        // },
       ],
     },
     {
