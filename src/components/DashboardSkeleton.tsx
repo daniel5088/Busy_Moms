@@ -5,7 +5,10 @@ export function DashboardSkeleton() {
       <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 p-4 pb-6 dark:border-b dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div className="h-8 bg-white bg-opacity-20 rounded-lg w-48 animate-pulse"></div>
-          <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full animate-pulse"></div>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full animate-pulse"></div>
+            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full animate-pulse"></div>
+          </div>
         </div>
 
         <div className="bg-white bg-opacity-10 dark:bg-gray-900 dark:bg-opacity-50 rounded-xl p-3">
