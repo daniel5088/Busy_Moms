@@ -120,57 +120,7 @@ export function QuickLinks() {
         </div>
       </header>
 
-      <main className="p-4 sm:p-6 space-y-4">
-        {/* Form section */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            Add New Link
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label
-                htmlFor="label"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Name / description
-              </label>
-              <input
-                id="label"
-                type="text"
-                value={labelInput}
-                onChange={(e) => setLabelInput(e.target.value)}
-                placeholder="e.g., Gmail, Work Calendar, Recipes"
-                className="w-full px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm sm:text-base"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="url"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Website URL
-              </label>
-              <input
-                id="url"
-                type="text"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="e.g., gmail.com or https://example.com"
-                className="w-full px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm sm:text-base"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={!isFormValid}
-              className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-            >
-              Add Link
-            </button>
-          </form>
-        </div>
-
+      <main className="p-4 sm:p-6 space-y-6">
         {/* List section */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -189,7 +139,7 @@ export function QuickLinks() {
                 No quick links yet
               </h3>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Add your first link using the form above
+                Add your first link using the form below
               </p>
             </div>
           ) : (
@@ -231,6 +181,56 @@ export function QuickLinks() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Form section */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 sm:p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Add New Link
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label
+                htmlFor="label"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Name / description
+              </label>
+              <input
+                id="label"
+                type="text"
+                value={labelInput}
+                onChange={(e) => setLabelInput(e.target.value)}
+                placeholder="e.g., Gmail, Work Calendar, Recipes"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm sm:text-base"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="url"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Website URL
+              </label>
+              <input
+                id="url"
+                type="text"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="e.g., gmail.com or https://example.com"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm sm:text-base"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={!isFormValid}
+              className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+            >
+              Add Link
+            </button>
+          </form>
         </div>
       </main>
     </div>
