@@ -117,7 +117,7 @@ export function QuickLinks() {
         </div>
       </header>
 
-      <main className="p-3 sm:p-4 space-y-3">
+      <main className="pt-2 px-3 pb-3 sm:pt-3 sm:px-4 sm:pb-4 space-y-3">
         {/* Form section */}
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
@@ -217,7 +217,7 @@ export function QuickLinks() {
                       </button>
                       <button
                         onClick={() => handleDelete(link.id)}
-                        className="p-2 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                        className="flex items-center justify-center p-2 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
