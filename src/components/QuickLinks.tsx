@@ -120,7 +120,7 @@ export function QuickLinks() {
         </div>
       </header>
 
-      <main className="p-4 sm:p-6 space-y-6">
+      <main className="p-3 sm:p-4 space-y-4">
         {/* Form section */}
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
