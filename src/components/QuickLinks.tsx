@@ -110,9 +110,6 @@ export function QuickLinks() {
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
               Quick Links
             </h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Save important websites for one-tap access
-            </p>
           </div>
           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
             <Link className="w-5 h-5 text-blue-600 dark:text-blue-300" />
@@ -120,13 +117,13 @@ export function QuickLinks() {
         </div>
       </header>
 
-      <main className="p-3 sm:p-4 space-y-4">
+      <main className="p-3 sm:p-4 space-y-3">
         {/* Form section */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             Add New Link
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-2">
             <div>
               <label
                 htmlFor="label"
@@ -173,7 +170,7 @@ export function QuickLinks() {
 
         {/* List section */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">
             Saved Links
           </h2>
 
@@ -194,11 +191,11 @@ export function QuickLinks() {
             </div>
           ) : (
             // Links list
-            <div className="space-y-3">
+            <div className="space-y-2">
               {links.map((link) => (
                 <div
                   key={link.id}
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-sm transition-all"
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 hover:shadow-sm transition-all"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
