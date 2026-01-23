@@ -102,7 +102,7 @@ export function QuickLinks() {
   const isFormValid = labelInput.trim() && urlInput.trim();
 
   return (
-    <div className="h-screen overflow-y-auto pb-10 sm:pb-24 bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen overflow-y-auto pb-20 sm:pb-24 bg-gray-50 dark:bg-gray-900">
       {/* Header section */}
       <header className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-2">
