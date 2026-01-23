@@ -117,7 +117,7 @@ export function QuickLinks() {
         </div>
       </header>
 
-      <main className="pt-0 px-3 pb-3 sm:pt-1 sm:px-4 sm:pb-4 space-y-2">
+      <main className="pt-1 px-3 pb-3 sm:pt-1 sm:px-4 sm:pb-4 space-y-2">
         {/* Form section */}
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
