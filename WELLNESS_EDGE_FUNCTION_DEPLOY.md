@@ -1,6 +1,6 @@
-# Deploy Wellness Edge Function
+# Wellness Edge Function - DEPLOYED ✓
 
-The Wellness feature requires the `cycle-tracker` edge function to be deployed to Supabase.
+The Wellness feature edge function has been successfully deployed and tested!
 
 ## Deployment Steps
 

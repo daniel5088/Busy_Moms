@@ -188,38 +188,31 @@ export const cycleTrackerService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    try {
-      const response = await fetch(EDGE_FUNCTION_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'x-correlation-id': crypto.randomUUID(),
-        },
-        body: JSON.stringify({
-          action,
-          user_id: user.id,
-          cycle_data: cycleData,
-        }),
-      });
+    const response = await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'x-correlation-id': crypto.randomUUID(),
+      },
+      body: JSON.stringify({
+        action,
+        user_id: user.id,
+        cycle_data: cycleData,
+      }),
+    });
 
-      if (!response.ok) {
-        let errorMessage = `API Error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch {
-          errorMessage = `${errorMessage} - ${response.statusText}`;
-        }
-        throw new Error(errorMessage);
+    if (!response.ok) {
+      let errorMessage = `API Error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        errorMessage = `${errorMessage} - ${response.statusText}`;
       }
-
-      return response.json();
-    } catch (error) {
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error('The Wellness edge function is not deployed. Please deploy it via Supabase Dashboard: Edge Functions > Deploy cycle-tracker');
-      }
-      throw error;
+      throw new Error(errorMessage);
     }
+
+    return response.json();
   },
 };
