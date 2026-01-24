@@ -223,7 +223,7 @@ const CycleTracker = () => {
     const colors = {
       period: 'bg-pink-500/20 border-pink-500',
       follicular: 'bg-teal-500/20 border-teal-500',
-      ovulation: 'bg-purple-500/20 border-purple-500',
+      ovulation: 'bg-amber-500/20 border-amber-500',
       luteal: 'bg-blue-500/20 border-blue-500'
     };
     return colors[phase as keyof typeof colors] || 'bg-slate-700/50 border-slate-600';
@@ -290,11 +290,11 @@ const CycleTracker = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">Smart Cycle Tracker</h1>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">Smart Cycle Tracker</h1>
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={getAIInsights} disabled={loading && loadingType === 'insights'}
-              className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 px-4 py-2 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center gap-2 text-sm text-white">
+              className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 px-4 py-2 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center gap-2 text-sm text-white">
               {loading && loadingType === 'insights' ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Loading...</>
               ) : (
@@ -310,7 +310,7 @@ const CycleTracker = () => {
               )}
             </button>
             <button onClick={analyzeSymptoms} disabled={loading && loadingType === 'analysis'}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-4 py-2 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center gap-2 text-sm text-white">
+              className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 px-4 py-2 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center gap-2 text-sm text-white">
               {loading && loadingType === 'analysis' ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Loading...</>
               ) : (
@@ -321,9 +321,9 @@ const CycleTracker = () => {
         </div>
 
         {aiInsights && (
-          <div className="bg-white dark:bg-gradient-to-br dark:from-purple-900/40 dark:to-pink-900/40 rounded-xl p-4 md:p-6 border border-purple-200 dark:border-purple-500/30 shadow-lg">
+          <div className="bg-white dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900 rounded-xl p-4 md:p-6 border border-pink-200 dark:border-pink-500/30 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-6 h-6 text-purple-400" />
+              <Sparkles className="w-6 h-6 text-pink-400" />
               <h2 className="text-xl font-semibold">AI Insights</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -356,14 +356,14 @@ const CycleTracker = () => {
               </div>
             </div>
             {aiInsights.fertilityWindow && (
-              <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-500/30">
+              <div className="mt-4 pt-4 border-t border-pink-200 dark:border-slate-600">
                 <h3 className="font-semibold mb-2">Fertility Window</h3>
                 <p className="text-sm text-gray-600 dark:text-slate-300">
                   Peak: {aiInsights.fertilityWindow.peak} | Window: {aiInsights.fertilityWindow.start} to {aiInsights.fertilityWindow.end}
                 </p>
               </div>
             )}
-            <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-500/30">
+            <div className="mt-4 pt-4 border-t border-pink-200 dark:border-slate-600">
               <h3 className="font-semibold mb-2 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-400" />What's Next
               </h3>
@@ -407,7 +407,7 @@ const CycleTracker = () => {
         )}
 
         {symptomAnalysis && (
-          <div className="bg-white dark:bg-gradient-to-br dark:from-pink-900/40 dark:to-purple-900/40 rounded-xl p-4 md:p-6 border border-pink-200 dark:border-pink-500/30 shadow-lg">
+          <div className="bg-white dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900 rounded-xl p-4 md:p-6 border border-pink-200 dark:border-pink-500/30 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-6 h-6 text-pink-400" />
               <h2 className="text-xl font-semibold">Symptom Analysis</h2>
@@ -461,8 +461,8 @@ const CycleTracker = () => {
           </div>
           <div className="bg-white dark:bg-slate-800 rounded-xl p-3 md:p-4 border border-gray-200 dark:border-slate-700 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <div className="bg-purple-500/20 p-2 rounded-lg">
-                <Heart className="w-4 h-4 md:w-5 md:h-5 text-purple-400" />
+              <div className="bg-rose-500/20 p-2 rounded-lg">
+                <Heart className="w-4 h-4 md:w-5 md:h-5 text-rose-400" />
               </div>
               <span className="text-gray-500 dark:text-slate-400 text-xs md:text-sm">Cycle</span>
             </div>
@@ -513,7 +513,7 @@ const CycleTracker = () => {
               {[
                 { color: 'pink', label: 'Period' },
                 { color: 'teal', label: 'Follicular' },
-                { color: 'purple', label: 'Ovulation' },
+                { color: 'amber', label: 'Ovulation' },
                 { color: 'blue', label: 'Luteal' }
               ].map(({ color, label }) => (
                 <div key={label} className="flex items-center gap-2">
