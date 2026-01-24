@@ -28,6 +28,7 @@ import { captureAndStoreGoogleTokens } from './services/googleTokenStorage';
 import { Diagnostics } from './pages/Diagnostics';
 import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks component
 import { useDarkMode } from './hooks/useDarkMode';
+import CycleTracker from './components/CycleTracker';
 
 export type Screen =
   | 'dashboard'
@@ -42,7 +43,8 @@ export type SubScreen =
   | 'contacts'
   | 'family-folders'
   | 'settings'
-  | 'quick-links'; // Alvaro-quicklinks: Add quick-links to SubScreen type
+  | 'quick-links'
+  | 'wellness';
 
 function App() {
   const session = useSessionContext();
@@ -353,6 +355,11 @@ function App() {
               {currentSubScreen === 'quick-links' && (
                 <FeatureErrorBoundary featureName="Quick Links">
                   <QuickLinks />
+                </FeatureErrorBoundary>
+              )}
+              {currentSubScreen === 'wellness' && (
+                <FeatureErrorBoundary featureName="Wellness">
+                  <CycleTracker />
                 </FeatureErrorBoundary>
               )}
             </>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, FolderOpen, UserPlus, ShoppingBag, CheckSquare } from 'lucide-react';
+import { Users, FolderOpen, UserPlus, ShoppingBag, CheckSquare, Heart } from 'lucide-react';
 import { NavigationHeader } from './NavigationHeader';
 // import { FamilyHubSkeleton } from './skeletons/FamilyHubSkeleton';
 import { SubScreen, Screen } from '../App';
@@ -48,6 +48,13 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
       description: 'Shopping lists and items',
       color: 'from-fuchsia-400 to-pink-400',
     },
+    {
+      id: 'wellness' as SubScreen,
+      icon: Heart,
+      title: 'Wellness',
+      description: 'Cycle tracking & health insights',
+      color: 'from-pink-400 to-rose-400',
+    },
   ];
 
   return (
@@ -65,7 +72,7 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
           id="family-hub-intro"
           className="text-center text-base text-gray-600 dark:text-gray-400 mt-2 mb-4 max-w-2xl mx-auto"
         >
-          Quick access to your family's shared spaces — folders, contacts, tasks, and shopping.
+          Quick access to your family's shared spaces — folders, contacts, tasks, shopping, and wellness.
         </p>
 
         <section aria-label="Quick access features">
