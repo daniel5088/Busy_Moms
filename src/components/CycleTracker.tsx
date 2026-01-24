@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Droplet, Heart, Activity, Brain, Zap, Moon, Sun, TrendingUp, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { Calendar, Droplet, Heart, Activity, Zap, Moon, Sun, TrendingUp, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { cycleTrackerService, CycleData, CycleSymptom, CycleHistory } from '../services/cycleTrackerService';
 import { useAuth } from '../hooks/useAuth';
 
@@ -291,7 +291,6 @@ const CycleTracker = () => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">Smart Cycle Tracker</h1>
-            <Brain className="w-8 h-8 text-purple-400" />
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={getAIInsights} disabled={loading && loadingType === 'insights'}
@@ -299,7 +298,7 @@ const CycleTracker = () => {
               {loading && loadingType === 'insights' ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Loading...</>
               ) : (
-                <><Brain className="w-4 h-4" />Get Insights</>
+                <><Sparkles className="w-4 h-4" />Get Insights</>
               )}
             </button>
             <button onClick={predictNextPeriod} disabled={loading && loadingType === 'prediction'}
@@ -324,7 +323,7 @@ const CycleTracker = () => {
         {aiInsights && (
           <div className="bg-white dark:bg-gradient-to-br dark:from-purple-900/40 dark:to-pink-900/40 rounded-xl p-4 md:p-6 border border-purple-200 dark:border-purple-500/30 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
-              <Brain className="w-6 h-6 text-purple-400" />
+              <Sparkles className="w-6 h-6 text-purple-400" />
               <h2 className="text-xl font-semibold">AI Insights</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
