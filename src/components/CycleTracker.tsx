@@ -88,8 +88,9 @@ const CycleTracker = () => {
       });
       setAiInsights(insights);
     } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to get insights. Please try again.');
+      console.error('Error getting insights:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to get AI insights: ${errorMessage}\n\nPlease ensure the Wellness feature is properly set up by running the database migration.`);
     }
     setLoading(false);
     setLoadingType('');
@@ -114,8 +115,9 @@ const CycleTracker = () => {
       });
       setPrediction(predictionData);
     } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to predict. Please try again.');
+      console.error('Error predicting period:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to predict next period: ${errorMessage}\n\nPlease ensure the Wellness feature is properly set up by running the database migration.`);
     }
     setLoading(false);
     setLoadingType('');
@@ -143,8 +145,9 @@ const CycleTracker = () => {
       });
       setSymptomAnalysis(analysis);
     } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to analyze. Please try again.');
+      console.error('Error analyzing symptoms:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to analyze symptoms: ${errorMessage}\n\nPlease ensure the Wellness feature is properly set up by running the database migration.`);
     }
     setLoading(false);
     setLoadingType('');
