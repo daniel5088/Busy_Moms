@@ -1572,7 +1572,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               aria-label="Open location in Waze"
                             >
                               <img
-                                src="/waze_logo_2022.png"
+                                src="/waze_logo.svg"
                                 alt="Waze"
                                 className="h-10 w-auto object-contain"
                               />
@@ -1587,7 +1587,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               aria-label="Open location in Google Maps"
                             >
                               <img
-                                src="/google_maps_logo.svg.png"
+                                src="/google_maps_logo.svg"
                                 alt="Google Maps"
                                 className="h-10 w-auto object-contain"
                               />
@@ -1617,7 +1617,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                               aria-label="Request an Uber to this location"
                             >
                               <img
-                                src="/vecteezy_uber-logo-png-uber-icon-transparent-png_27127451.png"
+                                src="/uber_logo.svg"
                                 alt="Uber"
                                 className="h-10 w-auto object-contain"
                               />
