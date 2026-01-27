@@ -2,6 +2,14 @@ import { supabase } from '../lib/supabase';
 import type { UserMeasurementPreferences, MeasurementOverride } from '../lib/supabase';
 import { MeasurementConverter, MeasurementSystem } from '../utils/measurementConverter';
 
+export interface ConvertedMeasurement {
+  originalQuantity: number | null;
+  originalUnit: string | null;
+  displayQuantity: number | null;
+  displayUnit: string | null;
+  conversionApplied: boolean;
+}
+
 export class MeasurementPreferencesService {
   private preferencesCache: Map<string, UserMeasurementPreferences> = new Map();
 
@@ -145,6 +153,51 @@ export class MeasurementPreferencesService {
     }
 
     return { quantity, unit };
+  }
+
+  async convertForDisplay(
+    userId: string,
+    measurement: { quantity: number | null; unit: string | null }
+  ): Promise<ConvertedMeasurement> {
+    // Handle null/undefined cases
+    if (!measurement.quantity || !measurement.unit) {
+      return {
+        originalQuantity: measurement.quantity,
+        originalUnit: measurement.unit,
+        displayQuantity: measurement.quantity,
+        displayUnit: measurement.unit,
+        conversionApplied: false,
+      };
+    }
+
+    // Get cached user preferences
+    const prefs = await this.getPreferences(userId);
+
+    // Convert to user's preferred system
+    const result = MeasurementConverter.convertToSystem(
+      measurement.quantity,
+      measurement.unit,
+      prefs.preferred_system
+    );
+
+    if (result.conversionApplied) {
+      return {
+        originalQuantity: measurement.quantity,
+        originalUnit: measurement.unit,
+        displayQuantity: result.quantity,
+        displayUnit: result.unit,
+        conversionApplied: true,
+      };
+    }
+
+    // No conversion needed/possible
+    return {
+      originalQuantity: measurement.quantity,
+      originalUnit: measurement.unit,
+      displayQuantity: measurement.quantity,
+      displayUnit: measurement.unit,
+      conversionApplied: false,
+    };
   }
 
   clearCache(userId?: string): void {

@@ -30,6 +30,7 @@ import { SendToProviderModal } from './SendToProviderModal';
 import { GiftFinderModal } from './GiftFinderModal';
 import { instacartShoppingService } from '../services/instacartShoppingService';
 import { InstacartButton } from './InstacartButton';
+import { measurementPreferencesService, ConvertedMeasurement } from '../services/measurementPreferencesService';
 
 interface ShoppingProps {
   openGiftFinder?: boolean;
@@ -54,6 +55,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
   const [preferredRetailer, setPreferredRetailer] = useState<UserPreferredRetailer | null>(null);
   const [showGiftFinderModal, setShowGiftFinderModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+  const [convertedItems, setConvertedItems] = useState<Map<string, ConvertedMeasurement>>(new Map());
 
   useEffect(() => {
     if (user?.id) {
@@ -92,6 +94,28 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
       setActiveTab('list');
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!user || shoppingList.length === 0) return;
+
+    async function convertItems() {
+      const conversions = new Map<string, ConvertedMeasurement>();
+
+      for (const item of shoppingList) {
+        if (item.quantity && item.unit) {
+          const converted = await measurementPreferencesService.convertForDisplay(
+            user.id,
+            { quantity: item.quantity, unit: item.unit }
+          );
+          conversions.set(item.id, converted);
+        }
+      }
+
+      setConvertedItems(conversions);
+    }
+
+    convertItems();
+  }, [user, shoppingList]);
 
   const fetchShoppingList = async () => {
     if (!user?.id) return;
@@ -524,8 +548,18 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                           </div>
                           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                             <p>
-                              {item.category}{' '}
-                              {item.quantity && item.quantity > 1 ? `(${item.quantity})` : ''}
+                              {item.category}
+                              {(() => {
+                                const converted = convertedItems.get(item.id);
+                                const qty = converted?.displayQuantity ?? item.quantity;
+                                const unit = converted?.displayUnit ?? item.unit;
+                                if (qty && unit) {
+                                  return ` • ${qty} ${unit}`;
+                                } else if (qty && qty > 1) {
+                                  return ` (${qty})`;
+                                }
+                                return '';
+                              })()}
                             </p>
                           </div>
                           <div className="flex flex-wrap gap-2 mt-2">

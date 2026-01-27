@@ -6,6 +6,7 @@ import { instacartService } from '../services/instacartService';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { InstacartButton } from './InstacartButton';
+import { measurementPreferencesService, ConvertedMeasurement } from '../services/measurementPreferencesService';
 
 interface RecipeDetailModalProps {
   recipe: Recipe;
@@ -25,6 +26,7 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded, onRecip
   const [servings, setServings] = useState(recipe.servings || 4);
   const originalServings = recipe.servings || 4;
   const [deleting, setDeleting] = useState(false);
+  const [convertedIngredients, setConvertedIngredients] = useState<Map<string, ConvertedMeasurement>>(new Map());
 
   useEffect(() => {
     loadIngredients();
@@ -52,6 +54,37 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded, onRecip
     } catch (error) {
       console.error('Error checking if recipe is saved:', error);
     }
+  };
+
+  useEffect(() => {
+    if (!user || ingredients.length === 0) return;
+
+    async function convertIngredients() {
+      const conversions = new Map<string, ConvertedMeasurement>();
+
+      for (const ing of ingredients) {
+        const converted = await measurementPreferencesService.convertForDisplay(
+          user.id,
+          { quantity: ing.quantity, unit: ing.unit }
+        );
+        conversions.set(ing.id, converted);
+      }
+
+      setConvertedIngredients(conversions);
+    }
+
+    convertIngredients();
+  }, [user, ingredients]);
+
+  const getDisplayQuantity = (ingredient: RecipeIngredient) => {
+    const converted = convertedIngredients.get(ingredient.id);
+    const baseQuantity = converted?.displayQuantity ?? ingredient.quantity;
+    return baseQuantity ? getAdjustedQuantity(baseQuantity) : null;
+  };
+
+  const getDisplayUnit = (ingredient: RecipeIngredient) => {
+    const converted = convertedIngredients.get(ingredient.id);
+    return converted?.displayUnit ?? ingredient.unit;
   };
 
   const toggleIngredient = (ingredientId: string) => {
@@ -322,9 +355,11 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded, onRecip
                         />
                         <div className="flex-1">
                           <p className="text-gray-900">
-                            {ingredient.quantity && ingredient.unit
-                              ? `${getAdjustedQuantity(ingredient.quantity)} ${ingredient.unit} `
-                              : ''}
+                            {(() => {
+                              const qty = getDisplayQuantity(ingredient);
+                              const unit = getDisplayUnit(ingredient);
+                              return qty && unit ? `${qty} ${unit} ` : '';
+                            })()}
                             {ingredient.display_text}
                           </p>
                         </div>
@@ -352,9 +387,11 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded, onRecip
                           />
                           <div className="flex-1">
                             <p className="text-gray-600">
-                              {ingredient.quantity && ingredient.unit
-                                ? `${getAdjustedQuantity(ingredient.quantity)} ${ingredient.unit} `
-                                : ''}
+                              {(() => {
+                                const qty = getDisplayQuantity(ingredient);
+                                const unit = getDisplayUnit(ingredient);
+                                return qty && unit ? `${qty} ${unit} ` : '';
+                              })()}
                               {ingredient.display_text}
                             </p>
                           </div>
