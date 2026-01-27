@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, User, Heart, School, Mail, Calendar } from 'lucide-react';
 import { supabase, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { getAgeFromBirthday } from '../../utils/ageCalculator';
+import {
+  createBirthdayEventsForNext100Years,
+  updateBirthdayEvents,
+} from '../../services/birthdayEventsService';
 
 interface FamilyMemberFormProps {
   isOpen: boolean;
@@ -20,6 +24,7 @@ export function FamilyMemberForm({
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const originalBirthdayRef = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     Email: '',
@@ -42,12 +47,15 @@ export function FamilyMemberForm({
       let year = '';
 
       if (editMember.birthday) {
+        originalBirthdayRef.current = editMember.birthday;
         const date = new Date(editMember.birthday);
         if (!isNaN(date.getTime())) {
           month = String(date.getMonth() + 1).padStart(2, '0');
           day = String(date.getDate()).padStart(2, '0');
           year = String(date.getFullYear());
         }
+      } else {
+        originalBirthdayRef.current = null;
       }
 
       setFormData({
@@ -64,6 +72,7 @@ export function FamilyMemberForm({
         grade: editMember.grade || '',
       });
     } else {
+      originalBirthdayRef.current = null;
       // Reset form for new member
       setFormData({
         name: '',
@@ -161,8 +170,19 @@ export function FamilyMemberForm({
         throw result.error;
       }
 
+      const savedMember = result.data;
+
+      if (editMember) {
+        const birthdayChanged = originalBirthdayRef.current !== birthday;
+        if (birthdayChanged) {
+          await updateBirthdayEvents(savedMember, originalBirthdayRef.current);
+        }
+      } else {
+        await createBirthdayEventsForNext100Years(savedMember);
+      }
+
       // Call the callback with the saved member
-      onMemberCreated(result.data);
+      onMemberCreated(savedMember);
       onClose();
 
       // Reset form

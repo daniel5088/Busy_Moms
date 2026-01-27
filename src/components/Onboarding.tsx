@@ -15,6 +15,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import FamilyMemberCard, { FamilyMember } from './onboarding/FamilyMemberCard';
 import { ALL as ALL_COLORS } from '../lib/colorPalette';
+import { createBirthdayEventsForNext100Years } from '../services/birthdayEventsService';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -347,12 +348,19 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           });
 
         if (familyMembersToInsert.length > 0) {
-          const { error: familyMembersError } = await supabase
+          const { data: insertedMembers, error: familyMembersError } = await supabase
             .from('family_members')
-            .insert(familyMembersToInsert);
+            .insert(familyMembersToInsert)
+            .select();
 
           if (familyMembersError) {
             console.error('Error saving family members:', familyMembersError);
+          } else if (insertedMembers) {
+            for (const member of insertedMembers) {
+              if (member.birthday) {
+                await createBirthdayEventsForNext100Years(member);
+              }
+            }
           }
         }
       }

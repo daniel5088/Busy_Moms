@@ -51,7 +51,7 @@ export interface Event {
   event_type?: string | null;
   rsvp_required?: boolean | null;
   rsvp_status?: 'pending' | 'yes' | 'no' | 'maybe' | null;
-  source?: 'whatsapp' | 'manual' | 'ai' | null;
+  source?: 'whatsapp' | 'manual' | 'ai' | 'birthday' | null;
   assigned_to_email?: string | null; // Email of person this event is assigned to
   assigned_by_email?: string | null; // Email of person who assigned this event
   assigned_by_name?: string | null; // Name of person who assigned this event
