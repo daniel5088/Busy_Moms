@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Calculator } from 'lucide-react';
 import { MeasurementConverter, MeasurementType } from '../utils/measurementConverter';
 import { InstacartUnitMapper } from '../utils/instacartUnitMapper';
+import { useAuth } from '../hooks/useAuth';
+import { measurementPreferencesService } from '../services/measurementPreferencesService';
 
 interface MeasurementInputProps {
   quantity: number | null;
@@ -24,18 +26,33 @@ export function MeasurementInput({
   onQuantityChange,
   onUnitChange,
   showConverter = true,
-  preferredSystem = 'imperial',
+  preferredSystem,
   disabled = false,
   className = '',
 }: MeasurementInputProps) {
+  const { user } = useAuth();
   const [showConversion, setShowConversion] = useState(false);
   const [conversionResult, setConversionResult] = useState<string>('');
+  const [fetchedSystem, setFetchedSystem] = useState<'metric' | 'imperial'>('imperial');
+
+  const effectiveSystem = preferredSystem ?? fetchedSystem;
 
   const measurementType: MeasurementType = unit
     ? MeasurementConverter.getMeasurementType(unit)
     : 'count';
 
-  const availableUnits = MeasurementConverter.getCommonUnits(preferredSystem)[measurementType];
+  const availableUnits = MeasurementConverter.getCommonUnits(effectiveSystem)[measurementType];
+
+  useEffect(() => {
+    if (!preferredSystem && user) {
+      measurementPreferencesService
+        .getPreferredSystem(user.id)
+        .then(setFetchedSystem)
+        .catch((error) => {
+          console.error('Error fetching preferred system:', error);
+        });
+    }
+  }, [preferredSystem, user]);
 
   useEffect(() => {
     if (!unit && ingredientName && category) {
@@ -48,7 +65,7 @@ export function MeasurementInput({
     if (quantity && unit && showConverter) {
       updateConversion();
     }
-  }, [quantity, unit, preferredSystem]);
+  }, [quantity, unit, effectiveSystem]);
 
   const updateConversion = () => {
     if (!quantity || !unit) {
@@ -56,7 +73,7 @@ export function MeasurementInput({
       return;
     }
 
-    const targetSystem = preferredSystem === 'metric' ? 'imperial' : 'metric';
+    const targetSystem = effectiveSystem === 'metric' ? 'imperial' : 'metric';
     const converted = MeasurementConverter.convertToSystem(quantity, unit, targetSystem);
 
     if (converted.conversionApplied) {

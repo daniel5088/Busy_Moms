@@ -238,6 +238,11 @@ export class MeasurementPreferencesService {
     const prefs = await this.getPreferences(userId);
     return MeasurementConverter.getCommonUnits(prefs.preferred_system);
   }
+
+  async getPreferredSystem(userId: string): Promise<MeasurementSystem> {
+    const prefs = await this.getPreferences(userId);
+    return prefs.preferred_system || 'imperial';
+  }
 }
 
 export const measurementPreferencesService = new MeasurementPreferencesService();

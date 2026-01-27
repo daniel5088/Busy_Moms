@@ -5,6 +5,8 @@ import { EmailRequiredPopup } from '../shared/EmailRequiredPopup';
 import { useAuth } from '../../hooks/useAuth';
 import { MeasurementInput } from '../MeasurementInput';
 import { InstacartUnitMapper } from '../../utils/instacartUnitMapper';
+import { measurementPreferencesService } from '../../services/measurementPreferencesService';
+import type { MeasurementSystem } from '../../utils/measurementConverter';
 
 interface ShoppingFormProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
   const [selectedMemberName, setSelectedMemberName] = useState('');
+  const [preferredSystem, setPreferredSystem] = useState<MeasurementSystem>('imperial');
   const [formData, setFormData] = useState({
     item: editItem?.item || '',
     category: editItem?.category || 'other',
@@ -33,6 +36,7 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
   React.useEffect(() => {
     if (isOpen && user) {
       loadFamilyMembers();
+      loadPreferredSystem();
     }
   }, [isOpen, user]);
 
@@ -66,6 +70,17 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
       }
     } catch (error) {
       console.error('Error loading family members:', error);
+    }
+  };
+
+  const loadPreferredSystem = async () => {
+    if (!user?.id) return;
+
+    try {
+      const system = await measurementPreferencesService.getPreferredSystem(user.id);
+      setPreferredSystem(system);
+    } catch (error) {
+      console.error('Error loading preferred system:', error);
     }
   };
 
@@ -202,6 +217,7 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
               onUnitChange={(u) => setFormData({ ...formData, unit: u })}
               showConverter={true}
               className=""
+              preferredSystem={preferredSystem}
             />
 
             <div>
