@@ -193,17 +193,6 @@ export function Settings({
     }
   };
 
-  // TEMP: removed - auto-convert units is now always enabled
-  // const toggleAutoConvert = async () => {
-  //   if (!user) return;
-  //
-  //   try {
-  //     await measurementPreferencesService.toggleAutoConvert(user.id);
-  //     await loadMeasurementPreferences();
-  //   } catch (error) {
-  //     console.error('Error toggling auto-convert:', error);
-  //   }
-  // };
 
   const loadAIVoicePreferences = React.useCallback(async () => {
     if (!user) return;
@@ -451,15 +440,6 @@ export function Settings({
           enabled: measurementPrefs?.preferred_system === 'metric',
           onClick: toggleMeasurementSystem,
         },
-        // TEMP: removed - auto-convert units is now always enabled
-        // {
-        //   icon: RefreshCw,
-        //   title: 'Auto-Convert Units',
-        //   description: 'Automatically convert measurements to your preferred system',
-        //   toggle: true,
-        //   enabled: measurementPrefs?.auto_convert ?? true,
-        //   onClick: toggleAutoConvert,
-        // },
       ],
     },
     {
@@ -729,6 +709,14 @@ export function Settings({
                   </div>
                 ))}
               </div>
+
+              {section.title === 'Measurement Preferences' && (
+                <div className="mt-3 bg-blue-50 dark:bg-blue-900 bg-opacity-50 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    Automatic unit conversion is always enabled. Measurements convert to your preferred system (Metric or Imperial) automatically.
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>

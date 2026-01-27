@@ -86,6 +86,13 @@ export class MeasurementPreferencesService {
     await this.updatePreferences(userId, updates);
   }
 
+  /**
+   * @deprecated Auto-convert is now always enabled. This function exists only for backward
+   * compatibility and should not be called. It will be removed in a future version.
+   *
+   * Automatic unit conversion is permanently enabled and cannot be disabled. All measurements
+   * are converted to the user's preferred system (metric or imperial) automatically.
+   */
   async toggleAutoConvert(userId: string): Promise<boolean> {
     const prefs = await this.getPreferences(userId);
     const newValue = !prefs.auto_convert;
@@ -145,7 +152,7 @@ export class MeasurementPreferencesService {
   ): Promise<{ quantity: number; unit: string }> {
     const prefs = await this.getPreferences(userId);
 
-    // Auto-convert is now always enabled, so always perform conversion
+    // Auto-convert is permanently enabled - always perform conversion to user's preferred system
     const result = MeasurementConverter.convertToSystem(quantity, unit, prefs.preferred_system);
 
     if (result.conversionApplied) {

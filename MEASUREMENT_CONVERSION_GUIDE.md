@@ -55,8 +55,10 @@ This system provides comprehensive ingredient measurement conversion capabilitie
 
 - Database-backed user preference storage
 - Configurable measurement system (metric/imperial)
-- Auto-conversion toggle
+- Auto-conversion (always enabled)
 - Per-item measurement overrides
+
+**Note:** Automatic unit conversion is permanently enabled and cannot be disabled. All measurements are automatically converted to the user's preferred system (metric or imperial).
 
 ### 5. **UI Components**
 
@@ -70,7 +72,7 @@ This system provides comprehensive ingredient measurement conversion capabilitie
 #### Settings Integration
 
 - Toggle between metric and imperial systems
-- Enable/disable automatic unit conversion
+- Automatic unit conversion (always enabled)
 - Preferences persist across sessions
 
 ## Database Schema
@@ -199,10 +201,7 @@ import { measurementPreferencesService } from './services/measurementPreferences
 // Set user's preferred system
 await measurementPreferencesService.setPreferredSystem(userId, 'metric');
 
-// Toggle auto-conversion
-await measurementPreferencesService.toggleAutoConvert(userId);
-
-// Convert based on preferences
+// Convert based on preferences (auto-conversion is always enabled)
 const converted = await measurementPreferencesService.convertBasedOnPreferences(userId, 2, 'cup');
 ```
 
@@ -239,7 +238,7 @@ Test the conversion system:
 
 1. Add items with various units in Shopping form
 2. Toggle measurement system in Settings
-3. Verify auto-conversion works correctly
+3. Verify auto-conversion works correctly (always enabled)
 4. Check Instacart submissions use compatible units
 5. Import recipes and verify unit parsing
 
@@ -248,7 +247,7 @@ Test the conversion system:
 **Issue**: Units not converting
 
 - Check user preferences in Settings
-- Verify auto-convert is enabled
+- Auto-convert is always enabled
 - Ensure units are compatible (same measurement type)
 
 **Issue**: Instacart API rejecting units
