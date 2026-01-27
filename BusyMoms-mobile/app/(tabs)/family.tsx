@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Users, User } from 'lucide-react-native';
 import { supabase, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { getAgeFromBirthday } from '../../utils/ageCalculator';
 
 export default function FamilyScreen() {
   const { user } = useAuth();
@@ -77,8 +78,10 @@ export default function FamilyScreen() {
                 {member.relationship && (
                   <Text style={styles.memberDetail}>{member.relationship}</Text>
                 )}
-                {member.age && (
-                  <Text style={styles.memberDetail}>Age: {member.age}</Text>
+                {(getAgeFromBirthday(member.birthday) !== null || member.age) && (
+                  <Text style={styles.memberDetail}>
+                    Age: {getAgeFromBirthday(member.birthday) ?? member.age}
+                  </Text>
                 )}
                 {member.school && (
                   <Text style={styles.memberDetail}>{member.school}</Text>

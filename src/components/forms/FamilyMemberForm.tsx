@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, User, Heart, School, Mail } from 'lucide-react';
+import { X, User, Heart, School, Mail, Calendar } from 'lucide-react';
 import { supabase, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { getAgeFromBirthday } from '../../utils/ageCalculator';
 
 interface FamilyMemberFormProps {
   isOpen: boolean;
@@ -23,7 +24,9 @@ export function FamilyMemberForm({
     name: '',
     Email: '',
     relationship: 'Child',
-    age: '',
+    birthdayMonth: '',
+    birthdayDay: '',
+    birthdayYear: '',
     gender: 'Other',
     allergies: '',
     medical_notes: '',
@@ -34,11 +37,26 @@ export function FamilyMemberForm({
   // Update form data when editMember changes
   React.useEffect(() => {
     if (editMember) {
+      let month = '';
+      let day = '';
+      let year = '';
+
+      if (editMember.birthday) {
+        const date = new Date(editMember.birthday);
+        if (!isNaN(date.getTime())) {
+          month = String(date.getMonth() + 1).padStart(2, '0');
+          day = String(date.getDate()).padStart(2, '0');
+          year = String(date.getFullYear());
+        }
+      }
+
       setFormData({
         name: editMember.name || '',
         Email: editMember.Email || '',
         relationship: editMember.relationship || 'Child',
-        age: editMember.age?.toString() || '',
+        birthdayMonth: month,
+        birthdayDay: day,
+        birthdayYear: year,
         gender: editMember.gender || 'Other',
         allergies: editMember.allergies?.join(', ') || '',
         medical_notes: editMember.medical_notes || '',
@@ -51,7 +69,9 @@ export function FamilyMemberForm({
         name: '',
         Email: '',
         relationship: 'Child',
-        age: '',
+        birthdayMonth: '',
+        birthdayDay: '',
+        birthdayYear: '',
         gender: 'Other',
         allergies: '',
         medical_notes: '',
@@ -78,15 +98,47 @@ export function FamilyMemberForm({
         throw new Error('You must be logged in to add family members.');
       }
 
-      const memberData = {
-        ...formData,
+      let birthday: string | null = null;
+      if (formData.birthdayMonth && formData.birthdayDay && formData.birthdayYear) {
+        const month = parseInt(formData.birthdayMonth);
+        const day = parseInt(formData.birthdayDay);
+        const year = parseInt(formData.birthdayYear);
+
+        if (month < 1 || month > 12) {
+          throw new Error('Month must be between 1 and 12');
+        }
+        if (day < 1 || day > 31) {
+          throw new Error('Day must be between 1 and 31');
+        }
+        if (year < 1900 || year > new Date().getFullYear()) {
+          throw new Error('Please enter a valid birth year');
+        }
+
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const testDate = new Date(dateStr);
+        if (isNaN(testDate.getTime())) {
+          throw new Error('Please enter a valid date');
+        }
+        if (testDate > new Date()) {
+          throw new Error('Birthday cannot be in the future');
+        }
+
+        birthday = dateStr;
+      }
+
+      const memberData: any = {
         user_id: user.id,
-        age: formData.age ? parseInt(formData.age.toString()) : null,
+        name: formData.name,
+        Email: formData.Email,
+        relationship: formData.relationship,
+        birthday: birthday,
+        birthday_estimated: false,
+        gender: formData.gender,
         allergies: formData.allergies
           .split(',')
           .map((a) => a.trim())
           .filter((a) => a),
-        // Clear school and grade if not applicable
+        medical_notes: formData.medical_notes,
         school: showSchoolFields ? formData.school : '',
         grade: showSchoolFields ? formData.grade : '',
       };
@@ -118,14 +170,16 @@ export function FamilyMemberForm({
         name: '',
         Email: '',
         relationship: 'Child',
-        age: '',
+        birthdayMonth: '',
+        birthdayDay: '',
+        birthdayYear: '',
         gender: 'Other',
         allergies: '',
         medical_notes: '',
         school: '',
         grade: '',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving family member:', error);
       setError(`Error saving family member: ${error.message || 'Please try again.'}`);
     } finally {
@@ -208,34 +262,75 @@ export function FamilyMemberForm({
               </select>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-                  Age
-                </label>
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+                Birthday
+              </label>
+              <div className="flex gap-2">
                 <input
-                  type="number"
-                  min="0"
-                  value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                  className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                  placeholder="Age"
+                  type="text"
+                  maxLength={2}
+                  value={formData.birthdayMonth}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setFormData({ ...formData, birthdayMonth: value });
+                  }}
+                  className="w-16 px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base text-center"
+                  placeholder="MM"
+                />
+                <span className="text-gray-400 dark:text-gray-500 self-center">/</span>
+                <input
+                  type="text"
+                  maxLength={2}
+                  value={formData.birthdayDay}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setFormData({ ...formData, birthdayDay: value });
+                  }}
+                  className="w-16 px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base text-center"
+                  placeholder="DD"
+                />
+                <span className="text-gray-400 dark:text-gray-500 self-center">/</span>
+                <input
+                  type="text"
+                  maxLength={4}
+                  value={formData.birthdayYear}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setFormData({ ...formData, birthdayYear: value });
+                  }}
+                  className="w-20 px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base text-center"
+                  placeholder="YYYY"
                 />
               </div>
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-                  Gender
-                </label>
-                <select
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
-                  className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
+              {editMember?.birthday_estimated && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  Birthday is estimated—tap to update.
+                </p>
+              )}
+              {formData.birthdayMonth && formData.birthdayDay && formData.birthdayYear && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Age: {getAgeFromBirthday(
+                    `${formData.birthdayYear}-${String(formData.birthdayMonth).padStart(2, '0')}-${String(formData.birthdayDay).padStart(2, '0')}`
+                  ) || 'Invalid date'}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                Gender
+              </label>
+              <select
+                value={formData.gender}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                className="w-full px-3 py-2 sm:px-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
 
             {showSchoolFields && (

@@ -21,6 +21,8 @@ export interface FamilyMember {
   name: string;
   Email: string;
   age?: number | null;
+  birthday?: string | null;
+  birthday_estimated?: boolean | null;
   gender?: 'Boy' | 'Girl' | 'Other' | null;
   relationship?: string | null;
   avatar_url?: string | null;

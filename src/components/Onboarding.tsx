@@ -323,18 +323,28 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (familyMembers.length > 0) {
         const familyMembersToInsert = familyMembers
           .filter((m) => m.name.trim() !== '' && m.relationship !== '')
-          .map((m) => ({
-            user_id: user.id,
-            name: m.name,
-            relationship: m.relationship,
-            age: m.age,
-            gender: m.gender || 'Other',
-            school: m.school || '',
-            grade: m.grade || '',
-            allergies: m.allergies || [],
-            medical_notes: m.medical_notes || '',
-            color: m.color,
-          }));
+          .map((m) => {
+            let birthday: string | null = null;
+            if (m.birthdayMonth && m.birthdayDay && m.birthdayYear) {
+              const month = String(m.birthdayMonth).padStart(2, '0');
+              const day = String(m.birthdayDay).padStart(2, '0');
+              birthday = `${m.birthdayYear}-${month}-${day}`;
+            }
+
+            return {
+              user_id: user.id,
+              name: m.name,
+              relationship: m.relationship,
+              birthday: birthday,
+              birthday_estimated: false,
+              gender: m.gender || 'Other',
+              school: m.school || '',
+              grade: m.grade || '',
+              allergies: m.allergies || [],
+              medical_notes: m.medical_notes || '',
+              color: m.color,
+            };
+          });
 
         if (familyMembersToInsert.length > 0) {
           const { error: familyMembersError } = await supabase

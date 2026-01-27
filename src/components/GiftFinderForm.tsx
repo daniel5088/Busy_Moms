@@ -8,6 +8,7 @@ import {
 } from '../lib/supabase';
 import { affiliateMatrixService } from '../services/affiliateMatrixService';
 import { formatDate } from '../utils/timeFormatters';
+import { getAgeFromBirthday } from '../utils/ageCalculator';
 
 interface GiftFinderFormProps {
   familyMembers: FamilyMember[];
@@ -161,11 +162,12 @@ export function GiftFinderForm({
 
     const member = familyMembers.find((m) => m.id === memberId);
     if (member) {
+      const age = getAgeFromBirthday(member.birthday) ?? member.age ?? 8;
       setFormData((prev) => ({
         ...prev,
         family_member_id: member.id,
         recipient_name: member.name,
-        recipient_age: member.age || 8,
+        recipient_age: age,
         recipient_gender: member.gender || 'Other',
       }));
       setSelectedMemberRelationship(member.relationship);

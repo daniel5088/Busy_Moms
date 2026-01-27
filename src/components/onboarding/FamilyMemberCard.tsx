@@ -1,6 +1,7 @@
 import React from 'react';
-import { Trash2, School, Heart } from 'lucide-react';
+import { Trash2, School, Heart, Calendar } from 'lucide-react';
 import ColorPicker from './ColorPicker';
+import { getAgeFromBirthday } from '../../utils/ageCalculator';
 
 export type FamilyMember = {
   id: string;
@@ -8,6 +9,11 @@ export type FamilyMember = {
   name: string;
   relationship?: string;
   age?: number;
+  birthday?: string;
+  birthday_estimated?: boolean;
+  birthdayMonth?: string;
+  birthdayDay?: string;
+  birthdayYear?: string;
   gender?: string;
   school?: string;
   grade?: string;
@@ -51,9 +57,19 @@ export default function FamilyMemberCard({ member, usedColors, onChange, onRemov
     onChange(updates);
   };
 
-  const handleAgeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const age = e.target.value ? parseInt(e.target.value, 10) : undefined;
-    onChange({ age });
+  const handleBirthdayMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    onChange({ birthdayMonth: value });
+  };
+
+  const handleBirthdayDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    onChange({ birthdayDay: value });
+  };
+
+  const handleBirthdayYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    onChange({ birthdayYear: value });
   };
 
   const handleGenderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -146,43 +162,75 @@ export default function FamilyMemberCard({ member, usedColors, onChange, onRemov
           </select>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor={`age-${member.id}`}
-              className="block text-sm font-medium text-gray-700 mb-1.5"
-            >
-              Age
-            </label>
+        <div>
+          <label
+            htmlFor={`birthday-month-${member.id}`}
+            className="block text-sm font-medium text-gray-700 mb-1.5"
+          >
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
+            Birthday
+          </label>
+          <div className="flex gap-2">
             <input
-              type="number"
-              id={`age-${member.id}`}
-              value={member.age ?? ''}
-              onChange={handleAgeChange}
-              min="0"
-              max="120"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 bg-white transition-colors"
-              placeholder="Age"
+              type="text"
+              id={`birthday-month-${member.id}`}
+              maxLength={2}
+              value={member.birthdayMonth || ''}
+              onChange={handleBirthdayMonthChange}
+              className="w-16 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 bg-white transition-colors text-center"
+              placeholder="MM"
+            />
+            <span className="text-gray-400 self-center">/</span>
+            <input
+              type="text"
+              id={`birthday-day-${member.id}`}
+              maxLength={2}
+              value={member.birthdayDay || ''}
+              onChange={handleBirthdayDayChange}
+              className="w-16 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 bg-white transition-colors text-center"
+              placeholder="DD"
+            />
+            <span className="text-gray-400 self-center">/</span>
+            <input
+              type="text"
+              id={`birthday-year-${member.id}`}
+              maxLength={4}
+              value={member.birthdayYear || ''}
+              onChange={handleBirthdayYearChange}
+              className="w-20 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 bg-white transition-colors text-center"
+              placeholder="YYYY"
             />
           </div>
-          <div>
-            <label
-              htmlFor={`gender-${member.id}`}
-              className="block text-sm font-medium text-gray-700 mb-1.5"
-            >
-              Gender
-            </label>
-            <select
-              id={`gender-${member.id}`}
-              value={member.gender || 'Other'}
-              onChange={handleGenderChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 bg-white transition-colors"
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
+          {member.birthday_estimated && (
+            <p className="mt-1.5 text-sm text-amber-600">Birthday is estimated—tap to update.</p>
+          )}
+          {member.birthdayMonth && member.birthdayDay && member.birthdayYear && (
+            <p className="mt-1.5 text-sm text-gray-500">
+              Age:{' '}
+              {getAgeFromBirthday(
+                `${member.birthdayYear}-${String(member.birthdayMonth).padStart(2, '0')}-${String(member.birthdayDay).padStart(2, '0')}`
+              ) || 'Invalid date'}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor={`gender-${member.id}`}
+            className="block text-sm font-medium text-gray-700 mb-1.5"
+          >
+            Gender
+          </label>
+          <select
+            id={`gender-${member.id}`}
+            value={member.gender || 'Other'}
+            onChange={handleGenderChange}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 bg-white transition-colors"
+          >
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
 
         {showSchoolFields && (
