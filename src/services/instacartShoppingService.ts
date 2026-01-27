@@ -11,7 +11,27 @@ import type {
   Retailer,
 } from '../lib/supabase';
 import { InstacartUnitMapper } from '../utils/instacartUnitMapper';
-// Note: getPreferredRetailer is from legacy user_settings table - no longer used
+import { MeasurementConverter } from '../utils/measurementConverter';
+
+interface FormattedInstacartItem {
+  name: string;
+  quantity: number;
+  unit: string | null;
+  category: string;
+}
+
+interface SkippedItem {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+  reason: string;
+}
+
+interface FormatResult {
+  items: FormattedInstacartItem[];
+  skipped: SkippedItem[];
+  warnings: string[];
+}
 
 export class InstacartShoppingService {
   private edgeFunctionUrl: string;
@@ -40,8 +60,27 @@ export class InstacartShoppingService {
       throw new Error('User must be authenticated to send items to Instacart');
     }
 
-    const formattedItems = this.formatItemsForInstacart(items);
+    const formatResult = this.formatItemsForInstacart(items);
 
+    console.log('📦 Export Summary:', {
+      total: items.length,
+      exported: formatResult.items.length,
+      skipped: formatResult.skipped.length,
+    });
+
+    if (formatResult.skipped.length > 0) {
+      console.warn('⚠️ Skipped items:', formatResult.skipped);
+    }
+
+    if (formatResult.items.length === 0) {
+      throw new Error(
+        'No items could be exported to Instacart. ' +
+          `${formatResult.skipped.length} item(s) have invalid or non-standard units. ` +
+          'Please update units to standard measurements (cups, grams, pounds, etc.).'
+      );
+    }
+
+    const formattedItems = formatResult.items;
     console.log('📦 Formatted items for Instacart:', formattedItems);
 
     // Determine which retailer to use
@@ -110,6 +149,16 @@ export class InstacartShoppingService {
         );
       }
       throw error;
+    }
+
+    // If some items were skipped, log a warning for the user
+    if (formatResult.skipped.length > 0) {
+      console.warn(
+        `⚠️ ${formatResult.skipped.length} item(s) were not sent to Instacart due to invalid units:`,
+        formatResult.skipped.map((s) => s.name).join(', ')
+      );
+      // TODO: Consider showing user-friendly toast notification
+      // toast.warning(`${formatResult.skipped.length} items skipped due to invalid units`);
     }
 
     // Get retailer name for metadata
@@ -208,24 +257,129 @@ export class InstacartShoppingService {
     return this.sendToInstacart(items, retailerKey);
   }
 
-  private formatItemsForInstacart(items: ShoppingItem[]) {
-    return items.map((item) => {
-      const formatted = InstacartUnitMapper.formatForInstacart(
-        item.quantity,
-        item.unit,
-        item.category || undefined
-      );
+  /**
+   * Normalizes a shopping item for Instacart export.
+   *
+   * CONSERVATIVE STRATEGY:
+   * - Stored (quantity, unit) is authoritative source
+   * - Non-standard units (pinch, dash, to taste) → SKIP item with warning
+   * - Only use valid Instacart-compatible measurements
+   * - Never guess or default to "each" unless unit is explicitly count-based
+   *
+   * RETURNS:
+   * - { quantity, unit } for valid items
+   * - null for items that should be skipped
+   *
+   * IDEMPOTENCY:
+   * - Conversion happens exactly once per export
+   * - Same input always produces same output
+   */
+  private normalizeShoppingItemForInstacart(
+    item: ShoppingItem
+  ): { quantity: number; unit: string | null } | null {
+    const itemName = item.item;
 
-      // Ensure quantity is always a valid number
-      const quantity = formatted.quantity || item.quantity || 1;
-      
-      return {
+    // Validate quantity
+    if (!item.quantity || item.quantity <= 0) {
+      console.warn(`⚠️ Skipping "${itemName}" - invalid quantity: ${item.quantity}`);
+      return null;
+    }
+
+    if (item.quantity > 10000) {
+      console.warn(`⚠️ Skipping "${itemName}" - unreasonable quantity: ${item.quantity}`);
+      return null;
+    }
+
+    // Handle missing unit - Instacart accepts null
+    if (!item.unit || item.unit.trim() === '') {
+      console.info(`ℹ️ Item "${itemName}" has no unit, sending as count-based item`);
+      return { quantity: item.quantity, unit: null };
+    }
+
+    // Normalize unit
+    const normalizedUnit = MeasurementConverter.normalizeUnit(item.unit);
+
+    // Check for non-standard cooking descriptors
+    const nonStandardUnits = [
+      'pinch',
+      'dash',
+      'garnish',
+      'to taste',
+      'as needed',
+      'some',
+      'splash',
+      'sprinkle',
+      'handful',
+    ];
+
+    if (nonStandardUnits.includes(normalizedUnit.toLowerCase())) {
+      console.warn(
+        `⚠️ Skipping "${itemName}" - non-standard unit "${item.unit}" cannot be reliably mapped to Instacart`
+      );
+      return null;
+    }
+
+    // Check if it's a valid measurement unit
+    if (!MeasurementConverter.isValidUnit(normalizedUnit)) {
+      console.warn(`⚠️ Skipping "${itemName}" - unrecognized unit "${item.unit}"`);
+      return null;
+    }
+
+    // Use InstacartUnitMapper to format (handles conversions if needed)
+    const formatted = InstacartUnitMapper.formatForInstacart(
+      item.quantity,
+      normalizedUnit,
+      item.category || undefined
+    );
+
+    // Validate the result
+    if (!formatted.unit) {
+      console.warn(`⚠️ Skipping "${itemName}" - unit mapping failed for "${item.unit}"`);
+      return null;
+    }
+
+    // Log conversion if it happened
+    if (formatted.unit !== normalizedUnit) {
+      console.info(
+        `🔄 Converted "${itemName}": ${item.quantity} ${item.unit} → ${formatted.quantity} ${formatted.unit}`
+      );
+    }
+
+    return {
+      quantity: Math.round(formatted.quantity * 100) / 100, // Round to 2 decimals
+      unit: formatted.unit,
+    };
+  }
+
+  private formatItemsForInstacart(items: ShoppingItem[]): FormatResult {
+    const formattedItems: FormattedInstacartItem[] = [];
+    const skipped: SkippedItem[] = [];
+    const warnings: string[] = [];
+
+    for (const item of items) {
+      const normalized = this.normalizeShoppingItemForInstacart(item);
+
+      if (normalized === null) {
+        // Item was skipped due to invalid/non-standard unit
+        skipped.push({
+          name: item.item,
+          quantity: item.quantity,
+          unit: item.unit,
+          reason: `Cannot export - invalid or non-standard unit: "${item.unit || 'none'}"`,
+        });
+        warnings.push(`Skipped "${item.item}" - invalid unit`);
+        continue;
+      }
+
+      formattedItems.push({
         name: item.item,
-        quantity: typeof quantity === 'number' ? quantity : parseInt(String(quantity)) || 1,
-        unit: formatted.unit || item.unit || null,
+        quantity: normalized.quantity,
+        unit: normalized.unit,
         category: item.category || 'other',
-      };
-    });
+      });
+    }
+
+    return { items: formattedItems, skipped, warnings };
   }
 
   private async updateItemsProviderStatus(
