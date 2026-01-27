@@ -2018,6 +2018,7 @@ class AIAssistantService {
     const title = String(details.title ?? 'item');
     const category = String(details.category ?? details.list ?? 'other');
     const quantity = coerceInt(details.quantity ?? 1, 1) ?? 1;
+    const unit = details.unit ? String(details.unit) : null;
 
     let assigned_to: string | null = null;
     let assigned_to_email: string | null = null;
@@ -2046,6 +2047,8 @@ class AIAssistantService {
             item: title,
             category,
             quantity,
+            unit,
+            original_unit: unit, // Track original unit to prevent double-conversion
             completed: false,
             urgent: false,
             assigned_to,
@@ -2071,9 +2074,13 @@ class AIAssistantService {
         detail: { type: 'shopping', action: 'created' }
       }));
 
-      let message = `✅ Added to shopping list: ${title}${
-        quantity > 1 ? ` x${quantity}` : ''
-      }`;
+      let message = `✅ Added to shopping list: ${title}`;
+      if (quantity && quantity > 1) {
+        message += ` x${quantity}`;
+      }
+      if (unit) {
+        message += ` ${unit}`;
+      }
       if (assigned_to_name) {
         message += ` assigned to ${assigned_to_name}`;
       }
@@ -2621,6 +2628,21 @@ class AIAssistantService {
         updatePayload.urgent = Boolean(updates.urgent);
       if (updates.category) updatePayload.category = String(updates.category);
       if (updates.notes) updatePayload.notes = String(updates.notes);
+
+      // Handle unit updates and maintain original_unit
+      if (updates.unit !== undefined) {
+        const newUnit = updates.unit ? String(updates.unit) : null;
+        updatePayload.unit = newUnit;
+
+        // Update original_unit to reduce future double-conversion risk
+        // If unit is being changed, update original_unit to the new unit
+        if (newUnit !== (item as any).unit) {
+          updatePayload.original_unit = newUnit;
+        }
+      } else if ((item as any).original_unit === null || (item as any).original_unit === undefined) {
+        // Legacy row: populate original_unit from current unit if we're doing any update
+        updatePayload.original_unit = (item as any).unit;
+      }
 
       if (Object.keys(updatePayload).length === 0) {
         return {

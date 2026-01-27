@@ -93,7 +93,7 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
       let result;
       if (editItem) {
         // When editing, only update the fields from the form, preserve other metadata
-        const updateData = {
+        const updateData: any = {
           item: formData.item,
           category: formData.category,
           quantity: formData.quantity,
@@ -103,6 +103,19 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
           provider_name: formData.provider_name,
           assigned_to_email: formData.assigned_to_email || null,
         };
+
+        // Update original_unit to reduce future double-conversion risk
+        // Case 1: User changed the unit -> update original_unit to new unit
+        // Case 2: Legacy row with null original_unit -> populate from current unit
+        // Case 3: Unit unchanged -> keep original_unit as-is (don't include in update)
+        if (formData.unit !== editItem.unit) {
+          // User changed the unit, so update original_unit
+          updateData.original_unit = formData.unit;
+        } else if (editItem.original_unit === null || editItem.original_unit === undefined) {
+          // Legacy row: populate original_unit from current unit
+          updateData.original_unit = editItem.unit;
+        }
+        // else: unit unchanged and original_unit already set, don't touch it
 
         result = await supabase
           .from('shopping_lists')
@@ -117,6 +130,7 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
           category: formData.category,
           quantity: formData.quantity,
           unit: formData.unit,
+          original_unit: formData.unit, // Track original unit to prevent double-conversion
           urgent: formData.urgent,
           notes: formData.notes,
           provider_name: formData.provider_name,

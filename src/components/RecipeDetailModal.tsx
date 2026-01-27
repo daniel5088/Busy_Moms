@@ -137,6 +137,8 @@ export function RecipeDetailModal({ recipe, onClose, onIngredientsAdded, onRecip
           user_id: user.id,
           item: ing.display_text,
           quantity: ing.quantity ? parseFloat(getAdjustedQuantity(ing.quantity) || '1') : 1,
+          unit: ing.unit || null,
+          original_unit: ing.unit || null, // Preserve original unit from recipe
           category: mapIngredientCategory(ing.category),
           notes: ing.unit ? `${getAdjustedQuantity(ing.quantity)} ${ing.unit}` : undefined,
           completed: false,
