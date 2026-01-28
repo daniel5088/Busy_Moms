@@ -360,7 +360,7 @@ export function Dashboard({
     },
     {
       icon: Link,
-      title: 'Quick Linkshahahah',
+      title: 'Quick Links',
       desc: 'Your favorite shortcuts',
       bgColor: 'bg-purple-50 dark:bg-gray-800',
       borderColor: 'border-purple-200 dark:border-gray-700',
