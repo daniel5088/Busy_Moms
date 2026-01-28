@@ -897,7 +897,7 @@ export function Settings({
                               : null;
                             const displayAge = computedAge ?? member.age;
 
-                            return displayAge ? (
+                            return displayAge !== null && displayAge !== undefined ? (
                               <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-rose-100 text-rose-700 rounded-full text-xs sm:text-sm font-medium">
                                 Age {displayAge}
                               </span>
