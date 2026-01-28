@@ -358,11 +358,6 @@ export function FamilyMemberForm({
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Age: {computedAge !== null && computedAge !== undefined ? computedAge : 'Invalid date'}
                     </p>
-                    {computedAge === 0 && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                        Age appears to be 0. Please confirm the birthday is correct.
-                      </p>
-                    )}
                   </>
                 );
               })()}
