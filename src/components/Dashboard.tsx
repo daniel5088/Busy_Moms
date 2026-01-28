@@ -412,7 +412,7 @@ export function Dashboard({
     },
     {
       icon: Shield,
-      title: 'Wellness Cycle',
+      title: 'Cycle tracker',
       desc: 'Track your wellness',
       bgColor: 'bg-rose-50 dark:bg-gray-800',
       borderColor: 'border-rose-200 dark:border-gray-700',
