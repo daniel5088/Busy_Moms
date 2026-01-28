@@ -3,6 +3,7 @@ import { X, CheckSquare, User, Calendar, Clock, Star } from 'lucide-react';
 import { Task, FamilyMember } from '../../lib/supabase';
 import { EmailRequiredPopup } from '../shared/EmailRequiredPopup';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotificationManager } from '../../hooks/useNotificationManager';
 import { taskSyncOrchestrator } from '../../services/taskSyncOrchestrator';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
@@ -17,6 +18,7 @@ interface TaskFormProps {
 export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUserName }: TaskFormProps) {
   const { user } = useAuth();
   const supabase = useSupabaseClient();
+  const { scheduleTaskNotification, cancelNotificationsByRelatedId } = useNotificationManager();
   const [loading, setLoading] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
@@ -163,6 +165,22 @@ export function TaskForm({ isOpen, onClose, onTaskCreated, editTask, currentUser
       }
 
       if (result.error) throw result.error;
+
+      // Schedule notification for the task
+      if (result.data && formData.due_date) {
+        // Cancel any existing notifications for this task (in case of update)
+        if (editTask) {
+          await cancelNotificationsByRelatedId(editTask.id, 'tasks');
+        }
+
+        // Schedule new notification
+        await scheduleTaskNotification(
+          result.data.id,
+          formData.title,
+          formData.due_date,
+          formData.due_time
+        );
+      }
 
       onTaskCreated(result.data);
 

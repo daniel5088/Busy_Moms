@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Users, UserCheck } from 'lucide-react';
 import { supabase, Event, FamilyMember } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotificationManager } from '../../hooks/useNotificationManager';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 import { geocodeLocation } from '../../services/geocoding';
 import { getTravelTime } from '../../services/googleDirections';
@@ -27,6 +28,7 @@ interface EventFormProps {
 export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormProps) {
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
+  const { scheduleEventNotification, cancelNotificationsByRelatedId } = useNotificationManager();
   const [loading, setLoading] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
@@ -216,6 +218,22 @@ export function EventForm({ defaultDate, event, onCancel, onSaved }: EventFormPr
       }
 
       if (result.error) throw result.error;
+
+      // Schedule notification for the event
+      if (result.data && formData.event_date) {
+        // Cancel any existing notifications for this event (in case of update)
+        if (event) {
+          await cancelNotificationsByRelatedId(event.id, 'events');
+        }
+
+        // Schedule new notification
+        await scheduleEventNotification(
+          result.data.id,
+          formData.title,
+          formData.event_date,
+          formData.start_time
+        );
+      }
 
       onSaved();
     } catch (error) {

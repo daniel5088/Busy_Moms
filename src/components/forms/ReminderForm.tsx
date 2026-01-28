@@ -3,6 +3,7 @@ import { X, Bell, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
 import { supabase, Reminder, FamilyMember } from '../../lib/supabase';
 import { EmailRequiredPopup } from '../shared/EmailRequiredPopup';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotificationManager } from '../../hooks/useNotificationManager';
 
 interface ReminderFormProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function ReminderForm({
   preselectedMember,
 }: ReminderFormProps) {
   const { user } = useAuth();
+  const { scheduleReminderNotification, cancelNotificationsByRelatedId } = useNotificationManager();
   const [loading, setLoading] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
@@ -146,6 +148,22 @@ export function ReminderForm({
       }
 
       if (result.error) throw result.error;
+
+      // Schedule notification for the reminder
+      if (result.data && formData.reminder_date) {
+        // Cancel any existing notifications for this reminder (in case of update)
+        if (editReminder) {
+          await cancelNotificationsByRelatedId(editReminder.id, 'reminders');
+        }
+
+        // Schedule new notification
+        await scheduleReminderNotification(
+          result.data.id,
+          formData.title,
+          formData.reminder_date,
+          formData.reminder_time
+        );
+      }
 
       onReminderCreated(result.data);
       onClose();

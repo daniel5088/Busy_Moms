@@ -24,6 +24,7 @@ import { ErrorBoundary, FeatureErrorBoundary } from './components/errors/ErrorBo
 import { ToastContainer } from './components/errors/ErrorToast';
 import { useToast } from './hooks/useErrorHandler';
 import { useAffirmationNotifier } from './hooks/useAffirmationNotifier';
+import { useNotificationManager } from './hooks/useNotificationManager';
 import { captureAndStoreGoogleTokens } from './services/googleTokenStorage';
 import { Diagnostics } from './pages/Diagnostics';
 import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks component
@@ -66,6 +67,7 @@ function App() {
   const [openAboutDialog, setOpenAboutDialog] = useState(false);
   const { toasts, removeToast } = useToast();
   const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
+  const notificationManager = useNotificationManager();
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   // Check URL parameters

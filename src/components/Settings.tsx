@@ -30,6 +30,7 @@ import { ConnectionTest } from './ConnectionTest';
 import { AuthTest } from './AuthTest';
 import { GoogleCalendarTest } from './GoogleCalendarTest';
 import { ErrorDashboard } from './errors/ErrorDashboard';
+import { NotificationSettings } from './NotificationSettings';
 //Alvaros - Dailyaffirmations: Remove AffirmationSettings import (now managed at App level)
 import { ConnectGoogleCalendarButton } from './ConnectGoogleCalendarButton';
 import { SyncSettings } from './SyncSettings';
@@ -71,6 +72,7 @@ export function Settings({
   const [showTaskSyncSettings, setShowTaskSyncSettings] = useState(false);
   const [showRetailerSearch, setShowRetailerSearch] = useState(false);
   const [showAddressManager, setShowAddressManager] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [showConnectionTest, setShowConnectionTest] = useState(false);
   const [showAuthTest, setShowAuthTest] = useState(false);
@@ -472,26 +474,19 @@ export function Settings({
       title: 'Notifications',
       items: [
         {
+          icon: Bell,
+          title: 'Notification Settings',
+          description: 'Manage all notification preferences',
+          action: 'Configure',
+          onClick: () => setShowNotificationSettings(true),
+        },
+        {
           icon: Sparkles,
           title: 'Daily Affirmations',
           description: 'Personalized encouragement every day',
           action: 'Configure',
           //Alvaros - Dailyaffirmations: Dispatch event to open unified settings modal at App level
           onClick: () => window.dispatchEvent(new CustomEvent('open-affirmations')),
-        },
-        {
-          icon: Bell,
-          title: 'Event Reminders',
-          description: 'Get notified about upcoming events',
-          toggle: true,
-          enabled: notifications.events,
-        },
-        {
-          icon: Bell,
-          title: 'Shopping Alerts',
-          description: 'Auto-reorder and list reminders',
-          toggle: true,
-          enabled: notifications.shopping,
         },
       ],
     },
@@ -1099,6 +1094,10 @@ export function Settings({
             </div>
           </div>
         </div>
+      )}
+
+      {showNotificationSettings && (
+        <NotificationSettings onClose={() => setShowNotificationSettings(false)} />
       )}
     </div>
   );
