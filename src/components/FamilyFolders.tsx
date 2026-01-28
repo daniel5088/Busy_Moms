@@ -16,6 +16,7 @@ import {
 import { FamilyMember, Event, Task, Reminder, ShoppingItem, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { formatDate } from '../utils/timeFormatters';
+import { getAgeFromBirthday } from '../utils/ageCalculator';
 import { EventForm } from './forms/EventForm';
 import { TaskForm } from './forms/TaskForm';
 import { ReminderForm } from './forms/ReminderForm';
@@ -341,12 +342,16 @@ export function FamilyFolders() {
                           <span>Member Details</span>
                         </h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                          {data.member.age && (
-                            <div>
-                              <span className="text-gray-600 dark:text-gray-400 font-medium">Age:</span>
-                              <span className="ml-2 text-gray-900 dark:text-gray-100">{data.member.age} years</span>
-                            </div>
-                          )}
+                          {(() => {
+                            const computedAge = data.member.birthday ? getAgeFromBirthday(data.member.birthday) : null;
+                            const displayAge = computedAge ?? data.member.age;
+                            return displayAge !== null && displayAge !== undefined ? (
+                              <div>
+                                <span className="text-gray-600 dark:text-gray-400 font-medium">Age:</span>
+                                <span className="ml-2 text-gray-900 dark:text-gray-100">{displayAge} years</span>
+                              </div>
+                            ) : null;
+                          })()}
                           {data.member.gender && (
                             <div>
                               <span className="text-gray-600 dark:text-gray-400 font-medium">Gender:</span>
