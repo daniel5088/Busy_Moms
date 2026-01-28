@@ -51,6 +51,7 @@ import {
   VOICE_OPTIONS,
   PERSONALITY_OPTIONS
 } from '../services/aiVoicePreferences';
+import { getAgeFromBirthday } from '../utils/ageCalculator';
 
 interface SettingsProps {
   darkMode: boolean;
@@ -890,11 +891,18 @@ export function Settings({
                               {member.relationship}
                             </span>
                           )}
-                          {member.age && (
-                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-rose-100 text-rose-700 rounded-full text-xs sm:text-sm font-medium">
-                              Age {member.age}
-                            </span>
-                          )}
+                          {(() => {
+                            const computedAge = member.birthday
+                              ? getAgeFromBirthday(member.birthday)
+                              : null;
+                            const displayAge = computedAge ?? member.age;
+
+                            return displayAge ? (
+                              <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-rose-100 text-rose-700 rounded-full text-xs sm:text-sm font-medium">
+                                Age {displayAge}
+                              </span>
+                            ) : null;
+                          })()}
                           {member.gender && (
                             <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm">
                               {member.gender}
