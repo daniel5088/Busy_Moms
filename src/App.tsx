@@ -378,9 +378,8 @@ function App() {
                       setCurrentScreen('calendar');
                       setOpenCalendarCamera(true);
                     }}
-                    onNavigateToRecipes={() => {
-                      setCurrentSubScreen('shopping');
-                      setOpenRecipesTab(true);
+                    onNavigateToWellness={() => {
+                      setCurrentSubScreen('wellness');
                     }}
                     onNavigateToEvent={(eventDate: string) => {
                       setSelectedEventDate(eventDate);
