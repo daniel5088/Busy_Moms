@@ -23,7 +23,7 @@ function getNextBirthdayDate(birthday: string, startYear: number): string {
   return `${startYear}-${month}-${day}`;
 }
 
-function generateBirthdayDates(birthday: string, yearsCount: number): string[] {
+function generateBirthdayDates(birthday: string, yearsCount: number = 2): string[] {
   const today = new Date();
   const currentYear = today.getFullYear();
   const [, month, day] = birthday.split('-');
@@ -40,8 +40,9 @@ function generateBirthdayDates(birthday: string, yearsCount: number): string[] {
   return dates;
 }
 
-export async function createBirthdayEventsForNext100Years(
-  member: FamilyMember
+export async function syncBirthdayEvents(
+  member: FamilyMember,
+  yearsAhead: number = 2
 ): Promise<{ success: boolean; eventsCreated: number; error?: string }> {
   try {
     if (!member.birthday) {
@@ -78,7 +79,7 @@ export async function createBirthdayEventsForNext100Years(
       existingEventsResult.data.map((e) => e.event_date)
     );
 
-    const allBirthdayDates = generateBirthdayDates(params.birthday, 100);
+    const allBirthdayDates = generateBirthdayDates(params.birthday, yearsAhead);
     const datesToCreate = allBirthdayDates.filter(
       (date) => !existingEventDates.has(date)
     );
@@ -127,9 +128,12 @@ export async function createBirthdayEventsForNext100Years(
   }
 }
 
+export const createBirthdayEventsForNext100Years = syncBirthdayEvents;
+
 export async function updateBirthdayEvents(
   member: FamilyMember,
-  oldBirthday: string | null
+  oldBirthday: string | null,
+  yearsAhead: number = 2
 ): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
     if (!member.id || !member.user_id) {
@@ -156,7 +160,7 @@ export async function updateBirthdayEvents(
     }
 
     if (member.birthday) {
-      const createResult = await createBirthdayEventsForNext100Years(member);
+      const createResult = await syncBirthdayEvents(member, yearsAhead);
       if (!createResult.success) {
         return {
           success: false,
