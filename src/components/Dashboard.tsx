@@ -71,7 +71,7 @@ interface DashboardProps {
   onVoiceChatOpen?: () => void;
   onOpenAffirmationSettings?: () => void;
   onNavigateToCalendarCamera?: () => void;
-  onNavigateToRecipes?: () => void;
+  onNavigateToWellness?: () => void;
   onNavigateToEvent?: (eventDate: string) => void;
   openAboutDialog?: boolean;
   onAboutDialogOpened?: () => void;
@@ -83,7 +83,7 @@ export function Dashboard({
   onVoiceChatOpen,
   onOpenAffirmationSettings,
   onNavigateToCalendarCamera,
-  onNavigateToRecipes,
+  onNavigateToWellness,
   onNavigateToEvent,
   openAboutDialog = false,
   onAboutDialogOpened,
@@ -411,9 +411,9 @@ export function Dashboard({
       action: () => onNavigateToCalendarCamera?.(),
     },
     {
-      icon: BookOpen,
-      title: 'My Recipes',
-      desc: 'Browse and save recipes',
+      icon: Shield,
+      title: 'Wellness Cycle',
+      desc: 'Track your wellness',
       bgColor: 'bg-rose-50 dark:bg-gray-800',
       borderColor: 'border-rose-200 dark:border-gray-700',
       iconBgColor: 'bg-rose-100 dark:bg-rose-900',
@@ -421,7 +421,7 @@ export function Dashboard({
       textColor: 'text-gray-900 dark:text-gray-100',
       descColor: 'text-gray-600 dark:text-gray-400',
       hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToRecipes?.(),
+      action: () => onNavigateToWellness?.(),
     },
   ];
 
