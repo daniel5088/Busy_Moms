@@ -356,10 +356,32 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           if (familyMembersError) {
             console.error('Error saving family members:', familyMembersError);
           } else if (insertedMembers) {
+            let birthdayEventSuccesses = 0;
+            let birthdayEventFailures = 0;
+
             for (const member of insertedMembers) {
               if (member.birthday) {
-                await createBirthdayEventsForNext100Years(member);
+                try {
+                  console.log(`🎂 Creating birthday events for ${member.name} (ID: ${member.id}) during onboarding`);
+                  const result = await createBirthdayEventsForNext100Years(member);
+                  if (result.success) {
+                    birthdayEventSuccesses++;
+                    console.log(`✅ Successfully created ${result.eventsCreated} birthday events for ${member.name}`);
+                  } else {
+                    birthdayEventFailures++;
+                    console.error(`❌ Failed to create birthday events for ${member.name}:`, result.error);
+                  }
+                } catch (error) {
+                  birthdayEventFailures++;
+                  console.error(`❌ Error creating birthday events for ${member.name}:`, error);
+                }
               }
+            }
+
+            if (birthdayEventFailures > 0) {
+              console.warn(`⚠️ Birthday events: ${birthdayEventSuccesses} succeeded, ${birthdayEventFailures} failed`);
+            } else if (birthdayEventSuccesses > 0) {
+              console.log(`✅ All birthday events created successfully (${birthdayEventSuccesses} members)`);
             }
           }
         }

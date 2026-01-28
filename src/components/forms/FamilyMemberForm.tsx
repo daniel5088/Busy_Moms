@@ -174,11 +174,31 @@ export function FamilyMemberForm({
 
       if (editMember) {
         const birthdayChanged = originalBirthdayRef.current !== birthday;
-        if (birthdayChanged) {
-          await updateBirthdayEvents(savedMember, originalBirthdayRef.current);
+        if (birthdayChanged && savedMember.birthday) {
+          try {
+            console.log(`🎂 Updating birthday events for ${savedMember.name} (ID: ${savedMember.id})`);
+            const updateResult = await updateBirthdayEvents(savedMember, originalBirthdayRef.current);
+            if (updateResult.success) {
+              console.log(`✅ Successfully updated birthday events for ${savedMember.name}`);
+            } else {
+              console.error(`❌ Failed to update birthday events for ${savedMember.name}:`, updateResult.error);
+            }
+          } catch (error) {
+            console.error(`❌ Error updating birthday events for ${savedMember.name}:`, error);
+          }
         }
-      } else {
-        await createBirthdayEventsForNext100Years(savedMember);
+      } else if (savedMember.birthday) {
+        try {
+          console.log(`🎂 Creating birthday events for ${savedMember.name} (ID: ${savedMember.id})`);
+          const createResult = await createBirthdayEventsForNext100Years(savedMember);
+          if (createResult.success) {
+            console.log(`✅ Successfully created ${createResult.eventsCreated} birthday events for ${savedMember.name}`);
+          } else {
+            console.error(`❌ Failed to create birthday events for ${savedMember.name}:`, createResult.error);
+          }
+        } catch (error) {
+          console.error(`❌ Error creating birthday events for ${savedMember.name}:`, error);
+        }
       }
 
       // Call the callback with the saved member
