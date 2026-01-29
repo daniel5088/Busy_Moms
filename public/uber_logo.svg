@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
-  <!-- Uber wordmark in black -->
-  <text x="10" y="55" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#000000">Uber</text>
-  <!-- Simplified version -->
-  <rect x="5" y="10" width="190" height="60" rx="8" fill="none" stroke="#000000" stroke-width="3"/>
-</svg>
