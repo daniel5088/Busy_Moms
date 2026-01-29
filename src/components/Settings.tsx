@@ -352,6 +352,32 @@ export function Settings({
     }
   };
 
+  const handleResetOnboarding = async () => {
+    if (!user?.id) return;
+
+    if (!confirm('Are you sure you want to reset onboarding? This will restart the setup flow.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ onboarding_completed: false })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error resetting onboarding:', error);
+        alert('Failed to reset onboarding. Please try again.');
+        return;
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error('Error resetting onboarding:', error);
+      alert('Failed to reset onboarding. Please try again.');
+    }
+  };
+
   const settingSections = [
     {
       title: 'Appearance',
@@ -415,6 +441,13 @@ export function Settings({
           description: 'Verify Google Calendar API integration',
           action: 'Test',
           onClick: () => setShowGoogleCalendarTest(true),
+        },
+        {
+          icon: LayoutDashboard,
+          title: 'Test Onboarding',
+          description: 'Reset and restart the onboarding flow',
+          action: 'Reset',
+          onClick: handleResetOnboarding,
         },
       ],
     },
