@@ -561,6 +561,7 @@ export function Contacts() {
         </div>
       </div>
 
+      <div className="p-4 sm:p-6">
         {/* Contacts List */}
         <div className="space-y-4">
           {filteredContacts.map((contact) => (
