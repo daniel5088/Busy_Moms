@@ -561,26 +561,6 @@ export function Contacts() {
         </div>
       </div>
 
-      <div className="p-4 sm:p-6">
-        {/* Background Check Promotion */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
-          <div className="flex items-start space-x-3">
-            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-blue-900 mb-1 text-sm sm:text-base">
-                Background Check Available
-              </h3>
-              <p className="text-xs sm:text-sm text-blue-700 mb-3">
-                Verify babysitter credentials with our trusted background check partner. Starting at
-                $19.99 per check.
-              </p>
-              <button className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-600 transition-colors">
-                Learn More
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Contacts List */}
         <div className="space-y-4">
           {filteredContacts.map((contact) => (
