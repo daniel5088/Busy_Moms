@@ -316,7 +316,13 @@ function App() {
 
   // Show onboarding if user exists but hasn't completed onboarding
   if (showOnboarding) {
-    return <Onboarding onComplete={() => setShowOnboarding(false)} />;
+    return (
+      <Onboarding
+        onComplete={() => setShowOnboarding(false)}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+      />
+    );
   }
   // Show main app if user is authenticated and has completed onboarding
   return (

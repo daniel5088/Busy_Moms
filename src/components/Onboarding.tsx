@@ -3,11 +3,15 @@ import {
   Heart,
   Users,
   Shield,
+  Sun,
+  Moon,
+  Smartphone,
+  Ruler,
+  Sparkles,
   Calendar,
-  MessageCircle,
-  Watch,
-  MapPin,
   Bell,
+  MapPin,
+  ShoppingCart,
   UserPlus,
   LogOut,
 } from 'lucide-react';
@@ -16,27 +20,37 @@ import { useAuth } from '../hooks/useAuth';
 import FamilyMemberCard, { FamilyMember } from './onboarding/FamilyMemberCard';
 import { ALL as ALL_COLORS } from '../lib/colorPalette';
 import { createBirthdayEventsForNext100Years } from '../services/birthdayEventsService';
+import { ConnectGoogleCalendarButton } from './ConnectGoogleCalendarButton';
+import { NotificationSettings } from './NotificationSettings';
+import { AddressForm } from './AddressForm';
+import { RetailerSelectionModal } from './RetailerSelectionModal';
+import { measurementPreferencesService } from '../services/measurementPreferencesService';
+import { affirmationService } from '../services/affirmationService';
 
 interface OnboardingProps {
   onComplete: () => void;
+  darkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
-export function Onboarding({ onComplete }: OnboardingProps) {
+export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingProps) {
   const { user, signOut } = useAuth();
   const [step, setStep] = useState(0);
   const [userType, setUserType] = useState('');
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
-  const [preferences, setPreferences] = useState({
-    notification_events: true,
-    notification_shopping: true,
-    notification_reminders: true,
-    notification_whatsapp: false,
-    whatsapp_integration_enabled: false,
-    smartwatch_connected: false,
-    background_check_alerts: true,
-  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // New state for Type A steps (required)
+  const [darkModeSelection, setDarkModeSelection] = useState<'light' | 'dark' | 'system' | null>(null);
+  const [measurementSystem, setMeasurementSystem] = useState<'metric' | 'imperial' | null>(null);
+  const [affirmationsEnabled, setAffirmationsEnabled] = useState(false);
+  const [affirmationsTime, setAffirmationsTime] = useState('08:00');
+
+  // New state for Type B steps (optional modals)
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showRetailerModal, setShowRetailerModal] = useState(false);
 
   const steps = [
     {
@@ -44,10 +58,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       subtitle: "You take care of the love, we'll handle the rest.",
       content: (
         <div className="text-center space-y-8">
-          <div className="w-32 h-32 mx-auto bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+          <div className="w-32 h-32 mx-auto bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 rounded-full flex items-center justify-center">
             <Heart className="w-16 h-16 text-white" />
           </div>
-          <p className="text-gray-600 text-lg leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
             Your AI-powered companion for managing family life, events, and daily tasks with ease.
           </p>
         </div>
@@ -64,13 +78,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               onClick={() => setUserType(type)}
               className={`w-full p-4 text-left rounded-xl border-2 transition-all ${
                 userType === type
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 hover:border-purple-300'
+                  ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-400'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-rose-300 dark:hover:border-rose-600'
               }`}
             >
               <div className="flex items-center space-x-3">
-                <Users className="w-5 h-5 text-purple-500" />
-                <span className="font-medium">{type}</span>
+                <Users className={`w-5 h-5 ${userType === type ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                <span className={`font-medium ${userType === type ? 'text-rose-900 dark:text-rose-200' : 'text-gray-900 dark:text-gray-100'}`}>{type}</span>
               </div>
             </button>
           ))}
@@ -82,15 +96,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       subtitle: 'Optional - You can always add them later in Settings',
       content: (
         <div className="space-y-4">
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-600 dark:text-gray-300 text-sm">
             Add your children and family members to personalize your experience. Each family member
             can have their own color for easy organization.
           </p>
 
           {familyMembers.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-              <Users className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-              <p className="text-gray-600 mb-4">No family members added yet</p>
+            <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600">
+              <Users className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-3" />
+              <p className="text-gray-600 dark:text-gray-300 mb-4">No family members added yet</p>
               <button
                 onClick={() => {
                   const newMember: FamilyMember = {
@@ -106,7 +120,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   };
                   setFamilyMembers([newMember]);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
                 Add First Family Member
@@ -154,7 +168,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   };
                   setFamilyMembers((prev) => [...prev, newMember]);
                 }}
-                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-colors inline-flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors inline-flex items-center justify-center gap-2"
               >
                 <UserPlus className="w-5 h-5" />
                 Add Another Family Member
@@ -165,73 +179,201 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       ),
     },
     {
-      title: 'Enable Smart Features',
-      subtitle: 'Grant permissions to unlock the full experience',
+      title: 'Choose Your Theme',
+      subtitle: 'Select your preferred appearance',
       content: (
         <div className="space-y-4">
-          {[
-            {
-              icon: Bell,
-              title: 'Event Notifications',
-              desc: 'Get notified about upcoming events',
-              key: 'notification_events',
-            },
-            {
-              icon: Calendar,
-              title: 'Shopping Alerts',
-              desc: 'Reminders for your shopping lists',
-              key: 'notification_shopping',
-            },
-            {
-              icon: Bell,
-              title: 'General Reminders',
-              desc: 'Never miss important tasks',
-              key: 'notification_reminders',
-            },
-            {
-              icon: MessageCircle,
-              title: 'WhatsApp Integration',
-              desc: 'Parse invitations and reminders',
-              key: 'whatsapp_integration_enabled',
-            },
-            {
-              icon: Watch,
-              title: 'Smartwatch Connection',
-              desc: 'Voice commands and quick actions',
-              key: 'smartwatch_connected',
-            },
-          ].map(({ icon: Icon, title, desc, key }) => (
-            <div key={title} className="p-4 bg-gray-50 rounded-xl">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{title}</h4>
-                  <p className="text-sm text-gray-600">{desc}</p>
-                </div>
-                <button
-                  onClick={() =>
-                    setPreferences((prev) => ({
-                      ...prev,
-                      [key]: !prev[key as keyof typeof prev],
-                    }))
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { value: 'light', icon: Sun, label: 'Light' },
+              { value: 'dark', icon: Moon, label: 'Dark' },
+              { value: 'system', icon: Smartphone, label: 'System' }
+            ].map(({ value, icon: Icon, label }) => (
+              <button
+                key={value}
+                onClick={() => {
+                  setDarkModeSelection(value as any);
+                  // Apply immediately based on selection
+                  if (value === 'light' && darkMode) {
+                    toggleDarkMode(); // Turn off dark mode
+                  } else if (value === 'dark' && !darkMode) {
+                    toggleDarkMode(); // Turn on dark mode
                   }
-                  className={`w-12 h-6 rounded-full relative transition-colors ${
-                    preferences[key as keyof typeof preferences] ? 'bg-purple-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <div
-                    className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-transform ${
-                      preferences[key as keyof typeof preferences]
-                        ? 'translate-x-6'
-                        : 'translate-x-0.5'
-                    }`}
-                  ></div>
-                </button>
-              </div>
+                  // For system, we'll just use the current setting
+                }}
+                className={`p-6 rounded-xl border-2 transition-all ${
+                  darkModeSelection === value
+                    ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-400'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-rose-300 dark:hover:border-rose-600'
+                }`}
+              >
+                <Icon className={`w-8 h-8 mx-auto mb-2 ${darkModeSelection === value ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                <span className={`block text-sm font-medium ${darkModeSelection === value ? 'text-rose-900 dark:text-rose-200' : 'text-gray-900 dark:text-gray-100'}`}>{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Measurement Preferences',
+      subtitle: 'Choose your preferred measurement system',
+      content: (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => setMeasurementSystem('metric')}
+              className={`p-6 rounded-xl border-2 transition-all ${
+                measurementSystem === 'metric'
+                  ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-400'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-rose-300 dark:hover:border-rose-600'
+              }`}
+            >
+              <Ruler className={`w-8 h-8 mx-auto mb-3 ${measurementSystem === 'metric' ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'}`} />
+              <h3 className={`font-semibold mb-2 ${measurementSystem === 'metric' ? 'text-rose-900 dark:text-rose-200' : 'text-gray-900 dark:text-gray-100'}`}>Metric</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">grams, ml, kg</p>
+            </button>
+            <button
+              onClick={() => setMeasurementSystem('imperial')}
+              className={`p-6 rounded-xl border-2 transition-all ${
+                measurementSystem === 'imperial'
+                  ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-400'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-rose-300 dark:hover:border-rose-600'
+              }`}
+            >
+              <Ruler className={`w-8 h-8 mx-auto mb-3 ${measurementSystem === 'imperial' ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'}`} />
+              <h3 className={`font-semibold mb-2 ${measurementSystem === 'imperial' ? 'text-rose-900 dark:text-rose-200' : 'text-gray-900 dark:text-gray-100'}`}>Imperial</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">cups, oz, lbs</p>
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Auto-convert is always enabled</p>
+        </div>
+      ),
+    },
+    {
+      title: 'Daily Affirmations',
+      subtitle: 'Get personalized encouragement every day',
+      content: (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+            <div className="flex items-center space-x-3">
+              <Sparkles className="w-5 h-5 text-rose-500 dark:text-rose-400" />
+              <span className="font-medium text-gray-900 dark:text-gray-100">Enable Daily Affirmations</span>
             </div>
-          ))}
+            <button
+              onClick={() => setAffirmationsEnabled(!affirmationsEnabled)}
+              className={`w-12 h-6 rounded-full relative transition-colors ${
+                affirmationsEnabled ? 'bg-rose-500' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-transform ${
+                  affirmationsEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                }`}
+              ></div>
+            </button>
+          </div>
+
+          {affirmationsEnabled && (
+            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-800">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                Preferred Time
+              </label>
+              <input
+                type="time"
+                value={affirmationsTime}
+                onChange={(e) => setAffirmationsTime(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-rose-500 dark:focus:ring-rose-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+          )}
+
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+            You can change this later in Settings
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: 'Google Calendar Integration',
+      subtitle: 'You can configure this now, or continue and set it up later in Settings.',
+      content: (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
+              <Calendar className="w-8 h-8 text-rose-500 dark:text-rose-400" />
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Sync your events with Google Calendar to keep everything in one place.
+            </p>
+            <ConnectGoogleCalendarButton />
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Notification Preferences',
+      subtitle: 'You can configure this now, or continue and set it up later in Settings.',
+      content: (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
+              <Bell className="w-8 h-8 text-rose-500 dark:text-rose-400" />
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Customize when and how you receive notifications for events, tasks, and reminders.
+            </p>
+            <button
+              onClick={() => setShowNotificationsModal(true)}
+              className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
+            >
+              Configure Now
+            </button>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Home Address',
+      subtitle: 'You can configure this now, or continue and set it up later in Settings.',
+      content: (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
+              <MapPin className="w-8 h-8 text-rose-500 dark:text-rose-400" />
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Set your home address for directions, travel time estimates, and location-based features.
+            </p>
+            <button
+              onClick={() => setShowAddressModal(true)}
+              className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
+            >
+              Configure Now
+            </button>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Preferred Retailers',
+      subtitle: 'You can configure this now, or continue and set it up later in Settings.',
+      content: (
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
+              <ShoppingCart className="w-8 h-8 text-rose-500 dark:text-rose-400" />
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Select your favorite grocery stores and retailers for quick shopping list creation.
+            </p>
+            <button
+              onClick={() => setShowRetailerModal(true)}
+              className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
+            >
+              Configure Now
+            </button>
+          </div>
         </div>
       ),
     },
@@ -243,12 +385,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <div className="w-24 h-24 mx-auto bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
             <Shield className="w-12 h-12 text-white" />
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Your AI assistant is ready to help you manage your family life with smart reminders,
             event planning, and personalized suggestions.
           </p>
-          <div className="bg-purple-50 p-4 rounded-xl">
-            <p className="text-purple-800 font-medium">"What can I help you with today?"</p>
+          <div className="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-xl border border-rose-200 dark:border-rose-800">
+            <p className="text-rose-800 dark:text-rose-200 font-medium">"What can I help you with today?"</p>
           </div>
         </div>
       ),
@@ -301,23 +443,25 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         }
       }
 
-      // Create or update user preferences (optional - don't fail onboarding if this fails)
-      try {
-        const { error: preferencesError } = await supabase.from('user_preferences').upsert(
-          {
-            user_id: user.id,
-            ...preferences,
-          },
-          {
-            onConflict: 'user_id',
-          }
-        );
-
-        if (preferencesError) {
-          console.warn('Could not save preferences:', preferencesError.message);
+      // Save measurement preferences if selected
+      if (measurementSystem) {
+        try {
+          await measurementPreferencesService.setPreferredSystem(user.id, measurementSystem);
+        } catch (prefError) {
+          console.warn('Could not save measurement preferences:', prefError);
         }
-      } catch (prefError) {
-        console.warn('Could not save preferences:', prefError);
+      }
+
+      // Save affirmation settings if enabled
+      if (affirmationsEnabled) {
+        try {
+          await affirmationService.updateSettings(user.id, {
+            enabled: true,
+            preferred_time: affirmationsTime,
+          });
+        } catch (affError) {
+          console.warn('Could not save affirmation settings:', affError);
+        }
       }
 
       // Save family members if any were added
@@ -420,12 +564,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="h-screen flex flex-col p-6">
-      {/* Alvaro-landmarks: Header with Sign Out button */}
+    <div className="h-screen flex flex-col p-6 bg-gray-50 dark:bg-gray-900">
+      {/* Header with Sign Out button */}
       <header className="flex justify-end mb-4">
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
@@ -434,22 +578,22 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="text-red-600 text-lg">⚠</span>
+              <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center">
+                <span className="text-red-600 dark:text-red-400 text-lg">⚠</span>
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-red-900 mb-1">
+              <h3 className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1">
                 Error Completing Onboarding
               </h3>
-              <p className="text-sm text-red-700 mb-2">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300 mb-2">{error}</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setError(null)}
-                  className="text-sm text-red-600 hover:text-red-800 underline"
+                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 underline"
                 >
                   Dismiss
                 </button>
@@ -458,7 +602,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     setError(null);
                     completeOnboarding();
                   }}
-                  className="text-sm text-red-600 hover:text-red-800 underline font-medium"
+                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 underline font-medium"
                 >
                   Try Again
                 </button>
@@ -468,18 +612,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         </div>
       )}
 
-      {/* Alvaro-landmarks: Main onboarding content area */}
+      {/* Main onboarding content area */}
       <main className="flex-1 flex flex-col">
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Step {step + 1} of {steps.length}
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div
-              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-rose-500 to-pink-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((step + 1) / steps.length) * 100}%` }}
             ></div>
           </div>
@@ -488,9 +632,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         {/* Content */}
         <div className="flex-1 flex flex-col">
           <div className="mb-8">
-            {/* Alvaro-landmarks: Primary h1 heading for onboarding step */}
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{steps[step].title}</h1>
-            <p className="text-gray-600">{steps[step].subtitle}</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{steps[step].title}</h1>
+            <p className="text-gray-600 dark:text-gray-300">{steps[step].subtitle}</p>
           </div>
 
           <div className="flex-1">{steps[step].content}</div>
@@ -502,7 +645,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             onClick={prevStep}
             disabled={step === 0}
             className={`px-6 py-3 rounded-xl font-medium transition-all ${
-              step === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-purple-600 hover:bg-purple-50'
+              step === 0 ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20'
             }`}
           >
             Back
@@ -512,9 +655,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             disabled={
               (step === 1 && !userType) ||
               (step === 2 && familyMembers.some((m) => !m.name.trim() || !m.relationship)) ||
+              (step === 3 && !darkModeSelection) ||
+              (step === 4 && !measurementSystem) ||
               saving
             }
-            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving
               ? 'Saving...'
@@ -528,6 +673,22 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           </button>
         </div>
       </main>
+
+      {/* Modals for Type B optional configurations */}
+      {showNotificationsModal && (
+        <NotificationSettings onClose={() => setShowNotificationsModal(false)} />
+      )}
+
+      {showAddressModal && (
+        <AddressForm onClose={() => setShowAddressModal(false)} />
+      )}
+
+      {showRetailerModal && (
+        <RetailerSelectionModal
+          isOpen={showRetailerModal}
+          onClose={() => setShowRetailerModal(false)}
+        />
+      )}
     </div>
   );
 }
