@@ -614,7 +614,7 @@ export function Dashboard({
                 className="hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                 aria-label="About Busy Moms Assistant AI"
               >
-                <img src="/bmalogo.png" alt="" className="h-10 w-auto object-contain" />
+                <img src="/bmalogo.png" alt="" className="h-12 w-auto object-contain" />
               </button>
             </div>
           </div>
