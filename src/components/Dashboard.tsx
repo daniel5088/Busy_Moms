@@ -10,7 +10,7 @@ import {
   Sparkles,
   X,
   BookOpen,
-  Shield,
+  Heart,
   ListTodo,
   Link,
   Loader2,
@@ -411,7 +411,7 @@ export function Dashboard({
       action: () => onNavigateToCalendarCamera?.(),
     },
     {
-      icon: Shield,
+      icon: Heart,
       title: 'Cycle tracker',
       desc: 'Track your wellness',
       bgColor: 'bg-rose-50 dark:bg-gray-800',
