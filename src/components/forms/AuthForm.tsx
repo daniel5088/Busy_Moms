@@ -157,9 +157,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md p-4 sm:p-8">
         <header className="text-center mb-8">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
-            <img src="/bmalogo.png" alt="Busy Moms App" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
-          </div>
+          <img src="/bmalogo.png" alt="Busy Moms App" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto mb-4" />
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
             {showForgotPassword 
               ? (otpSent ? 'Reset Your Password' : 'Forgot Password') 
