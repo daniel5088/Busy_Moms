@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Mail, Lock, User, Chrome, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Chrome, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
@@ -158,7 +158,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-sm sm:max-w-md p-4 sm:p-8">
         <header className="text-center mb-8">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            <img src="/bmalogo.png" alt="Busy Moms App" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
             {showForgotPassword 
