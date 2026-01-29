@@ -58,14 +58,15 @@ export function useAffirmationNotifier() {
   const dismissNotification = () => {
     setPendingAffirmation(null);
   };
-
+//Aller, what is this???
+//Call the cops
   const showBrowserNotification = (affirmation: Affirmation) => {
     if ('Notification' in window && Notification.permission === 'granted') {
       const notification = new Notification('Daily Affirmation', {
         body:
           affirmation.affirmation_text.substring(0, 100) +
           (affirmation.affirmation_text.length > 100 ? '...' : ''),
-        icon: '/icon.png',
+        icon: '/icon.svg',
         badge: '/badge.png',
       });
 
