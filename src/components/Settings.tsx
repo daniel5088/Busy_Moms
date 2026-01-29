@@ -628,7 +628,7 @@ export function Settings({
         {/* Settings Sections */}
         <div className="space-y-6">
           {visibleSections.map((section, sectionIndex) => (
-            <div key={sectionIndex} id={section.title === 'Notifications' ? 'notifications-settings' : undefined}>
+            <div key={sectionIndex}>
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
                 {section.title}
               </h2>

@@ -19,6 +19,7 @@ import { AffirmationNotification } from './components/AffirmationNotification';
 import { DailyAffirmations } from './components/DailyAffirmations';
 //Alvaros - Dailyaffirmations: Import AffirmationSettings for unified settings modal
 import { AffirmationSettings } from './components/AffirmationSettings';
+import { NotificationSettings } from './components/NotificationSettings';
 import { Loader2 } from 'lucide-react';
 import { ErrorBoundary, FeatureErrorBoundary } from './components/errors/ErrorBoundary';
 import { ToastContainer } from './components/errors/ErrorToast';
@@ -59,6 +60,7 @@ function App() {
   const [showAffirmations, setShowAffirmations] = useState(false);
   //Alvaros - Dailyaffirmations: State for unified affirmation settings modal
   const [showAffirmationSettings, setShowAffirmationSettings] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [openGiftFinder, setOpenGiftFinder] = useState(false);
   const [openCalendarCamera, setOpenCalendarCamera] = useState(false);
   const [openRecipesTab, setOpenRecipesTab] = useState(false);
@@ -243,6 +245,19 @@ function App() {
 
     return () => {
       window.removeEventListener('open-affirmations', handleOpenAffirmations);
+    };
+  }, []);
+
+  // Listen for 'open-notifications' event from MoreMenu
+  useEffect(() => {
+    const handleOpenNotifications = () => {
+      setShowNotificationSettings(true);
+    };
+
+    window.addEventListener('open-notifications', handleOpenNotifications);
+
+    return () => {
+      window.removeEventListener('open-notifications', handleOpenNotifications);
     };
   }, []);
 
@@ -464,6 +479,10 @@ function App() {
           onClose={() => setShowAffirmationSettings(false)}
           onSettingsChanged={reloadSettings}
         />
+
+        {showNotificationSettings && (
+          <NotificationSettings onClose={() => setShowNotificationSettings(false)} />
+        )}
 
         <ToastContainer toasts={toasts} onRemove={removeToast} />
       </div>
