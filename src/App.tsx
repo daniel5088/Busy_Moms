@@ -447,6 +447,7 @@ function App() {
                     }}
                     openAboutDialog={openAboutDialog}
                     onAboutDialogOpened={() => setOpenAboutDialog(false)}
+                    affirmationSettings={affirmationSettings}
                   />
                 </FeatureErrorBoundary>
               )}

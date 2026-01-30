@@ -75,6 +75,7 @@ interface DashboardProps {
   onNavigateToEvent?: (eventDate: string) => void;
   openAboutDialog?: boolean;
   onAboutDialogOpened?: () => void;
+  affirmationSettings?: { enabled: boolean } | null;
 }
 
 export function Dashboard({
@@ -87,6 +88,7 @@ export function Dashboard({
   onNavigateToEvent,
   openAboutDialog = false,
   onAboutDialogOpened,
+  affirmationSettings,
 }: DashboardProps) {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
@@ -201,6 +203,20 @@ export function Dashboard({
       loadTodayAffirmation();
     }
   }, [user]);
+
+  const prevAffirmationEnabledRef = React.useRef<boolean | null>(null);
+
+  React.useEffect(() => {
+    const currentEnabled = affirmationSettings?.enabled ?? false;
+    const prevEnabled = prevAffirmationEnabledRef.current;
+
+    if (prevEnabled === false && currentEnabled === true) {
+      console.log('Affirmations enabled: refreshing today\'s affirmation');
+      loadTodayAffirmation();
+    }
+
+    prevAffirmationEnabledRef.current = currentEnabled;
+  }, [affirmationSettings?.enabled]);
 
   // Auto-open About dialog when triggered from Settings
   React.useEffect(() => {
