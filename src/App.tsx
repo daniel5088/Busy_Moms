@@ -286,18 +286,31 @@ function App() {
   // Show loading only when we're checking auth or onboarding for authenticated users
   if (loading || (user && checkingOnboarding)) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600 dark:text-blue-400" />
-          <p className="text-gray-600 dark:text-gray-300">
-            {loading
-              ? 'Loading...'
-              : checkingOnboarding
-                ? 'Checking your profile...'
-                : 'Loading...'}
-          </p>
+      <>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600 dark:text-blue-400" />
+            <p className="text-gray-600 dark:text-gray-300">
+              {loading
+                ? 'Loading...'
+                : checkingOnboarding
+                  ? 'Checking your profile...'
+                  : 'Loading...'}
+            </p>
+          </div>
         </div>
-      </div>
+
+        {/* Global modals available during all app states */}
+        <AffirmationSettings
+          isOpen={showAffirmationSettings}
+          onClose={() => setShowAffirmationSettings(false)}
+          onSettingsChanged={reloadSettings}
+        />
+
+        {showNotificationSettings && (
+          <NotificationSettings onClose={() => setShowNotificationSettings(false)} />
+        )}
+      </>
     );
   }
 
@@ -305,23 +318,49 @@ function App() {
   if (!user) {
     console.log('🔐 No user authenticated, showing sign-in form');
     return (
-      <AuthForm
-        onAuthSuccess={() => {
-          console.log('✅ Auth success callback triggered');
-          // The useEffect will handle checking onboarding status
-        }}
-      />
+      <>
+        <AuthForm
+          onAuthSuccess={() => {
+            console.log('✅ Auth success callback triggered');
+            // The useEffect will handle checking onboarding status
+          }}
+        />
+
+        {/* Global modals available during all app states */}
+        <AffirmationSettings
+          isOpen={showAffirmationSettings}
+          onClose={() => setShowAffirmationSettings(false)}
+          onSettingsChanged={reloadSettings}
+        />
+
+        {showNotificationSettings && (
+          <NotificationSettings onClose={() => setShowNotificationSettings(false)} />
+        )}
+      </>
     );
   }
 
   // Show onboarding if user exists but hasn't completed onboarding
   if (showOnboarding) {
     return (
-      <Onboarding
-        onComplete={() => setShowOnboarding(false)}
-        darkMode={darkMode}
-        toggleDarkMode={toggleDarkMode}
-      />
+      <>
+        <Onboarding
+          onComplete={() => setShowOnboarding(false)}
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
+
+        {/* Global modals available during all app states */}
+        <AffirmationSettings
+          isOpen={showAffirmationSettings}
+          onClose={() => setShowAffirmationSettings(false)}
+          onSettingsChanged={reloadSettings}
+        />
+
+        {showNotificationSettings && (
+          <NotificationSettings onClose={() => setShowNotificationSettings(false)} />
+        )}
+      </>
     );
   }
   // Show main app if user is authenticated and has completed onboarding
@@ -479,7 +518,7 @@ function App() {
           externalSettingsEnabled={affirmationSettings?.enabled}
         />
 
-        {/*Alvaros - Dailyaffirmations: Unified settings modal accessible from both Settings and More menu*/}
+        {/*Alvaros - Dailyaffirmations: Unified settings modal accessible from all app states (rendered before early returns)*/}
         <AffirmationSettings
           isOpen={showAffirmationSettings}
           onClose={() => setShowAffirmationSettings(false)}
