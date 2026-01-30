@@ -28,6 +28,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { Affirmation } from '../lib/supabase';
+import { WeatherWidget } from './WeatherWidget';
+import { useWeather } from '../hooks/useWeather';
 import { affirmationService } from '../services/affirmationService';
 import { formatEventTime, formatEventTimeRange, formatDate, getTodayISO } from '../utils/timeFormatters';
 import {
@@ -106,6 +108,14 @@ export function Dashboard({
     reminderWeekOffset,
     setReminderWeekOffset,
   } = useDashboardData();
+
+  const {
+    weather,
+    settings: weatherSettings,
+    loading: weatherLoading,
+    error: weatherError,
+    refresh: refreshWeather,
+  } = useWeather();
 
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
@@ -825,6 +835,17 @@ export function Dashboard({
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Weather Widget */}
+          <div>
+            <WeatherWidget
+              weather={weather}
+              loading={weatherLoading}
+              error={weatherError}
+              locationName={weatherSettings?.default_location || 'Your Location'}
+              onRefresh={refreshWeather}
+            />
           </div>
 
           {/* Quick Actions - 3x2 Grid */}
