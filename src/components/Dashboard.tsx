@@ -19,6 +19,9 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  Gift,
+  Bell,
+  Star,
 } from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
@@ -439,6 +442,45 @@ export function Dashboard({
       hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
       action: () => onNavigateToWellness?.(),
     },
+    {
+      icon: Gift,
+      title: 'Gift Finder',
+      desc: 'Coming soon',
+      bgColor: 'bg-gray-50 dark:bg-gray-800',
+      borderColor: 'border-gray-200 dark:border-gray-700',
+      iconBgColor: 'bg-gray-100 dark:bg-gray-700',
+      iconColor: 'text-gray-400 dark:text-gray-500',
+      textColor: 'text-gray-500 dark:text-gray-400',
+      descColor: 'text-gray-400 dark:text-gray-500',
+      hoverBg: '',
+      action: undefined,
+    },
+    {
+      icon: Bell,
+      title: 'Notifications',
+      desc: 'Coming soon',
+      bgColor: 'bg-gray-50 dark:bg-gray-800',
+      borderColor: 'border-gray-200 dark:border-gray-700',
+      iconBgColor: 'bg-gray-100 dark:bg-gray-700',
+      iconColor: 'text-gray-400 dark:text-gray-500',
+      textColor: 'text-gray-500 dark:text-gray-400',
+      descColor: 'text-gray-400 dark:text-gray-500',
+      hoverBg: '',
+      action: undefined,
+    },
+    {
+      icon: Star,
+      title: 'Favorites',
+      desc: 'Coming soon',
+      bgColor: 'bg-gray-50 dark:bg-gray-800',
+      borderColor: 'border-gray-200 dark:border-gray-700',
+      iconBgColor: 'bg-gray-100 dark:bg-gray-700',
+      iconColor: 'text-gray-400 dark:text-gray-500',
+      textColor: 'text-gray-500 dark:text-gray-400',
+      descColor: 'text-gray-400 dark:text-gray-500',
+      hoverBg: '',
+      action: undefined,
+    },
   ];
 
   if (loading) {
@@ -799,9 +841,10 @@ export function Dashboard({
                       action.action();
                     }
                   }}
+                  disabled={!action.action}
                   className={`p-3 sm:p-4 rounded-xl ${action.bgColor} border ${action.borderColor} shadow-sm flex flex-col items-center
                     transition-all duration-200 ease-in-out
-                    ${action.hoverBg} hover:shadow-md hover:border-opacity-80
+                    ${action.action ? `${action.hoverBg} hover:shadow-md hover:border-opacity-80` : 'cursor-not-allowed opacity-60'}
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2`}
                   aria-label={`${action.title}: ${action.desc}`}
                 >

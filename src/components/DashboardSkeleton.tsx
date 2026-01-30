@@ -27,9 +27,9 @@ export function DashboardSkeleton() {
           <div className="w-1/2 bg-gray-200 dark:bg-gray-800 rounded-xl h-80 animate-pulse"></div>
         </div>
 
-        {/* Quick Actions - 3x2 Grid Skeleton */}
+        {/* Quick Actions - 3x3 Grid Skeleton */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(9)].map((_, i) => (
             <div
               key={i}
               className="h-24 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse"
