@@ -64,11 +64,11 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
         if (data) {
           setMeasurementSystem(data.preferred_system);
         } else {
-          setMeasurementSystem('metric');
+          setMeasurementSystem('imperial');
         }
       } catch (error) {
         console.error('Error loading measurement preference:', error);
-        setMeasurementSystem('metric');
+        setMeasurementSystem('imperial');
       }
     };
 
