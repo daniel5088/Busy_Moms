@@ -41,13 +41,12 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // New state for Type A steps (required)
-  const [darkModeSelection, setDarkModeSelection] = useState<'light' | 'dark' | 'system' | null>(null);
+  // State for settings configuration step
   const [measurementSystem, setMeasurementSystem] = useState<'metric' | 'imperial' | null>(null);
   const [affirmationsEnabled, setAffirmationsEnabled] = useState(false);
   const [affirmationsTime, setAffirmationsTime] = useState('08:00');
 
-  // New state for Type B steps (optional modals)
+  // Modal states for optional configurations
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showRetailerModal, setShowRetailerModal] = useState(false);
@@ -179,200 +178,211 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
       ),
     },
     {
-      title: 'Choose Your Theme',
-      subtitle: 'Select your preferred appearance',
+      title: 'Configure Settings',
+      subtitle: 'Set up your preferences - you can change these later in Settings',
       content: (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { value: 'light', icon: Sun, label: 'Light' },
-              { value: 'dark', icon: Moon, label: 'Dark' },
-              { value: 'system', icon: Smartphone, label: 'System' }
-            ].map(({ value, icon: Icon, label }) => (
+        <div className="space-y-3 max-h-[500px] overflow-y-auto">
+          {/* Dark Mode */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+                  <Moon className="w-5 h-5 text-rose-600 dark:text-rose-300" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Dark Mode</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Switch between light and dark themes
+                  </p>
+                </div>
+              </div>
               <button
-                key={value}
-                onClick={() => {
-                  setDarkModeSelection(value as any);
-                  // Apply immediately based on selection
-                  if (value === 'light' && darkMode) {
-                    toggleDarkMode(); // Turn off dark mode
-                  } else if (value === 'dark' && !darkMode) {
-                    toggleDarkMode(); // Turn on dark mode
-                  }
-                  // For system, we'll just use the current setting
-                }}
-                className={`p-6 rounded-xl border-2 transition-all ${
-                  darkModeSelection === value
-                    ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-400'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-rose-300 dark:hover:border-rose-600'
+                onClick={toggleDarkMode}
+                className={`w-12 h-6 rounded-full relative transition-colors ${
+                  darkMode ? 'bg-rose-500' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
-                <Icon className={`w-8 h-8 mx-auto mb-2 ${darkModeSelection === value ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'}`} />
-                <span className={`block text-sm font-medium ${darkModeSelection === value ? 'text-rose-900 dark:text-rose-200' : 'text-gray-900 dark:text-gray-100'}`}>{label}</span>
+                <div
+                  className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-transform ${
+                    darkMode ? 'right-0.5' : 'left-0.5'
+                  }`}
+                ></div>
               </button>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Measurement Preferences',
-      subtitle: 'Choose your preferred measurement system',
-      content: (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => setMeasurementSystem('metric')}
-              className={`p-6 rounded-xl border-2 transition-all ${
-                measurementSystem === 'metric'
-                  ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-400'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-rose-300 dark:hover:border-rose-600'
-              }`}
-            >
-              <Ruler className={`w-8 h-8 mx-auto mb-3 ${measurementSystem === 'metric' ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'}`} />
-              <h3 className={`font-semibold mb-2 ${measurementSystem === 'metric' ? 'text-rose-900 dark:text-rose-200' : 'text-gray-900 dark:text-gray-100'}`}>Metric</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">grams, ml, kg</p>
-            </button>
-            <button
-              onClick={() => setMeasurementSystem('imperial')}
-              className={`p-6 rounded-xl border-2 transition-all ${
-                measurementSystem === 'imperial'
-                  ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-400'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-rose-300 dark:hover:border-rose-600'
-              }`}
-            >
-              <Ruler className={`w-8 h-8 mx-auto mb-3 ${measurementSystem === 'imperial' ? 'text-rose-500 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'}`} />
-              <h3 className={`font-semibold mb-2 ${measurementSystem === 'imperial' ? 'text-rose-900 dark:text-rose-200' : 'text-gray-900 dark:text-gray-100'}`}>Imperial</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">cups, oz, lbs</p>
-            </button>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Auto-convert is always enabled</p>
-        </div>
-      ),
-    },
-    {
-      title: 'Daily Affirmations',
-      subtitle: 'Get personalized encouragement every day',
-      content: (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-            <div className="flex items-center space-x-3">
-              <Sparkles className="w-5 h-5 text-rose-500 dark:text-rose-400" />
-              <span className="font-medium text-gray-900 dark:text-gray-100">Enable Daily Affirmations</span>
             </div>
-            <button
-              onClick={() => setAffirmationsEnabled(!affirmationsEnabled)}
-              className={`w-12 h-6 rounded-full relative transition-colors ${
-                affirmationsEnabled ? 'bg-rose-500' : 'bg-gray-300 dark:bg-gray-600'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-transform ${
-                  affirmationsEnabled ? 'translate-x-6' : 'translate-x-0.5'
+          </div>
+
+          {/* Measurement System */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+                  <Ruler className="w-5 h-5 text-rose-600 dark:text-rose-300" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Measurement System</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {measurementSystem === 'metric'
+                      ? 'Using Metric (grams, ml, kg)'
+                      : measurementSystem === 'imperial'
+                        ? 'Using Imperial (cups, oz, lbs)'
+                        : 'Choose your preferred system'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setMeasurementSystem('metric')}
+                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+                    measurementSystem === 'metric'
+                      ? 'bg-rose-500 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  Metric
+                </button>
+                <button
+                  onClick={() => setMeasurementSystem('imperial')}
+                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+                    measurementSystem === 'imperial'
+                      ? 'bg-rose-500 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  Imperial
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Daily Affirmations */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-rose-600 dark:text-rose-300" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Daily Affirmations</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Personalized encouragement every day
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAffirmationsEnabled(!affirmationsEnabled)}
+                className={`w-12 h-6 rounded-full relative transition-colors ${
+                  affirmationsEnabled ? 'bg-rose-500' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
-              ></div>
-            </button>
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-transform ${
+                    affirmationsEnabled ? 'right-0.5' : 'left-0.5'
+                  }`}
+                ></div>
+              </button>
+            </div>
+            {affirmationsEnabled && (
+              <div className="pl-13 mt-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  Preferred Time
+                </label>
+                <input
+                  type="time"
+                  value={affirmationsTime}
+                  onChange={(e) => setAffirmationsTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-rose-500 dark:focus:ring-rose-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+            )}
           </div>
 
-          {affirmationsEnabled && (
-            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-800">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                Preferred Time
-              </label>
-              <input
-                type="time"
-                value={affirmationsTime}
-                onChange={(e) => setAffirmationsTime(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-rose-500 dark:focus:ring-rose-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
+          {/* Connect Google Calendar */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-rose-600 dark:text-rose-300" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Connect Google Calendar</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Sync your events with Google Calendar
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                <ConnectGoogleCalendarButton />
+              </div>
             </div>
-          )}
+          </div>
 
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            You can change this later in Settings
-          </p>
-        </div>
-      ),
-    },
-    {
-      title: 'Google Calendar Integration',
-      subtitle: 'You can configure this now, or continue and set it up later in Settings.',
-      content: (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
-              <Calendar className="w-8 h-8 text-rose-500 dark:text-rose-400" />
+          {/* Notifications */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+                  <Bell className="w-5 h-5 text-rose-600 dark:text-rose-300" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Notification Preferences</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Customize notification settings
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowNotificationsModal(true)}
+                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Manage
+              </button>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Sync your events with Google Calendar to keep everything in one place.
-            </p>
-            <ConnectGoogleCalendarButton />
           </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Notification Preferences',
-      subtitle: 'You can configure this now, or continue and set it up later in Settings.',
-      content: (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
-              <Bell className="w-8 h-8 text-rose-500 dark:text-rose-400" />
+
+          {/* Home Address */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-rose-600 dark:text-rose-300" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Home Address</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Set your default location
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddressModal(true)}
+                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Manage
+              </button>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Customize when and how you receive notifications for events, tasks, and reminders.
-            </p>
-            <button
-              onClick={() => setShowNotificationsModal(true)}
-              className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
-            >
-              Configure Now
-            </button>
           </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Home Address',
-      subtitle: 'You can configure this now, or continue and set it up later in Settings.',
-      content: (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
-              <MapPin className="w-8 h-8 text-rose-500 dark:text-rose-400" />
+
+          {/* Instacart Retailers */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
+                  <ShoppingCart className="w-5 h-5 text-rose-600 dark:text-rose-300" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Preferred Retailers</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Select your favorite grocery stores
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRetailerModal(true)}
+                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Manage
+              </button>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Set your home address for directions, travel time estimates, and location-based features.
-            </p>
-            <button
-              onClick={() => setShowAddressModal(true)}
-              className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
-            >
-              Configure Now
-            </button>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Preferred Retailers',
-      subtitle: 'You can configure this now, or continue and set it up later in Settings.',
-      content: (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
-              <ShoppingCart className="w-8 h-8 text-rose-500 dark:text-rose-400" />
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Select your favorite grocery stores and retailers for quick shopping list creation.
-            </p>
-            <button
-              onClick={() => setShowRetailerModal(true)}
-              className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
-            >
-              Configure Now
-            </button>
           </div>
         </div>
       ),
@@ -655,8 +665,7 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
             disabled={
               (step === 1 && !userType) ||
               (step === 2 && familyMembers.some((m) => !m.name.trim() || !m.relationship)) ||
-              (step === 3 && !darkModeSelection) ||
-              (step === 4 && !measurementSystem) ||
+              (step === 3 && !measurementSystem) ||
               saving
             }
             className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -669,7 +678,7 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
                   ? familyMembers.length === 0
                     ? 'Skip for Now'
                     : 'Continue'
-                  : 'Next'}
+                  : 'Continue'}
           </button>
         </div>
       </main>
