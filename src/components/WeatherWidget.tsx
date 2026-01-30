@@ -1,4 +1,4 @@
-import { Cloud, Droplets, Wind, RefreshCw, MapPin, Loader } from 'lucide-react';
+import { Cloud, Droplets, Wind, RefreshCw, MapPin, Loader, Settings } from 'lucide-react';
 import { WeatherData } from '../services/weatherService';
 
 interface WeatherWidgetProps {
@@ -7,9 +7,10 @@ interface WeatherWidgetProps {
   error: string | null;
   locationName?: string;
   onRefresh?: () => void;
+  onOpenSettings?: () => void;
 }
 
-export function WeatherWidget({ weather, loading, error, locationName, onRefresh }: WeatherWidgetProps) {
+export function WeatherWidget({ weather, loading, error, locationName, onRefresh, onOpenSettings }: WeatherWidgetProps) {
   if (loading) {
     return (
       <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
@@ -20,32 +21,28 @@ export function WeatherWidget({ weather, loading, error, locationName, onRefresh
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-lg shadow-md p-6 text-white">
-        <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <Cloud className="w-12 h-12 opacity-50" />
-          <p className="text-sm text-center">{error}</p>
-          {onRefresh && (
-            <button
-              onClick={onRefresh}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm flex items-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Try Again
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const isLocationError = error && (error.includes('latitude') || error.includes('longitude') || error.includes('location'));
 
-  if (!weather?.current) {
+  if (error || !weather?.current) {
     return (
       <div className="bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg shadow-md p-6 text-white">
-        <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <MapPin className="w-12 h-12 opacity-50" />
-          <p className="text-sm text-center">Set your location in settings to see weather</p>
+        <div className="flex flex-col items-center justify-center h-48 gap-4">
+          <MapPin className="w-16 h-16 opacity-75" />
+          <div className="text-center">
+            <p className="text-lg font-semibold mb-1">Location Not Set</p>
+            <p className="text-sm opacity-90 mb-4">
+              Set your location to see weather information
+            </p>
+          </div>
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              Go to Settings
+            </button>
+          )}
         </div>
       </div>
     );

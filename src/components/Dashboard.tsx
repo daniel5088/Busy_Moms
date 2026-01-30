@@ -1096,6 +1096,10 @@ export function Dashboard({
                 error={weatherError}
                 locationName={weatherSettings?.default_location || 'Your Location'}
                 onRefresh={refreshWeather}
+                onOpenSettings={() => {
+                  setShowWeatherModal(false);
+                  onNavigate('more');
+                }}
               />
             </div>
           </div>
