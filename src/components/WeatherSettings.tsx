@@ -44,13 +44,35 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
     }
   }, [settings]);
 
-  const handleLocationSelect = (location: { name: string; latitude: number; longitude: number }) => {
+  const handleLocationChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      default_location: value,
+    }));
+  };
+
+  const handleLocationSelect = (location: { name: string; placeId: string }) => {
+    // When a place is selected, we need to geocode it to get coordinates
     setFormData(prev => ({
       ...prev,
       default_location: location.name,
-      latitude: location.latitude,
-      longitude: location.longitude,
     }));
+
+    // If we have Google Maps available, geocode the place
+    if (window.google?.maps?.Geocoder && location.placeId) {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ placeId: location.placeId }, (results, status) => {
+        if (status === 'OK' && results?.[0]) {
+          const lat = results[0].geometry.location.lat();
+          const lng = results[0].geometry.location.lng();
+          setFormData(prev => ({
+            ...prev,
+            latitude: lat,
+            longitude: lng,
+          }));
+        }
+      });
+    }
   };
 
   const handleUseCurrentLocation = () => {
@@ -141,8 +163,8 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
             <div className="flex-1">
               <LocationAutocomplete
                 value={formData.default_location || ''}
+                onChange={handleLocationChange}
                 onSelect={handleLocationSelect}
-                placeholder="Enter city or location"
               />
             </div>
             <button

@@ -661,7 +661,22 @@ export function Dashboard({
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => setShowWeatherModal(true)}
+                onClick={() => {
+                  console.log('[Dashboard] Weather button clicked');
+                  console.log('[Dashboard] Current weather state:', {
+                    weather,
+                    weatherSettings,
+                    weatherLoading,
+                    weatherError,
+                    hasWeather: !!weather,
+                    hasCurrent: !!weather?.current,
+                    hasSettings: !!weatherSettings,
+                    hasCoordinates: !!(weatherSettings?.latitude && weatherSettings?.longitude),
+                    latitude: weatherSettings?.latitude,
+                    longitude: weatherSettings?.longitude,
+                  });
+                  setShowWeatherModal(true);
+                }}
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
                 title="View weather"
                 aria-label="View weather"

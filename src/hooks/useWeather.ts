@@ -8,27 +8,34 @@ export function useWeather() {
   const [error, setError] = useState<string | null>(null);
 
   const loadSettings = useCallback(async () => {
+    console.log('[useWeather] Loading settings...');
     try {
       const data = await weatherService.getSettings();
+      console.log('[useWeather] Settings loaded:', data);
       setSettings(data);
       return data;
     } catch (err) {
-      console.error('Failed to load weather settings:', err);
+      console.error('[useWeather] Failed to load weather settings:', err);
       return null;
     }
   }, []);
 
   const loadWeather = useCallback(async (coords?: { latitude: number; longitude: number }) => {
+    console.log('[useWeather] loadWeather called with coords:', coords);
     setLoading(true);
     setError(null);
     try {
       const data = await weatherService.getWeatherForLocation(coords);
+      console.log('[useWeather] Weather data received:', data);
       setWeather(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load weather');
-      console.error('Failed to load weather:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load weather';
+      console.error('[useWeather] Failed to load weather:', err);
+      console.error('[useWeather] Error message:', errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
+      console.log('[useWeather] Loading complete');
     }
   }, []);
 
@@ -48,12 +55,21 @@ export function useWeather() {
 
   useEffect(() => {
     const init = async () => {
+      console.log('[useWeather] Initializing...');
       const userSettings = await loadSettings();
+      console.log('[useWeather] Init - User settings:', userSettings);
+
       if (userSettings?.latitude && userSettings?.longitude) {
+        console.log('[useWeather] Init - Loading weather with coordinates:', {
+          latitude: userSettings.latitude,
+          longitude: userSettings.longitude
+        });
         await loadWeather({ latitude: userSettings.latitude, longitude: userSettings.longitude });
       } else {
+        console.warn('[useWeather] Init - No coordinates in settings, skipping weather load');
         setLoading(false);
       }
+      console.log('[useWeather] Init complete');
     };
     init();
   }, [loadSettings, loadWeather]);

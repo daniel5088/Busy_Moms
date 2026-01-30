@@ -69,10 +69,16 @@ class WeatherService {
   }
 
   private async makeRequest(body: any): Promise<any> {
+    console.log('[WeatherService] Making request to:', this.baseUrl);
+    console.log('[WeatherService] Request body:', body);
+
     const session = await supabase.auth.getSession();
     if (!session.data.session) {
+      console.error('[WeatherService] Not authenticated');
       throw new Error('Not authenticated');
     }
+
+    console.log('[WeatherService] Authenticated, sending request...');
 
     const response = await fetch(this.baseUrl, {
       method: 'POST',
@@ -83,12 +89,17 @@ class WeatherService {
       body: JSON.stringify(body),
     });
 
+    console.log('[WeatherService] Response status:', response.status);
+
     if (!response.ok) {
       const error = await response.json();
+      console.error('[WeatherService] Request failed:', error);
       throw new Error(error.error || 'Failed to fetch weather data');
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('[WeatherService] Request successful:', result);
+    return result;
   }
 
   async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherResponse> {
@@ -123,24 +134,45 @@ class WeatherService {
   }
 
   async getWeatherForLocation(location?: { latitude: number; longitude: number }): Promise<WeatherData> {
+    console.log('[WeatherService] getWeatherForLocation called with:', location);
+
     let coords = location;
 
     if (!coords) {
+      console.log('[WeatherService] No coords provided, fetching settings...');
       const settings = await this.getSettings();
+      console.log('[WeatherService] Settings fetched:', settings);
+
       if (settings?.latitude && settings?.longitude) {
         coords = {
           latitude: settings.latitude,
           longitude: settings.longitude,
         };
+        console.log('[WeatherService] Using coords from settings:', coords);
+      } else {
+        console.warn('[WeatherService] Settings missing latitude or longitude:', {
+          hasLatitude: !!settings?.latitude,
+          hasLongitude: !!settings?.longitude,
+          latitude: settings?.latitude,
+          longitude: settings?.longitude
+        });
       }
     }
 
     if (!coords) {
-      throw new Error('No location provided and no default location set');
+      const error = 'No location provided and no default location set';
+      console.error('[WeatherService]', error);
+      throw new Error(error);
     }
 
+    console.log('[WeatherService] Fetching forecast for coords:', coords);
     const response = await this.getForecast(coords.latitude, coords.longitude);
-    return this.parseWeatherData(response.data);
+    console.log('[WeatherService] Forecast response:', response);
+
+    const parsedData = this.parseWeatherData(response.data);
+    console.log('[WeatherService] Parsed weather data:', parsedData);
+
+    return parsedData;
   }
 
   private parseWeatherData(data: any): WeatherData {
