@@ -2,6 +2,16 @@
 
 This guide explains how to set up and use the MCP-first weather system with Open-Meteo.
 
+## Security Update: API Key Authentication
+
+The weather MCP integration now requires API key authentication for enhanced security. All requests to your MCP server are authenticated using the `WEATHER_MCP_KEY` secret stored securely in Supabase.
+
+**What's New:**
+- API key authentication required for all MCP server requests
+- Secrets stored securely in Supabase (never exposed to frontend)
+- Both `Authorization: Bearer` and `X-API-Key` headers sent for compatibility
+- Clear error messages if secrets are not configured
+
 ## Architecture Overview
 
 ```
@@ -33,6 +43,15 @@ This guide explains how to set up and use the MCP-first weather system with Open
 └─────────────────┘
 ```
 
+## Quick Setup Checklist
+
+- [ ] Set up and run your MCP server
+- [ ] Obtain your MCP server API key
+- [ ] Set `WEATHER_MCP_URL` secret in Supabase Dashboard
+- [ ] Set `WEATHER_MCP_KEY` secret in Supabase Dashboard
+- [ ] Verify edge function is deployed
+- [ ] Test weather functionality in your app
+
 ## Setup Instructions
 
 ### 1. Set Up MCP Server
@@ -48,27 +67,44 @@ npm start
 
 The MCP server will typically run on `http://localhost:3000`.
 
+**Obtain Your API Key:**
+1. Check your MCP server documentation for how to generate an API key
+2. Some MCP servers may require registration or configuration to enable API key authentication
+3. Keep your API key secure and never commit it to version control
+
 ### 2. Configure Environment Variables
 
-Add the MCP server URL to your Supabase edge function environment:
+Add the MCP server URL and API key to your Supabase edge function environment:
+
+**In Supabase Dashboard:**
+1. Go to **Edge Functions** > **Secrets**
+2. Add the following secrets:
 
 ```bash
-# Set in Supabase Dashboard under Edge Functions > Secrets
-MCP_SERVER_URL=http://localhost:3000
-# or for production:
-MCP_SERVER_URL=https://your-mcp-server.com
+# Required: Your MCP server URL
+WEATHER_MCP_URL=https://your-mcp-server.com
+
+# Required: Your MCP server API key for authentication
+WEATHER_MCP_KEY=your-api-key-here
 ```
+
+**Important Notes:**
+- The `WEATHER_MCP_KEY` is used to authenticate requests to your MCP server
+- Both secrets are required for the edge function to work
+- These secrets are never exposed to the frontend - all requests go through the secure edge function
+- For local development, you can set these in your local `.env` file
 
 ### 3. Deploy Edge Function
 
 The edge function `weather-mcp` has been created at:
 `supabase/functions/weather-mcp/index.ts`
 
-Deploy it to Supabase:
+**Deploy via Supabase Dashboard:**
+1. Go to your Supabase project dashboard
+2. Navigate to **Edge Functions**
+3. The function should deploy automatically, or you can trigger a deployment
 
-```bash
-supabase functions deploy weather-mcp
-```
+**Note:** Make sure to set the secrets (WEATHER_MCP_URL and WEATHER_MCP_KEY) BEFORE deploying the function, or redeploy after setting them.
 
 ### 4. Apply Database Migration
 
@@ -267,9 +303,26 @@ POST /mcp/v1/call
 
 ### MCP Server Connection Issues
 
-1. Verify MCP server is running: `curl http://localhost:3000/health`
-2. Check `MCP_SERVER_URL` environment variable
+1. Verify MCP server is running: `curl https://your-mcp-server.com/health`
+2. Check `WEATHER_MCP_URL` environment variable is set correctly
 3. Review edge function logs in Supabase dashboard
+
+### Authentication Issues
+
+1. **401 Unauthorized Error:**
+   - Verify `WEATHER_MCP_KEY` is set correctly in Supabase secrets
+   - Ensure your MCP server is configured to accept the API key
+   - Check that the API key hasn't expired
+
+2. **Missing API Key Error:**
+   - Confirm `WEATHER_MCP_KEY` secret is set in Supabase Dashboard
+   - Redeploy the edge function after setting secrets
+
+3. **API Key Format:**
+   - The edge function sends the API key in two formats:
+     - `Authorization: Bearer <key>` header
+     - `X-API-Key: <key>` header
+   - Check which format your MCP server expects
 
 ### No Weather Data
 

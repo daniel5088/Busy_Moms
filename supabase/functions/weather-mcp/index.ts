@@ -51,8 +51,17 @@ Deno.serve(async (req: Request) => {
       throw new Error("Missing authorization header");
     }
 
-    // Get MCP server URL from environment
-    const mcpServerUrl = Deno.env.get("MCP_SERVER_URL") || "http://localhost:3000";
+    // Get MCP server URL and API key from environment
+    const mcpServerUrl = Deno.env.get("WEATHER_MCP_URL");
+    const mcpApiKey = Deno.env.get("WEATHER_MCP_KEY");
+
+    if (!mcpServerUrl) {
+      throw new Error("WEATHER_MCP_URL environment variable is not configured");
+    }
+
+    if (!mcpApiKey) {
+      throw new Error("WEATHER_MCP_KEY environment variable is not configured");
+    }
 
     const { action, latitude, longitude, location, settings }: WeatherRequest = await req.json();
 
@@ -181,6 +190,8 @@ Deno.serve(async (req: Request) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${mcpApiKey}`,
+        'X-API-Key': mcpApiKey,
       },
       body: JSON.stringify(mcpRequest),
     });
