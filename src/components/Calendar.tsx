@@ -137,6 +137,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [selectedEvent, setSelectedEvent] = useState<DbEvent | null>(null);
   const [selectedReminder, setSelectedReminder] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
@@ -266,6 +267,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
     }
   }, [user?.id, user?.email, monthStart, monthEnd, supabase]);
 
@@ -988,7 +990,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
   // --- UI -------------------------------------------------------------------
   // Alvaros Skeletons
-  if (loading) {
+  if (loading && isInitialLoad) {
     return <CalendarSkeleton />;
   }
 
