@@ -204,14 +204,16 @@ export default function FamilyMemberCard({ member, usedColors, onChange, onRemov
           {member.birthday_estimated && (
             <p className="mt-1.5 text-sm text-amber-600">Birthday is estimated—tap to update.</p>
           )}
-          {member.birthdayMonth && member.birthdayDay && member.birthdayYear && (
-            <p className="mt-1.5 text-sm text-gray-500">
-              Age:{' '}
-              {getAgeFromBirthday(
-                `${member.birthdayYear}-${String(member.birthdayMonth).padStart(2, '0')}-${String(member.birthdayDay).padStart(2, '0')}`
-              ) || 'Invalid date'}
-            </p>
-          )}
+          {member.birthdayMonth && member.birthdayDay && member.birthdayYear && (() => {
+            const age = getAgeFromBirthday(
+              `${member.birthdayYear}-${String(member.birthdayMonth).padStart(2, '0')}-${String(member.birthdayDay).padStart(2, '0')}`
+            );
+            return (
+              <p className="mt-1.5 text-sm text-gray-500">
+                Age: {age !== null && age !== undefined ? age : 'Invalid date'}
+              </p>
+            );
+          })()}
         </div>
 
         <div>

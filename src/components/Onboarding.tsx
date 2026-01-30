@@ -49,6 +49,32 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showRetailerModal, setShowRetailerModal] = useState(false);
 
+  // Load measurement preference on mount
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    const loadMeasurementPreference = async () => {
+      try {
+        const { data } = await supabase
+          .from('user_measurement_preferences')
+          .select('preferred_system')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (data) {
+          setMeasurementSystem(data.preferred_system);
+        } else {
+          setMeasurementSystem('metric');
+        }
+      } catch (error) {
+        console.error('Error loading measurement preference:', error);
+        setMeasurementSystem('metric');
+      }
+    };
+
+    loadMeasurementPreference();
+  }, [user?.id]);
+
   const steps = [
     {
       title: 'Welcome to Your Life Assistant',
