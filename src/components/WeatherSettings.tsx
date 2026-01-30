@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Save, Loader } from 'lucide-react';
+import { MapPin, Save, Loader, Locate } from 'lucide-react';
 import { WeatherSettings as IWeatherSettings } from '../services/weatherService';
 import { LocationAutocomplete } from './LocationAutocomplete';
 
@@ -23,6 +23,7 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
     daily_days: 7,
   });
   const [saving, setSaving] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -50,6 +51,60 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
       latitude: location.latitude,
       longitude: location.longitude,
     }));
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setMessage({ type: 'error', text: 'Geolocation is not supported by your browser' });
+      return;
+    }
+
+    setGettingLocation(true);
+    setMessage(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          const locationName = data.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+
+          setFormData(prev => ({
+            ...prev,
+            default_location: locationName,
+            latitude,
+            longitude,
+          }));
+          setMessage({ type: 'success', text: 'Location detected successfully' });
+        } catch (error) {
+          setFormData(prev => ({
+            ...prev,
+            default_location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+            latitude,
+            longitude,
+          }));
+          setMessage({ type: 'success', text: 'Location detected' });
+        } finally {
+          setGettingLocation(false);
+        }
+      },
+      (error) => {
+        setGettingLocation(false);
+        let errorMessage = 'Unable to get your location';
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMessage = 'Location permission denied. Please enable location access in your browser settings.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          errorMessage = 'Location information unavailable';
+        } else if (error.code === error.TIMEOUT) {
+          errorMessage = 'Location request timed out';
+        }
+        setMessage({ type: 'error', text: errorMessage });
+      }
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,11 +137,29 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Default Location
           </label>
-          <LocationAutocomplete
-            value={formData.default_location || ''}
-            onSelect={handleLocationSelect}
-            placeholder="Enter city or location"
-          />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <LocationAutocomplete
+                value={formData.default_location || ''}
+                onSelect={handleLocationSelect}
+                placeholder="Enter city or location"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleUseCurrentLocation}
+              disabled={gettingLocation}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+              title="Use current location"
+            >
+              {gettingLocation ? (
+                <Loader className="w-4 h-4 animate-spin" />
+              ) : (
+                <Locate className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">Auto Detect</span>
+            </button>
+          </div>
           {formData.latitude && formData.longitude && (
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Coordinates: {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)}

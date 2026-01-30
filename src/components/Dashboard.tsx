@@ -22,6 +22,8 @@ import {
   Gift,
   Bell,
   Star,
+  CloudSun,
+  XCircle,
 } from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
@@ -130,6 +132,7 @@ export function Dashboard({
   const [autoOpenedSlotIndex, setAutoOpenedSlotIndex] = React.useState<number | null>(null);
   const [affirmationStatus, setAffirmationStatus] = React.useState<string>('');
   const [showAboutMenu, setShowAboutMenu] = React.useState(false);
+  const [showWeatherModal, setShowWeatherModal] = React.useState(false);
 
   const shouldShowReminder = React.useCallback((reminder: Reminder, now: Date): boolean => {
     const today = getTodayISO();
@@ -658,6 +661,14 @@ export function Dashboard({
             </div>
             <div className="flex items-center space-x-3">
               <button
+                onClick={() => setShowWeatherModal(true)}
+                className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
+                title="View weather"
+                aria-label="View weather"
+              >
+                <CloudSun className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+              </button>
+              <button
                 onClick={handleOpenAffirmation}
                 className={`w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95 ${
                   isAffirmationButtonGlowing
@@ -835,17 +846,6 @@ export function Dashboard({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Weather Widget */}
-          <div>
-            <WeatherWidget
-              weather={weather}
-              loading={weatherLoading}
-              error={weatherError}
-              locationName={weatherSettings?.default_location || 'Your Location'}
-              onRefresh={refreshWeather}
-            />
           </div>
 
           {/* Quick Actions - 3x2 Grid */}
@@ -1059,6 +1059,44 @@ export function Dashboard({
                   </a>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Weather Modal */}
+      {showWeatherModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="weather-modal-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowWeatherModal(false)}
+          />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h2 id="weather-modal-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Weather
+              </h2>
+              <button
+                onClick={() => setShowWeatherModal(false)}
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                aria-label="Close weather"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <WeatherWidget
+                weather={weather}
+                loading={weatherLoading}
+                error={weatherError}
+                locationName={weatherSettings?.default_location || 'Your Location'}
+                onRefresh={refreshWeather}
+              />
             </div>
           </div>
         </div>
