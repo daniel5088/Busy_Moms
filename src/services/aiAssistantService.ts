@@ -17,6 +17,7 @@ import {
 } from './calendarProvider';
 import { calendarContextService } from './calendarContext';
 import { formatTimeForDisplay, formatDateForDisplay, parseTimeToMinutes } from '../utils/timeFormatters';
+import { weatherAgentService } from './weatherAgentService';
 
 /** Central brain for "Sara" — routes natural language to concrete app actions. */
 export interface AIAction {
@@ -35,6 +36,10 @@ export interface AIAction {
     | 'family_query'
     | 'family_update'
     | 'family_delete'
+    | 'weather'
+    | 'weather_current'
+    | 'weather_forecast'
+    | 'weather_event_check'
     | 'chat';
   success: boolean;
   message: string;
@@ -62,6 +67,10 @@ type IntentType =
   | 'family_query'
   | 'family_update'
   | 'family_delete'
+  | 'weather'
+  | 'weather_current'
+  | 'weather_forecast'
+  | 'weather_event_check'
   | 'chat';
 
 interface IntentResult {
@@ -380,7 +389,7 @@ async function classifyMessage(
   console.log('📅 Next 7 days mapping:', next7Days);
 
   const systemPrompt = `You are a smart assistant that classifies user messages into actions.
-Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query|calendar_update|calendar_delete|calendar_share|reminder|reminder_share|shopping|shopping_query|shopping_update|shopping_delete|task|task_query|task_update|task_delete|schedule_query|family|family_query|family_update|family_delete|chat", "details": {...}}
+Return ONLY valid JSON with this exact format: {"type": "calendar|calendar_query|calendar_update|calendar_delete|calendar_share|reminder|reminder_share|shopping|shopping_query|shopping_update|shopping_delete|task|task_query|task_update|task_delete|schedule_query|family|family_query|family_update|family_delete|weather_current|weather_forecast|weather_event_check|chat", "details": {...}}
 
 IMPORTANT DATE CONTEXT:
 - Today is ${today} (${todayFormatted})
@@ -441,6 +450,10 @@ For family queries: {"type": "family_query", "details": {"query_type": "all|sear
 For family updates: {"type": "family_update", "details": {"search_term": "name to find", "updates": {"age": number, "school": "school name", "grade": "grade level"}}}
 For family deletion: {"type": "family_delete", "details": {"search_term": "name to delete"}}
 
+For weather queries: {"type": "weather_current", "details": {"location": "city name or address (optional)"}}
+For weather forecasts: {"type": "weather_forecast", "details": {"location": "city name (optional)", "days": number}}
+For event weather checks: {"type": "weather_event_check", "details": {"event_name": "name of event"}}
+
 For reminders: {"type": "reminder", "details": {"title": "reminder text", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm", "assigned_to": "person name"}}
 For reminder sharing: {"type": "reminder_share", "details": {"search_term": "reminder to find", "recipient_name": "person name"}}
 For calendar creation: {"type": "calendar", "details": {"title": "event name", "date": "YYYY-MM-DD", "time": "HH:MM:SS or 6pm or 6:00pm", "location": "place", "participants": "person name or list of names"}}
@@ -474,7 +487,13 @@ EXAMPLES:
 "What do I have today?" → {"type": "schedule_query", "details": {"query_type": "today"}}
 "What's on my calendar on Saturday?" → {"type": "schedule_query", "details": {"query_type": "date", "date": "[USE DATE FROM MAPPING]"}}
 "Show me my calendar for tomorrow" → {"type": "schedule_query", "details": {"query_type": "tomorrow"}}
-"What's on my shopping list?" → {"type": "shopping_query", "details": {"query_type": "pending"}}`;
+"What's on my shopping list?" → {"type": "shopping_query", "details": {"query_type": "pending"}}
+"What's the weather like?" → {"type": "weather_current", "details": {}}
+"What's the weather today?" → {"type": "weather_current", "details": {}}
+"How's the weather in New York?" → {"type": "weather_current", "details": {"location": "New York"}}
+"What's the forecast for this week?" → {"type": "weather_forecast", "details": {"days": 7}}
+"Will it rain tomorrow?" → {"type": "weather_forecast", "details": {"days": 2}}
+"What's the weather for my dentist appointment?" → {"type": "weather_event_check", "details": {"event_name": "dentist appointment"}}`;
 
   try {
     const response = await openaiService.chat([
@@ -837,6 +856,13 @@ class AIAssistantService {
           return this.handleFamilyQuery(intent.details || {}, userId);
         case 'family_update':
           return this.handleFamilyUpdate(intent.details || {}, userId);
+        case 'weather':
+        case 'weather_current':
+          return this.handleWeatherCurrent(intent.details || {}, userId);
+        case 'weather_forecast':
+          return this.handleWeatherForecast(intent.details || {}, userId);
+        case 'weather_event_check':
+          return this.handleWeatherEventCheck(intent.details || {}, userId);
         case 'family_delete':
           return this.handleFamilyDelete(intent.details || {}, userId);
         default:
@@ -3046,6 +3072,171 @@ class AIAssistantService {
         type: 'family_delete',
         success: false,
         message: `Failed to remove family member: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      };
+    }
+  }
+
+  /** Weather - Get current weather */
+  private async handleWeatherCurrent(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    console.log('🌤️ Getting current weather with details:', details);
+
+    try {
+      const result = await weatherAgentService.getCurrentWeather();
+
+      if (!result.success) {
+        return {
+          type: 'weather_current',
+          success: false,
+          message: result.error || 'Failed to get weather information.',
+        };
+      }
+
+      return {
+        type: 'weather_current',
+        success: true,
+        message: result.message || 'Here is the current weather.',
+        data: result.data,
+      };
+    } catch (error) {
+      console.error('❌ Weather current error:', error);
+      return {
+        type: 'weather_current',
+        success: false,
+        message: `Failed to get weather: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      };
+    }
+  }
+
+  /** Weather - Get forecast */
+  private async handleWeatherForecast(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    console.log('🌤️ Getting weather forecast with details:', details);
+
+    try {
+      const days = Number(details.days) || 7;
+      const result = await weatherAgentService.getForecast(undefined, undefined, days);
+
+      if (!result.success) {
+        return {
+          type: 'weather_forecast',
+          success: false,
+          message: result.error || 'Failed to get weather forecast.',
+        };
+      }
+
+      return {
+        type: 'weather_forecast',
+        success: true,
+        message: result.message || 'Here is the weather forecast.',
+        data: result.data,
+      };
+    } catch (error) {
+      console.error('❌ Weather forecast error:', error);
+      return {
+        type: 'weather_forecast',
+        success: false,
+        message: `Failed to get forecast: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      };
+    }
+  }
+
+  /** Weather - Check weather for a specific event */
+  private async handleWeatherEventCheck(
+    details: Record<string, unknown>,
+    userId: UUID,
+  ): Promise<AIAction> {
+    console.log('🌤️ Checking weather for event with details:', details);
+
+    const eventName = String(details.event_name || '');
+
+    if (!eventName) {
+      return {
+        type: 'weather_event_check',
+        success: false,
+        message: 'Please specify which event you want weather information for.',
+      };
+    }
+
+    try {
+      const { data: events, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('user_id', userId)
+        .ilike('title', `%${eventName}%`)
+        .gte('event_date', new Date().toISOString().split('T')[0])
+        .order('event_date', { ascending: true })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (!events || events.length === 0) {
+        return {
+          type: 'weather_event_check',
+          success: false,
+          message: `No upcoming events found matching "${eventName}".`,
+        };
+      }
+
+      const event = events[0];
+      const eventDate = new Date(event.event_date);
+      const today = new Date();
+      const daysUntil = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysUntil > 16) {
+        return {
+          type: 'weather_event_check',
+          success: false,
+          message: `The event "${event.title}" is on ${event.event_date}, which is too far in the future for a reliable forecast (${daysUntil} days away).`,
+        };
+      }
+
+      const result = await weatherAgentService.getForecast(undefined, undefined, Math.max(daysUntil + 1, 7));
+
+      if (!result.success) {
+        return {
+          type: 'weather_event_check',
+          success: false,
+          message: `Found the event "${event.title}" on ${event.event_date}, but couldn't get weather information.`,
+        };
+      }
+
+      const forecastData = result.data as any[];
+      const eventForecast = forecastData.find(day => day.date === event.event_date);
+
+      if (eventForecast) {
+        const message = `Weather for "${event.title}" on ${event.event_date}:\n${eventForecast.condition}, High ${Math.round(eventForecast.temperature_max)}°F, Low ${Math.round(eventForecast.temperature_min)}°F.\nChance of rain: ${eventForecast.precipitation_probability}%`;
+
+        return {
+          type: 'weather_event_check',
+          success: true,
+          message,
+          data: { event, forecast: eventForecast },
+        };
+      }
+
+      return {
+        type: 'weather_event_check',
+        success: true,
+        message: `Found the event "${event.title}" on ${event.event_date}, but weather data for that day is not available yet.`,
+        data: { event },
+      };
+    } catch (error) {
+      console.error('❌ Weather event check error:', error);
+      return {
+        type: 'weather_event_check',
+        success: false,
+        message: `Failed to check weather for event: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`,
       };
