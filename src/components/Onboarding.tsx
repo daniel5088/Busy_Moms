@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   UserPlus,
   LogOut,
+  XCircle,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -22,10 +23,9 @@ import { ALL as ALL_COLORS } from '../lib/colorPalette';
 import { createBirthdayEventsForNext100Years } from '../services/birthdayEventsService';
 import { ConnectGoogleCalendarButton } from './ConnectGoogleCalendarButton';
 import { NotificationSettings } from './NotificationSettings';
-import { AddressForm } from './AddressForm';
+import { AddressManager } from './AddressManager';
 import { RetailerSelectionModal } from './RetailerSelectionModal';
 import { measurementPreferencesService } from '../services/measurementPreferencesService';
-import { affirmationService } from '../services/affirmationService';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -43,8 +43,6 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
 
   // State for settings configuration step
   const [measurementSystem, setMeasurementSystem] = useState<'metric' | 'imperial' | null>(null);
-  const [affirmationsEnabled, setAffirmationsEnabled] = useState(false);
-  const [affirmationsTime, setAffirmationsTime] = useState('08:00');
 
   // Modal states for optional configurations
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
@@ -256,7 +254,7 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
 
           {/* Daily Affirmations */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-rose-600 dark:text-rose-300" />
@@ -269,31 +267,12 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
                 </div>
               </div>
               <button
-                onClick={() => setAffirmationsEnabled(!affirmationsEnabled)}
-                className={`w-12 h-6 rounded-full relative transition-colors ${
-                  affirmationsEnabled ? 'bg-rose-500' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
+                onClick={() => window.dispatchEvent(new CustomEvent('open-affirmations'))}
+                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                <div
-                  className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-transform ${
-                    affirmationsEnabled ? 'right-0.5' : 'left-0.5'
-                  }`}
-                ></div>
+                Manage
               </button>
             </div>
-            {affirmationsEnabled && (
-              <div className="pl-13 mt-3">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                  Preferred Time
-                </label>
-                <input
-                  type="time"
-                  value={affirmationsTime}
-                  onChange={(e) => setAffirmationsTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-rose-500 dark:focus:ring-rose-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                />
-              </div>
-            )}
           </div>
 
           {/* Connect Google Calendar */}
@@ -459,18 +438,6 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
           await measurementPreferencesService.setPreferredSystem(user.id, measurementSystem);
         } catch (prefError) {
           console.warn('Could not save measurement preferences:', prefError);
-        }
-      }
-
-      // Save affirmation settings if enabled
-      if (affirmationsEnabled) {
-        try {
-          await affirmationService.updateSettings(user.id, {
-            enabled: true,
-            preferred_time: affirmationsTime,
-          });
-        } catch (affError) {
-          console.warn('Could not save affirmation settings:', affError);
         }
       }
 
@@ -689,7 +656,25 @@ export function Onboarding({ onComplete, darkMode, toggleDarkMode }: OnboardingP
       )}
 
       {showAddressModal && (
-        <AddressForm onClose={() => setShowAddressModal(false)} />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="address-modal-title">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+              <h2 id="address-modal-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Manage Addresses
+              </h2>
+              <button
+                onClick={() => setShowAddressModal(false)}
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                aria-label="Close address manager"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <AddressManager />
+            </div>
+          </div>
+        </div>
       )}
 
       {showRetailerModal && (
