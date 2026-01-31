@@ -21,6 +21,13 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
     include_daily: true,
     hourly_hours: 24,
     daily_days: 7,
+    // Display settings
+    show_hourly_forecast: true,
+    show_uv_index: false,
+    show_air_quality: false,
+    show_wind: true,
+    show_humidity: true,
+    show_pressure: true,
   });
   const [saving, setSaving] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
@@ -40,6 +47,13 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
         include_daily: settings.include_daily !== false,
         hourly_hours: settings.hourly_hours || 24,
         daily_days: settings.daily_days || 7,
+        // Display settings
+        show_hourly_forecast: settings.show_hourly_forecast !== false,
+        show_uv_index: settings.show_uv_index === true,
+        show_air_quality: settings.show_air_quality === true,
+        show_wind: settings.show_wind !== false,
+        show_humidity: settings.show_humidity !== false,
+        show_pressure: settings.show_pressure !== false,
       });
     }
   }, [settings]);
@@ -301,6 +315,76 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
                 />
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Widget Display Settings */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Widget Display Options
+          </label>
+          <div className="space-y-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.show_hourly_forecast}
+                onChange={(e) => setFormData(prev => ({ ...prev, show_hourly_forecast: e.target.checked }))}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Show hourly forecast in widget</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.show_wind}
+                onChange={(e) => setFormData(prev => ({ ...prev, show_wind: e.target.checked }))}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Show wind speed</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.show_humidity}
+                onChange={(e) => setFormData(prev => ({ ...prev, show_humidity: e.target.checked }))}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Show humidity</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.show_pressure}
+                onChange={(e) => setFormData(prev => ({ ...prev, show_pressure: e.target.checked }))}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Show pressure</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.show_uv_index}
+                onChange={(e) => setFormData(prev => ({ ...prev, show_uv_index: e.target.checked }))}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Show UV index</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">(when available)</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.show_air_quality}
+                onChange={(e) => setFormData(prev => ({ ...prev, show_air_quality: e.target.checked }))}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Show air quality</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">(when available)</span>
+            </label>
           </div>
         </div>
 
