@@ -261,8 +261,19 @@ function getBackgroundGradient(weatherCode: number | undefined, isDark: boolean)
   return timeGradient;
 }
 
-// Check if it's night time
-function isNightTime(): boolean {
+// Check if it's night time in the location's timezone
+function isNightTime(utcOffsetSeconds?: number): boolean {
+  // If we have UTC offset from the weather data, use it to calculate the location's local time
+  if (utcOffsetSeconds !== undefined) {
+    const now = new Date();
+    // Get current UTC time in milliseconds
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+    // Add the location's offset to get local time at that location
+    const locationTime = new Date(utcTime + (utcOffsetSeconds * 1000));
+    const hour = locationTime.getHours();
+    return hour >= 20 || hour < 6;
+  }
+  // Fallback to browser time
   const hour = new Date().getHours();
   return hour >= 20 || hour < 6;
 }
@@ -270,7 +281,7 @@ function isNightTime(): boolean {
 export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings, settings }: WeatherWidgetProps) {
   const { darkMode } = useDarkMode();
   const isDark = darkMode;
-  const isNight = isNightTime();
+  const isNight = isNightTime(weather?.utc_offset_seconds);
   const bgGradient = getBackgroundGradient(weather?.current?.weather_code, isDark);
   const weatherOverlay = weather?.current?.weather_code 
     ? getWeatherGradient(weather.current.weather_code, isDark)
@@ -545,28 +556,14 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             </h2>
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
               {weather.hourly.slice(0, 24).map((hour, index) => {
-                // Parse time as local time (hour.time format: "YYYY-MM-DDTHH:mm" or "YYYY-MM-DDTHH:mm:ssZ")
-                // Extract date/time components and create local Date object
-                const timeMatch = hour.time.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-                let hourDate: Date;
-
-                if (timeMatch) {
-                  const [, year, month, day, hours, minutes] = timeMatch;
-                  hourDate = new Date(
-                    parseInt(year),
-                    parseInt(month) - 1,
-                    parseInt(day),
-                    parseInt(hours),
-                    parseInt(minutes)
-                  );
-                } else {
-                  // Fallback to regular parsing
-                  hourDate = new Date(hour.time);
-                }
-
-                const hourLabel = hourDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+                // Extract hour directly from time string (format: "YYYY-MM-DDTHH:00")
+                // This is already in the location's timezone
+                const hourMatch = hour.time.match(/T(\d{1,2})/);
+                const hourNum = hourMatch ? parseInt(hourMatch[1], 10) : 0;
+                const hourLabel = hourNum === 0 ? '12 AM' : hourNum < 12 ? `${hourNum} AM` : hourNum === 12 ? '12 PM' : `${hourNum - 12} PM`;
                 const isCurrentHour = index === 0;
-
+                const isNightHour = hourNum >= 20 || hourNum < 6;
+                
                 return (
                   <div
                     key={hour.time}
@@ -584,7 +581,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                     </div>
                     <div className="mb-2 flex justify-center">
                       <div className="scale-50">
-                        <WeatherIcon weatherCode={hour.weather_code} isNight={hourDate.getHours() >= 20 || hourDate.getHours() < 6} size="small" />
+                        <WeatherIcon weatherCode={hour.weather_code} isNight={isNightHour} size="small" />
                       </div>
                     </div>
                     <div className={`text-lg font-medium ${
