@@ -240,16 +240,20 @@ class WeatherService {
 
     // Daily
     if (parsed.daily?.time && Array.isArray(parsed.daily.time)) {
-      result.daily = parsed.daily.time.map((date: string, i: number) => ({
-        date,
-        temperature_max: parsed.daily.temperature_2m_max?.[i] ?? 0,
-        temperature_min: parsed.daily.temperature_2m_min?.[i] ?? 0,
-        weather_code: parsed.daily.weathercode?.[i] ?? 0,
-        precipitation_sum: parsed.daily.precipitation_sum?.[i] ?? 0,
-        precipitation_probability: parsed.daily.precipitation_probability_max?.[i] ?? 0,
-        condition: this.getWeatherCondition(parsed.daily.weathercode?.[i] ?? 0),
-        icon: "", // No longer using emoji icons
-      }));
+      result.daily = parsed.daily.time.map((date: string, i: number) => {
+        const weatherCode = parsed.daily.weathercode?.[i] ?? 0;
+        console.log(`[WeatherService] Daily forecast for ${date}: weather_code=${weatherCode}, condition=${this.getWeatherCondition(weatherCode)}`);
+        return {
+          date,
+          temperature_max: parsed.daily.temperature_2m_max?.[i] ?? 0,
+          temperature_min: parsed.daily.temperature_2m_min?.[i] ?? 0,
+          weather_code: weatherCode,
+          precipitation_sum: parsed.daily.precipitation_sum?.[i] ?? 0,
+          precipitation_probability: parsed.daily.precipitation_probability_max?.[i] ?? 0,
+          condition: this.getWeatherCondition(weatherCode),
+          icon: "", // No longer using emoji icons
+        };
+      });
     }
 
     // Location (optional)
