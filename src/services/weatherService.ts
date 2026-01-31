@@ -202,26 +202,36 @@ class WeatherService {
    * - MCP tool content wrapper: { content: [{ text: "<json string>" }] }
    */
   private parseWeatherData(data: any): WeatherData {
+    console.log('[WeatherService] parseWeatherData called with:', data);
+    
     // 1) If backend already returns the open-meteo JSON payload, use it directly.
     const openMeteoPayload =
       this.isOpenMeteoPayload(data) ? data : this.extractOpenMeteoPayloadFromMcp(data);
 
+    console.log('[WeatherService] Extracted OpenMeteo payload:', openMeteoPayload);
+
     const result: WeatherData = {};
-    if (!openMeteoPayload) return result;
+    if (!openMeteoPayload) {
+      console.error('[WeatherService] No valid OpenMeteo payload found');
+      return result;
+    }
 
     const parsed = openMeteoPayload;
 
     // Current - handle both formats
     if (parsed.current) {
       // New format with "current" object
+      const weatherCode = parsed.current.weather_code ?? 0;
+      console.log('[WeatherService] Current weather_code:', weatherCode);
+      
       result.current = {
         temperature: parsed.current.temperature_2m,
-        weather_code: parsed.current.weather_code ?? 0,
+        weather_code: weatherCode,
         wind_speed: parsed.current.wind_speed_10m || 0,
         wind_direction: parsed.current.wind_direction_10m || 0,
         humidity: parsed.current.relative_humidity_2m || 0,
         pressure: parsed.current.surface_pressure || 0,
-        condition: this.getWeatherCondition(parsed.current.weather_code ?? 0),
+        condition: this.getWeatherCondition(weatherCode),
         icon: "",
       };
     } else if (parsed.current_weather) {
@@ -253,8 +263,11 @@ class WeatherService {
 
     // Daily
     if (parsed.daily?.time && Array.isArray(parsed.daily.time)) {
+      const weatherCodes = parsed.daily.weather_code || parsed.daily.weathercode || [];
+      console.log('[WeatherService] Daily weather_code array from API:', weatherCodes);
+      
       result.daily = parsed.daily.time.map((date: string, i: number) => {
-        const weatherCode = parsed.daily.weathercode?.[i] ?? 0;
+        const weatherCode = weatherCodes[i] ?? 0;
         console.log(`[WeatherService] Daily forecast for ${date}: weather_code=${weatherCode}, condition=${this.getWeatherCondition(weatherCode)}`);
         return {
           date,
@@ -278,6 +291,7 @@ class WeatherService {
       };
     }
 
+    console.log('[WeatherService] Final parsed result:', result);
     return result;
   }
 
