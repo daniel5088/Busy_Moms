@@ -114,7 +114,6 @@ export function Dashboard({
   const [weatherSettings, setWeatherSettings] = React.useState<WeatherSettings | null>(null);
   const [weatherLoading, setWeatherLoading] = React.useState(false);
   const [weatherError, setWeatherError] = React.useState<string | null>(null);
-  const [weatherSettingsLoaded, setWeatherSettingsLoaded] = React.useState(false);
 
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
@@ -252,24 +251,14 @@ export function Dashboard({
       try {
         const settings = await weatherService.getSettings();
         setWeatherSettings(settings);
-        setWeatherSettingsLoaded(true);
       } catch (error) {
         console.error('Failed to load weather settings:', error);
-        setWeatherSettingsLoaded(true);
       }
     };
     loadWeatherSettings();
   }, []);
 
-  // Auto-load weather when settings are available with coordinates
-  React.useEffect(() => {
-    if (weatherSettingsLoaded && weatherSettings?.latitude && weatherSettings?.longitude && !weather) {
-      refreshWeather({
-        latitude: weatherSettings.latitude,
-        longitude: weatherSettings.longitude,
-      });
-    }
-  }, [weatherSettingsLoaded, weatherSettings, weather, refreshWeather]);
+  // Weather is fetched on-demand when the user clicks the weather icon
 
   // Auto-open About dialog when triggered from Settings
   React.useEffect(() => {
