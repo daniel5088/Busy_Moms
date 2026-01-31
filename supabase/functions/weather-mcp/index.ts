@@ -353,17 +353,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Get user settings for units
-    const { data: userSettings } = await supabase
-      .from("weather_settings")
-      .select("temperature_unit, wind_speed_unit, precipitation_unit")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    const tempUnit = userSettings?.temperature_unit === "celsius" ? "celsius" : "fahrenheit";
-    const windUnit = userSettings?.wind_speed_unit || "mph";
-    const precipUnit = userSettings?.precipitation_unit || "inch";
-
     // Fetch fresh from MCP
     const targetAudience = new URL(mcpServerUrl).origin;
     const identityToken = await getGoogleIdentityToken(targetAudience);
@@ -386,9 +375,6 @@ Deno.serve(async (req: Request) => {
         hourly: ["temperature_2m", "weather_code", "precipitation_probability"],
         daily: ["temperature_2m_max", "temperature_2m_min", "weather_code", "precipitation_sum"],
         timezone: "auto",
-        temperature_unit: tempUnit,
-        wind_speed_unit: windUnit,
-        precipitation_unit: precipUnit,
       },
     );
 
