@@ -441,8 +441,17 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             </h2>
             <div className="grid grid-cols-7 gap-3">
               {daily.slice(0, 7).map((day, index) => {
-                const date = new Date(day.date);
-                const dayName = index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' });
+                // Parse date as local time (day.date is in format YYYY-MM-DD)
+                const [year, month, dayOfMonth] = day.date.split('-').map(Number);
+                const date = new Date(year, month - 1, dayOfMonth);
+
+                // Check if this date is today in local time
+                const today = new Date();
+                const isToday = date.getFullYear() === today.getFullYear() &&
+                                date.getMonth() === today.getMonth() &&
+                                date.getDate() === today.getDate();
+
+                const dayName = isToday ? 'TODAY' : date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
                 // Debug: Log weather code for each day
                 if (index === 0) {
