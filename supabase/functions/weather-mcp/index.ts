@@ -248,6 +248,36 @@ function looksLikeOpenMeteoPayload(payload: any): boolean {
   );
 }
 
+// Check if cached data has complete weather info (not just daily)
+function hasCompleteWeatherData(payload: any): boolean {
+  if (!looksLikeOpenMeteoPayload(payload)) return false;
+  
+  // Must have either current/current_weather OR hourly data with the details we need
+  const hasCurrent = payload.current || payload.current_weather;
+  const hasHourlyWithDetails = payload.hourly && 
+    payload.hourly.time && 
+    payload.hourly.relative_humidity_2m &&
+    payload.hourly.surface_pressure;
+  
+  // Must have valid timezone data - not just GMT/0 for non-Greenwich locations
+  const hasTimezoneData = typeof payload.utc_offset_seconds === "number";
+  const timezone = payload.timezone || "";
+  const lat = payload.latitude ?? 0;
+  const lon = payload.longitude ?? 0;
+  
+  // If timezone is GMT with offset 0, check if the location is actually near Greenwich
+  // Greenwich is at lon 0, so valid GMT locations should have longitude between -30 and 30
+  const isNearGreenwich = lon > -30 && lon < 30;
+  const hasValidTimezone = hasTimezoneData && (timezone !== "GMT" || (timezone === "GMT" && payload.utc_offset_seconds === 0 && isNearGreenwich));
+  
+  if (!hasValidTimezone) {
+    console.log(`[Weather] Cache has invalid timezone: ${timezone} offset=${payload.utc_offset_seconds} for coords (${lat}, ${lon}), will refresh`);
+    return false;
+  }
+  
+  return hasCurrent || hasHourlyWithDetails;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Main handler
 // ─────────────────────────────────────────────────────────────────────────────
@@ -348,16 +378,22 @@ Deno.serve(async (req: Request) => {
       .eq("location_key", locationKey)
       .maybeSingle();
 
-    // Use cache ONLY if it looks like real open-meteo payload (and not error junk)
+    // Use cache ONLY if it looks like real open-meteo payload with complete data
     if (
       cachedRow &&
       new Date(cachedRow.expires_at) > new Date() &&
-      looksLikeOpenMeteoPayload(cachedRow.weather_data) &&
+      hasCompleteWeatherData(cachedRow.weather_data) &&
       !looksLikeMcpErrorPayload(cachedRow.weather_data)
     ) {
+      console.log("[Weather] Using cached data with complete weather info");
       return new Response(JSON.stringify({ data: cachedRow.weather_data, cached: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+    
+    // If cache exists but is incomplete, log and fetch fresh
+    if (cachedRow && !hasCompleteWeatherData(cachedRow.weather_data)) {
+      console.log("[Weather] Cached data incomplete (missing current/hourly), fetching fresh data");
     }
 
     // Fetch fresh from MCP
@@ -380,8 +416,9 @@ Deno.serve(async (req: Request) => {
         latitude,
         longitude,
         current_weather: true,
-        hourly: ["temperature_2m", "weather_code", "precipitation_probability", "relative_humidity_2m", "surface_pressure"],
-        daily: ["temperature_2m_max", "temperature_2m_min", "weather_code", "precipitation_sum", "precipitation_probability_max"],
+        current: ["temperature_2m", "weather_code", "wind_speed_10m", "wind_direction_10m", "relative_humidity_2m", "surface_pressure"],
+        hourly: ["temperature_2m", "weather_code", "precipitation_probability", "relative_humidity_2m", "surface_pressure", "wind_speed_10m", "wind_direction_10m"],
+        daily: ["temperature_2m_max", "temperature_2m_min", "weather_code", "precipitation_sum"],
         forecast_days: 7,
 
         // ✅ APPLY USER SETTINGS (Open-Meteo params)
@@ -392,13 +429,26 @@ Deno.serve(async (req: Request) => {
       },
     );
 
-    const weatherPayload = toolResp.result ?? null;
+    let weatherPayload = toolResp.result ?? null;
     if (!weatherPayload) {
       throw new Error("MCP returned no result");
     }
 
+    // Handle MCP content wrapper format: { content: [{ text: "..." }] }
+    if (weatherPayload.content && Array.isArray(weatherPayload.content) && weatherPayload.content[0]?.text) {
+      try {
+        const text = weatherPayload.content[0].text;
+        if (typeof text === 'string' && text.trim().startsWith('{')) {
+          weatherPayload = JSON.parse(text);
+          console.log("[Weather] Extracted payload from MCP content wrapper");
+        }
+      } catch (e) {
+        console.error("[Weather] Failed to parse MCP content text:", e);
+      }
+    }
+
     // DEBUG: Log weather codes
-    console.log("[Weather] Daily weather codes:", weatherPayload.daily?.weathercode);
+    console.log("[Weather] Daily weather codes:", weatherPayload.daily?.weathercode || weatherPayload.daily?.weather_code);
 
     // Extra safety: don't cache error-like payloads
     if (looksLikeMcpErrorPayload(weatherPayload) || !looksLikeOpenMeteoPayload(weatherPayload)) {
