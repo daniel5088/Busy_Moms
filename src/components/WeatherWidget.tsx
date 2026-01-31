@@ -1,3 +1,4 @@
+import React from 'react';
 import { Cloud, Droplets, Wind, MapPin, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap, Gauge, Leaf } from 'lucide-react';
 import { WeatherData, WeatherSettings } from '../services/weatherService';
 import { useDarkMode } from '../hooks/useDarkMode';
@@ -292,6 +293,13 @@ function isNightTime(utcOffsetSeconds?: number): boolean {
   return hour >= 20 || hour < 6;
 }
 
+function getHourInfo(timeString: string): { label: string; hour: number } {
+  const match = timeString.match(/T(\d{2}):/);
+  const hour = match ? parseInt(match[1], 10) : 0;
+  const label = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+  return { label, hour };
+}
+
 export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings, settings }: WeatherWidgetProps) {
   const { darkMode } = useDarkMode();
   const isDark = darkMode;
@@ -300,6 +308,48 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const weatherOverlay = weather?.current?.weather_code 
     ? getWeatherGradient(weather.current.weather_code, isDark)
     : '';
+
+  const [selectedDay, setSelectedDay] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (weather?.daily?.length) {
+      setSelectedDay((prev) => (prev && weather.daily.some((day) => day.date === prev) ? prev : weather.daily[0].date));
+    } else {
+      setSelectedDay(null);
+    }
+  }, [weather?.daily]);
+
+  const selectedDayDetails = React.useMemo(() => {
+    if (!selectedDay || !weather?.daily) {
+      return null;
+    }
+    return weather.daily.find((day) => day.date === selectedDay) ?? null;
+  }, [selectedDay, weather?.daily]);
+
+  const selectedDayHourly = React.useMemo(() => {
+    if (!selectedDay) {
+      return [];
+    }
+    const source = weather?.fullHourly && weather.fullHourly.length > 0 ? weather.fullHourly : weather?.hourly ?? [];
+    if (!source.length) {
+      return [];
+    }
+    return source
+      .filter((hour) => hour.time.startsWith(selectedDay))
+      .sort((a, b) => (a.time > b.time ? 1 : -1));
+  }, [selectedDay, weather?.fullHourly, weather?.hourly]);
+
+  const selectedDayLabel = React.useMemo(() => {
+    if (!selectedDay) {
+      return '';
+    }
+    const [year, month, day] = selectedDay.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+  }, [selectedDay]);
   
   // Display settings with defaults
   const showWind = settings?.show_wind !== false;
@@ -570,11 +620,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             </h2>
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
               {weather.hourly.slice(0, 24).map((hour, index) => {
-                // Extract hour directly from time string (format: "YYYY-MM-DDTHH:00")
-                // This is already in the location's timezone
-                const hourMatch = hour.time.match(/T(\d{1,2})/);
-                const hourNum = hourMatch ? parseInt(hourMatch[1], 10) : 0;
-                const hourLabel = hourNum === 0 ? '12 AM' : hourNum < 12 ? `${hourNum} AM` : hourNum === 12 ? '12 PM' : `${hourNum - 12} PM`;
+                const { hour: hourNum, label: hourLabel } = getHourInfo(hour.time);
                 const isCurrentHour = index === 0;
                 const isNightHour = hourNum >= 20 || hourNum < 6;
                 
@@ -646,6 +692,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
 
                 // Check if this date is today in the location's timezone
                 const isToday = day.date === locationTodayStr;
+                const isSelected = selectedDay === day.date;
 
                 const dayName = isToday ? 'TODAY' : date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
@@ -655,18 +702,22 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                 }
 
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={day.date}
-                    className={`rounded-[20px] p-5 text-center transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] ${
+                    onClick={() => setSelectedDay(day.date)}
+                    className={`rounded-[20px] p-5 text-center transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
                       isDark
                         ? 'bg-[#232337]/50 border border-[#6478b4]/20 hover:bg-[#323246]/80'
                         : 'bg-white/50 border border-[#a8c5d1]/15 hover:bg-white/80'
-                    }`}
+                    } ${isSelected ? 'ring-2 ring-rose-300/70' : ''}`}
                     style={{
                       backdropFilter: 'blur(10px)',
                       animation: 'fadeInUp 0.6s both',
                       animationDelay: `${0.4 + index * 0.05}s`
                     }}
+                    aria-pressed={isSelected}
+                    aria-label={`${dayName} forecast. High ${Math.round(day.temperature_max)} degrees, low ${Math.round(day.temperature_min)} degrees.`}
                   >
                     <div className={`text-[13px] uppercase tracking-wider mb-3 font-medium transition-colors duration-500 ${
                       isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'
@@ -685,7 +736,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                         {Math.round(day.temperature_max)}°
                       </div>
                       <div className={`text-base transition-colors duration-500 ${
-                        isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                  </button>
                       }`}>
                         {Math.round(day.temperature_min)}°
                       </div>
@@ -695,6 +746,94 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               })}
             </div>
           </div>
+          {selectedDay && (
+            <div className="mt-8 animate-fadeIn" style={{ animationDelay: '0.35s' }}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-4">
+                <div>
+                  <h3
+                    className={`text-xl font-semibold tracking-tight ${
+                      isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                    }`}
+                  >
+                    Daily Insights
+                  </h3>
+                  <p className={`${isDark ? 'text-[#e8e8f0]/70' : 'text-[#2a2a2e]/70'} text-sm`}>
+                    {selectedDayLabel}
+                    {selectedDayDetails &&
+                      ` · High ${Math.round(selectedDayDetails.temperature_max)}° / Low ${Math.round(selectedDayDetails.temperature_min)}°`}
+                  </p>
+                  {selectedDayDetails?.condition && (
+                    <p className={`${isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'} text-xs`}>
+                      {selectedDayDetails.condition}
+                    </p>
+                  )}
+                </div>
+                <p className={`text-xs ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
+                  Hourly timeline · 12 AM through midnight (local time)
+                </p>
+              </div>
+
+              {selectedDayHourly.length > 0 ? (
+                <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+                  {selectedDayHourly.map((hourEntry) => {
+                    const { hour: hourNum, label: hourLabel } = getHourInfo(hourEntry.time);
+                    const isNightHour = hourNum >= 20 || hourNum < 6;
+                    return (
+                      <div
+                        key={`${selectedDay}-${hourEntry.time}`}
+                        className={`flex-shrink-0 rounded-2xl p-4 text-center min-w-[100px] transition-all duration-300 ${
+                          isDark
+                            ? 'bg-[#232337]/60 border border-[#6478b4]/25'
+                            : 'bg-white/60 border border-[#a8c5d1]/20'
+                        }`}
+                        style={{ backdropFilter: 'blur(10px)' }}
+                      >
+                        <div className={`text-xs uppercase tracking-wider mb-2 ${
+                          isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'
+                        }`}>
+                          {hourLabel}
+                        </div>
+                        <div className="mb-2 flex justify-center">
+                          <div className="scale-50">
+                            <WeatherIcon weatherCode={hourEntry.weather_code} isNight={isNightHour} size="small" />
+                          </div>
+                        </div>
+                        <div className={`text-lg font-medium ${
+                          isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                        }`}>
+                          {Math.round(hourEntry.temperature)}°
+                        </div>
+                        {hourEntry.precipitation_probability > 0 && (
+                          <div className={`text-xs mt-1 flex items-center justify-center gap-1 ${
+                            isDark ? 'text-blue-300' : 'text-blue-600'
+                          }`}>
+                            <Droplets className="w-3 h-3" />
+                            {hourEntry.precipitation_probability}%
+                          </div>
+                        )}
+                        <div className={`text-[11px] mt-2 ${
+                          isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                        }`}>
+                          {hourEntry.condition}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div
+                  className={`rounded-2xl p-6 text-center ${
+                    isDark ? 'bg-[#232337]/40 border border-[#6478b4]/20' : 'bg-white/60 border border-[#a8c5d1]/20'
+                  }`}
+                  style={{ backdropFilter: 'blur(12px)' }}
+                >
+                  <p className={`${isDark ? 'text-[#e8e8f0]/70' : 'text-[#2a2a2e]/70'} text-sm`}>
+                    Hourly data is not available for this day yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         )}
       </div>
 
