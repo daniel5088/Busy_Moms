@@ -363,28 +363,6 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">Show pressure</span>
             </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.show_uv_index}
-                onChange={(e) => setFormData(prev => ({ ...prev, show_uv_index: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Show UV index</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">(when available)</span>
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.show_air_quality}
-                onChange={(e) => setFormData(prev => ({ ...prev, show_air_quality: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Show air quality</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">(when available)</span>
-            </label>
           </div>
         </div>
 
