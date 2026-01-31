@@ -1,4 +1,5 @@
 import { aiAssistantService } from './aiAssistantService';
+import { calendarContextService } from './calendarContext';
 import { sendToInstacart } from './instacartAgentService';
 import { supabase } from "../lib/supabase";
 import { IngredientParser } from '../utils/ingredientParser';
@@ -468,6 +469,21 @@ export class OpenAIRealtimeService extends Emitter {
               description: 'Type of weather query: current (right now), today (today\'s forecast), tomorrow (tomorrow\'s forecast), forecast (7-day forecast). Default: current'
             }
           }
+        }
+      },
+      {
+        type: 'function',
+        name: 'get_weather_for_event',
+        description: 'CRITICAL: Use this when user asks "what\'s the weather on my [EVENT] day?" or requests weather tied to an existing appointment. Provide the event name as search_term and let me find the date + forecast automatically. DO NOT ask the user for the date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            search_term: {
+              type: 'string',
+              description: 'Name of the event to find (e.g., "dentist appointment", "eye checkup", "soccer game"). I will search the calendar and fetch the weather for that date.'
+            }
+          },
+          required: ['search_term']
         }
       }
     ];
@@ -960,6 +976,9 @@ export class OpenAIRealtimeService extends Emitter {
         case 'get_weather':
           result = await this.handleGetWeather(args);
           break;
+        case 'get_weather_for_event':
+          result = await this.handleGetWeatherForEvent(args);
+          break;
         default:
           result = { success: false, message: `Unknown function: ${functionName}` };
       }
@@ -1288,6 +1307,100 @@ export class OpenAIRealtimeService extends Emitter {
       };
     }
   }
+
+  private async handleGetWeatherForEvent(args: any) {
+    if (!this.currentUserId) {
+      return { success: false, message: 'User not authenticated' };
+    }
+
+    const searchTerm = String(args.search_term || '').trim();
+    if (!searchTerm) {
+      return {
+        success: false,
+        message: 'Please tell me which event to check by providing an event name.'
+      };
+    }
+
+    const events = await calendarContextService.searchEvents(this.currentUserId, searchTerm);
+    if (!events || events.length === 0) {
+      return {
+        success: true,
+        message: `I couldn't find any events matching "${searchTerm}" on your calendar.`
+      };
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const upcomingEvent = events.find((event) => event.event_date >= today);
+    const targetEvent = upcomingEvent || events[0];
+
+    const weatherData = await weatherService.getWeatherForLocation();
+    if (!weatherData.daily || weatherData.daily.length === 0) {
+      return {
+        success: false,
+        message: 'Weather data is unavailable right now. Please try again shortly.'
+      };
+    }
+
+    const forecast = weatherData.daily.find((day: any) => day.date === targetEvent.event_date);
+    const eventDateObj = new Date(`${targetEvent.event_date}T00:00:00`);
+    const eventDateLabel = eventDateObj.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric'
+    });
+    const eventTimeLabel = targetEvent.start_time ? ` at ${this.formatTimeForDisplay(targetEvent.start_time)}` : '';
+
+    if (!forecast) {
+      const firstAvailable = weatherData.daily[0]?.date;
+      const lastAvailable = weatherData.daily[weatherData.daily.length - 1]?.date;
+      const rangeLabel = firstAvailable && lastAvailable
+        ? `${new Date(`${firstAvailable}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to ${new Date(`${lastAvailable}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : 'the upcoming days';
+
+      return {
+        success: true,
+        message: `I found your ${targetEvent.title} on ${eventDateLabel}${eventTimeLabel}, but I only have forecasts for ${rangeLabel}. Let's check again when we're closer to that date.`,
+        data: {
+          event: targetEvent,
+          forecast_available_range: {
+            start: firstAvailable || null,
+            end: lastAvailable || null
+          }
+        }
+      };
+    }
+
+    let message = `I found your ${targetEvent.title} on ${eventDateLabel}${eventTimeLabel}. `;
+    message += `Forecast for that day: ${forecast.condition}, high ${Math.round(forecast.temperature_max)}°F and low ${Math.round(forecast.temperature_min)}°F`;
+
+    if (typeof forecast.precipitation_probability === 'number') {
+      message += ` with a ${forecast.precipitation_probability}% chance of precipitation`;
+    }
+
+    if (typeof forecast.wind_speed === 'number') {
+      message += ` and wind around ${Math.round(forecast.wind_speed)} mph`;
+    }
+
+    message += '.';
+
+    return {
+      success: true,
+      message,
+      data: {
+        event: targetEvent,
+        forecast
+      }
+    };
+  }
+
+  private formatTimeForDisplay(time: string): string {
+    const [hoursStr, minutesStr] = time.split(':');
+    let hours = parseInt(hoursStr || '0', 10);
+    const minutes = parseInt(minutesStr || '0', 10);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${hours}:${String(minutes).padStart(2, '0')} ${period}`;
+  }
 }
 
 export const openaiRealtimeService = new OpenAIRealtimeService({
@@ -1327,6 +1440,7 @@ ACTION TRIGGERS - When user says these phrases, CALL THE FUNCTION:
 - "schedule" / "add to calendar" / "create event" / "schedule for Sarah" → CALL create_calendar_event (with assigned_to if name mentioned)
 - "create a task" / "assign task to John" / "tell Jack to clean" → CALL create_task (with assigned_to if name mentioned)
 - "what's the weather" / "how's the weather" / "will it rain" / "do I need an umbrella" / "what should I wear" → CALL get_weather
+- "what's the weather on my [EVENT]" / "what will the weather be for [EVENT]" / "weather on [NAME]'s appointment" → CALL get_weather_for_event with search_term set to the event name (no date needed)
 
 ⚠️ CRITICAL - FINDING EVENTS vs CREATING EVENTS:
 When user asks "when is my [EVENT]?" or "do I have a [EVENT]?", this is a SEARCH query - NOT a creation request!
@@ -1369,6 +1483,8 @@ CALENDAR MANAGEMENT:
 
 ⚠️ IMPORTANT: When user asks "when is my [EVENT]?", IMMEDIATELY call query_calendar(query_type: "search", search_term: "[EVENT]"). Do NOT ask for a date - you're SEARCHING for an existing event!
 
+⚠️ WEATHER + EVENTS: When user asks "what's the weather on my [EVENT]?" or "how's the weather during Jack's game?", IMMEDIATELY call get_weather_for_event with search_term set to the event name. Let me find the date and forecast automatically — never ask the user for the date.
+
 TASK MANAGEMENT:
 - View all tasks or filter by status ("What tasks do I have?", "Show me pending tasks")
 - Create new tasks for family members ("Create a task for Sarah to clean her room")
@@ -1382,6 +1498,7 @@ WEATHER INFORMATION:
 - Provide current weather conditions including temperature, humidity, wind speed, and pressure
 - Give today's weather forecast with high/low temperatures
 - Share tomorrow's weather outlook
+- Look up the weather for a specific calendar event by name ("weather on my dentist appointment") without asking for the date
 - Provide 7-day weather forecasts
 - Help plan activities based on weather conditions
 
