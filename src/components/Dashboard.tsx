@@ -231,6 +231,21 @@ export function Dashboard({
     prevAffirmationEnabledRef.current = currentEnabled;
   }, [affirmationSettings?.enabled]);
 
+  // Define refreshWeather before useEffects that use it
+  const refreshWeather = React.useCallback(async (coords?: { latitude: number; longitude: number }) => {
+    setWeatherLoading(true);
+    setWeatherError(null);
+    try {
+      const data = await weatherService.getWeatherForLocation(coords);
+      setWeather(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load weather';
+      setWeatherError(errorMessage);
+    } finally {
+      setWeatherLoading(false);
+    }
+  }, []);
+
   // Load weather settings on mount
   React.useEffect(() => {
     const loadWeatherSettings = async () => {
@@ -349,20 +364,6 @@ export function Dashboard({
       console.error('Error signing out:', error);
     }
   };
-
-  const refreshWeather = React.useCallback(async (coords?: { latitude: number; longitude: number }) => {
-    setWeatherLoading(true);
-    setWeatherError(null);
-    try {
-      const data = await weatherService.getWeatherForLocation(coords);
-      setWeather(data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load weather';
-      setWeatherError(errorMessage);
-    } finally {
-      setWeatherLoading(false);
-    }
-  }, []);
 
   const handleOpenAffirmation = (isAutomatic: boolean = false) => {
     if (affirmationStage !== 'hidden') return;
