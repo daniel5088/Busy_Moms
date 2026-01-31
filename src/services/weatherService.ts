@@ -235,8 +235,31 @@ class WeatherService {
     const parsed = openMeteoPayload;
 
     // Get timezone info from the API response - this tells us the location's timezone
-    const locationTimezone = parsed.timezone; // e.g., "Asia/Kolkata", "America/New_York"
-    const utcOffsetSeconds = parsed.utc_offset_seconds ?? 0;
+    let locationTimezone = parsed.timezone; // e.g., "Asia/Kolkata", "America/New_York"
+    let utcOffsetSeconds = parsed.utc_offset_seconds ?? 0;
+    
+    // FALLBACK: If API returns GMT/0 but coordinates are clearly not near Greenwich,
+    // estimate the timezone from longitude (longitude / 15 ≈ hour offset)
+    const longitude = parsed.longitude ?? 0;
+    const latitude = parsed.latitude ?? 0;
+    const isNearGreenwich = longitude > -30 && longitude < 30 && latitude > -60 && latitude < 70;
+    
+    if (locationTimezone === 'GMT' && utcOffsetSeconds === 0 && !isNearGreenwich) {
+      // Estimate timezone from longitude: each 15° = 1 hour
+      // Add special handling for India (longitude ~68-97) which is UTC+5:30
+      if (longitude >= 68 && longitude <= 97 && latitude >= 8 && latitude <= 37) {
+        // India Standard Time (IST) = UTC+5:30
+        utcOffsetSeconds = 5.5 * 3600; // 19800 seconds
+        locationTimezone = 'Asia/Kolkata (estimated)';
+        console.log('[WeatherService] Detected India coordinates, using IST (UTC+5:30)');
+      } else {
+        // General estimate from longitude
+        const estimatedHours = Math.round(longitude / 15);
+        utcOffsetSeconds = estimatedHours * 3600;
+        locationTimezone = `UTC${estimatedHours >= 0 ? '+' : ''}${estimatedHours} (estimated)`;
+        console.log('[WeatherService] Estimated timezone from longitude:', locationTimezone);
+      }
+    }
     
     // Calculate current time in the location's timezone
     // UTC offset in milliseconds
