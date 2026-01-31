@@ -272,31 +272,24 @@ class WeatherService {
       console.log('[WeatherService] No current weather data, synthesizing from hourly');
       console.log('[WeatherService] Hourly keys:', Object.keys(parsed.hourly));
       
-      // Find the index matching current local time
-      const now = new Date();
-      const currentHour = now.getHours();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      
+      // Find the index matching current time using timestamp comparison
+      const now = Date.now();
       let currentIndex = 0;
+      let minDiff = Infinity;
+      
       for (let i = 0; i < parsed.hourly.time.length; i++) {
         const timeStr = parsed.hourly.time[i];
-        if (timeStr.startsWith(todayStr)) {
-          const hourMatch = timeStr.match(/T(\d{1,2})/);
-          if (hourMatch) {
-            const hour = parseInt(hourMatch[1], 10);
-            if (hour === currentHour) {
-              currentIndex = i;
-              break;
-            } else if (hour > currentHour) {
-              // If we passed the current hour, use the previous one
-              currentIndex = Math.max(0, i - 1);
-              break;
-            }
-          }
+        const hourTime = new Date(timeStr).getTime();
+        const diff = Math.abs(hourTime - now);
+        
+        // Find the closest hour to now
+        if (diff < minDiff) {
+          minDiff = diff;
+          currentIndex = i;
         }
       }
       
-      console.log('[WeatherService] Using hourly index', currentIndex, 'time:', parsed.hourly.time[currentIndex]);
+      console.log('[WeatherService] Using hourly index', currentIndex, 'time:', parsed.hourly.time[currentIndex], 'current:', new Date().toISOString());
       
       const weatherCode = parsed.hourly.weather_code?.[currentIndex] ?? parsed.hourly.weathercode?.[currentIndex] ?? 0;
       result.current = {
@@ -310,7 +303,7 @@ class WeatherService {
         condition: this.getWeatherCondition(weatherCode),
         icon: "",
       };
-      console.log('[WeatherService] Synthesized from hourly - wind:', result.current.wind_speed, 'humidity:', result.current.humidity, 'pressure:', result.current.pressure);
+      console.log('[WeatherService] Synthesized from hourly - temp:', result.current.temperature, 'wind:', result.current.wind_speed, 'humidity:', result.current.humidity);
     } else if (parsed.daily?.time && parsed.daily.time.length > 0) {
       // Last fallback: synthesize from daily data (today)
       console.log('[WeatherService] No current/hourly data, synthesizing from daily');
@@ -331,33 +324,38 @@ class WeatherService {
       };
     }
 
-    // Hourly - find current hour and start from there
+    // Hourly - find current hour and start from there using timestamp comparison
     if (parsed.hourly?.time && Array.isArray(parsed.hourly.time)) {
       console.log('[WeatherService] Parsing hourly data, has', parsed.hourly.time.length, 'hours');
       const hourlyWeatherCodes = parsed.hourly.weather_code || parsed.hourly.weathercode || [];
       
-      // Find the index of the current hour
-      const now = new Date();
-      const currentHour = now.getHours();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      // Get current timestamp in milliseconds
+      const now = Date.now();
       
-      // Find the starting index - look for current hour today
+      // Find the starting index - the hour closest to now but not in the past
       let startIndex = 0;
+      let minDiff = Infinity;
+      
       for (let i = 0; i < parsed.hourly.time.length; i++) {
         const timeStr = parsed.hourly.time[i];
-        // Parse ISO format: "2026-01-31T12:00" or "2026-01-31T12"
-        if (timeStr.startsWith(todayStr)) {
-          const hourMatch = timeStr.match(/T(\d{1,2})/);
-          if (hourMatch) {
-            const hour = parseInt(hourMatch[1], 10);
-            if (hour >= currentHour) {
-              startIndex = i;
-              break;
-            }
-          }
+        // Parse as local time (Open-Meteo returns times in the requested timezone)
+        const hourTime = new Date(timeStr).getTime();
+        const diff = hourTime - now;
+        
+        // Find the first hour that's not more than 30 minutes in the past
+        if (diff >= -30 * 60 * 1000 && diff < minDiff) {
+          minDiff = diff;
+          startIndex = i;
+          break;
         }
       }
       
+      // If no future hour found, use the last available
+      if (minDiff === Infinity && parsed.hourly.time.length > 0) {
+        startIndex = Math.max(0, parsed.hourly.time.length - 24);
+      }
+      
+      console.log('[WeatherService] Current time:', new Date().toISOString());
       console.log('[WeatherService] Hourly forecast starting at index', startIndex, 'time:', parsed.hourly.time[startIndex]);
       
       // Get 24 hours starting from current hour
