@@ -245,18 +245,22 @@ export function Dashboard({
     }
   }, []);
 
+  // Function to load/refresh weather settings
+  const loadWeatherSettings = React.useCallback(async () => {
+    try {
+      const settings = await weatherService.getSettings();
+      setWeatherSettings(settings);
+      return settings;
+    } catch (error) {
+      console.error('Failed to load weather settings:', error);
+      return null;
+    }
+  }, []);
+
   // Load weather settings on mount
   React.useEffect(() => {
-    const loadWeatherSettings = async () => {
-      try {
-        const settings = await weatherService.getSettings();
-        setWeatherSettings(settings);
-      } catch (error) {
-        console.error('Failed to load weather settings:', error);
-      }
-    };
     loadWeatherSettings();
-  }, []);
+  }, [loadWeatherSettings]);
 
   // Weather is fetched on-demand when the user clicks the weather icon
 
@@ -698,20 +702,12 @@ export function Dashboard({
             <div className="flex items-center space-x-3">
               <button
                 onClick={async () => {
-                  // Load settings first if not already loaded
-                  if (!weatherSettings) {
-                    const settings = await weatherService.getSettings();
-                    setWeatherSettings(settings);
-                    if (settings?.latitude && settings?.longitude) {
-                      await refreshWeather({
-                        latitude: settings.latitude,
-                        longitude: settings.longitude,
-                      });
-                    }
-                  } else if (weatherSettings.latitude && weatherSettings.longitude) {
+                  // Always refresh settings to get latest display preferences
+                  const settings = await loadWeatherSettings();
+                  if (settings?.latitude && settings?.longitude) {
                     await refreshWeather({
-                      latitude: weatherSettings.latitude,
-                      longitude: weatherSettings.longitude,
+                      latitude: settings.latitude,
+                      longitude: settings.longitude,
                     });
                   }
                   setShowWeatherModal(true);
@@ -1149,6 +1145,7 @@ export function Dashboard({
                 loading={weatherLoading}
                 error={weatherError}
                 locationName={weatherSettings?.default_location || 'Your Location'}
+                settings={weatherSettings}
                 onOpenSettings={() => {
                   setShowWeatherModal(false);
                   onNavigate('more');
