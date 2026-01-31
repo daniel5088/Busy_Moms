@@ -632,11 +632,20 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                 const [year, month, dayOfMonth] = day.date.split('-').map(Number);
                 const date = new Date(year, month - 1, dayOfMonth);
 
-                // Check if this date is today in local time
-                const today = new Date();
-                const isToday = date.getFullYear() === today.getFullYear() &&
-                                date.getMonth() === today.getMonth() &&
-                                date.getDate() === today.getDate();
+                // Calculate today's date in the location's timezone
+                let locationTodayStr: string;
+                if (weather?.utc_offset_seconds !== undefined) {
+                  const now = new Date();
+                  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+                  const locationTime = new Date(utcTime + (weather.utc_offset_seconds * 1000));
+                  locationTodayStr = `${locationTime.getFullYear()}-${String(locationTime.getMonth() + 1).padStart(2, '0')}-${String(locationTime.getDate()).padStart(2, '0')}`;
+                } else {
+                  const now = new Date();
+                  locationTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                }
+
+                // Check if this date is today in the location's timezone
+                const isToday = day.date === locationTodayStr;
 
                 const dayName = isToday ? 'TODAY' : date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
