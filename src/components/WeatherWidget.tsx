@@ -312,12 +312,16 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const [selectedDay, setSelectedDay] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (weather?.daily?.length) {
-      setSelectedDay((prev) => (prev && weather.daily.some((day) => day.date === prev) ? prev : weather.daily[0].date));
-    } else {
+    // Clear selected day if weather data changes and selected day is no longer valid
+    if (weather?.daily?.length && selectedDay) {
+      const isValid = weather.daily.some((day) => day.date === selectedDay);
+      if (!isValid) {
+        setSelectedDay(null);
+      }
+    } else if (!weather?.daily?.length) {
       setSelectedDay(null);
     }
-  }, [weather?.daily]);
+  }, [weather?.daily, selectedDay]);
 
   const selectedDayDetails = React.useMemo(() => {
     if (!selectedDay || !weather?.daily) {
