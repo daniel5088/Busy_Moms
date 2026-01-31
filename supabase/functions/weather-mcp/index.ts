@@ -333,6 +333,13 @@ Deno.serve(async (req: Request) => {
 
     const locationKey = `${latitude.toFixed(2)}_${longitude.toFixed(2)}`;
 
+    // Fetch user settings
+    const { data: userSettings } = await supabase
+      .from("weather_settings")
+      .select("temperature_unit, wind_speed_unit, precipitation_unit, timezone")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
     // Cache lookup
     const { data: cachedRow } = await supabase
       .from("weather_cache")
@@ -361,6 +368,8 @@ Deno.serve(async (req: Request) => {
       mcpSessionId = await initializeMCPSession(mcpServerUrl, mcpApiKey, identityToken);
     }
 
+    const unitSettings = (userSettings ?? {}) as Partial<WeatherSettings>;
+
     const toolResp = await callMCPTool<any>(
       mcpServerUrl,
       mcpApiKey,
@@ -371,10 +380,14 @@ Deno.serve(async (req: Request) => {
         latitude,
         longitude,
         current_weather: true,
-        // ✅ FIX: use weather_code (not weathercode)
         hourly: ["temperature_2m", "weather_code", "precipitation_probability"],
         daily: ["temperature_2m_max", "temperature_2m_min", "weather_code", "precipitation_sum"],
-        timezone: "auto",
+
+        // ✅ APPLY USER SETTINGS (Open-Meteo params)
+        temperature_unit: unitSettings.temperature_unit === "fahrenheit" ? "fahrenheit" : "celsius",
+        wind_speed_unit: unitSettings.wind_speed_unit,            // "kmh" | "mph" | "ms" | "kn"
+        precipitation_unit: unitSettings.precipitation_unit,      // "mm" | "inch"
+        timezone: unitSettings.timezone ?? "auto",
       },
     );
 
