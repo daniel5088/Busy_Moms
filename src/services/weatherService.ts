@@ -15,6 +15,13 @@ export interface WeatherSettings {
   include_daily?: boolean;
   hourly_hours?: number;
   daily_days?: number;
+  // Display settings
+  show_hourly_forecast?: boolean;
+  show_uv_index?: boolean;
+  show_air_quality?: boolean;
+  show_wind?: boolean;
+  show_humidity?: boolean;
+  show_pressure?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -27,8 +34,15 @@ export interface WeatherData {
     wind_direction: number;
     humidity: number;
     pressure: number;
+    uv_index?: number;
     condition: string;
     icon: string;
+  };
+  air_quality?: {
+    aqi?: number;
+    pm2_5?: number;
+    pm10?: number;
+    category?: string;
   };
   hourly?: Array<{
     time: string;
@@ -223,6 +237,7 @@ class WeatherService {
       // New format with "current" object
       const weatherCode = parsed.current.weather_code ?? 0;
       console.log('[WeatherService] Current weather_code:', weatherCode);
+      console.log('[WeatherService] Current data keys:', Object.keys(parsed.current));
       
       result.current = {
         temperature: parsed.current.temperature_2m,
@@ -231,11 +246,15 @@ class WeatherService {
         wind_direction: parsed.current.wind_direction_10m || 0,
         humidity: parsed.current.relative_humidity_2m || 0,
         pressure: parsed.current.surface_pressure || 0,
+        uv_index: parsed.current.uv_index || parsed.hourly?.uv_index?.[0] || undefined,
         condition: this.getWeatherCondition(weatherCode),
         icon: "",
       };
     } else if (parsed.current_weather) {
       // Old format with "current_weather" object
+      console.log('[WeatherService] Using current_weather format');
+      console.log('[WeatherService] current_weather data:', parsed.current_weather);
+      console.log('[WeatherService] hourly data available:', !!parsed.hourly);
       result.current = {
         temperature: parsed.current_weather.temperature,
         weather_code: parsed.current_weather.weathercode,
@@ -243,12 +262,15 @@ class WeatherService {
         wind_direction: parsed.current_weather.winddirection,
         humidity: parsed.hourly?.relative_humidity_2m?.[0] || 0,
         pressure: parsed.hourly?.surface_pressure?.[0] || 0,
+        uv_index: parsed.hourly?.uv_index?.[0] || undefined,
         condition: this.getWeatherCondition(parsed.current_weather.weathercode),
         icon: "",
       };
+      console.log('[WeatherService] Parsed current with humidity:', result.current.humidity, 'pressure:', result.current.pressure);
     } else if (parsed.hourly?.time && parsed.hourly.time.length > 0) {
       // Fallback: synthesize current weather from first hourly data
       console.log('[WeatherService] No current weather data, synthesizing from hourly');
+      console.log('[WeatherService] Hourly keys:', Object.keys(parsed.hourly));
       const weatherCode = parsed.hourly.weather_code?.[0] ?? parsed.hourly.weathercode?.[0] ?? 0;
       result.current = {
         temperature: parsed.hourly.temperature_2m?.[0] ?? 0,
@@ -257,9 +279,11 @@ class WeatherService {
         wind_direction: parsed.hourly.wind_direction_10m?.[0] ?? 0,
         humidity: parsed.hourly.relative_humidity_2m?.[0] ?? 0,
         pressure: parsed.hourly.surface_pressure?.[0] ?? 0,
+        uv_index: parsed.hourly.uv_index?.[0] || undefined,
         condition: this.getWeatherCondition(weatherCode),
         icon: "",
       };
+      console.log('[WeatherService] Synthesized from hourly - wind:', result.current.wind_speed, 'humidity:', result.current.humidity, 'pressure:', result.current.pressure);
     } else if (parsed.daily?.time && parsed.daily.time.length > 0) {
       // Last fallback: synthesize from daily data (today)
       console.log('[WeatherService] No current/hourly data, synthesizing from daily');
@@ -274,6 +298,7 @@ class WeatherService {
         wind_direction: 0,
         humidity: 0,
         pressure: 0,
+        uv_index: parsed.daily.uv_index_max?.[0] || undefined,
         condition: this.getWeatherCondition(weatherCode),
         icon: "",
       };
@@ -281,13 +306,15 @@ class WeatherService {
 
     // Hourly (first 24)
     if (parsed.hourly?.time && Array.isArray(parsed.hourly.time)) {
+      console.log('[WeatherService] Parsing hourly data, has', parsed.hourly.time.length, 'hours');
       const times = parsed.hourly.time.slice(0, 24);
+      const hourlyWeatherCodes = parsed.hourly.weather_code || parsed.hourly.weathercode || [];
       result.hourly = times.map((time: string, i: number) => ({
         time,
         temperature: parsed.hourly.temperature_2m?.[i] ?? 0,
-        weather_code: parsed.hourly.weathercode?.[i] ?? 0,
+        weather_code: hourlyWeatherCodes[i] ?? 0,
         precipitation_probability: parsed.hourly.precipitation_probability?.[i] ?? 0,
-        condition: this.getWeatherCondition(parsed.hourly.weathercode?.[i] ?? 0),
+        condition: this.getWeatherCondition(hourlyWeatherCodes[i] ?? 0),
         icon: "", // No longer using emoji icons
       }));
     }
