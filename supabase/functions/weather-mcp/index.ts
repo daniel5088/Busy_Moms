@@ -380,8 +380,8 @@ Deno.serve(async (req: Request) => {
         latitude,
         longitude,
         current_weather: true,
-        hourly: ["temperature_2m", "weather_code", "precipitation_probability", "relative_humidity_2m", "surface_pressure"],
-        daily: ["temperature_2m_max", "temperature_2m_min", "weather_code", "precipitation_sum"],
+        hourly: ["temperature_2m", "weathercode", "precipitation_probability", "relative_humidity_2m", "surface_pressure"],
+        daily: ["temperature_2m_max", "temperature_2m_min", "weathercode", "precipitation_sum", "precipitation_probability_max"],
 
         // ✅ APPLY USER SETTINGS (Open-Meteo params)
         temperature_unit: unitSettings.temperature_unit === "fahrenheit" ? "fahrenheit" : "celsius",
