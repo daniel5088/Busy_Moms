@@ -375,21 +375,39 @@ class WeatherService {
       });
     }
 
-    // Daily
+    // Daily - ensure we start from today
     if (parsed.daily?.time && Array.isArray(parsed.daily.time)) {
       const weatherCodes = parsed.daily.weather_code || parsed.daily.weathercode || [];
       console.log('[WeatherService] Daily weather_code array from API:', weatherCodes);
       
-      result.daily = parsed.daily.time.map((date: string, i: number) => {
-        const weatherCode = weatherCodes[i] ?? 0;
+      // Get today's date string in local time
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      
+      // Find the index of today in the daily data
+      let startIndex = 0;
+      for (let i = 0; i < parsed.daily.time.length; i++) {
+        if (parsed.daily.time[i] >= todayStr) {
+          startIndex = i;
+          break;
+        }
+      }
+      
+      console.log('[WeatherService] Daily forecast starting from index', startIndex, 'date:', parsed.daily.time[startIndex], 'today:', todayStr);
+      
+      // Get 7 days starting from today
+      const times = parsed.daily.time.slice(startIndex, startIndex + 7);
+      result.daily = times.map((date: string, i: number) => {
+        const actualIndex = startIndex + i;
+        const weatherCode = weatherCodes[actualIndex] ?? 0;
         console.log(`[WeatherService] Daily forecast for ${date}: weather_code=${weatherCode}, condition=${this.getWeatherCondition(weatherCode)}`);
         return {
           date,
-          temperature_max: parsed.daily.temperature_2m_max?.[i] ?? 0,
-          temperature_min: parsed.daily.temperature_2m_min?.[i] ?? 0,
+          temperature_max: parsed.daily.temperature_2m_max?.[actualIndex] ?? 0,
+          temperature_min: parsed.daily.temperature_2m_min?.[actualIndex] ?? 0,
           weather_code: weatherCode,
-          precipitation_sum: parsed.daily.precipitation_sum?.[i] ?? 0,
-          precipitation_probability: parsed.daily.precipitation_probability_max?.[i] ?? 0,
+          precipitation_sum: parsed.daily.precipitation_sum?.[actualIndex] ?? 0,
+          precipitation_probability: parsed.daily.precipitation_probability_max?.[actualIndex] ?? 0,
           condition: this.getWeatherCondition(weatherCode),
           icon: "", // No longer using emoji icons
         };
