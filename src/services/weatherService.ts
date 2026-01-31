@@ -67,6 +67,8 @@ export interface WeatherData {
     latitude: number;
     longitude: number;
   };
+  timezone?: string; // Location's timezone (e.g., "Asia/Kolkata", "America/New_York")
+  utc_offset_seconds?: number; // UTC offset in seconds
 }
 
 interface WeatherResponse {
@@ -232,6 +234,27 @@ class WeatherService {
 
     const parsed = openMeteoPayload;
 
+    // Get timezone info from the API response - this tells us the location's timezone
+    const locationTimezone = parsed.timezone; // e.g., "Asia/Kolkata", "America/New_York"
+    const utcOffsetSeconds = parsed.utc_offset_seconds ?? 0;
+    
+    // Calculate current time in the location's timezone
+    // UTC offset in milliseconds
+    const locationOffsetMs = utcOffsetSeconds * 1000;
+    // Browser's offset in milliseconds (getTimezoneOffset returns minutes and is inverted)
+    const browserOffsetMs = -new Date().getTimezoneOffset() * 60 * 1000;
+    // Difference between location and browser timezone
+    const offsetDiff = locationOffsetMs - browserOffsetMs;
+    
+    // Current time adjusted to the location's timezone
+    const nowInLocationTz = new Date(Date.now() + offsetDiff);
+    const locationHour = nowInLocationTz.getHours();
+    const locationDateStr = `${nowInLocationTz.getFullYear()}-${String(nowInLocationTz.getMonth() + 1).padStart(2, '0')}-${String(nowInLocationTz.getDate()).padStart(2, '0')}`;
+    
+    console.log('[WeatherService] Location timezone:', locationTimezone, 'UTC offset:', utcOffsetSeconds);
+    console.log('[WeatherService] Browser time:', new Date().toISOString());
+    console.log('[WeatherService] Location local time:', nowInLocationTz.toISOString().replace('Z', ''), 'hour:', locationHour, 'date:', locationDateStr);
+
     // Current - handle multiple formats
     if (parsed.current) {
       // New format with "current" object
@@ -268,28 +291,31 @@ class WeatherService {
       };
       console.log('[WeatherService] Parsed current with humidity:', result.current.humidity, 'pressure:', result.current.pressure);
     } else if (parsed.hourly?.time && parsed.hourly.time.length > 0) {
-      // Fallback: synthesize current weather from hourly data at current hour
+      // Fallback: synthesize current weather from hourly data at current hour in location's timezone
       console.log('[WeatherService] No current weather data, synthesizing from hourly');
       console.log('[WeatherService] Hourly keys:', Object.keys(parsed.hourly));
       
-      // Find the index matching current time using timestamp comparison
-      const now = Date.now();
+      // Find the index matching current time in the location's timezone
       let currentIndex = 0;
-      let minDiff = Infinity;
-      
       for (let i = 0; i < parsed.hourly.time.length; i++) {
         const timeStr = parsed.hourly.time[i];
-        const hourTime = new Date(timeStr).getTime();
-        const diff = Math.abs(hourTime - now);
-        
-        // Find the closest hour to now
-        if (diff < minDiff) {
-          minDiff = diff;
-          currentIndex = i;
+        // Times are in format "YYYY-MM-DDTHH:00" in the location's timezone
+        if (timeStr.startsWith(locationDateStr)) {
+          const hourMatch = timeStr.match(/T(\d{1,2})/);
+          if (hourMatch) {
+            const hour = parseInt(hourMatch[1], 10);
+            if (hour === locationHour) {
+              currentIndex = i;
+              break;
+            } else if (hour > locationHour) {
+              currentIndex = Math.max(0, i - 1);
+              break;
+            }
+          }
         }
       }
       
-      console.log('[WeatherService] Using hourly index', currentIndex, 'time:', parsed.hourly.time[currentIndex], 'current:', new Date().toISOString());
+      console.log('[WeatherService] Using hourly index', currentIndex, 'time:', parsed.hourly.time[currentIndex], 'location hour:', locationHour);
       
       const weatherCode = parsed.hourly.weather_code?.[currentIndex] ?? parsed.hourly.weathercode?.[currentIndex] ?? 0;
       result.current = {
@@ -324,38 +350,34 @@ class WeatherService {
       };
     }
 
-    // Hourly - find current hour and start from there using timestamp comparison
+    // Hourly - find current hour and start from there using location's timezone
     if (parsed.hourly?.time && Array.isArray(parsed.hourly.time)) {
       console.log('[WeatherService] Parsing hourly data, has', parsed.hourly.time.length, 'hours');
       const hourlyWeatherCodes = parsed.hourly.weather_code || parsed.hourly.weathercode || [];
       
-      // Get current timestamp in milliseconds
-      const now = Date.now();
-      
-      // Find the starting index - the hour closest to now but not in the past
+      // Find the starting index - match the current hour in the location's timezone
       let startIndex = 0;
-      let minDiff = Infinity;
       
       for (let i = 0; i < parsed.hourly.time.length; i++) {
         const timeStr = parsed.hourly.time[i];
-        // Parse as local time (Open-Meteo returns times in the requested timezone)
-        const hourTime = new Date(timeStr).getTime();
-        const diff = hourTime - now;
-        
-        // Find the first hour that's not more than 30 minutes in the past
-        if (diff >= -30 * 60 * 1000 && diff < minDiff) {
-          minDiff = diff;
+        // Times are in format "YYYY-MM-DDTHH:00" in the location's timezone
+        if (timeStr.startsWith(locationDateStr)) {
+          const hourMatch = timeStr.match(/T(\d{1,2})/);
+          if (hourMatch) {
+            const hour = parseInt(hourMatch[1], 10);
+            if (hour >= locationHour) {
+              startIndex = i;
+              break;
+            }
+          }
+        } else if (timeStr > locationDateStr) {
+          // We've passed today, use first hour of next day
           startIndex = i;
           break;
         }
       }
       
-      // If no future hour found, use the last available
-      if (minDiff === Infinity && parsed.hourly.time.length > 0) {
-        startIndex = Math.max(0, parsed.hourly.time.length - 24);
-      }
-      
-      console.log('[WeatherService] Current time:', new Date().toISOString());
+      console.log('[WeatherService] Location time:', locationDateStr, 'hour:', locationHour);
       console.log('[WeatherService] Hourly forecast starting at index', startIndex, 'time:', parsed.hourly.time[startIndex]);
       
       // Get 24 hours starting from current hour
@@ -373,25 +395,21 @@ class WeatherService {
       });
     }
 
-    // Daily - ensure we start from today
+    // Daily - ensure we start from today in the location's timezone
     if (parsed.daily?.time && Array.isArray(parsed.daily.time)) {
       const weatherCodes = parsed.daily.weather_code || parsed.daily.weathercode || [];
       console.log('[WeatherService] Daily weather_code array from API:', weatherCodes);
       
-      // Get today's date string in local time
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      
-      // Find the index of today in the daily data
+      // Find the index of today (in location's timezone) in the daily data
       let startIndex = 0;
       for (let i = 0; i < parsed.daily.time.length; i++) {
-        if (parsed.daily.time[i] >= todayStr) {
+        if (parsed.daily.time[i] >= locationDateStr) {
           startIndex = i;
           break;
         }
       }
       
-      console.log('[WeatherService] Daily forecast starting from index', startIndex, 'date:', parsed.daily.time[startIndex], 'today:', todayStr);
+      console.log('[WeatherService] Daily forecast starting from index', startIndex, 'date:', parsed.daily.time[startIndex], 'location today:', locationDateStr);
       
       // Get 7 days starting from today
       const times = parsed.daily.time.slice(startIndex, startIndex + 7);
@@ -420,6 +438,10 @@ class WeatherService {
         longitude: parsed.longitude,
       };
     }
+
+    // Store timezone info for display purposes
+    result.timezone = locationTimezone;
+    result.utc_offset_seconds = utcOffsetSeconds;
 
     console.log('[WeatherService] Final parsed result:', result);
     return result;
