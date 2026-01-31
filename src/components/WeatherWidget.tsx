@@ -170,9 +170,23 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   );
 }
 
-// Get time-based gradient
-function getTimeBasedGradient(isDark: boolean): string {
-  const hour = new Date().getHours();
+// Get the hour in the location's timezone
+function getLocationHour(utcOffsetSeconds?: number): number {
+  if (utcOffsetSeconds !== undefined) {
+    const now = new Date();
+    // Get current UTC time in milliseconds
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+    // Add the location's offset to get local time at that location
+    const locationTime = new Date(utcTime + (utcOffsetSeconds * 1000));
+    return locationTime.getHours();
+  }
+  // Fallback to browser time
+  return new Date().getHours();
+}
+
+// Get time-based gradient using location's timezone
+function getTimeBasedGradient(isDark: boolean, utcOffsetSeconds?: number): string {
+  const hour = getLocationHour(utcOffsetSeconds);
   
   if (isDark) {
     // Night time (8pm - 6am)
@@ -256,8 +270,8 @@ function getWeatherGradient(weatherCode: number, isDark: boolean): string {
 }
 
 // Get background gradient that combines time and weather
-function getBackgroundGradient(weatherCode: number | undefined, isDark: boolean): string {
-  const timeGradient = getTimeBasedGradient(isDark);
+function getBackgroundGradient(weatherCode: number | undefined, isDark: boolean, utcOffsetSeconds?: number): string {
+  const timeGradient = getTimeBasedGradient(isDark, utcOffsetSeconds);
   return timeGradient;
 }
 
@@ -282,7 +296,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const { darkMode } = useDarkMode();
   const isDark = darkMode;
   const isNight = isNightTime(weather?.utc_offset_seconds);
-  const bgGradient = getBackgroundGradient(weather?.current?.weather_code, isDark);
+  const bgGradient = getBackgroundGradient(weather?.current?.weather_code, isDark, weather?.utc_offset_seconds);
   const weatherOverlay = weather?.current?.weather_code 
     ? getWeatherGradient(weather.current.weather_code, isDark)
     : '';
