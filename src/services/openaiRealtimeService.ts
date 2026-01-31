@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { IngredientParser } from '../utils/ingredientParser';
 import { aiVoicePreferencesService, AIPersonality } from './aiVoicePreferences';
 import { weatherService } from './weatherService';
+import { extractEventDateInfo, normalizeTime as normalizeTimeString, detectDate, EventDateInfo } from '../utils/dateDetection';
 
 // Fallback minimal speech types (safe for TS projects without full lib.dom)
 interface MinimalSpeechResult { transcript: string }
@@ -170,6 +171,8 @@ export class OpenAIRealtimeService extends Emitter {
 
   sendMessage(text: string) {
     const lower = text.toLowerCase();
+    this.lastUserTranscript = text;
+    this.lastUserAudio = '';
 
     // Detect Instacart request ONLY for explicit Instacart mentions
     if (
@@ -1012,13 +1015,54 @@ export class OpenAIRealtimeService extends Emitter {
     this.dc.send(JSON.stringify({ type: 'response.create' }));
   }
 
+  private combineContextText(additionalText?: string): string | null {
+    const segments: string[] = [];
+    if (additionalText) segments.push(additionalText);
+    if (this.lastUserTranscript) segments.push(this.lastUserTranscript);
+    const combined = segments.join(' ').trim();
+    return combined.length ? combined : null;
+  }
+
+  private getContextualDateInfo(additionalText?: string): EventDateInfo | null {
+    const context = this.combineContextText(additionalText);
+    if (!context) return null;
+    return extractEventDateInfo(context);
+  }
+
+  private formatDateToISO(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  private normalizeDateInput(input?: string): string | null {
+    if (!input) return null;
+    const detected = detectDate(input);
+    if (detected) {
+      return this.formatDateToISO(detected.date);
+    }
+    const parsed = new Date(input);
+    if (!Number.isNaN(parsed.getTime())) {
+      return this.formatDateToISO(parsed);
+    }
+    return null;
+  }
+
+  private normalizeTimeInput(input?: string): string | null {
+    if (!input) return null;
+    return normalizeTimeString(input) || null;
+  }
+
   private async handleCreateCalendarEvent(args: any) {
+    const contextualInfo = this.getContextualDateInfo(args.title);
+
+    const resolvedDate = this.normalizeDateInput(args.date) || contextualInfo?.date || args.date;
+    const resolvedStartTime = this.normalizeTimeInput(args.start_time || args.time) || contextualInfo?.time || args.start_time || args.time;
+    const resolvedEndTime = this.normalizeTimeInput(args.end_time) || args.end_time;
 
     const details: Record<string, unknown> = {
       title: args.title,
-      date: args.date,
-      start_time: args.start_time || args.time,
-      end_time: args.end_time,
+      date: resolvedDate,
+      start_time: resolvedStartTime,
+      end_time: resolvedEndTime,
       location: args.location,
       participants: args.participants,
       assigned_to: args.assigned_to
@@ -1077,10 +1121,14 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleCreateReminder(args: any) {
+    const contextualInfo = this.getContextualDateInfo(args.title);
+    const resolvedDate = this.normalizeDateInput(args.date) || contextualInfo?.date || args.date;
+    const resolvedTime = this.normalizeTimeInput(args.time) || contextualInfo?.time || args.time;
+
     return await aiAssistantService.createReminder({
       title: args.title,
-      date: args.date,
-      time: args.time,
+      date: resolvedDate,
+      time: resolvedTime,
       assigned_to: args.assigned_to
     }, this.currentUserId!);
   }
@@ -1157,6 +1205,9 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleCreateTask(args: any) {
+    const contextualInfo = this.getContextualDateInfo(args.title);
+    const resolvedDueDate = this.normalizeDateInput(args.due_date) || contextualInfo?.date || args.due_date;
+    const resolvedDueTime = this.normalizeTimeInput(args.due_time) || contextualInfo?.time || args.due_time;
 
     const details: Record<string, unknown> = {
       title: args.title,
@@ -1164,8 +1215,8 @@ export class OpenAIRealtimeService extends Emitter {
       category: args.category,
       priority: args.priority,
       assigned_to: args.assigned_to,
-      date: args.due_date,
-      time: args.due_time,
+      date: resolvedDueDate,
+      time: resolvedDueTime,
       points: args.points,
       notes: args.notes
     };
