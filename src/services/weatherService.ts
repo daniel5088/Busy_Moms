@@ -304,19 +304,48 @@ class WeatherService {
       };
     }
 
-    // Hourly (first 24)
+    // Hourly - find current hour and start from there
     if (parsed.hourly?.time && Array.isArray(parsed.hourly.time)) {
       console.log('[WeatherService] Parsing hourly data, has', parsed.hourly.time.length, 'hours');
-      const times = parsed.hourly.time.slice(0, 24);
       const hourlyWeatherCodes = parsed.hourly.weather_code || parsed.hourly.weathercode || [];
-      result.hourly = times.map((time: string, i: number) => ({
-        time,
-        temperature: parsed.hourly.temperature_2m?.[i] ?? 0,
-        weather_code: hourlyWeatherCodes[i] ?? 0,
-        precipitation_probability: parsed.hourly.precipitation_probability?.[i] ?? 0,
-        condition: this.getWeatherCondition(hourlyWeatherCodes[i] ?? 0),
-        icon: "", // No longer using emoji icons
-      }));
+      
+      // Find the index of the current hour
+      const now = new Date();
+      const currentHour = now.getHours();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      
+      // Find the starting index - look for current hour today
+      let startIndex = 0;
+      for (let i = 0; i < parsed.hourly.time.length; i++) {
+        const timeStr = parsed.hourly.time[i];
+        // Parse ISO format: "2026-01-31T12:00" or "2026-01-31T12"
+        if (timeStr.startsWith(todayStr)) {
+          const hourMatch = timeStr.match(/T(\d{1,2})/);
+          if (hourMatch) {
+            const hour = parseInt(hourMatch[1], 10);
+            if (hour >= currentHour) {
+              startIndex = i;
+              break;
+            }
+          }
+        }
+      }
+      
+      console.log('[WeatherService] Hourly forecast starting at index', startIndex, 'time:', parsed.hourly.time[startIndex]);
+      
+      // Get 24 hours starting from current hour
+      const times = parsed.hourly.time.slice(startIndex, startIndex + 24);
+      result.hourly = times.map((time: string, i: number) => {
+        const actualIndex = startIndex + i;
+        return {
+          time,
+          temperature: parsed.hourly.temperature_2m?.[actualIndex] ?? 0,
+          weather_code: hourlyWeatherCodes[actualIndex] ?? 0,
+          precipitation_probability: parsed.hourly.precipitation_probability?.[actualIndex] ?? 0,
+          condition: this.getWeatherCondition(hourlyWeatherCodes[actualIndex] ?? 0),
+          icon: "", // No longer using emoji icons
+        };
+      });
     }
 
     // Daily
