@@ -382,6 +382,7 @@ Deno.serve(async (req: Request) => {
         current_weather: true,
         hourly: ["temperature_2m", "weather_code", "precipitation_probability", "relative_humidity_2m", "surface_pressure"],
         daily: ["temperature_2m_max", "temperature_2m_min", "weather_code", "precipitation_sum", "precipitation_probability_max"],
+        forecast_days: 7,
 
         // ✅ APPLY USER SETTINGS (Open-Meteo params)
         temperature_unit: unitSettings.temperature_unit === "fahrenheit" ? "fahrenheit" : "celsius",
@@ -395,6 +396,9 @@ Deno.serve(async (req: Request) => {
     if (!weatherPayload) {
       throw new Error("MCP returned no result");
     }
+
+    // DEBUG: Log weather codes
+    console.log("[Weather] Daily weather codes:", weatherPayload.daily?.weathercode);
 
     // Extra safety: don't cache error-like payloads
     if (looksLikeMcpErrorPayload(weatherPayload) || !looksLikeOpenMeteoPayload(weatherPayload)) {
