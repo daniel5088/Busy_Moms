@@ -122,7 +122,9 @@ CREATE POLICY "Users can delete own notifications"
 
 -- Function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_notification_settings_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
