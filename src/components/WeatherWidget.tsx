@@ -480,15 +480,20 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                 const date = new Date(day.date);
                 const dayName = index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' });
 
+                // Debug: Log weather code for each day
+                if (index === 0) {
+                  console.log('[WeatherWidget] Daily forecast weather codes:', daily.map(d => ({ date: d.date, code: d.weather_code, condition: d.condition })));
+                }
+
                 return (
                   <div
                     key={day.date}
                     className={`rounded-[20px] p-5 text-center transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] ${
-                      isDark 
-                        ? 'bg-[#232337]/50 border border-[#6478b4]/20 hover:bg-[#323246]/80' 
+                      isDark
+                        ? 'bg-[#232337]/50 border border-[#6478b4]/20 hover:bg-[#323246]/80'
                         : 'bg-white/50 border border-[#a8c5d1]/15 hover:bg-white/80'
                     }`}
-                    style={{ 
+                    style={{
                       backdropFilter: 'blur(10px)',
                       animation: 'fadeInUp 0.6s both',
                       animationDelay: `${0.4 + index * 0.05}s`
