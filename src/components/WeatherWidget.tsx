@@ -1,5 +1,5 @@
-import { Cloud, Droplets, Wind, MapPin, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap } from 'lucide-react';
-import { WeatherData } from '../services/weatherService';
+import { Cloud, Droplets, Wind, MapPin, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap, Gauge, Leaf } from 'lucide-react';
+import { WeatherData, WeatherSettings } from '../services/weatherService';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { WeatherSkeleton } from './WeatherSkeleton';
 
@@ -9,6 +9,7 @@ interface WeatherWidgetProps {
   error: string | null;
   locationName?: string;
   onOpenSettings?: () => void;
+  settings?: WeatherSettings | null;
 }
 
 // Enhanced weather icon component
@@ -266,7 +267,7 @@ function isNightTime(): boolean {
   return hour >= 20 || hour < 6;
 }
 
-export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings }: WeatherWidgetProps) {
+export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings, settings }: WeatherWidgetProps) {
   const { darkMode } = useDarkMode();
   const isDark = darkMode;
   const isNight = isNightTime();
@@ -274,6 +275,14 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const weatherOverlay = weather?.current?.weather_code 
     ? getWeatherGradient(weather.current.weather_code, isDark)
     : '';
+  
+  // Display settings with defaults
+  const showWind = settings?.show_wind !== false;
+  const showHumidity = settings?.show_humidity !== false;
+  const showPressure = settings?.show_pressure !== false;
+  const showUvIndex = settings?.show_uv_index === true;
+  const showAirQuality = settings?.show_air_quality === true;
+  const showHourlyForecast = settings?.show_hourly_forecast !== false;
 
   if (loading) {
     return <WeatherSkeleton isDark={isDark} />;
@@ -368,69 +377,216 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           </div>
         </div>
 
-        {/* Weather Details - only show if we have detailed data */}
-        {(current.wind_speed > 0 || current.humidity > 0 || current.pressure > 0) && (
-        <div className="relative z-10 grid grid-cols-3 gap-6 mb-12 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
-          <div className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-            isDark 
-              ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
-              : 'bg-white/60 border border-[#a8c5d1]/20'
-          }`} style={{ backdropFilter: 'blur(10px)' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Wind className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
-              <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
-                isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-              }`}>
-                Wind
+        {/* Weather Details - dynamically show based on settings */}
+        {(() => {
+          const detailCards = [];
+          
+          // Wind
+          if (showWind && current.wind_speed > 0) {
+            detailCards.push(
+              <div key="wind" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                isDark 
+                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
+                  : 'bg-white/60 border border-[#a8c5d1]/20'
+              }`} style={{ backdropFilter: 'blur(10px)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Wind className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
+                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                  }`}>
+                    Wind
+                  </div>
+                </div>
+                <div className={`text-[28px] transition-colors duration-500 ${
+                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                }`}>
+                  {Math.round(current.wind_speed)} mph
+                </div>
               </div>
+            );
+          }
+          
+          // Humidity
+          if (showHumidity && current.humidity > 0) {
+            detailCards.push(
+              <div key="humidity" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                isDark 
+                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
+                  : 'bg-white/60 border border-[#a8c5d1]/20'
+              }`} style={{ backdropFilter: 'blur(10px)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Droplets className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
+                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                  }`}>
+                    Humidity
+                  </div>
+                </div>
+                <div className={`text-[28px] transition-colors duration-500 ${
+                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                }`}>
+                  {current.humidity}%
+                </div>
+              </div>
+            );
+          }
+          
+          // Pressure
+          if (showPressure && current.pressure > 0) {
+            detailCards.push(
+              <div key="pressure" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                isDark 
+                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
+                  : 'bg-white/60 border border-[#a8c5d1]/20'
+              }`} style={{ backdropFilter: 'blur(10px)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Gauge className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
+                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                  }`}>
+                    Pressure
+                  </div>
+                </div>
+                <div className={`text-[28px] transition-colors duration-500 ${
+                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                }`}>
+                  {Math.round(current.pressure)} mb
+                </div>
+              </div>
+            );
+          }
+          
+          // UV Index
+          if (showUvIndex && current.uv_index !== undefined && current.uv_index > 0) {
+            const uvLevel = current.uv_index <= 2 ? 'Low' : current.uv_index <= 5 ? 'Moderate' : current.uv_index <= 7 ? 'High' : current.uv_index <= 10 ? 'Very High' : 'Extreme';
+            detailCards.push(
+              <div key="uv" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                isDark 
+                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
+                  : 'bg-white/60 border border-[#a8c5d1]/20'
+              }`} style={{ backdropFilter: 'blur(10px)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
+                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                  }`}>
+                    UV Index
+                  </div>
+                </div>
+                <div className={`text-[28px] transition-colors duration-500 ${
+                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                }`}>
+                  {Math.round(current.uv_index)}
+                </div>
+                <div className={`text-xs mt-1 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
+                  {uvLevel}
+                </div>
+              </div>
+            );
+          }
+          
+          // Air Quality
+          if (showAirQuality && weather?.air_quality?.aqi !== undefined) {
+            const aqiCategory = weather.air_quality.category || (
+              weather.air_quality.aqi <= 50 ? 'Good' : 
+              weather.air_quality.aqi <= 100 ? 'Moderate' : 
+              weather.air_quality.aqi <= 150 ? 'Unhealthy (Sensitive)' : 
+              weather.air_quality.aqi <= 200 ? 'Unhealthy' : 'Very Unhealthy'
+            );
+            detailCards.push(
+              <div key="aqi" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                isDark 
+                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
+                  : 'bg-white/60 border border-[#a8c5d1]/20'
+              }`} style={{ backdropFilter: 'blur(10px)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Leaf className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
+                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                  }`}>
+                    Air Quality
+                  </div>
+                </div>
+                <div className={`text-[28px] transition-colors duration-500 ${
+                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                }`}>
+                  {weather.air_quality.aqi}
+                </div>
+                <div className={`text-xs mt-1 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
+                  {aqiCategory}
+                </div>
+              </div>
+            );
+          }
+          
+          if (detailCards.length === 0) return null;
+          
+          // Determine grid columns based on number of cards
+          const gridCols = detailCards.length === 1 ? 'grid-cols-1' : 
+                          detailCards.length === 2 ? 'grid-cols-2' : 
+                          detailCards.length <= 3 ? 'grid-cols-3' : 
+                          detailCards.length <= 4 ? 'grid-cols-2 md:grid-cols-4' : 
+                          'grid-cols-3 md:grid-cols-5';
+          
+          return (
+            <div className={`relative z-10 grid ${gridCols} gap-6 mb-12 animate-fadeIn`} style={{ animationDelay: '0.2s' }}>
+              {detailCards}
             </div>
-            <div className={`text-[28px] transition-colors duration-500 ${
-              isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-            }`}>
-              {Math.round(current.wind_speed)} mph
-            </div>
-          </div>
+          );
+        })()}
 
-          <div className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-            isDark 
-              ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
-              : 'bg-white/60 border border-[#a8c5d1]/20'
-          }`} style={{ backdropFilter: 'blur(10px)' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Droplets className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
-              <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
-                isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-              }`}>
-                Humidity
-              </div>
-            </div>
-            <div className={`text-[28px] transition-colors duration-500 ${
+        {/* Hourly Forecast */}
+        {showHourlyForecast && weather?.hourly && weather.hourly.length > 0 && (
+          <div className="relative z-10 animate-fadeIn mb-12" style={{ animationDelay: '0.25s' }}>
+            <h2 className={`text-2xl font-normal mb-6 tracking-tight transition-colors duration-500 ${
               isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-            }`}>
-              {current.humidity}%
+            }`} style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+              Hourly Forecast
+            </h2>
+            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+              {weather.hourly.slice(0, 24).map((hour, index) => {
+                const hourDate = new Date(hour.time);
+                const hourLabel = hourDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+                const isCurrentHour = index === 0;
+                
+                return (
+                  <div
+                    key={hour.time}
+                    className={`flex-shrink-0 rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-1 min-w-[80px] ${
+                      isDark
+                        ? 'bg-[#232337]/50 border border-[#6478b4]/20'
+                        : 'bg-white/50 border border-[#a8c5d1]/15'
+                    } ${isCurrentHour ? 'ring-2 ring-blue-400/50' : ''}`}
+                    style={{ backdropFilter: 'blur(10px)' }}
+                  >
+                    <div className={`text-xs uppercase tracking-wider mb-2 ${
+                      isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'
+                    }`}>
+                      {isCurrentHour ? 'Now' : hourLabel}
+                    </div>
+                    <div className="mb-2 flex justify-center">
+                      <div className="scale-50">
+                        <WeatherIcon weatherCode={hour.weather_code} isNight={hourDate.getHours() >= 20 || hourDate.getHours() < 6} size="small" />
+                      </div>
+                    </div>
+                    <div className={`text-lg font-medium ${
+                      isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                    }`}>
+                      {Math.round(hour.temperature)}°
+                    </div>
+                    {hour.precipitation_probability > 0 && (
+                      <div className={`text-xs mt-1 flex items-center justify-center gap-1 ${
+                        isDark ? 'text-blue-300' : 'text-blue-600'
+                      }`}>
+                        <Droplets className="w-3 h-3" />
+                        {hour.precipitation_probability}%
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-
-          <div className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-            isDark 
-              ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
-              : 'bg-white/60 border border-[#a8c5d1]/20'
-          }`} style={{ backdropFilter: 'blur(10px)' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Cloud className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
-              <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
-                isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-              }`}>
-                Pressure
-              </div>
-            </div>
-            <div className={`text-[28px] transition-colors duration-500 ${
-              isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-            }`}>
-              {Math.round(current.pressure)} mb
-            </div>
-          </div>
-        </div>
         )}
 
         {/* 7-Day Forecast */}
