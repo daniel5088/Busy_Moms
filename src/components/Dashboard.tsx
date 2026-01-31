@@ -114,6 +114,7 @@ export function Dashboard({
   const [weatherSettings, setWeatherSettings] = React.useState<WeatherSettings | null>(null);
   const [weatherLoading, setWeatherLoading] = React.useState(false);
   const [weatherError, setWeatherError] = React.useState<string | null>(null);
+  const [weatherSettingsLoaded, setWeatherSettingsLoaded] = React.useState(false);
 
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
@@ -230,6 +231,31 @@ export function Dashboard({
     prevAffirmationEnabledRef.current = currentEnabled;
   }, [affirmationSettings?.enabled]);
 
+  // Load weather settings on mount
+  React.useEffect(() => {
+    const loadWeatherSettings = async () => {
+      try {
+        const settings = await weatherService.getSettings();
+        setWeatherSettings(settings);
+        setWeatherSettingsLoaded(true);
+      } catch (error) {
+        console.error('Failed to load weather settings:', error);
+        setWeatherSettingsLoaded(true);
+      }
+    };
+    loadWeatherSettings();
+  }, []);
+
+  // Auto-load weather when settings are available with coordinates
+  React.useEffect(() => {
+    if (weatherSettingsLoaded && weatherSettings?.latitude && weatherSettings?.longitude && !weather) {
+      refreshWeather({
+        latitude: weatherSettings.latitude,
+        longitude: weatherSettings.longitude,
+      });
+    }
+  }, [weatherSettingsLoaded, weatherSettings, weather, refreshWeather]);
+
   // Auto-open About dialog when triggered from Settings
   React.useEffect(() => {
     if (openAboutDialog) {
@@ -328,17 +354,6 @@ export function Dashboard({
     setWeatherLoading(true);
     setWeatherError(null);
     try {
-      // Load settings first if not already loaded
-      if (!weatherSettings) {
-        const settings = await weatherService.getSettings();
-        setWeatherSettings(settings);
-
-        // Use settings coords if no coords provided
-        if (!coords && settings?.latitude && settings?.longitude) {
-          coords = { latitude: settings.latitude, longitude: settings.longitude };
-        }
-      }
-
       const data = await weatherService.getWeatherForLocation(coords);
       setWeather(data);
     } catch (err) {
@@ -347,7 +362,7 @@ export function Dashboard({
     } finally {
       setWeatherLoading(false);
     }
-  }, [weatherSettings]);
+  }, []);
 
   const handleOpenAffirmation = (isAutomatic: boolean = false) => {
     if (affirmationStage !== 'hidden') return;
