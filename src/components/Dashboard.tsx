@@ -30,7 +30,7 @@ import { useProfile } from '../hooks/useProfile';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { Affirmation } from '../lib/supabase';
 import { WeatherWidget } from './WeatherWidget';
-import { useWeather } from '../hooks/useWeather';
+import { weatherService, WeatherData, WeatherSettings } from '../services/weatherService';
 import { affirmationService } from '../services/affirmationService';
 import { formatEventTime, formatEventTimeRange, formatDate, getTodayISO } from '../utils/timeFormatters';
 import {
@@ -110,13 +110,10 @@ export function Dashboard({
     setReminderWeekOffset,
   } = useDashboardData();
 
-  const {
-    weather,
-    settings: weatherSettings,
-    loading: weatherLoading,
-    error: weatherError,
-    refresh: refreshWeather,
-  } = useWeather();
+  const [weather, setWeather] = React.useState<WeatherData | null>(null);
+  const [weatherSettings, setWeatherSettings] = React.useState<WeatherSettings | null>(null);
+  const [weatherLoading, setWeatherLoading] = React.useState(false);
+  const [weatherError, setWeatherError] = React.useState<string | null>(null);
 
   const [todayAffirmation, setTodayAffirmation] = React.useState<Affirmation | null>(null);
   const [affirmationStage, setAffirmationStage] = React.useState<AffirmationStage>('hidden');
@@ -326,6 +323,31 @@ export function Dashboard({
       console.error('Error signing out:', error);
     }
   };
+
+  const refreshWeather = React.useCallback(async (coords?: { latitude: number; longitude: number }) => {
+    setWeatherLoading(true);
+    setWeatherError(null);
+    try {
+      // Load settings first if not already loaded
+      if (!weatherSettings) {
+        const settings = await weatherService.getSettings();
+        setWeatherSettings(settings);
+
+        // Use settings coords if no coords provided
+        if (!coords && settings?.latitude && settings?.longitude) {
+          coords = { latitude: settings.latitude, longitude: settings.longitude };
+        }
+      }
+
+      const data = await weatherService.getWeatherForLocation(coords);
+      setWeather(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load weather';
+      setWeatherError(errorMessage);
+    } finally {
+      setWeatherLoading(false);
+    }
+  }, [weatherSettings]);
 
   const handleOpenAffirmation = (isAutomatic: boolean = false) => {
     if (affirmationStage !== 'hidden') return;
