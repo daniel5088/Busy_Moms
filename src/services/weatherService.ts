@@ -268,18 +268,45 @@ class WeatherService {
       };
       console.log('[WeatherService] Parsed current with humidity:', result.current.humidity, 'pressure:', result.current.pressure);
     } else if (parsed.hourly?.time && parsed.hourly.time.length > 0) {
-      // Fallback: synthesize current weather from first hourly data
+      // Fallback: synthesize current weather from hourly data at current hour
       console.log('[WeatherService] No current weather data, synthesizing from hourly');
       console.log('[WeatherService] Hourly keys:', Object.keys(parsed.hourly));
-      const weatherCode = parsed.hourly.weather_code?.[0] ?? parsed.hourly.weathercode?.[0] ?? 0;
+      
+      // Find the index matching current local time
+      const now = new Date();
+      const currentHour = now.getHours();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      
+      let currentIndex = 0;
+      for (let i = 0; i < parsed.hourly.time.length; i++) {
+        const timeStr = parsed.hourly.time[i];
+        if (timeStr.startsWith(todayStr)) {
+          const hourMatch = timeStr.match(/T(\d{1,2})/);
+          if (hourMatch) {
+            const hour = parseInt(hourMatch[1], 10);
+            if (hour === currentHour) {
+              currentIndex = i;
+              break;
+            } else if (hour > currentHour) {
+              // If we passed the current hour, use the previous one
+              currentIndex = Math.max(0, i - 1);
+              break;
+            }
+          }
+        }
+      }
+      
+      console.log('[WeatherService] Using hourly index', currentIndex, 'time:', parsed.hourly.time[currentIndex]);
+      
+      const weatherCode = parsed.hourly.weather_code?.[currentIndex] ?? parsed.hourly.weathercode?.[currentIndex] ?? 0;
       result.current = {
-        temperature: parsed.hourly.temperature_2m?.[0] ?? 0,
+        temperature: parsed.hourly.temperature_2m?.[currentIndex] ?? 0,
         weather_code: weatherCode,
-        wind_speed: parsed.hourly.wind_speed_10m?.[0] ?? 0,
-        wind_direction: parsed.hourly.wind_direction_10m?.[0] ?? 0,
-        humidity: parsed.hourly.relative_humidity_2m?.[0] ?? 0,
-        pressure: parsed.hourly.surface_pressure?.[0] ?? 0,
-        uv_index: parsed.hourly.uv_index?.[0] || undefined,
+        wind_speed: parsed.hourly.wind_speed_10m?.[currentIndex] ?? 0,
+        wind_direction: parsed.hourly.wind_direction_10m?.[currentIndex] ?? 0,
+        humidity: parsed.hourly.relative_humidity_2m?.[currentIndex] ?? 0,
+        pressure: parsed.hourly.surface_pressure?.[currentIndex] ?? 0,
+        uv_index: parsed.hourly.uv_index?.[currentIndex] || undefined,
         condition: this.getWeatherCondition(weatherCode),
         icon: "",
       };
