@@ -368,7 +368,8 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           </div>
         </div>
 
-        {/* Weather Details */}
+        {/* Weather Details - only show if we have detailed data */}
+        {(current.wind_speed > 0 || current.humidity > 0 || current.pressure > 0) && (
         <div className="relative z-10 grid grid-cols-3 gap-6 mb-12 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
           <div className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
             isDark 
@@ -430,6 +431,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             </div>
           </div>
         </div>
+        )}
 
         {/* 7-Day Forecast */}
         {daily && daily.length > 0 && (
