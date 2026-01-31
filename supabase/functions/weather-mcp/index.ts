@@ -370,8 +370,8 @@ Deno.serve(async (req: Request) => {
         latitude,
         longitude,
         current_weather: true,
-        hourly: ["temperature_2m", "weathercode", "precipitation_probability"],
-        daily: ["temperature_2m_max", "temperature_2m_min", "weathercode", "precipitation_sum"],
+        hourly: ["temperature_2m", "weather_code", "precipitation_probability"],
+        daily: ["temperature_2m_max", "temperature_2m_min", "weather_code", "precipitation_sum"],
         timezone: "auto",
       },
     );
