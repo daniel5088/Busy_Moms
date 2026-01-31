@@ -53,26 +53,18 @@ export function useWeather() {
     }
   }, [loadWeather]);
 
+  // DO NOT auto-load weather on mount
+  // Weather should only be loaded on explicit user action
   useEffect(() => {
     const init = async () => {
       console.log('[useWeather] Initializing...');
-      const userSettings = await loadSettings();
-      console.log('[useWeather] Init - User settings:', userSettings);
-
-      if (userSettings?.latitude && userSettings?.longitude) {
-        console.log('[useWeather] Init - Loading weather with coordinates:', {
-          latitude: userSettings.latitude,
-          longitude: userSettings.longitude
-        });
-        await loadWeather({ latitude: userSettings.latitude, longitude: userSettings.longitude });
-      } else {
-        console.warn('[useWeather] Init - No coordinates in settings, skipping weather load');
-        setLoading(false);
-      }
+      await loadSettings();
+      console.log('[useWeather] Init - Settings loaded');
+      setLoading(false);
       console.log('[useWeather] Init complete');
     };
     init();
-  }, [loadSettings, loadWeather]);
+  }, [loadSettings]);
 
   return {
     weather,
