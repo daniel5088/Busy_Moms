@@ -52,6 +52,14 @@ export interface WeatherData {
     condition: string;
     icon: string;
   }>;
+  fullHourly?: Array<{
+    time: string;
+    temperature: number;
+    weather_code: number;
+    precipitation_probability: number;
+    condition: string;
+    icon: string;
+  }>;
   daily?: Array<{
     date: string;
     temperature_max: number;
@@ -373,14 +381,25 @@ class WeatherService {
       };
     }
 
-    // Hourly - find current hour and start from there using location's timezone
+    // Hourly - store full dataset and derive the next 24 hours for UI
     if (parsed.hourly?.time && Array.isArray(parsed.hourly.time)) {
       console.log('[WeatherService] Parsing hourly data, has', parsed.hourly.time.length, 'hours');
       const hourlyWeatherCodes = parsed.hourly.weather_code || parsed.hourly.weathercode || [];
-      
+
+      const buildHourlyEntry = (index: number) => ({
+        time: parsed.hourly.time[index],
+        temperature: parsed.hourly.temperature_2m?.[index] ?? 0,
+        weather_code: hourlyWeatherCodes[index] ?? 0,
+        precipitation_probability: parsed.hourly.precipitation_probability?.[index] ?? 0,
+        condition: this.getWeatherCondition(hourlyWeatherCodes[index] ?? 0),
+        icon: "",
+      });
+
+      result.fullHourly = parsed.hourly.time.map((_time: string, index: number) => buildHourlyEntry(index));
+
       // Find the starting index - match the current hour in the location's timezone
       let startIndex = 0;
-      
+
       for (let i = 0; i < parsed.hourly.time.length; i++) {
         const timeStr = parsed.hourly.time[i];
         // Times are in format "YYYY-MM-DDTHH:00" in the location's timezone
@@ -399,23 +418,13 @@ class WeatherService {
           break;
         }
       }
-      
+
+      const startReferenceTime = parsed.hourly.time[startIndex] ?? parsed.hourly.time[parsed.hourly.time.length - 1];
       console.log('[WeatherService] Location time:', locationDateStr, 'hour:', locationHour);
-      console.log('[WeatherService] Hourly forecast starting at index', startIndex, 'time:', parsed.hourly.time[startIndex]);
-      
-      // Get 24 hours starting from current hour
-      const times = parsed.hourly.time.slice(startIndex, startIndex + 24);
-      result.hourly = times.map((time: string, i: number) => {
-        const actualIndex = startIndex + i;
-        return {
-          time,
-          temperature: parsed.hourly.temperature_2m?.[actualIndex] ?? 0,
-          weather_code: hourlyWeatherCodes[actualIndex] ?? 0,
-          precipitation_probability: parsed.hourly.precipitation_probability?.[actualIndex] ?? 0,
-          condition: this.getWeatherCondition(hourlyWeatherCodes[actualIndex] ?? 0),
-          icon: "", // No longer using emoji icons
-        };
-      });
+      console.log('[WeatherService] Hourly forecast starting at index', startIndex, 'time:', startReferenceTime);
+
+      // Get 24 hours starting from current hour for UI display
+      result.hourly = result.fullHourly.slice(startIndex, startIndex + 24);
     }
 
     // Daily - ensure we start from today in the location's timezone
