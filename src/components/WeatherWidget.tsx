@@ -1,6 +1,7 @@
-import { Cloud, Droplets, Wind, MapPin, Loader, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap } from 'lucide-react';
+import { Cloud, Droplets, Wind, MapPin, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap } from 'lucide-react';
 import { WeatherData } from '../services/weatherService';
-import { useState, useEffect } from 'react';
+import { useDarkMode } from '../hooks/useDarkMode';
+import { WeatherSkeleton } from './WeatherSkeleton';
 
 interface WeatherWidgetProps {
   weather: WeatherData | null;
@@ -266,24 +267,8 @@ function isNightTime(): boolean {
 }
 
 export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings }: WeatherWidgetProps) {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
-    }
-    return 'light';
-  });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', theme);
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
-
-  const isDark = theme === 'dark';
+  const { darkMode } = useDarkMode();
+  const isDark = darkMode;
   const isNight = isNightTime();
   const bgGradient = getBackgroundGradient(weather?.current?.weather_code, isDark);
   const weatherOverlay = weather?.current?.weather_code 
@@ -291,13 +276,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
     : '';
 
   if (loading) {
-    return (
-      <div className={`rounded-[32px] shadow-2xl p-12 transition-all duration-1000 bg-gradient-to-br ${bgGradient}`}>
-        <div className="flex items-center justify-center h-64">
-          <Loader className={`w-12 h-12 animate-spin ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`} />
-        </div>
-      </div>
-    );
+    return <WeatherSkeleton isDark={isDark} />;
   }
 
   const isLocationError = error && (error.includes('latitude') || error.includes('longitude') || error.includes('location'));
@@ -344,24 +323,6 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
 
   return (
     <div className="relative">
-      {/* Theme Toggle Button */}
-      <button
-        onClick={toggleTheme}
-        className={`absolute -top-4 -right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 hover:scale-110 z-50 ${
-          isDark 
-            ? 'bg-[#28283c]/80 hover:bg-[#323246]' 
-            : 'bg-white/80 hover:bg-white'
-        }`}
-        style={{ backdropFilter: 'blur(10px)' }}
-        aria-label="Toggle theme"
-      >
-        {isDark ? (
-          <Moon className="w-6 h-6 text-[#e8e8f0]" />
-        ) : (
-          <Sun className="w-6 h-6 text-[#fdb44b]" fill="currentColor" />
-        )}
-      </button>
-
       <div className={`rounded-[32px] shadow-2xl p-12 transition-all duration-1000 relative overflow-hidden bg-gradient-to-br ${bgGradient}`}>
         {/* Weather-specific overlay */}
         {weatherOverlay && (
