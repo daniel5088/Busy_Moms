@@ -264,6 +264,23 @@ export function Dashboard({
 
   // Weather is fetched on-demand when the user clicks the weather icon
 
+  const handleOpenWeatherModal = React.useCallback(async () => {
+    setShowWeatherModal(true);
+
+    const existingSettings = weatherSettings?.latitude && weatherSettings?.longitude ? weatherSettings : await loadWeatherSettings();
+
+    if (existingSettings?.latitude && existingSettings?.longitude) {
+      await refreshWeather({
+        latitude: existingSettings.latitude,
+        longitude: existingSettings.longitude,
+      });
+      return;
+    }
+
+    setWeather(null);
+    setWeatherError('Set your location to see weather information');
+  }, [loadWeatherSettings, refreshWeather, weatherSettings]);
+
   // Auto-open About dialog when triggered from Settings
   React.useEffect(() => {
     if (openAboutDialog) {
@@ -691,17 +708,7 @@ export function Dashboard({
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={async () => {
-                  // Always refresh settings to get latest display preferences
-                  const settings = await loadWeatherSettings();
-                  if (settings?.latitude && settings?.longitude) {
-                    await refreshWeather({
-                      latitude: settings.latitude,
-                      longitude: settings.longitude,
-                    });
-                  }
-                  setShowWeatherModal(true);
-                }}
+                onClick={handleOpenWeatherModal}
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
                 title="View weather"
                 aria-label="View weather"
