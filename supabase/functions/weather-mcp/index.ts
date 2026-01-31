@@ -30,14 +30,11 @@ interface WeatherSettings {
   daily_days?: number;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CACHES (memory inside the Edge Function instance)
-// ─────────────────────────────────────────────────────────────────────────────
 let identityTokenCache: { token: string; expiry: number } | null = null;
 let mcpSessionId: string | null = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HELPERS: JWT base64url + PEM conversion
+// JWT helpers
 // ─────────────────────────────────────────────────────────────────────────────
 function base64UrlEncode(input: string): string {
   const bytes = new TextEncoder().encode(input);
@@ -64,15 +61,12 @@ function pemPkcs8ToDer(privateKeyPem: string): Uint8Array {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GOOGLE CLOUD RUN IDENTITY TOKEN
+// Google identity token for Cloud Run
 // ─────────────────────────────────────────────────────────────────────────────
 async function getGoogleIdentityToken(targetAudience: string): Promise<string> {
   if (identityTokenCache && identityTokenCache.expiry > Date.now()) {
-    console.log("[Auth] Using cached identity token");
     return identityTokenCache.token;
   }
-
-  console.log("[Auth] Fetching new identity token...");
 
   const serviceAccountJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT");
   if (!serviceAccountJson) throw new Error("GOOGLE_SERVICE_ACCOUNT environment variable not set");
@@ -103,10 +97,9 @@ async function getGoogleIdentityToken(targetAudience: string): Promise<string> {
     aud: "https://oauth2.googleapis.com/token",
     iat: now,
     exp,
-    target_audience: targetAudience,
+    target_audience: targetAudience, // must be Cloud Run URL origin
   };
 
-  // ✅ Correct: base64url JWT parts
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
   const encodedClaims = base64UrlEncode(JSON.stringify(claimSet));
   const signingInput = `${encodedHeader}.${encodedClaims}`;
@@ -148,17 +141,12 @@ async function getGoogleIdentityToken(targetAudience: string): Promise<string> {
   const identityToken = data.id_token as string | undefined;
   if (!identityToken) throw new Error("Token exchange succeeded but id_token was missing");
 
-  identityTokenCache = {
-    token: identityToken,
-    expiry: Date.now() + 55 * 60 * 1000,
-  };
-
-  console.log("[Auth] Identity token obtained and cached");
+  identityTokenCache = { token: identityToken, expiry: Date.now() + 55 * 60 * 1000 };
   return identityToken;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MCP CALLS
+// MCP calls
 // ─────────────────────────────────────────────────────────────────────────────
 type JsonRpcEnvelope<T> = { jsonrpc: "2.0"; id: number | string; result?: T; error?: any };
 
@@ -167,8 +155,6 @@ async function initializeMCPSession(
   mcpApiKey: string,
   identityToken: string,
 ): Promise<string> {
-  console.log("[MCP] Initializing session...");
-
   const initRequest = {
     jsonrpc: "2.0",
     id: 1,
@@ -193,18 +179,15 @@ async function initializeMCPSession(
 
   if (!resp.ok) {
     const text = await resp.text();
-    console.error("[MCP] Init failed:", resp.status, text);
     throw new Error(`MCP initialization failed: ${resp.status} ${resp.statusText} — ${text}`);
   }
 
   const sessionId = resp.headers.get("mcp-session-id");
   if (!sessionId) {
     const text = await resp.text().catch(() => "");
-    console.error("[MCP] Missing mcp-session-id header. Body:", text);
-    throw new Error("No session ID returned from MCP server (missing mcp-session-id header)");
+    throw new Error(`No session ID returned from MCP server (missing mcp-session-id). Body: ${text}`);
   }
 
-  console.log("[MCP] Session initialized:", sessionId.substring(0, 8) + "...");
   return sessionId;
 }
 
@@ -237,15 +220,36 @@ async function callMCPTool<T>(
 
   if (!resp.ok) {
     const text = await resp.text();
-    console.error("[MCP] Tool call failed:", resp.status, text);
     throw new Error(`MCP tool call failed: ${resp.status} ${resp.statusText} — ${text}`);
   }
 
   return (await resp.json()) as JsonRpcEnvelope<T>;
 }
 
+// Cached payload sanity checks
+function looksLikeMcpErrorPayload(payload: any): boolean {
+  // If someone cached an error string or an error-shaped object
+  if (typeof payload === "string") return payload.trim().startsWith("Error:");
+  if (payload && typeof payload === "object") {
+    // common error markers
+    if (payload.error) return true;
+    if (payload.message && typeof payload.message === "string" && payload.message.includes("invalid_enum_value")) return true;
+  }
+  return false;
+}
+
+function looksLikeOpenMeteoPayload(payload: any): boolean {
+  return (
+    payload &&
+    typeof payload === "object" &&
+    typeof payload.latitude === "number" &&
+    typeof payload.longitude === "number" &&
+    (payload.current_weather || payload.hourly || payload.daily)
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN HANDLER
+// Main handler
 // ─────────────────────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -263,19 +267,16 @@ Deno.serve(async (req: Request) => {
 
     const mcpServerUrl = (Deno.env.get("WEATHER_MCP_URL") || "").trim();
     const mcpApiKey = (Deno.env.get("WEATHER_MCP_KEY") || "").trim();
-
     if (!mcpServerUrl) throw new Error("WEATHER_MCP_URL environment variable is not configured");
     if (!mcpApiKey) throw new Error("WEATHER_MCP_KEY environment variable is not configured");
 
-    const { action, latitude, longitude, location, settings }: WeatherRequest = await req.json();
+    const { action, latitude, longitude, settings }: WeatherRequest = await req.json();
 
-    // Supabase client
     const { createClient } = await import("jsr:@supabase/supabase-js@2");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Auth user from Supabase JWT
     const token = authHeader.replace(/^Bearer\s+/i, "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
@@ -286,7 +287,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── SETTINGS (no MCP) ────────────────────────────────────────────────────
+    // ── SETTINGS
     if (action === "get_settings" || action === "update_settings") {
       if (action === "get_settings") {
         const { data, error } = await supabase
@@ -322,7 +323,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ── WEATHER (requires lat/lng) ───────────────────────────────────────────
+    // ── WEATHER
     if (typeof latitude !== "number" || typeof longitude !== "number") {
       return new Response(JSON.stringify({ error: "Latitude and longitude are required" }), {
         status: 400,
@@ -332,7 +333,7 @@ Deno.serve(async (req: Request) => {
 
     const locationKey = `${latitude.toFixed(2)}_${longitude.toFixed(2)}`;
 
-    // Cache lookup (NOTE: old rows may contain full JSON-RPC envelope)
+    // Cache lookup
     const { data: cachedRow } = await supabase
       .from("weather_cache")
       .select("weather_data, expires_at")
@@ -340,26 +341,26 @@ Deno.serve(async (req: Request) => {
       .eq("location_key", locationKey)
       .maybeSingle();
 
-    if (cachedRow && new Date(cachedRow.expires_at) > new Date()) {
-      console.log("[Cache] Returning cached data");
-
-      const cachedWeather = (cachedRow.weather_data?.result ?? cachedRow.weather_data) ?? null;
-
-      return new Response(JSON.stringify({ data: cachedWeather, cached: true }), {
+    // Use cache ONLY if it looks like real open-meteo payload (and not error junk)
+    if (
+      cachedRow &&
+      new Date(cachedRow.expires_at) > new Date() &&
+      looksLikeOpenMeteoPayload(cachedRow.weather_data) &&
+      !looksLikeMcpErrorPayload(cachedRow.weather_data)
+    ) {
+      return new Response(JSON.stringify({ data: cachedRow.weather_data, cached: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ✅ Identity token audience MUST be ORIGIN only
+    // Fetch fresh from MCP
     const targetAudience = new URL(mcpServerUrl).origin;
     const identityToken = await getGoogleIdentityToken(targetAudience);
 
-    // Init session if needed
     if (!mcpSessionId) {
       mcpSessionId = await initializeMCPSession(mcpServerUrl, mcpApiKey, identityToken);
     }
 
-    // Call MCP tool
     const toolResp = await callMCPTool<any>(
       mcpServerUrl,
       mcpApiKey,
@@ -370,34 +371,38 @@ Deno.serve(async (req: Request) => {
         latitude,
         longitude,
         current_weather: true,
+        // ✅ FIX: use weather_code (not weathercode)
         hourly: ["temperature_2m", "weather_code", "precipitation_probability"],
         daily: ["temperature_2m_max", "temperature_2m_min", "weather_code", "precipitation_sum"],
         timezone: "auto",
       },
     );
 
-    // ✅ IMPORTANT: unwrap JSON-RPC envelope so frontend gets the actual weather payload
     const weatherPayload = toolResp.result ?? null;
-
     if (!weatherPayload) {
-      console.error("[MCP] No result in tool response:", toolResp);
       throw new Error("MCP returned no result");
     }
 
-    // Cache only the unwrapped payload so future reads match live shape
+    // Extra safety: don't cache error-like payloads
+    if (looksLikeMcpErrorPayload(weatherPayload) || !looksLikeOpenMeteoPayload(weatherPayload)) {
+      console.error("[MCP] Not caching payload (looks invalid):", weatherPayload);
+      return new Response(JSON.stringify({ data: weatherPayload, cached: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Cache 1 hour
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-    await supabase
-      .from("weather_cache")
-      .upsert(
-        {
-          user_id: user.id,
-          location_key: locationKey,
-          weather_data: weatherPayload, // ✅ store result only
-          expires_at: expiresAt.toISOString(),
-        },
-        { onConflict: "user_id,location_key" },
-      );
+    await supabase.from("weather_cache").upsert(
+      {
+        user_id: user.id,
+        location_key: locationKey,
+        weather_data: weatherPayload, // ✅ store open-meteo payload only
+        expires_at: expiresAt.toISOString(),
+      },
+      { onConflict: "user_id,location_key" },
+    );
 
     return new Response(JSON.stringify({ data: weatherPayload, cached: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
