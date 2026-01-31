@@ -264,16 +264,6 @@ export function Dashboard({
 
   // Weather is fetched on-demand when the user clicks the weather icon
 
-  // Auto-load weather on mount if location is set
-  React.useEffect(() => {
-    if (weatherSettings?.latitude && weatherSettings?.longitude) {
-      refreshWeather({
-        latitude: weatherSettings.latitude,
-        longitude: weatherSettings.longitude,
-      });
-    }
-  }, [weatherSettings?.latitude, weatherSettings?.longitude, refreshWeather]);
-
   // Auto-open About dialog when triggered from Settings
   React.useEffect(() => {
     if (openAboutDialog) {
