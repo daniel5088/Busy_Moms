@@ -545,10 +545,28 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             </h2>
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
               {weather.hourly.slice(0, 24).map((hour, index) => {
-                const hourDate = new Date(hour.time);
+                // Parse time as local time (hour.time format: "YYYY-MM-DDTHH:mm" or "YYYY-MM-DDTHH:mm:ssZ")
+                // Extract date/time components and create local Date object
+                const timeMatch = hour.time.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+                let hourDate: Date;
+
+                if (timeMatch) {
+                  const [, year, month, day, hours, minutes] = timeMatch;
+                  hourDate = new Date(
+                    parseInt(year),
+                    parseInt(month) - 1,
+                    parseInt(day),
+                    parseInt(hours),
+                    parseInt(minutes)
+                  );
+                } else {
+                  // Fallback to regular parsing
+                  hourDate = new Date(hour.time);
+                }
+
                 const hourLabel = hourDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
                 const isCurrentHour = index === 0;
-                
+
                 return (
                   <div
                     key={hour.time}
