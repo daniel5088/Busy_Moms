@@ -1,4 +1,4 @@
-import { Cloud, Droplets, Wind, MapPin, Loader, Settings, Sun, Moon } from 'lucide-react';
+import { Cloud, Droplets, Wind, MapPin, Loader, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap } from 'lucide-react';
 import { WeatherData } from '../services/weatherService';
 import { useState, useEffect } from 'react';
 
@@ -8,6 +8,161 @@ interface WeatherWidgetProps {
   error: string | null;
   locationName?: string;
   onOpenSettings?: () => void;
+}
+
+// Enhanced weather icon component
+function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: number, isNight: boolean, size?: 'small' | 'large' }) {
+  const iconSize = size === 'large' ? 'w-24 h-24' : 'w-16 h-16';
+  const glowSize = size === 'large' ? '80px' : '50px';
+  
+  // Clear sky
+  if (weatherCode === 0) {
+    if (isNight) {
+      return (
+        <div className="relative">
+          <div 
+            className="absolute inset-0 blur-xl opacity-60"
+            style={{
+              background: 'radial-gradient(circle, rgba(147, 197, 253, 0.4) 0%, transparent 70%)',
+              width: glowSize,
+              height: glowSize,
+              margin: 'auto',
+            }}
+          />
+          <Moon className={`${iconSize} text-blue-200 relative z-10 drop-shadow-2xl`} fill="currentColor" />
+        </div>
+      );
+    }
+    return (
+      <div className="relative">
+        <div 
+          className="absolute inset-0 blur-2xl opacity-70 animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, transparent 70%)',
+            width: glowSize,
+            height: glowSize,
+            margin: 'auto',
+          }}
+        />
+        <Sun className={`${iconSize} text-yellow-400 relative z-10 drop-shadow-2xl`} fill="currentColor" />
+      </div>
+    );
+  }
+  
+  // Partly cloudy
+  if (weatherCode <= 3) {
+    return (
+      <div className="relative">
+        {isNight ? (
+          <>
+            <Moon className={`${iconSize} text-blue-200 absolute top-0 left-0 opacity-70`} fill="currentColor" />
+            <Cloud className={`${iconSize} text-slate-300 absolute bottom-0 right-0`} fill="currentColor" strokeWidth={1} />
+          </>
+        ) : (
+          <>
+            <Sun className={`${iconSize} text-yellow-400 absolute top-0 left-0 opacity-80`} fill="currentColor" />
+            <Cloud className={`${iconSize} text-white absolute bottom-0 right-0 drop-shadow-lg`} fill="currentColor" strokeWidth={1} />
+          </>
+        )}
+      </div>
+    );
+  }
+  
+  // Fog
+  if (weatherCode <= 48) {
+    return (
+      <div className="relative">
+        <CloudFog className={`${iconSize} text-gray-400 drop-shadow-xl`} strokeWidth={1.5} />
+        <div className="absolute inset-0 blur-md opacity-50">
+          <CloudFog className={`${iconSize} text-gray-300`} />
+        </div>
+      </div>
+    );
+  }
+  
+  // Drizzle
+  if (weatherCode <= 57) {
+    return (
+      <div className="relative">
+        <CloudDrizzle className={`${iconSize} text-blue-300 drop-shadow-xl`} strokeWidth={1.5} />
+        <Droplets className="w-8 h-8 text-blue-400 absolute bottom-0 right-0 opacity-60 animate-bounce" />
+      </div>
+    );
+  }
+  
+  // Rain
+  if (weatherCode <= 65) {
+    return (
+      <div className="relative">
+        <CloudRain className={`${iconSize} text-blue-400 drop-shadow-xl`} strokeWidth={1.5} fill="rgba(59, 130, 246, 0.2)" />
+        <div className="absolute inset-0 animate-pulse">
+          <Droplets className="w-6 h-6 text-blue-500 absolute bottom-2 left-2 opacity-70" />
+        </div>
+      </div>
+    );
+  }
+  
+  // Freezing rain
+  if (weatherCode <= 67) {
+    return (
+      <div className="relative">
+        <CloudRain className={`${iconSize} text-cyan-300 drop-shadow-xl`} strokeWidth={1.5} />
+        <div className="absolute inset-0">
+          <div className="w-2 h-2 bg-cyan-200 rounded-full absolute bottom-3 left-3 animate-ping" />
+          <div className="w-2 h-2 bg-cyan-200 rounded-full absolute bottom-4 right-4 animate-ping" style={{ animationDelay: '0.5s' }} />
+        </div>
+      </div>
+    );
+  }
+  
+  // Snow
+  if (weatherCode <= 77) {
+    return (
+      <div className="relative">
+        <CloudSnow className={`${iconSize} text-blue-100 drop-shadow-2xl`} strokeWidth={1.5} fill="rgba(219, 234, 254, 0.3)" />
+        <div className="absolute inset-0">
+          <div className="w-3 h-3 text-white opacity-80 absolute bottom-2 left-3 animate-bounce">❄</div>
+          <div className="w-3 h-3 text-white opacity-80 absolute bottom-4 right-3 animate-bounce" style={{ animationDelay: '0.3s' }}>❄</div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Rain showers
+  if (weatherCode <= 82) {
+    return (
+      <div className="relative">
+        <CloudRain className={`${iconSize} text-blue-500 drop-shadow-xl animate-pulse`} strokeWidth={1.5} fill="rgba(59, 130, 246, 0.3)" />
+        <Wind className="w-8 h-8 text-slate-400 absolute top-0 right-0 opacity-40" />
+      </div>
+    );
+  }
+  
+  // Snow showers
+  if (weatherCode <= 86) {
+    return (
+      <div className="relative">
+        <CloudSnow className={`${iconSize} text-blue-200 drop-shadow-xl animate-pulse`} strokeWidth={1.5} fill="rgba(219, 234, 254, 0.4)" />
+        <Wind className="w-8 h-8 text-slate-300 absolute top-0 right-0 opacity-40" />
+      </div>
+    );
+  }
+  
+  // Thunderstorm
+  return (
+    <div className="relative">
+      <CloudLightning className={`${iconSize} text-slate-600 drop-shadow-2xl`} strokeWidth={1.5} fill="rgba(71, 85, 105, 0.4)" />
+      <div className="absolute inset-0 animate-pulse">
+        <Zap className="w-10 h-10 text-yellow-400 absolute bottom-0 left-1/2 -translate-x-1/2 drop-shadow-lg" fill="currentColor" />
+      </div>
+      <div 
+        className="absolute inset-0 blur-xl opacity-40 animate-pulse"
+        style={{
+          background: 'radial-gradient(circle, rgba(250, 204, 21, 0.4) 0%, transparent 70%)',
+        }}
+      />
+    </div>
+  );
 }
 
 // Get time-based gradient
@@ -101,6 +256,12 @@ function getBackgroundGradient(weatherCode: number | undefined, isDark: boolean)
   return timeGradient;
 }
 
+// Check if it's night time
+function isNightTime(): boolean {
+  const hour = new Date().getHours();
+  return hour >= 20 || hour < 6;
+}
+
 export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings }: WeatherWidgetProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -120,6 +281,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   };
 
   const isDark = theme === 'dark';
+  const isNight = isNightTime();
   const bgGradient = getBackgroundGradient(weather?.current?.weather_code, isDark);
   const weatherOverlay = weather?.current?.weather_code 
     ? getWeatherGradient(weather.current.weather_code, isDark)
@@ -229,11 +391,8 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
 
         {/* Current Weather */}
         <div className="relative z-10 flex items-center gap-8 mb-12 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-          <div className="text-8xl drop-shadow-2xl animate-bounce-slow" style={{ 
-            filter: 'drop-shadow(0 10px 30px rgba(168,197,209,0.3))',
-            animation: 'bounce 3s ease-in-out infinite'
-          }}>
-            {current.icon}
+          <div className="relative" style={{ width: '120px', height: '120px' }}>
+            <WeatherIcon weatherCode={current.weather_code} isNight={isNight} size="large" />
           </div>
           <div className={`text-[96px] font-light leading-none tracking-tighter transition-colors duration-500 ${
             isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
@@ -249,10 +408,13 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
               : 'bg-white/60 border border-[#a8c5d1]/20'
           }`} style={{ backdropFilter: 'blur(10px)' }}>
-            <div className={`text-[11px] uppercase tracking-wider mb-2 transition-colors duration-500 ${
-              isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-            }`}>
-              Wind
+            <div className="flex items-center gap-2 mb-2">
+              <Wind className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+              <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
+                isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+              }`}>
+                Wind
+              </div>
             </div>
             <div className={`text-[28px] transition-colors duration-500 ${
               isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
@@ -266,10 +428,13 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
               : 'bg-white/60 border border-[#a8c5d1]/20'
           }`} style={{ backdropFilter: 'blur(10px)' }}>
-            <div className={`text-[11px] uppercase tracking-wider mb-2 transition-colors duration-500 ${
-              isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-            }`}>
-              Humidity
+            <div className="flex items-center gap-2 mb-2">
+              <Droplets className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+              <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
+                isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+              }`}>
+                Humidity
+              </div>
             </div>
             <div className={`text-[28px] transition-colors duration-500 ${
               isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
@@ -283,10 +448,13 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
               : 'bg-white/60 border border-[#a8c5d1]/20'
           }`} style={{ backdropFilter: 'blur(10px)' }}>
-            <div className={`text-[11px] uppercase tracking-wider mb-2 transition-colors duration-500 ${
-              isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-            }`}>
-              Pressure
+            <div className="flex items-center gap-2 mb-2">
+              <Cloud className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+              <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
+                isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+              }`}>
+                Pressure
+              </div>
             </div>
             <div className={`text-[28px] transition-colors duration-500 ${
               isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
@@ -328,10 +496,8 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                     }`}>
                       {dayName}
                     </div>
-                    <div className="text-5xl mb-3" style={{ 
-                      filter: 'drop-shadow(0 4px 12px rgba(168,197,209,0.2))' 
-                    }}>
-                      {day.icon}
+                    <div className="mb-3 flex justify-center" style={{ height: '64px' }}>
+                      <WeatherIcon weatherCode={day.weather_code} isNight={false} size="small" />
                     </div>
                     <div className="flex flex-col gap-1">
                       <div className={`text-xl font-medium transition-colors duration-500 ${
