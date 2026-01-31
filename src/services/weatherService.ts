@@ -223,6 +223,18 @@ class WeatherService {
         condition: this.getWeatherCondition(parsed.current_weather.weathercode),
         icon: "", // No longer using emoji icons
       };
+    } else if (parsed.current) {
+      // Handle new "current" format from Open-Meteo API v1
+      result.current = {
+        temperature: parsed.current.temperature_2m,
+        weather_code: parsed.daily?.weather_code?.[0] ?? 0, // Use first day's weather code
+        wind_speed: parsed.current.wind_speed_10m || 0,
+        wind_direction: parsed.current.wind_direction_10m || 0,
+        humidity: parsed.current.relative_humidity_2m || 0,
+        pressure: parsed.current.surface_pressure || 0,
+        condition: this.getWeatherCondition(parsed.daily?.weather_code?.[0] ?? 0),
+        icon: "", // No longer using emoji icons
+      };
     }
 
     // Hourly (first 24)
