@@ -18,6 +18,7 @@ import {
 import { calendarContextService } from './calendarContext';
 import { formatTimeForDisplay, formatDateForDisplay, parseTimeToMinutes } from '../utils/timeFormatters';
 import { weatherAgentService } from './weatherAgentService';
+import { detectDate, detectDateRange, parseDuration, getRelativeDateString, DetectedDate } from '../utils/dateDetection';
 
 /** Central brain for "Sara" — routes natural language to concrete app actions. */
 export interface AIAction {
@@ -134,6 +135,12 @@ function toISODate(input?: string | number | Date | unknown): string | null {
     const targetDate = new Date(today);
     targetDate.setDate(today.getDate() + daysUntilTarget);
     return getLocalISODate(targetDate);
+  }
+
+  // Try the new date detection utility for natural language parsing
+  const detected = detectDate(s);
+  if (detected) {
+    return getLocalISODate(detected.date);
   }
 
   // Try parsing Date(...) and format to YYYY-MM-DD using local time
