@@ -666,6 +666,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
 
         {/* 7-Day Forecast */}
         {daily && daily.length > 0 && (
+          <>
           <div className="relative z-10 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
             <h2 className={`text-2xl font-normal mb-6 tracking-tight transition-colors duration-500 ${
               isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
@@ -736,12 +737,12 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                         {Math.round(day.temperature_max)}°
                       </div>
                       <div className={`text-base transition-colors duration-500 ${
-                  </button>
+                        isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
                       }`}>
                         {Math.round(day.temperature_min)}°
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -834,6 +835,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               )}
             </div>
           )}
+          </>
         )}
       </div>
 
