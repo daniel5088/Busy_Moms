@@ -3,6 +3,7 @@ import { sendToInstacart } from './instacartAgentService';
 import { supabase } from "../lib/supabase";
 import { IngredientParser } from '../utils/ingredientParser';
 import { aiVoicePreferencesService, AIPersonality } from './aiVoicePreferences';
+import { weatherService } from './weatherService';
 
 // Fallback minimal speech types (safe for TS projects without full lib.dom)
 interface MinimalSpeechResult { transcript: string }
@@ -452,6 +453,21 @@ export class OpenAIRealtimeService extends Emitter {
             search_term: { type: 'string', description: 'Term to find the task to delete (task title or part of it)' }
           },
           required: ['search_term']
+        }
+      },
+      {
+        type: 'function',
+        name: 'get_weather',
+        description: 'CRITICAL: Get current weather conditions and forecast for today and upcoming days. ALWAYS use this when user asks about weather ("what\'s the weather", "how\'s the weather today", "what\'s the weather tomorrow", "will it rain", "do I need an umbrella", "what should I wear"). This provides temperature, conditions, humidity, pressure, wind speed, and multi-day forecast.',
+        parameters: {
+          type: 'object',
+          properties: {
+            query_type: {
+              type: 'string',
+              enum: ['current', 'today', 'tomorrow', 'forecast'],
+              description: 'Type of weather query: current (right now), today (today\'s forecast), tomorrow (tomorrow\'s forecast), forecast (7-day forecast). Default: current'
+            }
+          }
         }
       }
     ];
@@ -941,6 +957,9 @@ export class OpenAIRealtimeService extends Emitter {
         case 'delete_task':
           result = await this.handleDeleteTask(args);
           break;
+        case 'get_weather':
+          result = await this.handleGetWeather(args);
+          break;
         default:
           result = { success: false, message: `Unknown function: ${functionName}` };
       }
@@ -1174,6 +1193,76 @@ export class OpenAIRealtimeService extends Emitter {
 
     return await aiAssistantService.deleteTask(details, this.currentUserId!);
   }
+
+  private async handleGetWeather(args: any) {
+    try {
+      const weatherData = await weatherService.getWeatherForLocation();
+
+      if (!weatherData.current) {
+        return {
+          success: false,
+          message: 'Weather data not available. Please set your location in settings first.'
+        };
+      }
+
+      const { current, daily } = weatherData;
+      const queryType = args.query_type || 'current';
+
+      let message = '';
+
+      switch (queryType) {
+        case 'current':
+        case 'today':
+          message = `Current weather: ${current.condition}, ${Math.round(current.temperature)}°F. `;
+          message += `Humidity ${current.humidity}%, wind speed ${Math.round(current.wind_speed)} mph`;
+
+          if (daily && daily.length > 0) {
+            const today = daily[0];
+            message += `. Today's high: ${Math.round(today.temperature_max)}°F, low: ${Math.round(today.temperature_min)}°F`;
+          }
+          break;
+
+        case 'tomorrow':
+          if (daily && daily.length > 1) {
+            const tomorrow = daily[1];
+            message = `Tomorrow's weather: ${tomorrow.condition}. `;
+            message += `High: ${Math.round(tomorrow.temperature_max)}°F, low: ${Math.round(tomorrow.temperature_min)}°F`;
+            if (tomorrow.precipitation_probability > 30) {
+              message += `. ${tomorrow.precipitation_probability}% chance of precipitation`;
+            }
+          } else {
+            message = 'Tomorrow\'s forecast is not available';
+          }
+          break;
+
+        case 'forecast':
+          if (daily && daily.length > 0) {
+            message = '7-day forecast: ';
+            const forecasts = daily.slice(0, 7).map((day, index) => {
+              const date = new Date(day.date);
+              const dayName = index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' });
+              return `${dayName}: ${day.condition}, high ${Math.round(day.temperature_max)}°, low ${Math.round(day.temperature_min)}°`;
+            });
+            message += forecasts.join('. ');
+          } else {
+            message = 'Forecast data is not available';
+          }
+          break;
+      }
+
+      return {
+        success: true,
+        message,
+        data: weatherData
+      };
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+      return {
+        success: false,
+        message: 'Unable to fetch weather data. Please make sure your location is set in settings.'
+      };
+    }
+  }
 }
 
 export const openaiRealtimeService = new OpenAIRealtimeService({
@@ -1210,6 +1299,7 @@ ACTION TRIGGERS - When user says these phrases, CALL THE FUNCTION:
 - "add to shopping list" / "buy" / "get" / "tell Cody to get bread" → CALL add_shopping_item (with assigned_to if name mentioned)
 - "schedule" / "add to calendar" / "create event" / "schedule for Sarah" → CALL create_calendar_event (with assigned_to if name mentioned)
 - "create a task" / "assign task to John" / "tell Jack to clean" → CALL create_task (with assigned_to if name mentioned)
+- "what's the weather" / "how's the weather" / "will it rain" / "do I need an umbrella" / "what should I wear" → CALL get_weather
 
 ASSIGNMENT PATTERNS - CRITICAL: ALWAYS extract family member names from these patterns:
 - "remind [NAME] to..." → assigned_to: NAME (e.g., "remind Rio to do homework" → assigned_to: "Rio")
@@ -1251,6 +1341,13 @@ TASK MANAGEMENT:
 - Mark tasks as complete ("Mark the homework task as done")
 - Delete tasks ("Delete the grocery shopping task")
 - Check who's assigned what ("What tasks does Sarah have?")
+
+WEATHER INFORMATION:
+- Provide current weather conditions including temperature, humidity, wind speed, and pressure
+- Give today's weather forecast with high/low temperatures
+- Share tomorrow's weather outlook
+- Provide 7-day weather forecasts
+- Help plan activities based on weather conditions
 
 OTHER FEATURES:
 - Set reminders for important dates and times
