@@ -406,9 +406,6 @@ Deno.serve(async (req: Request) => {
 
     const unitSettings = (userSettings ?? {}) as Partial<WeatherSettings>;
 
-    // Use timezone from request (user's browser timezone), fall back to user settings, then "auto"
-    const timezoneToUse = timezone ?? unitSettings.timezone ?? "auto";
-
     const toolResp = await callMCPTool<any>(
       mcpServerUrl,
       mcpApiKey,
@@ -428,7 +425,7 @@ Deno.serve(async (req: Request) => {
         temperature_unit: unitSettings.temperature_unit === "fahrenheit" ? "fahrenheit" : "celsius",
         wind_speed_unit: unitSettings.wind_speed_unit,            // "kmh" | "mph" | "ms" | "kn"
         precipitation_unit: unitSettings.precipitation_unit,      // "mm" | "inch"
-        timezone: timezoneToUse,
+        timezone: unitSettings.timezone ?? "auto",
       },
     );
 
