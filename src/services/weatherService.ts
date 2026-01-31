@@ -211,8 +211,21 @@ class WeatherService {
 
     const parsed = openMeteoPayload;
 
-    // Current
-    if (parsed.current_weather) {
+    // Current - handle both formats
+    if (parsed.current) {
+      // New format with "current" object
+      result.current = {
+        temperature: parsed.current.temperature_2m,
+        weather_code: parsed.current.weather_code ?? 0,
+        wind_speed: parsed.current.wind_speed_10m || 0,
+        wind_direction: parsed.current.wind_direction_10m || 0,
+        humidity: parsed.current.relative_humidity_2m || 0,
+        pressure: parsed.current.surface_pressure || 0,
+        condition: this.getWeatherCondition(parsed.current.weather_code ?? 0),
+        icon: "",
+      };
+    } else if (parsed.current_weather) {
+      // Old format with "current_weather" object
       result.current = {
         temperature: parsed.current_weather.temperature,
         weather_code: parsed.current_weather.weathercode,
@@ -221,19 +234,7 @@ class WeatherService {
         humidity: parsed.hourly?.relative_humidity_2m?.[0] || 0,
         pressure: parsed.hourly?.surface_pressure?.[0] || 0,
         condition: this.getWeatherCondition(parsed.current_weather.weathercode),
-        icon: "", // No longer using emoji icons
-      };
-    } else if (parsed.current) {
-      // Handle new "current" format from Open-Meteo API v1
-      result.current = {
-        temperature: parsed.current.temperature_2m,
-        weather_code: parsed.daily?.weather_code?.[0] ?? 0, // Use first day's weather code
-        wind_speed: parsed.current.wind_speed_10m || 0,
-        wind_direction: parsed.current.wind_direction_10m || 0,
-        humidity: parsed.current.relative_humidity_2m || 0,
-        pressure: parsed.current.surface_pressure || 0,
-        condition: this.getWeatherCondition(parsed.daily?.weather_code?.[0] ?? 0),
-        icon: "", // No longer using emoji icons
+        icon: "",
       };
     }
 
