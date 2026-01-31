@@ -261,17 +261,17 @@ export class OpenAIRealtimeService extends Emitter {
       {
         type: 'function',
         name: 'query_calendar',
-        description: 'Query the calendar for events or check availability',
+        description: 'CRITICAL: Use this to FIND/SEARCH for existing events. When user asks "when is my [EVENT]?" or "do I have a [EVENT]?", use query_type="search" with search_term=event name. DO NOT ask user for dates - just search!',
         parameters: {
           type: 'object',
           properties: {
             query_type: {
               type: 'string',
               enum: ['today', 'week', 'availability', 'search', 'next'],
-              description: 'Type of query: today (today\'s events), week (upcoming events), availability (check if free), search (find specific events), next (next upcoming event)'
+              description: 'Type of query: today (today\'s events), week (upcoming events), availability (check if free), search (IMPORTANT: use for "when is my X?" questions - finds events by name), next (next upcoming event)'
             },
-            date: { type: 'string', description: 'Date to check (for availability queries)' },
-            search_term: { type: 'string', description: 'Search term to find events (for search queries)' }
+            date: { type: 'string', description: 'Date to check (for availability queries only)' },
+            search_term: { type: 'string', description: 'REQUIRED for search queries. The event name to find. E.g., for "when is my dentist appointment?", use search_term="dentist"' }
           },
           required: ['query_type']
         }
@@ -1320,11 +1320,20 @@ RIGHT: User says "schedule meeting tomorrow at 2pm" → You CALL create_calendar
 
 ACTION TRIGGERS - When user says these phrases, CALL THE FUNCTION:
 - "what's my schedule" / "what do I have today" / "what's on my calendar" / "what do I have tomorrow" / "show me my schedule" → CALL get_schedule (PRIMARY schedule query)
+- "when is my [EVENT]" / "when is [NAME]'s appointment" / "find my [EVENT]" / "do I have a [EVENT]" → CALL query_calendar with query_type: "search" and search_term: the event name (e.g., "when is my dentist appointment" → query_type: "search", search_term: "dentist")
+- "what's my next event" / "what's coming up" → CALL query_calendar with query_type: "next"
 - "remind me" / "remind Jack" / "set a reminder" / "don't let me forget" → CALL create_reminder (with assigned_to if name mentioned)
 - "add to shopping list" / "buy" / "get" / "tell Cody to get bread" → CALL add_shopping_item (with assigned_to if name mentioned)
 - "schedule" / "add to calendar" / "create event" / "schedule for Sarah" → CALL create_calendar_event (with assigned_to if name mentioned)
 - "create a task" / "assign task to John" / "tell Jack to clean" → CALL create_task (with assigned_to if name mentioned)
 - "what's the weather" / "how's the weather" / "will it rain" / "do I need an umbrella" / "what should I wear" → CALL get_weather
+
+⚠️ CRITICAL - FINDING EVENTS vs CREATING EVENTS:
+When user asks "when is my [EVENT]?" or "do I have a [EVENT]?", this is a SEARCH query - NOT a creation request!
+- "When is my dentist appointment?" → CALL query_calendar(query_type: "search", search_term: "dentist")
+- "Do I have a meeting tomorrow?" → CALL query_calendar(query_type: "search", search_term: "meeting")
+- "When is Jack's soccer practice?" → CALL query_calendar(query_type: "search", search_term: "soccer")
+DO NOT ask for dates when searching - just search for the event name!
 
 ASSIGNMENT PATTERNS - CRITICAL: ALWAYS extract family member names from these patterns:
 - "remind [NAME] to..." → assigned_to: NAME (e.g., "remind Rio to do homework" → assigned_to: "Rio")
@@ -1351,12 +1360,14 @@ When users mention day names (Monday, Tuesday, Wednesday, Thursday, Friday, Satu
 You have full access to the user's calendar, tasks, shopping lists, and reminders. You can:
 
 CALENDAR MANAGEMENT:
-- Answer questions about their schedule ("What's on my calendar today?")
-- Check availability ("Am I free tomorrow afternoon?")
-- Find events ("When is my dentist appointment?")
-- Create new events ("Schedule a meeting tomorrow at 2pm")
-- Update events ("Move my dentist appointment to next week")
-- Delete events ("Cancel my meeting tomorrow")
+- Answer questions about their schedule ("What's on my calendar today?") → use get_schedule
+- Check availability ("Am I free tomorrow afternoon?") → use query_calendar with availability
+- Find events ("When is my dentist appointment?") → use query_calendar with search (NO DATE NEEDED - just search by event name!)
+- Create new events ("Schedule a meeting tomorrow at 2pm") → use create_calendar_event
+- Update events ("Move my dentist appointment to next week") → use update_calendar_event
+- Delete events ("Cancel my meeting tomorrow") → use delete_calendar_event
+
+⚠️ IMPORTANT: When user asks "when is my [EVENT]?", IMMEDIATELY call query_calendar(query_type: "search", search_term: "[EVENT]"). Do NOT ask for a date - you're SEARCHING for an existing event!
 
 TASK MANAGEMENT:
 - View all tasks or filter by status ("What tasks do I have?", "Show me pending tasks")
