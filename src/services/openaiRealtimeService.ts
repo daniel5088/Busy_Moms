@@ -1205,8 +1205,31 @@ export class OpenAIRealtimeService extends Emitter {
         };
       }
 
-      const { current, daily } = weatherData;
+      const { current, daily, utc_offset_seconds } = weatherData;
       const queryType = args.query_type || 'current';
+
+      // Calculate today's date in the location's timezone
+      let locationToday: string;
+      if (utc_offset_seconds !== undefined) {
+        const now = new Date();
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+        const locationTime = new Date(utcTime + (utc_offset_seconds * 1000));
+        locationToday = `${locationTime.getFullYear()}-${String(locationTime.getMonth() + 1).padStart(2, '0')}-${String(locationTime.getDate()).padStart(2, '0')}`;
+      } else {
+        const now = new Date();
+        locationToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      }
+
+      // Find today's index in the daily array
+      let todayIndex = 0;
+      if (daily) {
+        for (let i = 0; i < daily.length; i++) {
+          if (daily[i].date >= locationToday) {
+            todayIndex = i;
+            break;
+          }
+        }
+      }
 
       let message = '';
 
@@ -1216,15 +1239,15 @@ export class OpenAIRealtimeService extends Emitter {
           message = `Current weather: ${current.condition}, ${Math.round(current.temperature)}°F. `;
           message += `Humidity ${current.humidity}%, wind speed ${Math.round(current.wind_speed)} mph`;
 
-          if (daily && daily.length > 0) {
-            const today = daily[0];
+          if (daily && daily.length > todayIndex) {
+            const today = daily[todayIndex];
             message += `. Today's high: ${Math.round(today.temperature_max)}°F, low: ${Math.round(today.temperature_min)}°F`;
           }
           break;
 
         case 'tomorrow':
-          if (daily && daily.length > 1) {
-            const tomorrow = daily[1];
+          if (daily && daily.length > todayIndex + 1) {
+            const tomorrow = daily[todayIndex + 1];
             message = `Tomorrow's weather: ${tomorrow.condition}. `;
             message += `High: ${Math.round(tomorrow.temperature_max)}°F, low: ${Math.round(tomorrow.temperature_min)}°F`;
             if (tomorrow.precipitation_probability > 30) {
@@ -1236,10 +1259,12 @@ export class OpenAIRealtimeService extends Emitter {
           break;
 
         case 'forecast':
-          if (daily && daily.length > 0) {
+          if (daily && daily.length > todayIndex) {
             message = '7-day forecast: ';
-            const forecasts = daily.slice(0, 7).map((day, index) => {
-              const date = new Date(day.date);
+            const forecasts = daily.slice(todayIndex, todayIndex + 7).map((day, index) => {
+              // Parse the date string directly (YYYY-MM-DD format) to avoid timezone issues
+              const [year, month, dayNum] = day.date.split('-').map(Number);
+              const date = new Date(year, month - 1, dayNum);
               const dayName = index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' });
               return `${dayName}: ${day.condition}, high ${Math.round(day.temperature_max)}°, low ${Math.round(day.temperature_min)}°`;
             });
