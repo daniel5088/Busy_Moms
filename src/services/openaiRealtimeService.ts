@@ -1051,6 +1051,79 @@ export class OpenAIRealtimeService extends Emitter {
     return normalizeTimeString(input) || null;
   }
 
+  private getRoundedEventDateTime(date?: string, time?: string): { date: string; hour: number; isoHour: string; displayLabel: string } | null {
+    if (!date) return null;
+    const dateParts = date.split('-').map((part) => parseInt(part, 10));
+    if (dateParts.length !== 3 || dateParts.some((n) => Number.isNaN(n))) return null;
+
+    let hour = 12;
+    let minutes = 0;
+
+    if (time) {
+      const [hStr, mStr] = time.split(':');
+      const parsedHour = parseInt(hStr ?? '12', 10);
+      const parsedMinutes = parseInt(mStr ?? '0', 10);
+      if (!Number.isNaN(parsedHour)) hour = parsedHour;
+      if (!Number.isNaN(parsedMinutes)) minutes = parsedMinutes;
+    }
+
+    let totalMinutes = hour * 60 + minutes;
+    totalMinutes = Math.max(0, Math.round(totalMinutes / 60) * 60);
+
+    const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+    if (totalMinutes >= 24 * 60) {
+      totalMinutes -= 24 * 60;
+      dateObj.setDate(dateObj.getDate() + 1);
+    }
+
+    const roundedHour = Math.floor(totalMinutes / 60);
+    const roundedDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+    const isoHour = `${roundedDate}T${String(roundedHour).padStart(2, '0')}:00`;
+
+    return {
+      date: roundedDate,
+      hour: roundedHour,
+      isoHour,
+      displayLabel: this.formatTimeForDisplay(`${String(roundedHour).padStart(2, '0')}:00:00`),
+    };
+  }
+
+  private parseHourlyTimeToMs(timeStr: string): number {
+    const [datePart, timePart] = timeStr.split('T');
+    if (!datePart || !timePart) return Number.NaN;
+    const [year, month, day] = datePart.split('-').map((part) => parseInt(part, 10));
+    const [hour] = timePart.split(':').map((part) => parseInt(part, 10));
+    if ([year, month, day, hour].some((n) => Number.isNaN(n))) return Number.NaN;
+    return new Date(year, month - 1, day, hour).getTime();
+  }
+
+  private findNearestHourlyEntry(
+    hourlyEntries: Array<{ time: string }>,
+    targetIsoHour: string
+  ): { entry: any; isExact: boolean } | null {
+    if (!hourlyEntries || hourlyEntries.length === 0) return null;
+    const exact = hourlyEntries.find((entry) => entry.time === targetIsoHour);
+    if (exact) return { entry: exact, isExact: true };
+
+    const targetMs = this.parseHourlyTimeToMs(targetIsoHour);
+    if (Number.isNaN(targetMs)) return null;
+
+    let best = null;
+    let minDiff = Number.POSITIVE_INFINITY;
+
+    for (const entry of hourlyEntries) {
+      const entryMs = this.parseHourlyTimeToMs(entry.time);
+      if (Number.isNaN(entryMs)) continue;
+      const diff = Math.abs(entryMs - targetMs);
+      if (diff < minDiff) {
+        minDiff = diff;
+        best = entry;
+      }
+    }
+
+    return best ? { entry: best, isExact: false } : null;
+  }
+
   private async handleCreateCalendarEvent(args: any) {
     const contextualInfo = this.getContextualDateInfo(args.title);
 
@@ -1079,6 +1152,39 @@ export class OpenAIRealtimeService extends Emitter {
   }
 
   private async handleQueryCalendar(args: any) {
+    if (!this.currentUserId) {
+      return { success: false, message: 'User not authenticated' };
+    }
+
+    if (args.query_type === 'search') {
+      const searchTerm = String(args.search_term || '').trim();
+      if (!searchTerm) {
+        return {
+          type: 'calendar',
+          success: false,
+          message: 'Please provide an event name so I know what to search for.',
+        };
+      }
+
+      const events = await calendarContextService.searchEvents(this.currentUserId, searchTerm);
+      if (!events.length) {
+        return {
+          type: 'calendar',
+          success: true,
+          message: `I couldn't find any events matching "${searchTerm}" on your calendar.`,
+          data: { events: [] },
+        };
+      }
+
+      const formatted = calendarContextService.formatEventsAsNaturalLanguage(events.slice(0, 5));
+      return {
+        type: 'calendar',
+        success: true,
+        message: `Here ${events.length === 1 ? 'is' : 'are'} ${events.length === 1 ? 'the event' : 'the events'} I found for "${searchTerm}":\n${formatted}`,
+        data: { events },
+      };
+    }
+
     let message = '';
     switch (args.query_type) {
       case 'today':
@@ -1385,14 +1491,20 @@ export class OpenAIRealtimeService extends Emitter {
     const targetEvent = upcomingEvent || events[0];
 
     const weatherData = await weatherService.getWeatherForLocation();
-    if (!weatherData.daily || weatherData.daily.length === 0) {
+    if ((!weatherData.daily || weatherData.daily.length === 0) && (!weatherData.fullHourly && !weatherData.hourly)) {
       return {
         success: false,
         message: 'Weather data is unavailable right now. Please try again shortly.'
       };
     }
 
-    const forecast = weatherData.daily.find((day: any) => day.date === targetEvent.event_date);
+    const hourlyEntries = weatherData.fullHourly || weatherData.hourly;
+    const roundedEventTime = this.getRoundedEventDateTime(targetEvent.event_date, targetEvent.start_time);
+    const hourlyMatch = hourlyEntries && roundedEventTime
+      ? this.findNearestHourlyEntry(hourlyEntries, roundedEventTime.isoHour)
+      : null;
+
+    const forecast = weatherData.daily?.find((day: any) => day.date === (roundedEventTime?.date || targetEvent.event_date));
     const eventDateObj = new Date(`${targetEvent.event_date}T00:00:00`);
     const eventDateLabel = eventDateObj.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -1401,9 +1513,16 @@ export class OpenAIRealtimeService extends Emitter {
     });
     const eventTimeLabel = targetEvent.start_time ? ` at ${this.formatTimeForDisplay(targetEvent.start_time)}` : '';
 
-    if (!forecast) {
-      const firstAvailable = weatherData.daily[0]?.date;
-      const lastAvailable = weatherData.daily[weatherData.daily.length - 1]?.date;
+    if (!forecast && !hourlyMatch) {
+      const hourlyList = hourlyEntries || [];
+      const hourlyCount = hourlyList.length;
+      const firstHourlyTime = hourlyCount ? hourlyList[0].time : null;
+      const lastHourlyTime = hourlyCount ? hourlyList[hourlyCount - 1].time : null;
+
+      const firstAvailable = weatherData.daily?.[0]?.date || firstHourlyTime?.split('T')[0] || null;
+      const lastAvailable = weatherData.daily?.[weatherData.daily.length - 1]?.date
+        || lastHourlyTime?.split('T')[0]
+        || null;
       const rangeLabel = firstAvailable && lastAvailable
         ? `${new Date(`${firstAvailable}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to ${new Date(`${lastAvailable}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
         : 'the upcoming days';
@@ -1414,32 +1533,69 @@ export class OpenAIRealtimeService extends Emitter {
         data: {
           event: targetEvent,
           forecast_available_range: {
-            start: firstAvailable || null,
-            end: lastAvailable || null
+            start: firstAvailable,
+            end: lastAvailable
           }
         }
       };
     }
 
     let message = `I found your ${targetEvent.title} on ${eventDateLabel}${eventTimeLabel}. `;
-    message += `Forecast for that day: ${forecast.condition}, high ${Math.round(forecast.temperature_max)}°F and low ${Math.round(forecast.temperature_min)}°F`;
 
-    if (typeof forecast.precipitation_probability === 'number') {
-      message += ` with a ${forecast.precipitation_probability}% chance of precipitation`;
+    if (hourlyMatch) {
+      const hourlyForecast = hourlyMatch.entry;
+      const roundedLabel = roundedEventTime?.displayLabel || 'that time';
+      message += `Around ${roundedLabel}, expect ${hourlyForecast.condition.toLowerCase()} and about ${Math.round(hourlyForecast.temperature)}°F`;
+
+      if (typeof hourlyForecast.precipitation_probability === 'number') {
+        message += ` with a ${hourlyForecast.precipitation_probability}% chance of precipitation`;
+      }
+
+      if (!hourlyMatch.isExact && roundedEventTime) {
+        message += ` (using the closest hourly forecast available to ${roundedLabel}).`;
+      } else {
+        message += '.';
+      }
+
+      return {
+        success: true,
+        message,
+        data: {
+          event: targetEvent,
+          forecast: hourlyForecast,
+          daily_forecast: forecast || null,
+          forecast_type: 'hourly'
+        }
+      };
     }
 
-    if (typeof forecast.wind_speed === 'number') {
-      message += ` and wind around ${Math.round(forecast.wind_speed)} mph`;
-    }
+    if (forecast) {
+      message += `Forecast for that day: ${forecast.condition}, high ${Math.round(forecast.temperature_max)}°F and low ${Math.round(forecast.temperature_min)}°F`;
 
-    message += '.';
+      if (typeof forecast.precipitation_probability === 'number') {
+        message += ` with a ${forecast.precipitation_probability}% chance of precipitation`;
+      }
+
+      message += '.';
+
+      return {
+        success: true,
+        message,
+        data: {
+          event: targetEvent,
+          forecast,
+          forecast_type: 'daily'
+        }
+      };
+    }
 
     return {
       success: true,
       message,
       data: {
         event: targetEvent,
-        forecast
+        forecast: null,
+        forecast_type: 'unknown'
       }
     };
   }
