@@ -232,27 +232,34 @@ export function Dashboard({
 
   // Define refreshWeather before useEffects that use it
   const refreshWeather = React.useCallback(async (coords?: { latitude: number; longitude: number }) => {
+    console.log('[Dashboard] refreshWeather called with coords:', coords);
     setWeatherLoading(true);
     setWeatherError(null);
     try {
       const data = await weatherService.getWeatherForLocation(coords);
+      console.log('[Dashboard] Weather data received:', data);
       setWeather(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load weather';
+      console.error('[Dashboard] Weather error:', err);
+      console.error('[Dashboard] Error message:', errorMessage);
       setWeatherError(errorMessage);
     } finally {
       setWeatherLoading(false);
+      console.log('[Dashboard] Weather loading complete');
     }
   }, []);
 
   // Load weather settings on mount
   React.useEffect(() => {
     const loadWeatherSettings = async () => {
+      console.log('[Dashboard] Loading weather settings...');
       try {
         const settings = await weatherService.getSettings();
+        console.log('[Dashboard] Weather settings loaded:', settings);
         setWeatherSettings(settings);
       } catch (error) {
-        console.error('Failed to load weather settings:', error);
+        console.error('[Dashboard] Failed to load weather settings:', error);
       }
     };
     loadWeatherSettings();
@@ -262,11 +269,23 @@ export function Dashboard({
 
   // Auto-load weather on mount if location is set
   React.useEffect(() => {
+    console.log('[Dashboard] Auto-load weather effect triggered', {
+      hasLatitude: !!weatherSettings?.latitude,
+      hasLongitude: !!weatherSettings?.longitude,
+      latitude: weatherSettings?.latitude,
+      longitude: weatherSettings?.longitude,
+    });
     if (weatherSettings?.latitude && weatherSettings?.longitude) {
+      console.log('[Dashboard] Auto-loading weather with coords:', {
+        latitude: weatherSettings.latitude,
+        longitude: weatherSettings.longitude,
+      });
       refreshWeather({
         latitude: weatherSettings.latitude,
         longitude: weatherSettings.longitude,
       });
+    } else {
+      console.log('[Dashboard] Skipping auto-load: no coordinates in settings');
     }
   }, [weatherSettings?.latitude, weatherSettings?.longitude, refreshWeather]);
 

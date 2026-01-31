@@ -282,22 +282,25 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const isLocationError = error && (error.includes('latitude') || error.includes('longitude') || error.includes('location'));
 
   if (error || !weather?.current) {
+    const errorTitle = error ? 'Weather Error' : 'Location Not Set';
+    const errorMessage = error || 'Set your location to see weather information';
+
     return (
       <div className={`rounded-[32px] shadow-2xl p-12 transition-all duration-1000 relative overflow-hidden bg-gradient-to-br ${bgGradient}`}>
         {/* Decorative glow */}
         <div className={`absolute -top-1/2 -right-1/4 w-[400px] h-[400px] rounded-full blur-3xl animate-float transition-all duration-1000 ${
           isDark ? 'bg-[#6478b4]/20' : 'bg-[#a8c5d1]/15'
         }`} />
-        
+
         <div className="relative z-10 flex flex-col items-center justify-center h-64 gap-6">
           <MapPin className={`w-20 h-20 ${isDark ? 'text-[#e8e8f0]/30' : 'text-[#2a2a2e]/30'}`} />
-          <div className="text-center">
-            <p className={`text-2xl font-light mb-2 ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`} 
+          <div className="text-center max-w-md">
+            <p className={`text-2xl font-light mb-2 ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}
                style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              Location Not Set
+              {errorTitle}
             </p>
             <p className={`text-sm mb-6 ${isDark ? 'text-[#e8e8f0]/70' : 'text-[#2a2a2e]/60'}`}>
-              Set your location to see weather information
+              {errorMessage}
             </p>
           </div>
           {onOpenSettings && (
