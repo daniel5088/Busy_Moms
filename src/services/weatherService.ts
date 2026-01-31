@@ -218,7 +218,7 @@ class WeatherService {
 
     const parsed = openMeteoPayload;
 
-    // Current - handle both formats
+    // Current - handle multiple formats
     if (parsed.current) {
       // New format with "current" object
       const weatherCode = parsed.current.weather_code ?? 0;
@@ -244,6 +244,37 @@ class WeatherService {
         humidity: parsed.hourly?.relative_humidity_2m?.[0] || 0,
         pressure: parsed.hourly?.surface_pressure?.[0] || 0,
         condition: this.getWeatherCondition(parsed.current_weather.weathercode),
+        icon: "",
+      };
+    } else if (parsed.hourly?.time && parsed.hourly.time.length > 0) {
+      // Fallback: synthesize current weather from first hourly data
+      console.log('[WeatherService] No current weather data, synthesizing from hourly');
+      const weatherCode = parsed.hourly.weather_code?.[0] ?? parsed.hourly.weathercode?.[0] ?? 0;
+      result.current = {
+        temperature: parsed.hourly.temperature_2m?.[0] ?? 0,
+        weather_code: weatherCode,
+        wind_speed: parsed.hourly.wind_speed_10m?.[0] ?? 0,
+        wind_direction: parsed.hourly.wind_direction_10m?.[0] ?? 0,
+        humidity: parsed.hourly.relative_humidity_2m?.[0] ?? 0,
+        pressure: parsed.hourly.surface_pressure?.[0] ?? 0,
+        condition: this.getWeatherCondition(weatherCode),
+        icon: "",
+      };
+    } else if (parsed.daily?.time && parsed.daily.time.length > 0) {
+      // Last fallback: synthesize from daily data (today)
+      console.log('[WeatherService] No current/hourly data, synthesizing from daily');
+      const weatherCodes = parsed.daily.weather_code || parsed.daily.weathercode || [];
+      const weatherCode = weatherCodes[0] ?? 0;
+      const tempMax = parsed.daily.temperature_2m_max?.[0] ?? 0;
+      const tempMin = parsed.daily.temperature_2m_min?.[0] ?? 0;
+      result.current = {
+        temperature: Math.round((tempMax + tempMin) / 2), // Average of max/min
+        weather_code: weatherCode,
+        wind_speed: 0,
+        wind_direction: 0,
+        humidity: 0,
+        pressure: 0,
+        condition: this.getWeatherCondition(weatherCode),
         icon: "",
       };
     }
