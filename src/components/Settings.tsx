@@ -39,7 +39,7 @@ import { TaskSyncSettings } from './TaskSyncSettings';
 import { RetailerSearch } from './RetailerSearch';
 import { AddressManager } from './AddressManager';
 import { WeatherSettings } from './WeatherSettings';
-import { useWeather } from '../hooks/useWeather';
+import { weatherService, WeatherSettings as IWeatherSettings } from '../services/weatherService';
 import { FamilyMember, Profile, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { googleCalendarService } from '../services/googleCalendar';
@@ -69,7 +69,7 @@ export function Settings({
 }: SettingsProps) {
   const { user, signOut } = useAuth();
   const { performSync } = useCalendarSync();
-  const { settings: weatherSettings, updateSettings: updateWeatherSettings } = useWeather();
+  const [weatherSettings, setWeatherSettings] = useState<IWeatherSettings | null>(null);
   const [showFamilyForm, setShowFamilyForm] = useState(false);
   const [showProfileForm, setShowProfileForm] = useState(false);
   //Alvaros - Dailyaffirmations: Removed showAffirmationSettings state (now managed at App level)
@@ -226,6 +226,25 @@ export function Settings({
     }
   };
 
+  const loadWeatherSettings = React.useCallback(async () => {
+    try {
+      const settings = await weatherService.getSettings();
+      setWeatherSettings(settings);
+    } catch (error) {
+      console.error('Error loading weather settings:', error);
+    }
+  }, []);
+
+  const updateWeatherSettings = async (newSettings: Partial<IWeatherSettings>) => {
+    try {
+      const updated = await weatherService.updateSettings(newSettings);
+      setWeatherSettings(updated);
+    } catch (error) {
+      console.error('Error updating weather settings:', error);
+      throw error;
+    }
+  };
+
   const updatePersonalityPreference = async (personality: AIPersonality) => {
     if (!user) return;
 
@@ -277,6 +296,13 @@ export function Settings({
       }, 500);
     }
   }, [scrollToGoogleCalendar]);
+
+  // Load weather settings only when weather settings dialog is opened
+  React.useEffect(() => {
+    if (showWeatherSettings && !weatherSettings) {
+      loadWeatherSettings();
+    }
+  }, [showWeatherSettings, weatherSettings, loadWeatherSettings]);
 
   // Listen for auth state changes to detect when Google Calendar is connected
   React.useEffect(() => {

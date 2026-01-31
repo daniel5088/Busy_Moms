@@ -15,7 +15,6 @@ import {
   Link,
   Loader2,
   Settings,
-  RefreshCw,
   Camera,
   ChevronLeft,
   ChevronRight,
@@ -662,16 +661,7 @@ export function Dashboard({
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => {
-                  console.log('[Dashboard] Weather button clicked');
-                  console.log('[Dashboard] Current weather state:', {
-                    weather,
-                    weatherSettings,
-                    weatherLoading,
-                    weatherError,
-                    hasWeather: !!weather,
-                    hasCurrent: !!weather?.current,
-                    hasSettings: !!weatherSettings,
-                    hasCoordinates: !!(weatherSettings?.latitude && weatherSettings?.longitude),
+                  refreshWeather({
                     latitude: weatherSettings?.latitude,
                     longitude: weatherSettings?.longitude,
                   });
@@ -1110,7 +1100,6 @@ export function Dashboard({
                 loading={weatherLoading}
                 error={weatherError}
                 locationName={weatherSettings?.default_location || 'Your Location'}
-                onRefresh={refreshWeather}
                 onOpenSettings={() => {
                   setShowWeatherModal(false);
                   onNavigate('more');

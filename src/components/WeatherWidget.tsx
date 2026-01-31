@@ -1,4 +1,4 @@
-import { Cloud, Droplets, Wind, RefreshCw, MapPin, Loader, Settings, Sun, Moon } from 'lucide-react';
+import { Cloud, Droplets, Wind, MapPin, Loader, Settings, Sun, Moon } from 'lucide-react';
 import { WeatherData } from '../services/weatherService';
 import { useState, useEffect } from 'react';
 
@@ -7,7 +7,6 @@ interface WeatherWidgetProps {
   loading: boolean;
   error: string | null;
   locationName?: string;
-  onRefresh?: () => void;
   onOpenSettings?: () => void;
 }
 
@@ -102,7 +101,7 @@ function getBackgroundGradient(weatherCode: number | undefined, isDark: boolean)
   return timeGradient;
 }
 
-export function WeatherWidget({ weather, loading, error, locationName, onRefresh, onOpenSettings }: WeatherWidgetProps) {
+export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings }: WeatherWidgetProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
@@ -226,19 +225,6 @@ export function WeatherWidget({ weather, loading, error, locationName, onRefresh
               {current.condition}
             </p>
           </div>
-          {onRefresh && (
-            <button
-              onClick={onRefresh}
-              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:rotate-180 ${
-                isDark 
-                  ? 'bg-[#6478b4]/20 hover:bg-[#6478b4]/35' 
-                  : 'bg-white/20 hover:bg-white/30'
-              }`}
-              title="Refresh weather"
-            >
-              <RefreshCw className={`w-5 h-5 ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`} />
-            </button>
-          )}
         </div>
 
         {/* Current Weather */}
