@@ -12,14 +12,17 @@ interface WeatherWidgetProps {
 
 // Enhanced weather icon component
 function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: number, isNight: boolean, size?: 'small' | 'large' }) {
-  const iconSize = size === 'large' ? 'w-24 h-24' : 'w-16 h-16';
-  const glowSize = size === 'large' ? '80px' : '50px';
+  const iconSize = size === 'large' ? 'w-24 h-24' : 'w-14 h-14';
+  const glowSize = size === 'large' ? '80px' : '40px';
+  const dropletSize = size === 'large' ? 'w-6 h-6' : 'w-4 h-4';
+  const accentSize = size === 'large' ? 'w-10 h-10' : 'w-5 h-5';
+  const windSize = size === 'large' ? 'w-8 h-8' : 'w-4 h-4';
   
   // Clear sky
   if (weatherCode === 0) {
     if (isNight) {
       return (
-        <div className="relative">
+        <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
           <div 
             className="absolute inset-0 blur-xl opacity-60"
             style={{
@@ -34,7 +37,7 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
       );
     }
     return (
-      <div className="relative">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
         <div 
           className="absolute inset-0 blur-2xl opacity-70 animate-pulse"
           style={{
@@ -52,16 +55,16 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   // Partly cloudy
   if (weatherCode <= 3) {
     return (
-      <div className="relative">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
         {isNight ? (
           <>
-            <Moon className={`${iconSize} text-blue-200 absolute top-0 left-0 opacity-70`} fill="currentColor" />
-            <Cloud className={`${iconSize} text-slate-300 absolute bottom-0 right-0`} fill="currentColor" strokeWidth={1} />
+            <Moon className={`${iconSize} text-blue-200 absolute ${size === 'large' ? 'top-2 left-2' : 'top-0 left-0'} opacity-70`} fill="currentColor" />
+            <Cloud className={`${iconSize} text-slate-300 absolute ${size === 'large' ? 'bottom-2 right-2' : 'bottom-0 right-0'}`} fill="currentColor" strokeWidth={1} />
           </>
         ) : (
           <>
-            <Sun className={`${iconSize} text-yellow-400 absolute top-0 left-0 opacity-80`} fill="currentColor" />
-            <Cloud className={`${iconSize} text-white absolute bottom-0 right-0 drop-shadow-lg`} fill="currentColor" strokeWidth={1} />
+            <Sun className={`${iconSize} text-yellow-400 absolute ${size === 'large' ? 'top-2 left-2' : 'top-0 left-0'} opacity-80`} fill="currentColor" />
+            <Cloud className={`${iconSize} text-white absolute ${size === 'large' ? 'bottom-2 right-2' : 'bottom-0 right-0'} drop-shadow-lg`} fill="currentColor" strokeWidth={1} />
           </>
         )}
       </div>
@@ -71,9 +74,9 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   // Fog
   if (weatherCode <= 48) {
     return (
-      <div className="relative">
-        <CloudFog className={`${iconSize} text-gray-400 drop-shadow-xl`} strokeWidth={1.5} />
-        <div className="absolute inset-0 blur-md opacity-50">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
+        <CloudFog className={`${iconSize} text-gray-400 drop-shadow-xl relative z-10`} strokeWidth={1.5} />
+        <div className="absolute inset-0 blur-md opacity-50 flex items-center justify-center">
           <CloudFog className={`${iconSize} text-gray-300`} />
         </div>
       </div>
@@ -83,9 +86,9 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   // Drizzle
   if (weatherCode <= 57) {
     return (
-      <div className="relative">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
         <CloudDrizzle className={`${iconSize} text-blue-300 drop-shadow-xl`} strokeWidth={1.5} />
-        <Droplets className="w-8 h-8 text-blue-400 absolute bottom-0 right-0 opacity-60 animate-bounce" />
+        <Droplets className={`${dropletSize} text-blue-400 absolute ${size === 'large' ? 'bottom-4 right-4' : 'bottom-1 right-1'} opacity-60 animate-bounce`} />
       </div>
     );
   }
@@ -93,10 +96,10 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   // Rain
   if (weatherCode <= 65) {
     return (
-      <div className="relative">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
         <CloudRain className={`${iconSize} text-blue-400 drop-shadow-xl`} strokeWidth={1.5} fill="rgba(59, 130, 246, 0.2)" />
-        <div className="absolute inset-0 animate-pulse">
-          <Droplets className="w-6 h-6 text-blue-500 absolute bottom-2 left-2 opacity-70" />
+        <div className="absolute inset-0 animate-pulse flex items-center justify-center">
+          <Droplets className={`${dropletSize} text-blue-500 absolute ${size === 'large' ? 'bottom-3 left-3' : 'bottom-1 left-1'} opacity-70`} />
         </div>
       </div>
     );
@@ -105,11 +108,11 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   // Freezing rain
   if (weatherCode <= 67) {
     return (
-      <div className="relative">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
         <CloudRain className={`${iconSize} text-cyan-300 drop-shadow-xl`} strokeWidth={1.5} />
         <div className="absolute inset-0">
-          <div className="w-2 h-2 bg-cyan-200 rounded-full absolute bottom-3 left-3 animate-ping" />
-          <div className="w-2 h-2 bg-cyan-200 rounded-full absolute bottom-4 right-4 animate-ping" style={{ animationDelay: '0.5s' }} />
+          <div className={`${size === 'large' ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-cyan-200 rounded-full absolute ${size === 'large' ? 'bottom-4 left-4' : 'bottom-2 left-2'} animate-ping`} />
+          <div className={`${size === 'large' ? 'w-2 h-2' : 'w-1.5 h-1.5'} bg-cyan-200 rounded-full absolute ${size === 'large' ? 'bottom-5 right-5' : 'bottom-2 right-2'} animate-ping`} style={{ animationDelay: '0.5s' }} />
         </div>
       </div>
     );
@@ -118,11 +121,11 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   // Snow
   if (weatherCode <= 77) {
     return (
-      <div className="relative">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
         <CloudSnow className={`${iconSize} text-blue-100 drop-shadow-2xl`} strokeWidth={1.5} fill="rgba(219, 234, 254, 0.3)" />
         <div className="absolute inset-0">
-          <div className="w-3 h-3 text-white opacity-80 absolute bottom-2 left-3 animate-bounce">❄</div>
-          <div className="w-3 h-3 text-white opacity-80 absolute bottom-4 right-3 animate-bounce" style={{ animationDelay: '0.3s' }}>❄</div>
+          <div className={`${size === 'large' ? 'text-base' : 'text-xs'} text-white opacity-80 absolute ${size === 'large' ? 'bottom-3 left-4' : 'bottom-1 left-1'} animate-bounce`}>❄</div>
+          <div className={`${size === 'large' ? 'text-base' : 'text-xs'} text-white opacity-80 absolute ${size === 'large' ? 'bottom-5 right-4' : 'bottom-2 right-1'} animate-bounce`} style={{ animationDelay: '0.3s' }}>❄</div>
         </div>
       </div>
     );
@@ -131,9 +134,9 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   // Rain showers
   if (weatherCode <= 82) {
     return (
-      <div className="relative">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
         <CloudRain className={`${iconSize} text-blue-500 drop-shadow-xl animate-pulse`} strokeWidth={1.5} fill="rgba(59, 130, 246, 0.3)" />
-        <Wind className="w-8 h-8 text-slate-400 absolute top-0 right-0 opacity-40" />
+        <Wind className={`${windSize} text-slate-400 absolute ${size === 'large' ? 'top-2 right-2' : 'top-0 right-0'} opacity-40`} />
       </div>
     );
   }
@@ -141,19 +144,19 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
   // Snow showers
   if (weatherCode <= 86) {
     return (
-      <div className="relative">
+      <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
         <CloudSnow className={`${iconSize} text-blue-200 drop-shadow-xl animate-pulse`} strokeWidth={1.5} fill="rgba(219, 234, 254, 0.4)" />
-        <Wind className="w-8 h-8 text-slate-300 absolute top-0 right-0 opacity-40" />
+        <Wind className={`${windSize} text-slate-300 absolute ${size === 'large' ? 'top-2 right-2' : 'top-0 right-0'} opacity-40`} />
       </div>
     );
   }
   
   // Thunderstorm
   return (
-    <div className="relative">
+    <div className="relative flex items-center justify-center" style={{ width: size === 'large' ? '120px' : '60px', height: size === 'large' ? '120px' : '60px' }}>
       <CloudLightning className={`${iconSize} text-slate-600 drop-shadow-2xl`} strokeWidth={1.5} fill="rgba(71, 85, 105, 0.4)" />
-      <div className="absolute inset-0 animate-pulse">
-        <Zap className="w-10 h-10 text-yellow-400 absolute bottom-0 left-1/2 -translate-x-1/2 drop-shadow-lg" fill="currentColor" />
+      <div className="absolute inset-0 animate-pulse flex items-center justify-center">
+        <Zap className={`${accentSize} text-yellow-400 absolute ${size === 'large' ? 'bottom-2' : 'bottom-0'} left-1/2 -translate-x-1/2 drop-shadow-lg`} fill="currentColor" />
       </div>
       <div 
         className="absolute inset-0 blur-xl opacity-40 animate-pulse"
@@ -491,21 +494,23 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                       animationDelay: `${0.4 + index * 0.05}s`
                     }}
                   >
-                    <div className={`text-[13px] uppercase tracking-wider mb-4 font-medium transition-colors duration-500 ${
+                    <div className={`text-[13px] uppercase tracking-wider mb-3 font-medium transition-colors duration-500 ${
                       isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'
                     }`}>
                       {dayName}
                     </div>
-                    <div className="mb-3 flex justify-center" style={{ height: '64px' }}>
-                      <WeatherIcon weatherCode={day.weather_code} isNight={false} size="small" />
+                    <div className="mb-3 flex justify-center items-center" style={{ height: '70px' }}>
+                      <div className="scale-90">
+                        <WeatherIcon weatherCode={day.weather_code} isNight={false} size="small" />
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <div className={`text-xl font-medium transition-colors duration-500 ${
+                    <div className="flex flex-col gap-0.5">
+                      <div className={`text-2xl font-medium transition-colors duration-500 ${
                         isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
                       }`}>
                         {Math.round(day.temperature_max)}°
                       </div>
-                      <div className={`text-[15px] transition-colors duration-500 ${
+                      <div className={`text-base transition-colors duration-500 ${
                         isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
                       }`}>
                         {Math.round(day.temperature_min)}°
