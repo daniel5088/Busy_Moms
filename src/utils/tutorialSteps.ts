@@ -40,7 +40,7 @@ export const dashboardTutorialSteps: TutorialStep[] = [
   {
     title: 'Meet Sarah - Your AI Assistant',
     description: 'Click the Sarah button at the bottom to chat with your AI assistant. Ask questions, create events, or get help anytime!',
-    targetId: 'main-navigation',
+    targetId: 'sarah-button',
     placement: 'top',
   },
   {

@@ -46,6 +46,7 @@ export function ImprovedNavigation({
 
         {onVoiceChatOpen && (
           <button
+            id="sarah-button"
             onClick={onVoiceChatOpen}
             className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-14 h-14 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-rose-400"
             title="AI Voice Assistant"
