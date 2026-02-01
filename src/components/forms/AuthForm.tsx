@@ -16,6 +16,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   const [otpSent, setOtpSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,31 +28,119 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       if (isSignUp) {
-        const { data, error } = await signUp(formData.email, formData.password);
-        if (error) {
-          if (error.message.includes('User already registered')) {
-            alert(
-              'This email is already registered. Please sign in instead, or use a different email to sign up.'
-            );
+        console.log('🔐 Starting signup process for:', formData.email);
+        
+        // Validate inputs
+        if (!formData.email || !formData.password) {
+          throw new Error('Email and password are required');
+        }
+        
+        if (formData.password.length < 6) {
+          throw new Error('Password must be at least 6 characters');
+        }
+
+        // Attempt signup
+        const { data, error: signUpError } = await signUp(formData.email, formData.password, {
+          full_name: formData.fullName || '',
+        });
+
+        if (signUpError) {
+          console.error('❌ Signup error:', signUpError);
+          
+          // Handle specific error cases
+          if (signUpError.message.includes('User already registered')) {
+            setError('This email is already registered. Please sign in instead.');
             setIsSignUp(false);
             return;
           }
-          throw error;
+          
+          if (signUpError.message.includes('Database error')) {
+            setError('Account creation failed. Please contact support or try again later.');
+            console.error('Database error details:', signUpError);
+            return;
+          }
+          
+          throw signUpError;
         }
 
-        if (data.user) {
-          console.log('User created successfully, profile will be created during onboarding');
+        if (!data?.user) {
+          throw new Error('Failed to create user account');
         }
+
+        console.log('✅ User created successfully:', data.user.id);
+
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+          setError('Please check your email to confirm your account before signing in.');
+          setIsSignUp(false);
+          return;
+        }
+
+        // Verify user record was created in users table
+        try {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', data.user.id)
+            .single();
+
+          if (userError && userError.code === 'PGRST116') {
+            // User doesn't exist in users table, create it manually
+            console.log('⚠️ User not found in users table, creating manually...');
+            
+            const { error: insertError } = await supabase
+              .from('users')
+              .insert({
+                id: data.user.id,
+                uuid: data.user.id,
+                email: formData.email,
+                full_name: formData.fullName || '',
+                user_type: 'Dad',
+                ai_personality: 'Friendly',
+                onboarding_completed: false,
+              });
+
+            if (insertError) {
+              console.error('❌ Failed to create user record:', insertError);
+              // Don't fail the signup completely, they can still sign in
+              setError('Account created but profile setup incomplete. You can still sign in and complete your profile.');
+            } else {
+              console.log('✅ User record created manually');
+            }
+          }
+        } catch (fallbackError) {
+          console.warn('⚠️ Fallback user creation check failed:', fallbackError);
+        }
+
+        // Success! Proceed to onboarding
+        console.log('✅ Signup complete, proceeding to onboarding');
+        onAuthSuccess();
+
       } else {
-        const { error } = await signIn(formData.email, formData.password);
-        if (error) throw error;
+        // Sign In
+        console.log('🔐 Starting sign in for:', formData.email);
+        const { error: signInError } = await signIn(formData.email, formData.password);
+        
+        if (signInError) {
+          console.error('❌ Sign in error:', signInError);
+          
+          if (signInError.message.includes('Invalid login credentials')) {
+            throw new Error('Invalid email or password. Please try again.');
+          }
+          
+          throw signInError;
+        }
+        
+        console.log('✅ Sign in successful');
         onAuthSuccess();
       }
     } catch (error: any) {
-      alert(error.message || 'An error occurred');
+      console.error('❌ Auth error:', error);
+      setError(error.message || 'An error occurred during authentication');
     } finally {
       setLoading(false);
     }
@@ -60,39 +149,39 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
   const handleGoogleSignIn = async () => {
     console.log('🔐 Google sign-in button clicked');
     setGoogleLoading(true);
+    setError(null);
+    
     try {
       const { error } = await signInWithGoogle();
       if (error) {
-        console.error('Google sign-in error:', error);
-        alert(
-          `Google sign-in failed: ${error.message}\n\nPlease check:\n1. Google OAuth is configured in Supabase\n2. This domain is added to authorized origins\n3. Redirect URI is set correctly`
-        );
+        console.error('❌ Google sign-in error:', error);
+        setError('Google sign-in failed. Please check your network connection and try again.');
         setGoogleLoading(false);
         return;
       }
       console.log('🚀 Google OAuth redirect initiated...');
     } catch (error: any) {
-      console.error('Google sign-in error:', error);
-      alert(
-        `Google sign-in failed: ${error.message}\n\nThis might be a configuration issue. Please check your Supabase Google OAuth settings.`
-      );
+      console.error('❌ Google sign-in error:', error);
+      setError('Google sign-in is not available. Please use email/password instead.');
       setGoogleLoading(false);
     }
   };
 
   const handleSendPasswordResetOTP = async () => {
     if (!formData.email) {
-      alert('Please enter your email address');
+      setError('Please enter your email address');
       return;
     }
 
     setLoading(true);
+    setError(null);
+    
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: formData.email,
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: undefined, // No redirect, just send OTP
+          emailRedirectTo: undefined,
           data: {
             purpose: 'password_reset'
           }
@@ -102,9 +191,9 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       if (error) throw error;
 
       setOtpSent(true);
-      alert('Password reset code sent! Check your email for the 6-digit code.');
+      setError('Password reset code sent! Check your email for the 6-digit code.');
     } catch (error: any) {
-      alert(error.message || 'Failed to send verification code');
+      setError(error.message || 'Failed to send verification code');
     } finally {
       setLoading(false);
     }
@@ -112,19 +201,20 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    
     if (!formData.otp || formData.otp.length !== 6) {
-      alert('Please enter a valid 6-digit code');
+      setError('Please enter a valid 6-digit code');
       return;
     }
 
     if (!formData.newPassword || formData.newPassword.length < 6) {
-      alert('Password must be at least 6 characters');
+      setError('Password must be at least 6 characters');
       return;
     }
 
     setLoading(true);
     try {
-      // First verify the OTP
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email: formData.email,
         token: formData.otp,
@@ -133,21 +223,22 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
 
       if (verifyError) throw verifyError;
 
-      // Then update the password
       const { error: updateError } = await supabase.auth.updateUser({
         password: formData.newPassword,
       });
 
       if (updateError) throw updateError;
 
-      alert('Password updated successfully! You can now sign in.');
+      setError('Password updated successfully! You can now sign in.');
       
-      // Reset form and go back to sign in
-      setShowForgotPassword(false);
-      setOtpSent(false);
-      setFormData({ ...formData, otp: '', newPassword: '' });
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setOtpSent(false);
+        setFormData({ ...formData, otp: '', newPassword: '' });
+        setError(null);
+      }, 2000);
     } catch (error: any) {
-      alert(error.message || 'Failed to reset password. Please try again.');
+      setError(error.message || 'Failed to reset password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -174,12 +265,21 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
           </p>
         </header>
 
+        {/* Error Message Display */}
+        {error && (
+          <div className={`mb-4 p-3 rounded-lg text-sm ${
+            error.includes('successfully') || error.includes('sent')
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}>
+            {error}
+          </div>
+        )}
+
         <main>
           {showForgotPassword ? (
-            // Forgot Password Flow with OTP
             <div className="space-y-3 sm:space-y-4">
               {!otpSent ? (
-                // Step 1: Enter Email for Reset
                 <>
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
@@ -205,7 +305,6 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                   </button>
                 </>
               ) : (
-                // Step 2: Enter OTP and New Password
                 <form onSubmit={handleResetPassword} className="space-y-3 sm:space-y-4">
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
@@ -263,9 +362,11 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => {
                       setOtpSent(false);
                       setFormData({ ...formData, otp: '', newPassword: '' });
+                      setError(null);
                     }}
                     className="w-full text-purple-600 hover:underline text-sm"
                   >
@@ -275,10 +376,12 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
               )}
 
               <button
+                type="button"
                 onClick={() => {
                   setShowForgotPassword(false);
                   setOtpSent(false);
                   setFormData({ ...formData, otp: '', newPassword: '' });
+                  setError(null);
                 }}
                 className="w-full text-gray-600 hover:underline text-sm sm:text-base"
               >
@@ -286,7 +389,6 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
               </button>
             </div>
           ) : (
-            // Regular Password Sign In/Up
             <>
               <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                 {isSignUp && (
@@ -359,10 +461,10 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                 </button>
               </form>
 
-              {/* Forgot Password Link - only show on sign in */}
               {!isSignUp && (
                 <div className="mt-3 text-center">
                   <button
+                    type="button"
                     onClick={() => setShowForgotPassword(true)}
                     className="text-sm text-purple-600 hover:underline"
                   >
@@ -371,7 +473,6 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                 </div>
               )}
 
-              {/* Google Sign-In */}
               <div className="mt-4 sm:mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -383,6 +484,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
                 </div>
 
                 <button
+                  type="button"
                   onClick={handleGoogleSignIn}
                   disabled={googleLoading || loading}
                   className="w-full mt-3 sm:mt-4 flex items-center justify-center space-x-2 sm:space-x-3 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -400,7 +502,11 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
 
               <div className="mt-4 sm:mt-6 text-center">
                 <button
-                  onClick={() => setIsSignUp(!isSignUp)}
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setError(null);
+                  }}
                   className="text-purple-600 hover:underline text-sm sm:text-base"
                 >
                   {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
