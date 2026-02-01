@@ -111,7 +111,7 @@ export function LifeReceipts() {
 
   return (
     <>
-      <div className="h-screen overflow-y-auto pb-20 sm:pb-24 bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen overflow-y-auto pb-20 sm:pb-24 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <header className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="text-center">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -127,19 +127,23 @@ export function LifeReceipts() {
           <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
             <button
               onClick={handleAddClick}
-              className="w-full h-24 sm:h-28 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm"
+              className="p-3 sm:p-4 rounded-xl bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 shadow-sm flex flex-col items-center transition-all duration-200 ease-in-out hover:bg-blue-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
             >
-              <Plus className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
-              <span className="text-base sm:text-lg">Add</span>
+              <div className="bg-blue-100 dark:bg-blue-900 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3">
+                <Plus className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+              </div>
+              <span className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg">Add</span>
             </button>
             <button
               onClick={handleSeeClick}
-              className="w-full h-24 sm:h-28 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm"
+              className="p-3 sm:p-4 rounded-xl bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-gray-700 shadow-sm flex flex-col items-center transition-all duration-200 ease-in-out hover:bg-green-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
             >
-              <Eye className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
-              <span className="text-base sm:text-lg">See</span>
+              <div className="bg-green-100 dark:bg-green-900 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3">
+                <Eye className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-green-600 dark:text-green-400" />
+              </div>
+              <span className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg">See</span>
               {receipts.length > 0 && (
-                <span className="text-xs sm:text-sm opacity-90">
+                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   ({receipts.length})
                 </span>
               )}
@@ -148,10 +152,12 @@ export function LifeReceipts() {
           <button
             onClick={() => setShowClearModal(true)}
             disabled={receipts.length === 0}
-            className="w-full h-24 sm:h-28 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+            className="w-full p-3 sm:p-4 rounded-xl bg-red-50 dark:bg-gray-800 border border-red-200 dark:border-gray-700 shadow-sm flex flex-col items-center transition-all duration-200 ease-in-out hover:bg-red-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
           >
-            <Trash2 className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
-            <span className="text-base sm:text-lg">Clear my mind</span>
+            <div className="bg-red-100 dark:bg-red-900 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3">
+              <Trash2 className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-red-600 dark:text-red-400" />
+            </div>
+            <span className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg">Clear my mind</span>
           </button>
         </div>
 
