@@ -1,0 +1,27 @@
+========================================
+SIGNUP IS BROKEN - FIX IN 30 SECONDS
+========================================
+
+STEP 1: Open https://supabase.com/dashboard
+
+STEP 2: Click your project
+
+STEP 3: Click "SQL Editor" (left sidebar)
+
+STEP 4: Click "New Query"
+
+STEP 5: Paste these 2 lines:
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users CASCADE;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+
+STEP 6: Click "Run" (or press Ctrl+Enter)
+
+DONE! Signup will work immediately.
+
+========================================
+
+WHY: A database trigger is trying to modify auth.users
+without proper permissions, blocking all signups.
+
+========================================

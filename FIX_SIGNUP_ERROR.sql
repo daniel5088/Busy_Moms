@@ -24,9 +24,16 @@
   ** SIGNUP WILL NOT WORK UNTIL THIS IS DONE **
 */
 
--- Drop the trigger and function that's causing signup failures
+-- ==============================================================================
+-- COPY THESE TWO LINES AND RUN THEM IN YOUR SUPABASE SQL EDITOR
+-- ==============================================================================
+
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users CASCADE;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+
+-- ==============================================================================
+-- THAT'S IT - SIGNUP WILL WORK IMMEDIATELY AFTER RUNNING THESE TWO LINES
+-- ==============================================================================
 
 -- Verify the trigger is gone
 SELECT
