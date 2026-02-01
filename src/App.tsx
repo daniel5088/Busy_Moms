@@ -67,6 +67,8 @@ function App() {
   const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
   const [scrollToGoogleCalendar, setScrollToGoogleCalendar] = useState(false);
   const [openAboutDialog, setOpenAboutDialog] = useState(false);
+  const [autoStartCalendarTutorial, setAutoStartCalendarTutorial] = useState(false);
+  const [autoStartFamilyTutorial, setAutoStartFamilyTutorial] = useState(false);
   const { toasts, removeToast } = useToast();
   const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const notificationManager = useNotificationManager();
@@ -87,6 +89,16 @@ function App() {
       });
     }
   }, [forceSignOut, user]);
+
+  // Reset auto-start flags after they're used
+  useEffect(() => {
+    if (currentScreen === 'calendar' && autoStartCalendarTutorial) {
+      setTimeout(() => setAutoStartCalendarTutorial(false), 1000);
+    }
+    if (currentScreen === 'family' && autoStartFamilyTutorial) {
+      setTimeout(() => setAutoStartFamilyTutorial(false), 1000);
+    }
+  }, [currentScreen, autoStartCalendarTutorial, autoStartFamilyTutorial]);
 
   // Show edge diagnostics page if requested
   if (showEdgeDiagnostics) {
@@ -410,6 +422,10 @@ function App() {
                     darkMode={darkMode}
                     toggleDarkMode={toggleDarkMode}
                     scrollToGoogleCalendar={scrollToGoogleCalendar}
+                    onNavigateToScreen={(screen) => {
+                      setCurrentSubScreen(null);
+                      setCurrentScreen(screen);
+                    }}
                   />
                 </FeatureErrorBoundary>
               )}
@@ -430,7 +446,12 @@ function App() {
               {(currentScreen === 'dashboard' || currentScreen === 'dashboard-v4') && (
                 <FeatureErrorBoundary featureName="Dashboard">
                   <Dashboard
-                    onNavigate={setCurrentScreen}
+                    onNavigate={(screen) => {
+                      if (screen === 'calendar') {
+                        setAutoStartCalendarTutorial(true);
+                      }
+                      setCurrentScreen(screen);
+                    }}
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onVoiceChatOpen={() => setShowVoiceChat(true)}
                     onOpenAffirmationSettings={() => setShowAffirmationSettings(true)}
@@ -467,6 +488,13 @@ function App() {
                       setScrollToGoogleCalendar(true);
                       setCurrentSubScreen('settings');
                     }}
+                    onNavigate={(screen) => {
+                      if (screen === 'family') {
+                        setAutoStartFamilyTutorial(true);
+                      }
+                      setCurrentScreen(screen);
+                    }}
+                    autoStartTutorial={autoStartCalendarTutorial}
                   />
                 </FeatureErrorBoundary>
               )}
@@ -480,6 +508,7 @@ function App() {
                   <FamilyHub
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onNavigateToScreen={setCurrentScreen}
+                    autoStartTutorial={autoStartFamilyTutorial}
                   />
                 </FeatureErrorBoundary>
               )}

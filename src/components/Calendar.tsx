@@ -103,9 +103,11 @@ interface CalendarProps {
   initialSelectedDate?: string | null;
   onDateSelected?: () => void;
   onNavigateToGoogleCalendarSettings?: () => void;
+  onNavigate?: (screen: 'dashboard' | 'family' | 'more') => void;
+  autoStartTutorial?: boolean;
 }
 
-export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCalendarCamera, onCalendarCameraOpened, initialSelectedDate, onDateSelected, onNavigateToGoogleCalendarSettings }: CalendarProps) {
+export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCalendarCamera, onCalendarCameraOpened, initialSelectedDate, onDateSelected, onNavigateToGoogleCalendarSettings, onNavigate, autoStartTutorial }: CalendarProps) {
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
@@ -157,7 +159,14 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     handleNext: handleTutorialNext,
     handleBack: handleTutorialBack,
     handleSkip: handleTutorialSkip,
-  } = useTutorial('calendar', calendarTutorialSteps);
+  } = useTutorial('calendar', calendarTutorialSteps, {
+    autoStart: autoStartTutorial,
+    onComplete: () => {
+      if (onNavigate) {
+        setTimeout(() => onNavigate('family'), 500);
+      }
+    },
+  });
 
   // Handle initial selected date from dashboard navigation
   useEffect(() => {
@@ -1084,6 +1093,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     Your events stay private and secure.
                   </p>
                   <button
+                    id="google-calendar-sync"
                     onClick={() => {
                       onNavigateToGoogleCalendarSettings?.();
                     }}

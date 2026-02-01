@@ -56,18 +56,21 @@ import {
   PERSONALITY_OPTIONS
 } from '../services/aiVoicePreferences';
 import { getAgeFromBirthday } from '../utils/ageCalculator';
-import { resetTutorial } from '../services/tutorialService';
+import { resetTutorial, resetAllTutorialsAndRestart } from '../services/tutorialService';
+import type { Screen } from '../App';
 
 interface SettingsProps {
   darkMode: boolean;
   toggleDarkMode: () => void;
   scrollToGoogleCalendar?: boolean;
+  onNavigateToScreen?: (screen: Screen) => void;
 }
 
 export function Settings({
   darkMode,
   toggleDarkMode,
   scrollToGoogleCalendar = false,
+  onNavigateToScreen,
 }: SettingsProps) {
   const { user, signOut } = useAuth();
   const { performSync } = useCalendarSync();
@@ -415,15 +418,17 @@ export function Settings({
   const handleResetTutorials = async () => {
     if (resettingTutorials) return;
 
+    if (!confirm('This will restart the tutorial walkthrough from the beginning. Continue?')) {
+      return;
+    }
+
     setResettingTutorials(true);
     try {
-      await Promise.all([
-        resetTutorial('dashboard'),
-        resetTutorial('calendar'),
-        resetTutorial('family_hub'),
-      ]);
+      await resetAllTutorialsAndRestart();
 
-      alert('Tutorials have been reset. They will show again on your next visit to each page.');
+      if (onNavigateToScreen) {
+        onNavigateToScreen('dashboard-v4');
+      }
     } catch (error) {
       console.error('Error resetting tutorials:', error);
       alert('Failed to reset tutorials. Please try again.');
@@ -597,9 +602,9 @@ export function Settings({
       items: [
         {
           icon: BookOpen,
-          title: 'Reset Tutorials',
+          title: 'Show Tutorials',
           description: 'Restart the walkthrough guides for Dashboard, Calendar, and Family Hub',
-          action: resettingTutorials ? 'Resetting...' : 'Reset',
+          action: resettingTutorials ? 'Loading...' : 'Show',
           onClick: handleResetTutorials,
           disabled: resettingTutorials,
         },

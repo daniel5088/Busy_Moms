@@ -2,7 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { TutorialStep } from '../components/TutorialOverlay';
 import { TutorialName, getTutorialProgress, markTutorialComplete } from '../services/tutorialService';
 
-export function useTutorial(tutorialName: TutorialName, steps: TutorialStep[]) {
+interface UseTutorialOptions {
+  onComplete?: () => void;
+  autoStart?: boolean;
+}
+
+export function useTutorial(
+  tutorialName: TutorialName,
+  steps: TutorialStep[],
+  options: UseTutorialOptions = {}
+) {
+  const { onComplete, autoStart = false } = options;
   const [visible, setVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -11,7 +21,12 @@ export function useTutorial(tutorialName: TutorialName, steps: TutorialStep[]) {
     const checkTutorialStatus = async () => {
       try {
         const completed = await getTutorialProgress(tutorialName);
-        setVisible(!completed);
+
+        if (autoStart && !completed) {
+          setTimeout(() => setVisible(true), 500);
+        } else {
+          setVisible(!completed);
+        }
       } catch (error) {
         console.error('Error checking tutorial status:', error);
       } finally {
@@ -20,7 +35,7 @@ export function useTutorial(tutorialName: TutorialName, steps: TutorialStep[]) {
     };
 
     checkTutorialStatus();
-  }, [tutorialName]);
+  }, [tutorialName, autoStart]);
 
   const handleNext = useCallback(async () => {
     if (currentStep < steps.length - 1) {
@@ -29,8 +44,12 @@ export function useTutorial(tutorialName: TutorialName, steps: TutorialStep[]) {
       await markTutorialComplete(tutorialName);
       setVisible(false);
       setCurrentStep(0);
+
+      if (onComplete) {
+        onComplete();
+      }
     }
-  }, [currentStep, steps.length, tutorialName]);
+  }, [currentStep, steps.length, tutorialName, onComplete]);
 
   const handleBack = useCallback(() => {
     if (currentStep > 0) {

@@ -119,3 +119,17 @@ export async function getAllTutorialProgress(): Promise<Record<TutorialName, boo
 
   return progress;
 }
+
+export async function resetAllTutorialsAndRestart(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return;
+  }
+
+  const tutorials: TutorialName[] = ['dashboard', 'calendar', 'family_hub'];
+
+  for (const tutorial of tutorials) {
+    await resetTutorial(tutorial);
+  }
+}

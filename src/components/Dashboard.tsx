@@ -139,7 +139,11 @@ export function Dashboard({
     handleNext: handleTutorialNext,
     handleBack: handleTutorialBack,
     handleSkip: handleTutorialSkip,
-  } = useTutorial('dashboard', dashboardTutorialSteps);
+  } = useTutorial('dashboard', dashboardTutorialSteps, {
+    onComplete: () => {
+      setTimeout(() => onNavigate('calendar'), 500);
+    },
+  });
 
   const shouldShowReminder = React.useCallback((reminder: Reminder, now: Date): boolean => {
     const today = getTodayISO();
@@ -944,7 +948,7 @@ export function Dashboard({
           </div>
 
           {/* Smart Reminders */}
-          <div>
+          <div id="smart-reminders">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
                 Smart Reminders

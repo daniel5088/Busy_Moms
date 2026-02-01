@@ -21,8 +21,14 @@ export const dashboardTutorialSteps: TutorialStep[] = [
   },
   {
     title: 'Today\'s Schedule',
-    description: 'View your upcoming events and tasks for the day. Stay organized and never miss an important moment.',
+    description: 'View your daily schedule on the left and your weekly schedule on the right. Stay organized and never miss an important moment.',
     targetId: 'todays-schedule',
+    placement: 'bottom',
+  },
+  {
+    title: 'Smart Reminders',
+    description: 'See all your upcoming reminders and tasks. These are personalized notifications to keep you on track.',
+    targetId: 'smart-reminders',
     placement: 'bottom',
   },
   {
@@ -32,10 +38,16 @@ export const dashboardTutorialSteps: TutorialStep[] = [
     placement: 'top',
   },
   {
-    title: 'Navigation',
-    description: 'Use the navigation bar to access Calendar, Family Hub, Shopping, and more features.',
+    title: 'Meet Sarah - Your AI Assistant',
+    description: 'Click the Sarah button at the bottom to chat with your AI assistant. Ask questions, create events, or get help anytime!',
     targetId: 'main-navigation',
     placement: 'top',
+  },
+  {
+    title: 'You\'re All Set!',
+    description: 'Great job! Now let\'s explore your Calendar to see how you can manage all your family events.',
+    targetId: null,
+    placement: 'center',
   },
 ];
 

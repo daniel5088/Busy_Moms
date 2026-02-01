@@ -10,9 +10,10 @@ import { SubScreen, Screen } from '../App';
 interface FamilyHubProps {
   onNavigateToSubScreen: (screen: SubScreen) => void;
   onNavigateToScreen: (screen: Screen) => void;
+  autoStartTutorial?: boolean;
 }
 
-export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyHubProps) {
+export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen, autoStartTutorial }: FamilyHubProps) {
   // TODO: Uncomment when real data loading is implemented
   // const [loading, setLoading] = useState(true);
 
@@ -28,7 +29,9 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
     handleNext: handleTutorialNext,
     handleBack: handleTutorialBack,
     handleSkip: handleTutorialSkip,
-  } = useTutorial('family_hub', familyHubTutorialSteps);
+  } = useTutorial('family_hub', familyHubTutorialSteps, {
+    autoStart: autoStartTutorial,
+  });
 
   const familyFeatures = [
     {
