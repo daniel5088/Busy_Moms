@@ -228,6 +228,12 @@ export function useAuth() {
       });
 
       if (error) {
+        // Check if it's the database trigger error
+        if (error.message && error.message.includes('Database error saving new user')) {
+          console.error('❌ Database trigger error - please run FIX_SIGNUP_ERROR.sql');
+          console.error('   This is caused by a problematic database trigger that needs to be removed.');
+          console.error('   See FIX_SIGNUP_ERROR.sql in the project root for the fix.');
+        }
         console.error('❌ Sign-up error:', error.message);
         return { data: null, error };
       }

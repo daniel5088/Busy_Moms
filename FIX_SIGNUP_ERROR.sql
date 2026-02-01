@@ -1,20 +1,27 @@
 /*
-  # Fix User Signup Error
+  # Fix User Signup Error - REQUIRED TO ENABLE SIGNUP
 
   This SQL fixes the "Database error saving new user" error that occurs during signup.
 
   ## Problem
   The handle_new_user() trigger tries to update auth.users table directly,
   which requires superuser privileges that the function doesn't have.
+  This causes ALL signups to fail with a 500 error.
 
   ## Solution
   Drop the problematic trigger and function to allow normal signup to work.
+  Role assignment is already handled in the application code through metadata.
 
-  ## How to Apply
-  1. Go to your Supabase Dashboard
-  2. Navigate to SQL Editor
-  3. Copy and paste this entire file
-  4. Click "Run" to execute
+  ## CRITICAL: How to Apply (MUST BE DONE MANUALLY)
+  1. Open your Supabase Dashboard at https://supabase.com/dashboard
+  2. Select your project
+  3. Click "SQL Editor" in the left sidebar
+  4. Click "New Query"
+  5. Copy ONLY lines 22-23 below (the DROP statements)
+  6. Paste into the SQL Editor
+  7. Click "Run" or press Ctrl+Enter
+
+  ** SIGNUP WILL NOT WORK UNTIL THIS IS DONE **
 */
 
 -- Drop the trigger and function that's causing signup failures
