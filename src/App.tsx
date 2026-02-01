@@ -31,6 +31,7 @@ import { Diagnostics } from './pages/Diagnostics';
 import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks component
 import { useDarkMode } from './hooks/useDarkMode';
 import CycleTracker from './components/CycleTracker';
+import { LifeReceipts } from './components/LifeReceipts';
 
 export type Screen =
   | 'dashboard'
@@ -46,7 +47,8 @@ export type SubScreen =
   | 'family-folders'
   | 'settings'
   | 'quick-links'
-  | 'wellness';
+  | 'wellness'
+  | 'life-receipts';
 
 function App() {
   const session = useSessionContext();
@@ -438,6 +440,11 @@ function App() {
               {currentSubScreen === 'wellness' && (
                 <FeatureErrorBoundary featureName="Wellness">
                   <CycleTracker />
+                </FeatureErrorBoundary>
+              )}
+              {currentSubScreen === 'life-receipts' && (
+                <FeatureErrorBoundary featureName="Life Receipts">
+                  <LifeReceipts />
                 </FeatureErrorBoundary>
               )}
             </>

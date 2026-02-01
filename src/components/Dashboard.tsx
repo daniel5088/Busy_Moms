@@ -23,6 +23,7 @@ import {
   Star,
   CloudSun,
   XCircle,
+  Receipt,
 } from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
@@ -518,17 +519,17 @@ export function Dashboard({
       action: () => onNavigateToWellness?.(),
     },
     {
-      icon: Gift,
-      title: 'Gift Finder',
-      desc: 'Coming soon',
-      bgColor: 'bg-gray-50 dark:bg-gray-800',
-      borderColor: 'border-gray-200 dark:border-gray-700',
-      iconBgColor: 'bg-gray-100 dark:bg-gray-700',
-      iconColor: 'text-gray-400 dark:text-gray-500',
-      textColor: 'text-gray-500 dark:text-gray-400',
-      descColor: 'text-gray-400 dark:text-gray-500',
-      hoverBg: '',
-      action: undefined,
+      icon: Receipt,
+      title: 'Life Receipts',
+      desc: 'Clear your mind',
+      bgColor: 'bg-indigo-50 dark:bg-gray-800',
+      borderColor: 'border-indigo-200 dark:border-gray-700',
+      iconBgColor: 'bg-indigo-100 dark:bg-indigo-900',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      textColor: 'text-gray-900 dark:text-gray-100',
+      descColor: 'text-gray-600 dark:text-gray-400',
+      hoverBg: 'hover:bg-indigo-100 dark:hover:bg-gray-700',
+      action: () => onNavigateToSubScreen('life-receipts'),
     },
     {
       icon: Bell,
