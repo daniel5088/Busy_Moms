@@ -128,7 +128,7 @@ export function LifeReceipts() {
             <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
             <button
               onClick={handleAddClick}
-              className="p-3 sm:p-4 rounded-xl bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 shadow-sm flex flex-col items-center transition-all duration-200 ease-in-out hover:bg-blue-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+              className="h-40 sm:h-44 p-3 sm:p-4 rounded-xl bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center transition-all duration-200 ease-in-out hover:bg-blue-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
             >
               <div className="bg-blue-100 dark:bg-blue-900 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3">
                 <Plus className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-blue-600 dark:text-blue-400" />
