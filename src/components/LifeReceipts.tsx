@@ -143,11 +143,6 @@ export function LifeReceipts() {
                 <Eye className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-green-600 dark:text-green-400" />
               </div>
               <span className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg">See</span>
-              {receipts.length > 0 && (
-                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                  ({receipts.length})
-                </span>
-              )}
             </button>
           </div>
           <button
