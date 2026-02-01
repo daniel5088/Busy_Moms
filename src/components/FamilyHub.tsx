@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Users, FolderOpen, UserPlus, ShoppingBag, CheckSquare, Heart } from 'lucide-react';
 import { NavigationHeader } from './NavigationHeader';
+import { TutorialOverlay } from './TutorialOverlay';
+import { useTutorial } from '../hooks/useTutorial';
+import { familyHubTutorialSteps } from '../utils/tutorialSteps';
 // import { FamilyHubSkeleton } from './skeletons/FamilyHubSkeleton';
 import { SubScreen, Screen } from '../App';
 
@@ -18,6 +21,14 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
   // if (loading) {
   //   return <FamilyHubSkeleton />;
   // }
+
+  const {
+    visible: tutorialVisible,
+    currentStep: tutorialStep,
+    handleNext: handleTutorialNext,
+    handleBack: handleTutorialBack,
+    handleSkip: handleTutorialSkip,
+  } = useTutorial('family_hub', familyHubTutorialSteps);
 
   const familyFeatures = [
     {
@@ -76,10 +87,11 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
         </p>
 
         <section aria-label="Quick access features">
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+          <div id="family-members-section" className="grid gap-4" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
             {familyFeatures.map((feature) => (
               <button
                 key={feature.id}
+                id={`${feature.id}-section`}
                 type="button"
                 onClick={() => onNavigateToSubScreen(feature.id)}
                 aria-labelledby={`family-feature-title-${feature.id}`}
@@ -109,6 +121,15 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen }: FamilyH
           </div>
         </section>
       </div>
+
+      <TutorialOverlay
+        steps={familyHubTutorialSteps}
+        currentStep={tutorialStep}
+        visible={tutorialVisible}
+        onNext={handleTutorialNext}
+        onBack={handleTutorialBack}
+        onSkip={handleTutorialSkip}
+      />
     </main>
   );
 }

@@ -44,6 +44,9 @@ import {
   markAsAutoShown,
   clearOldAutoShowData,
 } from '../utils/affirmationScheduler';
+import { TutorialOverlay } from './TutorialOverlay';
+import { useTutorial } from '../hooks/useTutorial';
+import { dashboardTutorialSteps } from '../utils/tutorialSteps';
 
 import { SubScreen } from '../App';
 
@@ -129,6 +132,14 @@ export function Dashboard({
   const [affirmationStatus, setAffirmationStatus] = React.useState<string>('');
   const [showAboutMenu, setShowAboutMenu] = React.useState(false);
   const [showWeatherModal, setShowWeatherModal] = React.useState(false);
+
+  const {
+    visible: tutorialVisible,
+    currentStep: tutorialStep,
+    handleNext: handleTutorialNext,
+    handleBack: handleTutorialBack,
+    handleSkip: handleTutorialSkip,
+  } = useTutorial('dashboard', dashboardTutorialSteps);
 
   const shouldShowReminder = React.useCallback((reminder: Reminder, now: Date): boolean => {
     const today = getTodayISO();
@@ -708,6 +719,7 @@ export function Dashboard({
             </div>
             <div className="flex items-center space-x-3">
               <button
+                id="weather-widget"
                 onClick={handleOpenWeatherModal}
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95"
                 title="View weather"
@@ -716,6 +728,7 @@ export function Dashboard({
                 <CloudSun className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               </button>
               <button
+                id="daily-affirmations"
                 onClick={handleOpenAffirmation}
                 className={`w-8 h-8 sm:w-10 sm:h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-30 transition-all active:scale-95 ${
                   isAffirmationButtonGlowing
@@ -781,7 +794,7 @@ export function Dashboard({
 
         <div className="p-4 space-y-4 sm:p-6 sm:space-y-6">
           {/* Side-by-side Schedule Cards */}
-          <div className="flex gap-3 sm:gap-4">
+          <div id="todays-schedule" className="flex gap-3 sm:gap-4">
             {/* Today's Schedule */}
             <div className="w-1/2">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
@@ -896,7 +909,7 @@ export function Dashboard({
           </div>
 
           {/* Quick Actions - 3x2 Grid */}
-          <div>
+          <div id="quick-links">
             <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
               Quick Actions
             </h2>
@@ -1152,6 +1165,15 @@ export function Dashboard({
           </div>
         </div>
       )}
+
+      <TutorialOverlay
+        steps={dashboardTutorialSteps}
+        currentStep={tutorialStep}
+        visible={tutorialVisible}
+        onNext={handleTutorialNext}
+        onBack={handleTutorialBack}
+        onSkip={handleTutorialSkip}
+      />
     </>
   );
 }

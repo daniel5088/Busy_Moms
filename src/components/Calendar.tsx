@@ -30,6 +30,9 @@ import type { Event as DbEvent } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCalendarSync } from '../hooks/useCalendarSync';
 import { useDefaultAddress } from '../hooks/useDefaultAddress';
+import { TutorialOverlay } from './TutorialOverlay';
+import { useTutorial } from '../hooks/useTutorial';
+import { calendarTutorialSteps } from '../utils/tutorialSteps';
 import type { SubScreen } from '../App';
 
 // --- Helpers -----------------------------------------------------------------
@@ -146,6 +149,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [showGiftSuggestion, setShowGiftSuggestion] = useState(false);
   const [giftEventTitle, setGiftEventTitle] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<Set<number>>(new Set());
+
+  // Tutorial
+  const {
+    visible: tutorialVisible,
+    currentStep: tutorialStep,
+    handleNext: handleTutorialNext,
+    handleBack: handleTutorialBack,
+    handleSkip: handleTutorialSkip,
+  } = useTutorial('calendar', calendarTutorialSteps);
 
   // Handle initial selected date from dashboard navigation
   useEffect(() => {
@@ -1041,7 +1053,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
           {/* Google Calendar Connection Banner */}
           {user?.id && !isGoogleConnected && (
-            <div className="mb-6 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-2xl p-4 shadow-lg" data-google-banner>
+            <div id="google-calendar-sync" className="mb-6 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-2xl p-4 shadow-lg" data-google-banner>
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
                   <svg viewBox="0 0 24 24" className="w-10 h-10" fill="currentColor">
@@ -1118,7 +1130,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Calendar Grid - Left Side */}
             <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+              <div id="calendar-view" className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
                 {/* Month Navigation */}
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -1223,6 +1235,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                 {/* Add Event Button */}
                 <div className="flex gap-3 mt-6">
                   <button
+                    id="add-event-button"
                     onClick={() => {
                       setSelectedEvent(null);
                       setShowEventForm(true);
@@ -1245,7 +1258,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
             {/* Events List - Right Side */}
             <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+              <div id="calendar-events" className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                   {selectedDate && isSameDay(selectedDate, new Date()) ? 'Today' : 'Selected Day'}
                 </h3>
@@ -2335,6 +2348,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
             </div>
           </div>
         )}
+
+        <TutorialOverlay
+          steps={calendarTutorialSteps}
+          currentStep={tutorialStep}
+          visible={tutorialVisible}
+          onNext={handleTutorialNext}
+          onBack={handleTutorialBack}
+          onSkip={handleTutorialSkip}
+        />
       </div>
     </>
   );

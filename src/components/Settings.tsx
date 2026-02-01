@@ -24,6 +24,7 @@ import {
   Moon,
   LayoutDashboard,
   Cloud,
+  BookOpen,
 } from 'lucide-react';
 import { FamilyMemberForm } from './forms/FamilyMemberForm';
 import { ProfileForm } from './forms/ProfileForm';
@@ -55,6 +56,7 @@ import {
   PERSONALITY_OPTIONS
 } from '../services/aiVoicePreferences';
 import { getAgeFromBirthday } from '../utils/ageCalculator';
+import { resetTutorial } from '../services/tutorialService';
 
 interface SettingsProps {
   darkMode: boolean;
@@ -96,6 +98,7 @@ export function Settings({
     shopping: true,
     reminders: true,
   });
+  const [resettingTutorials, setResettingTutorials] = useState(false);
 
   const checkGoogleConnection = React.useCallback(async () => {
     if (!user) return;
@@ -409,6 +412,26 @@ export function Settings({
     }
   };
 
+  const handleResetTutorials = async () => {
+    if (resettingTutorials) return;
+
+    setResettingTutorials(true);
+    try {
+      await Promise.all([
+        resetTutorial('dashboard'),
+        resetTutorial('calendar'),
+        resetTutorial('family_hub'),
+      ]);
+
+      alert('Tutorials have been reset. They will show again on your next visit to each page.');
+    } catch (error) {
+      console.error('Error resetting tutorials:', error);
+      alert('Failed to reset tutorials. Please try again.');
+    } finally {
+      setResettingTutorials(false);
+    }
+  };
+
   const settingSections = [
     {
       title: 'Appearance',
@@ -566,6 +589,19 @@ export function Settings({
           action: 'Configure',
           //Alvaros - Dailyaffirmations: Dispatch event to open unified settings modal at App level
           onClick: () => window.dispatchEvent(new CustomEvent('open-affirmations')),
+        },
+      ],
+    },
+    {
+      title: 'Help & Tutorials',
+      items: [
+        {
+          icon: BookOpen,
+          title: 'Reset Tutorials',
+          description: 'Restart the walkthrough guides for Dashboard, Calendar, and Family Hub',
+          action: resettingTutorials ? 'Resetting...' : 'Reset',
+          onClick: handleResetTutorials,
+          disabled: resettingTutorials,
         },
       ],
     },
