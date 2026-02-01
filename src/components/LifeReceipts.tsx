@@ -124,22 +124,22 @@ export function LifeReceipts() {
         </header>
 
         <div className="p-3 sm:p-4">
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="grid grid-cols-2 gap-3 mb-3 min-w-0">
             <button
               onClick={handleAddClick}
-              className="h-24 sm:h-28 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm"
+              className="min-w-0 h-24 sm:h-28 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm"
             >
-              <Plus className="w-8 h-8 sm:w-10 sm:h-10" />
-              <span className="text-base sm:text-lg">Add</span>
+              <Plus className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
+              <span className="text-base sm:text-lg whitespace-nowrap">Add</span>
             </button>
             <button
               onClick={handleSeeClick}
-              className="h-24 sm:h-28 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm"
+              className="min-w-0 h-24 sm:h-28 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm"
             >
-              <Eye className="w-8 h-8 sm:w-10 sm:h-10" />
-              <span className="text-base sm:text-lg">See</span>
+              <Eye className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
+              <span className="text-base sm:text-lg whitespace-nowrap">See</span>
               {receipts.length > 0 && (
-                <span className="text-xs sm:text-sm opacity-90">
+                <span className="text-xs sm:text-sm opacity-90 whitespace-nowrap">
                   ({receipts.length})
                 </span>
               )}
@@ -150,8 +150,8 @@ export function LifeReceipts() {
             disabled={receipts.length === 0}
             className="w-full h-24 sm:h-28 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm disabled:opacity-50"
           >
-            <Trash2 className="w-8 h-8 sm:w-10 sm:h-10" />
-            <span className="text-base sm:text-lg">Clear my mind</span>
+            <Trash2 className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
+            <span className="text-base sm:text-lg whitespace-nowrap">Clear my mind</span>
           </button>
         </div>
 
