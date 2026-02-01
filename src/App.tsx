@@ -509,6 +509,7 @@ function App() {
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onNavigateToScreen={setCurrentScreen}
                     autoStartTutorial={autoStartFamilyTutorial}
+                    onOpenVoiceChat={() => setShowVoiceChat(true)}
                   />
                 </FeatureErrorBoundary>
               )}

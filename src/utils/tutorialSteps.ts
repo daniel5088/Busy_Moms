@@ -122,3 +122,42 @@ export const familyHubTutorialSteps: TutorialStep[] = [
     placement: 'top',
   },
 ];
+
+export const sarahTutorialSteps: TutorialStep[] = [
+  {
+    title: 'Meet Sarah - Your AI Assistant',
+    description: 'Hi! I\'m Sarah, your personal AI assistant. I can help you manage your family life with simple voice or text commands. Let me show you what I can do!',
+    targetId: null,
+    placement: 'center',
+  },
+  {
+    title: 'Calendar Management',
+    description: 'Try saying:\n\n• "Schedule dentist appointment tomorrow at 2pm"\n• "What\'s my schedule today?"\n• "Am I free Friday afternoon?"\n• "Move my dentist appointment to next week"\n• "Share the piano lesson with Emma"',
+    targetId: null,
+    placement: 'center',
+  },
+  {
+    title: 'Task Management',
+    description: 'Try saying:\n\n• "Create a task for Emma to clean her room"\n• "Show me all pending tasks"\n• "Remind Jack to do his homework at 5pm"\n• "What tasks does Emma have?"\n• "High priority task: call school"',
+    targetId: null,
+    placement: 'center',
+  },
+  {
+    title: 'Shopping Lists',
+    description: 'Try saying:\n\n• "Add milk and bread to my shopping list"\n• "Send items to Instacart"\n• "What\'s on my shopping list?"\n• "Mark milk as purchased"\n• "Remind Emma to pick up milk"',
+    targetId: null,
+    placement: 'center',
+  },
+  {
+    title: 'Reminders',
+    description: 'Try saying:\n\n• "Remind me to call mom tomorrow at 3pm"\n• "Remind Jack to take out the trash at 6pm"\n• "Set a reminder for Emma\'s soccer practice"\n• "What reminders do I have today?"',
+    targetId: null,
+    placement: 'center',
+  },
+  {
+    title: 'Weather & More',
+    description: 'Try saying:\n\n• "What\'s the weather today?"\n• "Will it rain tomorrow?"\n• "What\'s the forecast for this week?"\n• "What\'s the weather for my dentist appointment?"\n\nI\'m here to help make your life easier!',
+    targetId: null,
+    placement: 'center',
+  },
+];

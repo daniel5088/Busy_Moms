@@ -11,9 +11,10 @@ interface FamilyHubProps {
   onNavigateToSubScreen: (screen: SubScreen) => void;
   onNavigateToScreen: (screen: Screen) => void;
   autoStartTutorial?: boolean;
+  onOpenVoiceChat?: () => void;
 }
 
-export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen, autoStartTutorial }: FamilyHubProps) {
+export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen, autoStartTutorial, onOpenVoiceChat }: FamilyHubProps) {
   // TODO: Uncomment when real data loading is implemented
   // const [loading, setLoading] = useState(true);
 
@@ -31,6 +32,11 @@ export function FamilyHub({ onNavigateToSubScreen, onNavigateToScreen, autoStart
     handleSkip: handleTutorialSkip,
   } = useTutorial('family_hub', familyHubTutorialSteps, {
     autoStart: autoStartTutorial,
+    onComplete: () => {
+      if (onOpenVoiceChat) {
+        setTimeout(() => onOpenVoiceChat(), 500);
+      }
+    },
   });
 
   const familyFeatures = [

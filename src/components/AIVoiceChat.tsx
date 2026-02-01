@@ -8,6 +8,9 @@ import { sendToInstacart } from '../services/instacartAgentService';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useRetailerSelection } from '../hooks/useRetailerSelection';
+import { TutorialOverlay } from './TutorialOverlay';
+import { useTutorial } from '../hooks/useTutorial';
+import { sarahTutorialSteps } from '../utils/tutorialSteps';
 
 interface AIVoiceChatProps {
   isOpen: boolean;
@@ -20,6 +23,16 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+
+  const {
+    visible: tutorialVisible,
+    currentStep: tutorialStep,
+    handleNext: handleTutorialNext,
+    handleBack: handleTutorialBack,
+    handleSkip: handleTutorialSkip,
+  } = useTutorial('sarah', sarahTutorialSteps, {
+    autoStart: true,
+  });
 
   // Add Instacart items directly to the shopping list database
   const addItemsToLocalShoppingList = async (items: string[]) => {
@@ -890,6 +903,15 @@ export function AIVoiceChat({ isOpen, onClose }: AIVoiceChatProps) {
           </div>
         )}
       </div>
+
+      <TutorialOverlay
+        steps={sarahTutorialSteps}
+        currentStep={tutorialStep}
+        visible={tutorialVisible}
+        onNext={handleTutorialNext}
+        onBack={handleTutorialBack}
+        onSkip={handleTutorialSkip}
+      />
     </div>
   );
 }

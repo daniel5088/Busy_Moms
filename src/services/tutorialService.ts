@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-export type TutorialName = 'dashboard' | 'calendar' | 'family_hub';
+export type TutorialName = 'dashboard' | 'calendar' | 'family_hub' | 'sarah';
 
 export interface TutorialProgress {
   id: string;
@@ -90,6 +90,7 @@ export async function getAllTutorialProgress(): Promise<Record<TutorialName, boo
       dashboard: false,
       calendar: false,
       family_hub: false,
+      sarah: false,
     };
   }
 
@@ -111,6 +112,7 @@ export async function getAllTutorialProgress(): Promise<Record<TutorialName, boo
     dashboard: false,
     calendar: false,
     family_hub: false,
+    sarah: false,
   };
 
   data?.forEach((item) => {
@@ -127,7 +129,7 @@ export async function resetAllTutorialsAndRestart(): Promise<void> {
     return;
   }
 
-  const tutorials: TutorialName[] = ['dashboard', 'calendar', 'family_hub'];
+  const tutorials: TutorialName[] = ['dashboard', 'calendar', 'family_hub', 'sarah'];
 
   for (const tutorial of tutorials) {
     await resetTutorial(tutorial);
