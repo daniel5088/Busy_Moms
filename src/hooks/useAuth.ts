@@ -87,7 +87,9 @@ export function useAuth() {
 
   const handleUserProfile = async (user: User) => {
     try {
-      // If your RLS requires auth, ensure your policies allow SELECT/INSERT for auth.uid()=id
+      console.log('👤 Checking profile for user:', user.id);
+      
+      // Check if profile exists
       const { data: existing, error: checkError } = await supabase
         .from('profiles')
         .select('id')
@@ -96,11 +98,13 @@ export function useAuth() {
 
       // Ignore "no rows" code (PGRST116)
       if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Profile check error:', checkError);
+        console.error('❌ Profile check error:', checkError);
         return;
       }
 
       if (!existing) {
+        console.log('⚠️ Profile not found, creating...');
+        
         const profileData = {
           id: user.id,
           email: user.email ?? '',
@@ -115,28 +119,221 @@ export function useAuth() {
         };
 
         const { error: createError } = await supabase.from('profiles').insert([profileData]);
-        if (createError) console.error('Profile create error:', createError);
+        
+        if (createError) {
+          console.error('❌ Profile create error:', createError);
+        } else {
+          console.log('✅ Profile created successfully');
+        }
+      } else {
+        console.log('✅ Profile already exists');
       }
+
+      // IMPORTANT: Also check/create users table record for your app
+      // This ensures compatibility with both tables
+      await ensureUsersTableRecord(user);
+      
     } catch (error) {
-      console.error('Profile handling error (database may be unavailable):', error);
+      console.error('❌ Profile handling error (database may be unavailable):', error);
     }
   };
 
-  const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) console.error('Sign-up error:', error.message);
-    return { data, error };
+  /**
+   * Ensures a record exists in the users table (in addition to profiles)
+   * This provides compatibility with other parts of your app that use the users table
+   */
+  const ensureUsersTableRecord = async (user: User) => {
+    try {
+      console.log('👤 Checking users table for:', user.id);
+      
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      // Ignore "no rows" code (PGRST116)
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('⚠️ Users table check error (table may not exist):', checkError);
+        return; // Don't fail if users table doesn't exist
+      }
+
+      if (!existingUser) {
+        console.log('⚠️ User record not found in users table, creating...');
+        
+        const userData = {
+          id: user.id,
+          uuid: user.id,
+          email: user.email ?? '',
+          full_name:
+            (user.user_metadata?.full_name ??
+              user.user_metadata?.name ??
+              user.email?.split('@')[0]) ||
+            'User',
+          user_type: user.user_metadata?.user_type || 'Dad',
+          ai_personality: user.user_metadata?.ai_personality || 'Friendly',
+          onboarding_completed: user.user_metadata?.onboarding_completed || false,
+        };
+
+        const { error: insertError } = await supabase.from('users').insert([userData]);
+        
+        if (insertError) {
+          console.error('⚠️ Failed to create users table record:', insertError);
+          // Don't throw - this is a fallback, not critical
+        } else {
+          console.log('✅ Users table record created successfully');
+        }
+      } else {
+        console.log('✅ Users table record already exists');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not verify/create users table record:', error);
+      // Don't throw - this is best-effort
+    }
   };
 
+  /**
+   * Enhanced sign up with better error handling and profile creation
+   */
+  const signUp = async (email: string, password: string, metadata?: { full_name?: string }) => {
+    try {
+      console.log('🔐 Starting signup for:', email);
+
+      // Validate inputs
+      if (!email || !password) {
+        const error = new Error('Email and password are required');
+        console.error('❌ Validation error:', error.message);
+        return { data: null, error };
+      }
+
+      if (password.length < 6) {
+        const error = new Error('Password must be at least 6 characters');
+        console.error('❌ Validation error:', error.message);
+        return { data: null, error };
+      }
+
+      // Attempt signup with metadata
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: metadata?.full_name || '',
+            user_type: 'Mom',
+            ai_personality: 'Friendly',
+            onboarding_completed: false,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        console.error('❌ Sign-up error:', error.message);
+        return { data: null, error };
+      }
+
+      if (!data.user) {
+        const error = new Error('Failed to create user account');
+        console.error('❌ No user returned:', error.message);
+        return { data: null, error };
+      }
+
+      console.log('✅ Auth user created:', data.user.id);
+
+      // Give the database trigger a moment to execute
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify/create profile record (fallback if trigger didn't work)
+      try {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (!existingProfile) {
+          console.log('⚠️ Profile not created by trigger, creating manually...');
+          
+          const profileData = {
+            id: data.user.id,
+            email: email,
+            full_name: metadata?.full_name || email.split('@')[0] || 'User',
+            user_type: 'Mom' as const,
+            onboarding_completed: false,
+            ai_personality: 'Friendly' as const,
+          };
+
+          await supabase.from('profiles').insert([profileData]);
+          console.log('✅ Profile created manually');
+        }
+      } catch (profileError) {
+        console.warn('⚠️ Could not verify/create profile:', profileError);
+      }
+
+      // Also ensure users table record exists (if your app uses it)
+      if (data.user) {
+        try {
+          await ensureUsersTableRecord(data.user);
+        } catch (usersError) {
+          console.warn('⚠️ Could not verify/create users table record:', usersError);
+        }
+      }
+
+      return { data, error: null };
+    } catch (err: any) {
+      console.error('❌ Unexpected sign-up error:', err);
+      return { data: null, error: err };
+    }
+  };
+
+  /**
+   * Sign in with enhanced profile verification
+   */
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) console.error('Sign-in error:', error.message);
-    return { data, error };
+    try {
+      console.log('🔐 Starting sign in for:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
+
+      if (error) {
+        console.error('❌ Sign-in error:', error.message);
+        return { data: null, error };
+      }
+
+      if (!data.user) {
+        const error = new Error('Failed to sign in');
+        console.error('❌ No user returned:', error.message);
+        return { data: null, error };
+      }
+
+      console.log('✅ Sign in successful:', data.user.id);
+
+      // Ensure profile exists (for users who signed up before the fix)
+      if (data.user) {
+        // Fire and forget - don't block sign in
+        handleUserProfile(data.user).catch(e => 
+          console.warn('⚠️ Could not verify profile on sign in:', e)
+        );
+      }
+
+      return { data, error: null };
+    } catch (err: any) {
+      console.error('❌ Unexpected sign-in error:', err);
+      return { data: null, error: err };
+    }
   };
 
   const signOut = async () => {
+    console.log('🔐 Signing out...');
     const { error } = await supabase.auth.signOut();
-    if (error) console.error('Sign-out error:', error.message);
+    if (error) {
+      console.error('❌ Sign-out error:', error.message);
+    } else {
+      console.log('✅ Sign out successful');
+    }
     return { error };
   };
 
