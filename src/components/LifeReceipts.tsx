@@ -124,7 +124,7 @@ export function LifeReceipts() {
         </header>
 
         <div className="p-3 sm:p-4">
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
             <button
               onClick={handleAddClick}
               className="w-full h-24 sm:h-28 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex flex-col items-center justify-center gap-2 shadow-sm"
