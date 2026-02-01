@@ -111,7 +111,7 @@ export function LifeReceipts() {
 
   return (
     <>
-      <div className="min-h-screen overflow-y-auto pb-20 sm:pb-24 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="min-h-screen flex flex-col overflow-y-auto pb-20 sm:pb-24 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <header className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="text-center">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -123,8 +123,9 @@ export function LifeReceipts() {
           </div>
         </header>
 
-        <div className="p-3 sm:p-4">
-          <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+        <div className="flex-1 flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-md">
+            <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
             <button
               onClick={handleAddClick}
               className="p-3 sm:p-4 rounded-xl bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 shadow-sm flex flex-col items-center transition-all duration-200 ease-in-out hover:bg-blue-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
@@ -159,6 +160,7 @@ export function LifeReceipts() {
             </div>
             <span className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg">Clear my mind</span>
           </button>
+          </div>
         </div>
 
         <main className="px-3 pb-3 sm:px-4 sm:pb-4 space-y-4">
