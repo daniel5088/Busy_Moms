@@ -34,19 +34,12 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       if (isSignUp) {
         console.log('🔐 Starting signup process for:', formData.email);
         
-        // Validate inputs
-        if (!formData.email || !formData.password) {
-          throw new Error('Email and password are required');
-        }
-        
-        if (formData.password.length < 6) {
-          throw new Error('Password must be at least 6 characters');
-        }
-
-        // Attempt signup
-        const { data, error: signUpError } = await signUp(formData.email, formData.password, {
-          full_name: formData.fullName || '',
-        });
+        // Call signup with metadata
+        const { data, error: signUpError } = await signUp(
+          formData.email, 
+          formData.password,
+          { full_name: formData.fullName }
+        );
 
         if (signUpError) {
           console.error('❌ Signup error:', signUpError);
@@ -59,7 +52,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
           }
           
           if (signUpError.message.includes('Database error')) {
-            setError('Account creation failed. Please contact support or try again later.');
+            setError('Account creation failed. Please try again or contact support.');
             console.error('Database error details:', signUpError);
             return;
           }
@@ -75,49 +68,17 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
 
         // Check if email confirmation is required
         if (data.user && !data.session) {
-          setError('Please check your email to confirm your account before signing in.');
-          setIsSignUp(false);
+          setError('✅ Account created! Please check your email to confirm your account before signing in.');
+          // Automatically switch to sign in mode after showing message
+          setTimeout(() => {
+            setIsSignUp(false);
+            setError(null);
+          }, 3000);
           return;
         }
 
-        // Verify user record was created in users table
-        try {
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', data.user.id)
-            .single();
-
-          if (userError && userError.code === 'PGRST116') {
-            // User doesn't exist in users table, create it manually
-            console.log('⚠️ User not found in users table, creating manually...');
-            
-            const { error: insertError } = await supabase
-              .from('users')
-              .insert({
-                id: data.user.id,
-                uuid: data.user.id,
-                email: formData.email,
-                full_name: formData.fullName || '',
-                user_type: 'Dad',
-                ai_personality: 'Friendly',
-                onboarding_completed: false,
-              });
-
-            if (insertError) {
-              console.error('❌ Failed to create user record:', insertError);
-              // Don't fail the signup completely, they can still sign in
-              setError('Account created but profile setup incomplete. You can still sign in and complete your profile.');
-            } else {
-              console.log('✅ User record created manually');
-            }
-          }
-        } catch (fallbackError) {
-          console.warn('⚠️ Fallback user creation check failed:', fallbackError);
-        }
-
-        // Success! Proceed to onboarding
-        console.log('✅ Signup complete, proceeding to onboarding');
+        // If we have a session, user is logged in, proceed to onboarding
+        console.log('✅ Signup complete, proceeding to app');
         onAuthSuccess();
 
       } else {
@@ -129,10 +90,13 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
           console.error('❌ Sign in error:', signInError);
           
           if (signInError.message.includes('Invalid login credentials')) {
-            throw new Error('Invalid email or password. Please try again.');
+            setError('Invalid email or password. Please try again.');
+          } else if (signInError.message.includes('Email not confirmed')) {
+            setError('Please confirm your email address before signing in. Check your inbox for the confirmation link.');
+          } else {
+            setError(signInError.message);
           }
-          
-          throw signInError;
+          return;
         }
         
         console.log('✅ Sign in successful');
@@ -191,7 +155,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
       if (error) throw error;
 
       setOtpSent(true);
-      setError('Password reset code sent! Check your email for the 6-digit code.');
+      setError('✅ Password reset code sent! Check your email for the 6-digit code.');
     } catch (error: any) {
       setError(error.message || 'Failed to send verification code');
     } finally {
@@ -229,7 +193,7 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
 
       if (updateError) throw updateError;
 
-      setError('Password updated successfully! You can now sign in.');
+      setError('✅ Password updated successfully! You can now sign in.');
       
       setTimeout(() => {
         setShowForgotPassword(false);
@@ -265,10 +229,10 @@ export function AuthForm({ onAuthSuccess }: AuthFormProps) {
           </p>
         </header>
 
-        {/* Error Message Display */}
+        {/* Error/Success Message Display */}
         {error && (
           <div className={`mb-4 p-3 rounded-lg text-sm ${
-            error.includes('successfully') || error.includes('sent')
+            error.includes('✅') || error.includes('successfully') || error.includes('sent')
               ? 'bg-green-50 text-green-800 border border-green-200'
               : 'bg-red-50 text-red-800 border border-red-200'
           }`}>
