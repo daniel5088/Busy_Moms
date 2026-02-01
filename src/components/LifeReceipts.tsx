@@ -139,7 +139,7 @@ export function LifeReceipts() {
               onClick={handleSeeClick}
               className="h-40 sm:h-44 p-3 sm:p-4 rounded-xl bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center transition-all duration-200 ease-in-out hover:bg-green-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
             >
-              <div className="bg-green-50 dark:bg-green-900 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3">
+              <div className="bg-green-100 dark:bg-green-900 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3">
                 <Eye className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-green-600 dark:text-green-400" />
               </div>
               <span className="font-semibold text-gray-900 dark:text-gray-100 text-base sm:text-lg">See</span>
