@@ -137,7 +137,7 @@ export function LifeReceipts() {
             </button>
             <button
               onClick={handleSeeClick}
-              className="p-3 sm:p-4 rounded-xl bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-gray-700 shadow-sm flex flex-col items-center transition-all duration-200 ease-in-out hover:bg-green-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+              className="h-40 sm:h-44 p-3 sm:p-4 rounded-xl bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center transition-all duration-200 ease-in-out hover:bg-green-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
             >
               <div className="bg-green-100 dark:bg-green-900 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3">
                 <Eye className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-green-600 dark:text-green-400" />
@@ -153,7 +153,7 @@ export function LifeReceipts() {
           <button
             onClick={() => setShowClearModal(true)}
             disabled={receipts.length === 0}
-            className="w-full p-3 sm:p-4 rounded-xl bg-red-50 dark:bg-gray-800 border border-red-200 dark:border-gray-700 shadow-sm flex flex-col items-center transition-all duration-200 ease-in-out hover:bg-red-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+            className="w-full h-40 sm:h-44 p-3 sm:p-4 rounded-xl bg-red-50 dark:bg-gray-800 border border-red-200 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center transition-all duration-200 ease-in-out hover:bg-red-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
           >
             <div className="bg-red-100 dark:bg-red-900 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3">
               <Trash2 className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-red-600 dark:text-red-400" />
