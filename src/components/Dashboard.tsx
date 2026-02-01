@@ -108,6 +108,7 @@ export function Dashboard({
     thisWeekEvents,
     tasks,
     reminders,
+    lifeReceipts,
     loading,
     reload,
     reminderWeekOffset,
@@ -521,7 +522,7 @@ export function Dashboard({
     {
       icon: Receipt,
       title: 'Life Receipts',
-      desc: 'Clear your mind',
+      desc: `(${lifeReceipts.length}) items`,
       bgColor: 'bg-indigo-50 dark:bg-gray-800',
       borderColor: 'border-indigo-200 dark:border-gray-700',
       iconBgColor: 'bg-indigo-100 dark:bg-indigo-900',

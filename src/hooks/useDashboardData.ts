@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase, Event, ShoppingItem, Reminder } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import { getTodayISO, getDateInDays } from '../utils/timeFormatters';
+import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 
 interface DashboardData {
   events: Event[];
@@ -9,6 +10,7 @@ interface DashboardData {
   thisWeekEvents: Event[];
   tasks: ShoppingItem[];
   reminders: Reminder[];
+  lifeReceipts: LifeReceipt[];
   loading: boolean;
   error: Error | null;
   reload: () => Promise<void>;
@@ -27,6 +29,7 @@ export function useDashboardData(): DashboardData {
   const [thisWeekEvents, setThisWeekEvents] = useState<Event[]>([]);
   const [tasks, setTasks] = useState<ShoppingItem[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [lifeReceipts, setLifeReceipts] = useState<LifeReceipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [reminderWeekOffset, setReminderWeekOffset] = useState(2);
@@ -159,6 +162,15 @@ export function useDashboardData(): DashboardData {
       if (tasksError) throw tasksError;
 
       setTasks(tasksData || []);
+
+      // Load life receipts
+      try {
+        const receiptsData = await lifeReceiptsService.listReceipts();
+        setLifeReceipts(receiptsData);
+      } catch (receiptsError: any) {
+        console.error('Error loading life receipts:', receiptsError);
+        setLifeReceipts([]);
+      }
     } catch (err: any) {
       console.error('Error loading dashboard data:', err);
       setError(err);
@@ -198,6 +210,7 @@ export function useDashboardData(): DashboardData {
     thisWeekEvents,
     tasks,
     reminders,
+    lifeReceipts,
     loading,
     error,
     reload: loadDashboardData,
