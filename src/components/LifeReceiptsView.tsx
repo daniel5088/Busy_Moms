@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Receipt } from 'lucide-react';
+import { ArrowLeft, Receipt, X } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 
 interface LifeReceiptsViewProps {
@@ -15,6 +15,17 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
     loadReceipts();
   }, []);
 
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && expandedId) {
+        setExpandedId(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [expandedId]);
+
   const loadReceipts = async () => {
     setLoading(true);
     try {
@@ -28,7 +39,11 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
   };
 
   const handleTileClick = (receiptId: string) => {
-    setExpandedId((prev) => (prev === receiptId ? null : receiptId));
+    setExpandedId(receiptId);
+  };
+
+  const handleCloseModal = () => {
+    setExpandedId(null);
   };
 
   return (
@@ -74,11 +89,9 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
-            {receipts.map((receipt) => {
-              const isExpanded = expandedId === receipt.id;
-
-              return (
+          <>
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
+              {receipts.map((receipt) => (
                 <div
                   key={receipt.id}
                   onClick={() => handleTileClick(receipt.id)}
@@ -90,81 +103,97 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                   }}
                   tabIndex={0}
                   role="button"
-                  aria-expanded={isExpanded}
-                  className={`
-                    bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900
-                    rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer
-                    focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600
-                    ${
-                      isExpanded
-                        ? 'sm:col-span-2 lg:col-span-2 p-4 sm:p-6'
-                        : 'aspect-square p-3 sm:p-4'
-                    }
-                  `}
+                  aria-label={`View receipt: ${receipt.content}`}
+                  className="aspect-square p-3 sm:p-4 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
                 >
-                  {isExpanded ? (
-                    <div className="flex flex-col h-full">
-                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
-                        {receipt.content}
-                      </h3>
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-3 text-center break-words">
+                      {receipt.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto">
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                            What
-                          </label>
-                          <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
-                            <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
-                              {receipt.what || 'unknown'}
-                            </p>
+            {expandedId && (
+              <div
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+                onClick={handleCloseModal}
+              >
+                <div
+                  className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full max-w-lg p-6 animate-scaleIn relative"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={handleCloseModal}
+                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
+                    aria-label="Close modal"
+                  >
+                    <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                  </button>
+
+                  {(() => {
+                    const receipt = receipts.find((r) => r.id === expandedId);
+                    if (!receipt) return null;
+
+                    return (
+                      <div className="flex flex-col">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 leading-tight pr-8">
+                          {receipt.content}
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                              What
+                            </label>
+                            <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                                {receipt.what || 'unknown'}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                            Who
-                          </label>
-                          <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
-                            <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
-                              {receipt.who || 'unknown'}
-                            </p>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                              Who
+                            </label>
+                            <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                                {receipt.who || 'unknown'}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                            Action
-                          </label>
-                          <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
-                            <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
-                              {receipt.obligation || 'unknown'}
-                            </p>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                              Action
+                            </label>
+                            <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                                {receipt.obligation || 'unknown'}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                            When
-                          </label>
-                          <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
-                            <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
-                              {receipt.when_bucket || 'unknown'}
-                            </p>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                              When
+                            </label>
+                            <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                                {receipt.when_bucket || 'unknown'}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-3 text-center break-words">
-                        {receipt.content}
-                      </p>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
