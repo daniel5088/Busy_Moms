@@ -9,6 +9,7 @@ interface LifeReceiptsViewProps {
 export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
   const [receipts, setReceipts] = useState<LifeReceipt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadReceipts();
@@ -24,6 +25,10 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTileClick = (receiptId: string) => {
+    setExpandedId((prev) => (prev === receiptId ? null : receiptId));
   };
 
   return (
@@ -69,17 +74,96 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
-            {receipts.map((receipt) => (
-              <div
-                key={receipt.id}
-                className="aspect-square bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-md hover:shadow-lg transition-shadow p-3 sm:p-4 flex items-center justify-center"
-              >
-                <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-3 text-center break-words">
-                  {receipt.content}
-                </p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
+            {receipts.map((receipt) => {
+              const isExpanded = expandedId === receipt.id;
+
+              return (
+                <div
+                  key={receipt.id}
+                  onClick={() => handleTileClick(receipt.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleTileClick(receipt.id);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-expanded={isExpanded}
+                  className={`
+                    bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900
+                    rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer
+                    focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600
+                    ${
+                      isExpanded
+                        ? 'sm:col-span-2 lg:col-span-2 p-4 sm:p-6'
+                        : 'aspect-square p-3 sm:p-4'
+                    }
+                  `}
+                >
+                  {isExpanded ? (
+                    <div className="flex flex-col h-full">
+                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
+                        {receipt.content}
+                      </h3>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto">
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                            What
+                          </label>
+                          <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
+                            <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                              {receipt.what || 'unknown'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                            Who
+                          </label>
+                          <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
+                            <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                              {receipt.who || 'unknown'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                            Action
+                          </label>
+                          <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
+                            <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                              {receipt.obligation || 'unknown'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                            When
+                          </label>
+                          <div className="bg-white dark:bg-gray-700 rounded-md px-3 py-2 border border-gray-200 dark:border-gray-600">
+                            <p className="text-sm text-gray-800 dark:text-gray-200 break-words">
+                              {receipt.when_bucket || 'unknown'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-3 text-center break-words">
+                        {receipt.content}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </main>
