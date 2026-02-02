@@ -59,4 +59,36 @@ export const lifeReceiptsService = {
     if (error) throw error;
     return data?.length || 0;
   },
+
+  async updateReceipt(
+    id: string,
+    updates: Partial<Pick<LifeReceipt, 'content' | 'what' | 'who' | 'when_bucket' | 'obligation'>>
+  ): Promise<LifeReceipt> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('life_receipts')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteReceipt(id: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('life_receipts')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+  },
 };
