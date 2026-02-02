@@ -32,6 +32,7 @@ import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Impo
 import { useDarkMode } from './hooks/useDarkMode';
 import CycleTracker from './components/CycleTracker';
 import { LifeReceipts } from './components/LifeReceipts';
+import { LifeReceiptsView } from './components/LifeReceiptsView';
 
 export type Screen =
   | 'dashboard'
@@ -48,7 +49,8 @@ export type SubScreen =
   | 'settings'
   | 'quick-links'
   | 'wellness'
-  | 'life-receipts';
+  | 'life-receipts'
+  | 'life-receipts-view';
 
 function App() {
   const session = useSessionContext();
@@ -444,7 +446,12 @@ function App() {
               )}
               {currentSubScreen === 'life-receipts' && (
                 <FeatureErrorBoundary featureName="Life Receipts">
-                  <LifeReceipts />
+                  <LifeReceipts onNavigateToView={() => setCurrentSubScreen('life-receipts-view')} />
+                </FeatureErrorBoundary>
+              )}
+              {currentSubScreen === 'life-receipts-view' && (
+                <FeatureErrorBoundary featureName="Life Receipts View">
+                  <LifeReceiptsView onBack={() => setCurrentSubScreen('life-receipts')} />
                 </FeatureErrorBoundary>
               )}
             </>

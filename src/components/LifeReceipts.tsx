@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Receipt, Trash2, X, Plus, Eye } from 'lucide-react';
+import { Trash2, X, Plus, Eye } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 
 function formatReceiptDate(createdAt: string): string {
@@ -26,7 +26,11 @@ function formatReceiptDate(createdAt: string): string {
   }
 }
 
-export function LifeReceipts() {
+interface LifeReceiptsProps {
+  onNavigateToView: () => void;
+}
+
+export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [receipts, setReceipts] = useState<LifeReceipt[]>([]);
   const [contentInput, setContentInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -34,10 +38,8 @@ export function LifeReceipts() {
   const [showClearModal, setShowClearModal] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showReceiptsList, setShowReceiptsList] = useState(false);
 
   const addFormRef = useRef<HTMLDivElement>(null);
-  const receiptsListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadReceipts();
@@ -69,10 +71,6 @@ export function LifeReceipts() {
       setReceipts((prev) => [newReceipt, ...prev]);
       setContentInput('');
       setShowAddForm(false);
-      setShowReceiptsList(true);
-      setTimeout(() => {
-        receiptsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
     } catch (error) {
       console.error('Error creating receipt:', error);
     } finally {
@@ -101,10 +99,7 @@ export function LifeReceipts() {
   };
 
   const handleSeeClick = () => {
-    setShowReceiptsList(true);
-    setTimeout(() => {
-      receiptsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    onNavigateToView();
   };
 
   const isFormValid = contentInput.trim().length > 0;
@@ -200,59 +195,6 @@ export function LifeReceipts() {
                   {submitting ? 'Adding...' : 'Add Receipt'}
                 </button>
               </form>
-            </div>
-          )}
-
-          {showReceiptsList && (
-            <div ref={receiptsListRef}>
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                  Your Receipts
-                </h2>
-                <button
-                  onClick={() => setShowReceiptsList(false)}
-                  className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  aria-label="Close"
-                >
-                  <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                </button>
-              </div>
-
-              {loading ? (
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm text-gray-600 dark:text-gray-400">
-                  Loading your receipts...
-                </div>
-              ) : receipts.length === 0 ? (
-                <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
-                  <Receipt className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                  <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                    No receipts yet
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                    Add your first thought by clicking the Add button above
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {receipts.map((receipt) => (
-                    <div
-                      key={receipt.id}
-                      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-sm transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm sm:text-base text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-wrap break-words">
-                            {receipt.content}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2">
-                            {formatReceiptDate(receipt.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
         </main>
