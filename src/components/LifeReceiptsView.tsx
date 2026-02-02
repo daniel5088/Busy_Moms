@@ -121,12 +121,12 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                 onClick={handleCloseModal}
               >
                 <div
-                  className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full max-w-md p-6 animate-scaleIn relative"
+                  className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full max-w-sm p-4 sm:p-5 animate-scaleIn relative"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={handleCloseModal}
-                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
+                    className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
                     aria-label="Close modal"
                   >
                     <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -138,50 +138,50 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
 
                     return (
                       <div className="flex flex-col">
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-10 leading-relaxed text-center px-2">
+                        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 leading-relaxed text-center px-1 break-words">
                           {receipt.content}
                         </h3>
 
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide block mb-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide block mb-1.5">
                               What
                             </label>
-                            <div className="bg-white dark:bg-gray-700 rounded-full px-3 py-1.5 border border-gray-200 dark:border-gray-600">
-                              <p className="text-xs text-gray-800 dark:text-gray-200 text-center truncate">
+                            <div className="bg-white dark:bg-gray-700 rounded-full px-3 py-2 border border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 text-center truncate">
                                 {receipt.what || 'unknown'}
                               </p>
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide block mb-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide block mb-1.5">
                               Who
                             </label>
-                            <div className="bg-white dark:bg-gray-700 rounded-full px-3 py-1.5 border border-gray-200 dark:border-gray-600">
-                              <p className="text-xs text-gray-800 dark:text-gray-200 text-center truncate">
+                            <div className="bg-white dark:bg-gray-700 rounded-full px-3 py-2 border border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 text-center truncate">
                                 {receipt.who || 'unknown'}
                               </p>
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide block mb-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide block mb-1.5">
                               When
                             </label>
-                            <div className="bg-white dark:bg-gray-700 rounded-full px-3 py-1.5 border border-gray-200 dark:border-gray-600">
-                              <p className="text-xs text-gray-800 dark:text-gray-200 text-center truncate">
+                            <div className="bg-white dark:bg-gray-700 rounded-full px-3 py-2 border border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 text-center truncate">
                                 {receipt.when_bucket || 'unknown'}
                               </p>
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide block mb-1">
+                            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide block mb-1.5">
                               Action
                             </label>
-                            <div className="bg-white dark:bg-gray-700 rounded-full px-3 py-1.5 border border-gray-200 dark:border-gray-600">
-                              <p className="text-xs text-gray-800 dark:text-gray-200 text-center truncate">
+                            <div className="bg-white dark:bg-gray-700 rounded-full px-3 py-2 border border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-800 dark:text-gray-200 text-center truncate">
                                 {receipt.obligation || 'unknown'}
                               </p>
                             </div>
