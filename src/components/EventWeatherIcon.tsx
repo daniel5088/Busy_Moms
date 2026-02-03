@@ -85,7 +85,19 @@ function getSeverityClasses(severity: WeatherSuggestion['severity']): { bg: stri
  * Small weather icon shown next to events with location
  */
 export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: EventWeatherIconProps) {
+  console.log('[EventWeatherIcon] Rendering with:', {
+    hasWeather: !!weather,
+    loading,
+    weather: weather ? {
+      condition: weather.condition,
+      hasSuggestion: !!weather.suggestion,
+      severity: weather.suggestion?.severity,
+      icon: weather.suggestion?.icon,
+    } : null,
+  });
+
   if (loading) {
+    console.log('[EventWeatherIcon] 🔄 Showing loading spinner');
     const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
     const spinnerSize = size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-5 h-5' : 'w-6 h-6';
     return (
@@ -97,6 +109,8 @@ export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: Eve
 
   // Show placeholder icon when no weather data loaded yet - click to fetch
   if (!weather) {
+    console.log('[EventWeatherIcon] ⚪ Showing placeholder (no weather data)');
+
     const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';
     const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
     
@@ -124,6 +138,43 @@ export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: Eve
       </button>
     );
   }
+
+  // Safety check: if weather doesn't have suggestion, show placeholder
+  if (!weather.suggestion) {
+    console.log('[EventWeatherIcon] ⚠️ Weather data missing suggestion field, showing placeholder');
+    const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';
+    const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
+
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick?.();
+        }}
+        className={`
+          ${containerSize} rounded-full
+          bg-gray-100 dark:bg-gray-700
+          text-gray-400 dark:text-gray-500
+          flex items-center justify-center
+          hover:bg-blue-100 dark:hover:bg-blue-900
+          hover:text-blue-500 dark:hover:text-blue-400
+          hover:scale-110 transition-all
+          border border-gray-200 dark:border-gray-600
+          focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500
+        `}
+        title="Click to check weather for this event"
+        aria-label="Check weather for this event location"
+      >
+        <CloudSun className={iconSize} />
+      </button>
+    );
+  }
+
+  console.log('[EventWeatherIcon] 🎨 Showing colored weather icon:', {
+    condition: weather.condition,
+    severity: weather.suggestion.severity,
+    icon: weather.suggestion.icon,
+  });
 
   const colors = getSeverityClasses(weather.suggestion.severity);
   const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';

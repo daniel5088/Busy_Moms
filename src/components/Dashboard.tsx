@@ -145,16 +145,46 @@ function DashboardEventWeatherIcon({
   }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded, weatherBatchFetchTrigger, cacheVersion]);
 
   const handleClick = async () => {
+    console.log(`[DashboardEventWeatherIcon] 🖱️ Click handler triggered for ${location}`);
+    console.log(`[DashboardEventWeatherIcon] Current weather state before fetch:`, weather ? {
+      condition: weather.condition,
+      temperature: weather.temperature,
+      hasSuggestion: !!weather.suggestion,
+    } : null);
+
     // Always fetch fresh weather data when clicked (force refresh)
     const data = await getEventWeather(location, eventDate, eventTime, true);
+
+    console.log(`[DashboardEventWeatherIcon] 📦 Received data from getEventWeather:`, data ? {
+      condition: data.condition,
+      temperature: data.temperature,
+      hasSuggestion: !!data.suggestion,
+      suggestion: data.suggestion,
+    } : null);
+
     if (data) {
+      console.log(`[DashboardEventWeatherIcon] ✅ Setting weather state with data`);
       setWeather(data);
       setHasLoaded(true);
+      console.log(`[DashboardEventWeatherIcon] 📢 Calling onShowInsights to open modal`);
       onShowInsights(data);
+    } else {
+      console.log(`[DashboardEventWeatherIcon] ⚠️ No data returned from getEventWeather`);
     }
   };
 
   const loading = isWeatherLoading(location, eventDate, eventTime);
+
+  console.log(`[DashboardEventWeatherIcon] 🎨 Rendering icon for ${location}:`, {
+    hasWeather: !!weather,
+    loading,
+    weather: weather ? {
+      condition: weather.condition,
+      temperature: weather.temperature,
+      hasSuggestion: !!weather.suggestion,
+      severity: weather.suggestion?.severity,
+    } : null,
+  });
 
   return (
     <EventWeatherIcon
