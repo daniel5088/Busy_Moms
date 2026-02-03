@@ -14,10 +14,12 @@ Multiple orphaned database triggers on the `auth.users` table are causing signup
 
 1. **`on_auth_user_created`** - Attempts to modify `auth.users` table without proper permissions
 2. **`on_auth_user_created_notification_settings`** - References `notification_settings` table that doesn't exist yet
+3. **`Add_Profile`** - Manually created trigger (not in migrations) causing unknown errors
 
 These triggers fire when a new user signs up, but fail because either:
 - They lack permissions to modify protected tables
 - They reference tables that haven't been created yet
+- They have unknown implementation errors
 
 This causes ALL signups (including Google OAuth) to fail.
 
@@ -63,6 +65,10 @@ DROP FUNCTION IF EXISTS public.create_default_notification_settings() CASCADE;
 -- Drop role assignment trigger (permission errors)
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users CASCADE;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+
+-- Drop Add_Profile trigger (manually created, causes signup failures)
+DROP TRIGGER IF EXISTS "Add_Profile" ON auth.users CASCADE;
+DROP TRIGGER IF EXISTS add_profile ON auth.users CASCADE;
 ```
 
 6. Click **Run** or press Ctrl+Enter

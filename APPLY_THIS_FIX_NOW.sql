@@ -23,6 +23,10 @@ DROP FUNCTION IF EXISTS public.create_default_notification_settings() CASCADE;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users CASCADE;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
+-- Drop Add_Profile trigger (manually created, causes signup failures)
+DROP TRIGGER IF EXISTS "Add_Profile" ON auth.users CASCADE;
+DROP TRIGGER IF EXISTS add_profile ON auth.users CASCADE;
+
 -- ============================================================================
 -- VERIFICATION - Run this query to confirm triggers are gone
 -- ============================================================================
