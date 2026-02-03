@@ -164,6 +164,17 @@ function EventWeatherIconWrapper({
       setWeather(data);
       setHasLoaded(true);
       onShowInsights(data);
+
+      // Dispatch event to update other components (Dashboard)
+      console.log('[CalendarWeatherIcon] 📢 Dispatching weatherCacheUpdated event');
+      window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
+        detail: {
+          location,
+          date: eventDate,
+          time: eventTime,
+          weatherData: data
+        }
+      }));
     }
   };
 

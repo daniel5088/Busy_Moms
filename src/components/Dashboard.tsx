@@ -197,6 +197,17 @@ function DashboardEventWeatherIcon({
       setHasLoaded(true);
       console.log(`[DashboardEventWeatherIcon] 📢 Calling onShowInsights to open modal`);
       onShowInsights(data);
+
+      // Dispatch event to update other components (Calendar)
+      console.log('[DashboardEventWeatherIcon] 📢 Dispatching weatherCacheUpdated event');
+      window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
+        detail: {
+          location,
+          date: eventDate,
+          time: eventTime,
+          weatherData: data
+        }
+      }));
     } else {
       console.log(`[DashboardEventWeatherIcon] ⚠️ No data returned from getEventWeather`);
     }
