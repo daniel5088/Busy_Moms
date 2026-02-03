@@ -1592,7 +1592,6 @@ export class OpenAIRealtimeService extends Emitter {
       }
 
       // Dispatch event to update UI components
-      console.log('%c[Voice Assistant] 📢 Dispatching weatherCacheUpdated event (hourly)', 'color: #3b82f6; font-weight: bold');
       window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
         detail: {
           location: targetEvent.location,
@@ -1624,7 +1623,6 @@ export class OpenAIRealtimeService extends Emitter {
       message += '.';
 
       // Dispatch event to update UI components
-      console.log('%c[Voice Assistant] 📢 Dispatching weatherCacheUpdated event', 'color: #3b82f6; font-weight: bold');
       window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
         detail: {
           location: targetEvent.location,

@@ -108,58 +108,27 @@ function DashboardEventWeatherIcon({
 
   // Check for cached weather on mount, when cache is loaded, AND when batch fetch completes
   React.useEffect(() => {
-    console.log(`[DashboardEventWeatherIcon] Effect triggered for ${location}:`, {
-      cacheLoaded,
-      weatherBatchFetchTrigger,
-      cacheVersion,
-      location,
-      eventDate,
-      eventTime,
-    });
-
-    if (!cacheLoaded) {
-      console.log(`[DashboardEventWeatherIcon] ⏳ Cache not loaded yet for ${location}`);
-      return;
-    }
+    if (!cacheLoaded) return;
 
     const cached = getCachedWeather(location, eventDate, eventTime);
-    console.log(`[DashboardEventWeatherIcon] Cache check for ${location}:`, {
-      hasCached: !!cached,
-      cached: cached ? {
-        condition: cached.condition,
-        temperature: cached.temperature,
-        location: cached.location,
-      } : null,
-    });
 
     if (cached) {
-      console.log(`[DashboardEventWeatherIcon] ✅ Using cached weather for ${location} on ${eventDate}`, {
-        condition: cached.condition,
-        temperature: cached.temperature,
-      });
       setWeather(cached);
       setHasLoaded(true);
-    } else {
-      console.log(`[DashboardEventWeatherIcon] ⚠️ No cached weather found for ${location} on ${eventDate}`);
     }
   }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded, weatherBatchFetchTrigger, cacheVersion]);
 
   // Listen for weather cache updates from voice assistant
   React.useEffect(() => {
     const handleWeatherCacheUpdate = (e: CustomEvent) => {
-      console.log('[DashboardEventWeatherIcon] 📢 Received weatherCacheUpdated event:', e.detail);
-
       // Check if this update is for our event
       const normalizedLocation = location.trim().toLowerCase();
       const detailLocation = (e.detail.location || '').trim().toLowerCase();
 
       if (normalizedLocation === detailLocation && e.detail.date === eventDate) {
-        console.log(`[DashboardEventWeatherIcon] 🔄 This update is for our event! Refreshing cache...`);
-
         // Reload from cache
         const cached = getCachedWeather(location, eventDate, eventTime);
         if (cached) {
-          console.log(`[DashboardEventWeatherIcon] ✅ Updated weather from voice assistant cache`);
           setWeather(cached);
           setHasLoaded(true);
         }
@@ -174,32 +143,15 @@ function DashboardEventWeatherIcon({
   }, [location, eventDate, eventTime, getCachedWeather]);
 
   const handleClick = async () => {
-    console.log(`[DashboardEventWeatherIcon] 🖱️ Click handler triggered for ${location}`);
-    console.log(`[DashboardEventWeatherIcon] Current weather state before fetch:`, weather ? {
-      condition: weather.condition,
-      temperature: weather.temperature,
-      hasSuggestion: !!weather.suggestion,
-    } : null);
-
     // Always fetch fresh weather data when clicked (force refresh)
     const data = await getEventWeather(location, eventDate, eventTime, true);
 
-    console.log(`[DashboardEventWeatherIcon] 📦 Received data from getEventWeather:`, data ? {
-      condition: data.condition,
-      temperature: data.temperature,
-      hasSuggestion: !!data.suggestion,
-      suggestion: data.suggestion,
-    } : null);
-
     if (data) {
-      console.log(`[DashboardEventWeatherIcon] ✅ Setting weather state with data`);
       setWeather(data);
       setHasLoaded(true);
-      console.log(`[DashboardEventWeatherIcon] 📢 Calling onShowInsights to open modal`);
       onShowInsights(data);
 
       // Dispatch event to update other components (Calendar)
-      console.log('[DashboardEventWeatherIcon] 📢 Dispatching weatherCacheUpdated event');
       window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
         detail: {
           location,
@@ -208,23 +160,10 @@ function DashboardEventWeatherIcon({
           weatherData: data
         }
       }));
-    } else {
-      console.log(`[DashboardEventWeatherIcon] ⚠️ No data returned from getEventWeather`);
     }
   };
 
   const loading = isWeatherLoading(location, eventDate, eventTime);
-
-  console.log(`[DashboardEventWeatherIcon] 🎨 Rendering icon for ${location}:`, {
-    hasWeather: !!weather,
-    loading,
-    weather: weather ? {
-      condition: weather.condition,
-      temperature: weather.temperature,
-      hasSuggestion: !!weather.suggestion,
-      severity: weather.suggestion?.severity,
-    } : null,
-  });
 
   return (
     <EventWeatherIcon

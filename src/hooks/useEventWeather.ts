@@ -42,18 +42,13 @@ function markMorningPrefetchDone(): void {
 function loadCacheFromStorage(): Map<string, EventWeatherData> {
   try {
     const stored = localStorage.getItem(WEATHER_CACHE_KEY);
-    if (!stored) {
-      console.log('%c[useEventWeather] 💾 No cached weather in localStorage', 'color: #6b7280');
-      return new Map();
-    }
+    if (!stored) return new Map();
 
     const parsed = JSON.parse(stored);
     const cache = new Map<string, EventWeatherData>(Object.entries(parsed));
-    console.log(`%c[useEventWeather] 💾 Loaded ${cache.size} cached weather items from localStorage`, 'color: #10b981');
-    console.log('[useEventWeather] 📦 Cached locations:', Array.from(cache.keys()));
     return cache;
   } catch (error) {
-    console.error('[useEventWeather] ❌ Error loading cache from localStorage:', error);
+    console.error('[Weather] Error loading cache:', error);
     return new Map();
   }
 }
@@ -65,9 +60,8 @@ function saveCacheToStorage(cache: Map<string, EventWeatherData>): void {
   try {
     const obj = Object.fromEntries(cache.entries());
     localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(obj));
-    console.log(`%c[useEventWeather] 💾 Saved ${cache.size} weather items to localStorage`, 'color: #10b981');
   } catch (error) {
-    console.error('[useEventWeather] ❌ Error saving cache to localStorage:', error);
+    console.error('[Weather] Error saving cache:', error);
   }
 }
 
@@ -76,7 +70,6 @@ function saveCacheToStorage(cache: Map<string, EventWeatherData>): void {
  */
 export function useEventWeather() {
   const [eventWeatherCache, setEventWeatherCache] = useState<Map<string, EventWeatherData>>(() => {
-    console.log('%c[useEventWeather] 🚀 Initializing hook, loading cache from localStorage', 'color: #3b82f6; font-weight: bold');
     return loadCacheFromStorage();
   });
   const [loadingEvents, setLoadingEvents] = useState<Set<string>>(new Set());
@@ -90,7 +83,6 @@ export function useEventWeather() {
       const settings = await weatherService.getSettings();
       const units = settings?.temperature_unit === 'celsius' ? 'metric' : 'imperial';
       setUnitsSystem(units);
-      console.log(`[useEventWeather] 🌡️  Loaded units system: ${units}`);
     }
     loadSettings();
   }, []);
@@ -98,7 +90,6 @@ export function useEventWeather() {
   // Save cache to localStorage whenever it changes
   useEffect(() => {
     if (eventWeatherCache.size > 0) {
-      console.log(`%c[useEventWeather] 📝 Cache changed, persisting ${eventWeatherCache.size} items to localStorage`, 'color: #8b5cf6');
       saveCacheToStorage(eventWeatherCache);
     }
   }, [eventWeatherCache]);
@@ -107,17 +98,7 @@ export function useEventWeather() {
    * Generate a cache key for an event (synchronous)
    */
   const getCacheKey = useCallback((location: string, eventDate: string, eventTime?: string | null): string => {
-    const key = generateWeatherCacheKey(location, eventDate, eventTime, unitsSystem);
-
-    console.log(`[useEventWeather] Generated cache key:`, {
-      location,
-      eventDate,
-      eventTime,
-      unitsSystem,
-      key
-    });
-
-    return key;
+    return generateWeatherCacheKey(location, eventDate, eventTime, unitsSystem);
   }, [unitsSystem]);
 
   /**
@@ -136,14 +117,12 @@ export function useEventWeather() {
 
     // Return cached data if available and not forcing refresh
     if (!force && eventWeatherCache.has(cacheKey)) {
-      console.log('%c[useEventWeather] 💾 Using in-memory cache (no API call)', 'color: #10b981');
-      console.log(`[useEventWeather]   Key: ${cacheKey}`);
+      console.log(`[Weather] ✓ Cache hit: ${location}`);
       return eventWeatherCache.get(cacheKey)!;
     }
 
     // Check Supabase cache before calling API
     if (!force) {
-      console.log('%c[useEventWeather] 🔍 Checking Supabase cache...', 'color: #8b5cf6');
       try {
         const { data: cachedRow } = await supabase
           .from('weather_cache')
@@ -153,7 +132,7 @@ export function useEventWeather() {
           .maybeSingle();
 
         if (cachedRow?.weather_data) {
-          console.log('%c[useEventWeather] ✅ Supabase cache HIT', 'color: #22c55e; font-weight: bold');
+          console.log(`[Weather] ✓ DB cache hit: ${location}`);
           const parsed = weatherService.parseEventWeatherFromCache(cachedRow.weather_data);
 
           if (parsed) {
@@ -167,17 +146,13 @@ export function useEventWeather() {
             setCacheVersion((v) => v + 1);
             return parsed;
           }
-        } else {
-          console.log('%c[useEventWeather] ⚠️ Supabase cache MISS', 'color: #f59e0b');
         }
       } catch (error) {
-        console.error('[useEventWeather] ❌ Error checking Supabase cache:', error);
+        console.error('[Weather] Cache check error:', error);
       }
     }
 
-    console.log('%c[useEventWeather] 🔄 Fetching weather from API', 'color: #3b82f6; font-weight: bold');
-    console.log(`[useEventWeather]   Location: ${location}`);
-    console.log(`[useEventWeather]   Date: ${eventDate}`);
+    console.log(`[Weather] → API call: ${location}, ${eventDate}`);
 
     // Mark as loading
     setLoadingEvents((prev: Set<string>) => new Set(prev).add(cacheKey));
@@ -185,32 +160,19 @@ export function useEventWeather() {
     try {
       const weatherData = await weatherService.getEventWeather(location, eventDate, eventTime, force);
 
-      console.log(`[useEventWeather] ✅ Fetched weather data for ${cacheKey}:`, weatherData ? {
-        condition: weatherData.condition,
-        temperature: weatherData.temperature,
-        location: weatherData.location
-      } : null);
-
       if (weatherData) {
         setEventWeatherCache((prev: Map<string, EventWeatherData>) => {
           const newCache = new Map(prev);
           newCache.set(cacheKey, weatherData);
-          console.log(`[useEventWeather] 💾 Stored in cache with key ${cacheKey}. Total cached: ${newCache.size}`);
-          console.log(`[useEventWeather] 📦 All cache keys:`, Array.from(newCache.keys()));
           return newCache;
         });
 
-        // Increment cache version to trigger component updates
-        setCacheVersion((v) => {
-          const newVersion = v + 1;
-          console.log(`[useEventWeather] 🔄 Cache version updated: ${v} -> ${newVersion}`);
-          return newVersion;
-        });
+        setCacheVersion((v) => v + 1);
       }
 
       return weatherData;
     } catch (error) {
-      console.error('[useEventWeather] ❌ Error fetching weather:', error);
+      console.error('[Weather] API error:', error);
       return null;
     } finally {
       setLoadingEvents((prev: Set<string>) => {
@@ -235,18 +197,6 @@ export function useEventWeather() {
   const getCachedWeather = useCallback((location: string, eventDate: string, eventTime?: string | null): EventWeatherData | null => {
     const cacheKey = getCacheKey(location, eventDate, eventTime);
     const cached = eventWeatherCache.get(cacheKey) || null;
-
-    console.log(`%c[useEventWeather] 🔍 Cache lookup`, 'color: #8b5cf6; font-weight: bold');
-    console.log(`   Looking for key: "${cacheKey}"`);
-    console.log(`   Key components:`, {
-      originalLocation: location,
-      normalizedLocation: location.trim().toLowerCase(),
-      originalDate: eventDate,
-      normalizedDate: eventDate.trim(),
-      originalTime: eventTime,
-      normalizedTime: eventTime?.trim() || 'allday',
-    });
-    console.log(`   Found: ${!!cached}`);
 
     if (cached) {
       console.log(`   ✅ Cache HIT:`, {

@@ -131,19 +131,14 @@ function EventWeatherIconWrapper({
   // Listen for weather cache updates from voice assistant
   useEffect(() => {
     const handleWeatherCacheUpdate = (e: CustomEvent) => {
-      console.log('[CalendarWeatherIcon] 📢 Received weatherCacheUpdated event:', e.detail);
-
       // Check if this update is for our event
       const normalizedLocation = location.trim().toLowerCase();
       const detailLocation = (e.detail.location || '').trim().toLowerCase();
 
       if (normalizedLocation === detailLocation && e.detail.date === eventDate) {
-        console.log(`[CalendarWeatherIcon] 🔄 This update is for our event! Refreshing cache...`);
-
         // Reload from cache
         const cached = getCachedWeather(location, eventDate, eventTime);
         if (cached) {
-          console.log(`[CalendarWeatherIcon] ✅ Updated weather from voice assistant cache`);
           setWeather(cached);
           setHasLoaded(true);
         }
@@ -166,7 +161,6 @@ function EventWeatherIconWrapper({
       onShowInsights(data);
 
       // Dispatch event to update other components (Dashboard)
-      console.log('[CalendarWeatherIcon] 📢 Dispatching weatherCacheUpdated event');
       window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
         detail: {
           location,
@@ -292,11 +286,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       const customEvent = event as CustomEvent;
       const { location, date, time, weatherData } = customEvent.detail || {};
 
-      console.log('%c[Calendar] 📡 Received weatherCacheUpdated event', 'color: #f59e0b; font-weight: bold');
-      console.log(`[Calendar]   Location: ${location}`);
-      console.log(`[Calendar]   Date: ${date}`);
-      console.log(`[Calendar]   Time: ${time}`);
-
       if (location && date && weatherData) {
         // Get fresh weather data from cache
         const weather = getCachedWeather(location, date, time);
@@ -305,7 +294,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
             const newCache = new Map(prev);
             const key = `${location}_${date}_${time || 'allday'}`;
             newCache.set(key, weather);
-            console.log(`[Calendar] ✅ Updated weather cache for ${key}`);
             return newCache;
           });
         }
@@ -313,11 +301,9 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     };
 
     window.addEventListener('weatherCacheUpdated', handleWeatherCacheUpdate);
-    console.log('[Calendar] 👂 Listening for weatherCacheUpdated events');
 
     return () => {
       window.removeEventListener('weatherCacheUpdated', handleWeatherCacheUpdate);
-      console.log('[Calendar] 🔇 Stopped listening for weatherCacheUpdated events');
     };
   }, [getCachedWeather]);
 

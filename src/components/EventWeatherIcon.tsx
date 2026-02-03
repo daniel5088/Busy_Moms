@@ -85,23 +85,7 @@ function getSeverityClasses(severity: WeatherSuggestion['severity']): { bg: stri
  * Small weather icon shown next to events with location
  */
 export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: EventWeatherIconProps) {
-  console.log('%c[EventWeatherIcon] Rendering', 'color: #f59e0b; font-weight: bold', {
-    hasWeather: !!weather,
-    loading,
-    weather: weather ? {
-      condition: weather.condition,
-      location: weather.location,
-      hasSuggestion: !!weather.suggestion,
-      severity: weather.suggestion?.severity,
-      icon: weather.suggestion?.icon,
-      hasCoordinates: !!(weather.latitude && weather.longitude),
-      latitude: weather.latitude,
-      longitude: weather.longitude,
-    } : null,
-  });
-
   if (loading) {
-    console.log('[EventWeatherIcon] 🔄 Showing loading spinner');
     const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
     const spinnerSize = size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-5 h-5' : 'w-6 h-6';
     return (
@@ -113,8 +97,6 @@ export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: Eve
 
   // Show placeholder icon when no weather data loaded yet - click to fetch
   if (!weather) {
-    console.log('[EventWeatherIcon] ⚪ Showing placeholder (no weather data)');
-
     const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';
     const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
     
@@ -145,7 +127,6 @@ export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: Eve
 
   // Safety check: if weather doesn't have suggestion, show placeholder
   if (!weather.suggestion) {
-    console.log('[EventWeatherIcon] ⚠️ Weather data missing suggestion field, showing placeholder');
     const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';
     const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
 
@@ -173,12 +154,6 @@ export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: Eve
       </button>
     );
   }
-
-  console.log('[EventWeatherIcon] 🎨 Showing colored weather icon:', {
-    condition: weather.condition,
-    severity: weather.suggestion.severity,
-    icon: weather.suggestion.icon,
-  });
 
   const colors = getSeverityClasses(weather.suggestion.severity);
   const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';
