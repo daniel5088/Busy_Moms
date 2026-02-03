@@ -86,6 +86,134 @@ interface WeatherResponse {
 
 type UnitsSystem = "IMPERIAL" | "METRIC";
 
+// ─── Hourly synthesis helpers ────────────────────────────────────────────────
+// The Google Weather MCP does not expose an hourly endpoint.  When we have daily
+// min / max we can produce a convincing 24-hour curve using the standard
+// diurnal temperature model:
+//   • minimum occurs around 05:00  (trough)
+//   • maximum occurs around 14:00  (peak)
+//   • the curve between them is sinusoidal
+//
+// This gives the Hourly Forecast strip and the per-day detail strip real data
+// to render without waiting for an API that doesn't exist yet.
+
+/** Hours-since-midnight for the daily temperature trough and peak. */
+const TROUGH_HOUR = 5;   // ~5 AM
+const PEAK_HOUR   = 14;  // ~2 PM
+
+/**
+ * Attempt a sinusoidal interpolation between min and max for a given hour.
+ *
+ * The model splits the day into two halves:
+ *   trough  →  peak   : rising half (cos goes from -1 → +1)
+ *   peak    →  next trough : falling half
+ *
+ * We map hour 0-23 onto that curve so that:
+ *   hour == TROUGH_HOUR  → returns tmin
+ *   hour == PEAK_HOUR    → returns tmax
+ */
+function interpTemp(hour: number, tmin: number, tmax: number): number {
+  const mid   = (tmax + tmin) / 2;
+  const amp   = (tmax - tmin) / 2;
+
+  // Normalise hour so that TROUGH_HOUR maps to 0 on a 24-h cycle
+  const shifted = ((hour - TROUGH_HOUR) + 24) % 24;
+  // Full cycle period = 24 h.  cos(0)= 1 at trough (we want min there)
+  // so we use  -cos  to flip: -cos(0)= -1 → mid + amp*(-1) = tmin  ✓
+  //                            -cos(π)= +1 → mid + amp*(+1) = tmax  ✓
+  // Peak should land at PEAK_HOUR.  shifted at peak = (14-5)=9 h.
+  // We want cos(angle) = -1  →  angle = π.
+  // angle = (shifted / peakShifted) * π  where peakShifted = 9
+  // For hours past the peak (shifted > 9) the temperature falls back to tmin
+  // over the remaining 15 hours → second half of the cosine from π to 2π.
+  const peakShifted = ((PEAK_HOUR - TROUGH_HOUR) + 24) % 24; // 9
+
+  let angle: number;
+  if (shifted <= peakShifted) {
+    // Rising leg: 0 … peakShifted  →  angle 0 … π
+    angle = (shifted / peakShifted) * Math.PI;
+  } else {
+    // Falling leg: peakShifted … 24  →  angle π … 2π
+    angle = Math.PI + ((shifted - peakShifted) / (24 - peakShifted)) * Math.PI;
+  }
+
+  return mid + amp * (-Math.cos(angle));
+}
+
+/**
+ * Build 24 synthetic hourly entries for a single day.
+ * @param dateStr   "YYYY-MM-DD"
+ * @param tmax      daily high
+ * @param tmin      daily low
+ * @param code      WMO weather code for the day
+ * @param condition human-readable condition string
+ * @param precipProb day-level precipitation probability (0-100)
+ * @param icon      icon URL (passed through unchanged)
+ */
+function synthesiseHoursForDay(
+  dateStr: string,
+  tmax: number,
+  tmin: number,
+  code: number,
+  condition: string,
+  precipProb: number,
+  icon: string,
+): WeatherData["hourly"] {
+  const hours: WeatherData["hourly"] = [];
+
+  for (let h = 0; h < 24; h++) {
+    const HH = String(h).padStart(2, "0");
+    hours.push({
+      time: `${dateStr}T${HH}:00`,
+      temperature: Math.round(interpTemp(h, tmin, tmax) * 10) / 10,
+      weather_code: code,
+      precipitation_probability: precipProb,
+      condition,
+      icon,
+    });
+  }
+
+  return hours;
+}
+
+/**
+ * Given the parsed `daily` array, produce a full `fullHourly` array (all days)
+ * and a `hourly` array (today's remaining hours only, starting from now).
+ */
+function synthesiseHourlyFromDaily(
+  dailyArr: WeatherData["daily"],
+): { hourly: WeatherData["hourly"]; fullHourly: WeatherData["hourly"] } {
+  const fullHourly: WeatherData["hourly"] = [];
+
+  for (const day of dailyArr ?? []) {
+    const dayHours = synthesiseHoursForDay(
+      day.date,
+      day.temperature_max,
+      day.temperature_min,
+      day.weather_code,
+      day.condition,
+      day.precipitation_probability,
+      day.icon,
+    );
+    fullHourly.push(...dayHours);
+  }
+
+  // `hourly` = today's hours from current hour onward (what the "Hourly Forecast"
+  // strip at the top of the widget renders — it slices to 24 entries itself).
+  const now = new Date();
+  const todayStr =
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const currentHour = now.getHours();
+
+  const hourly = fullHourly.filter((entry) => {
+    if (!entry.time.startsWith(todayStr)) return false;
+    const entryHour = parseInt(entry.time.slice(11, 13), 10);
+    return entryHour >= currentHour;
+  });
+
+  return { hourly, fullHourly };
+}
+
 class WeatherService {
   private readonly baseUrl: string;
 
@@ -159,8 +287,8 @@ class WeatherService {
     const result: WeatherData = {};
     if (!data || typeof data !== "object") return result;
 
+    // ─── Aggregated daily forecast (the main path for get_forecast) ─────────
     if (this.isAggregatedDailyForecast(data)) {
-      const unitsSystem: UnitsSystem = data.unitsSystem === "IMPERIAL" ? "IMPERIAL" : "METRIC";
       const first = data.daily?.[0]?.response;
       if (first && this.isLookupWeatherResponse(first)) {
         const currentFromFirst = this.lookupToCurrent(first);
@@ -170,6 +298,7 @@ class WeatherService {
         if (loc) result.location = loc;
       }
 
+      // ── Parse daily array ──
       const dailyArr: WeatherData["daily"] = [];
       for (const item of data.daily ?? []) {
         const d = item?.date;
@@ -181,14 +310,30 @@ class WeatherService {
       }
       if (dailyArr.length) result.daily = dailyArr;
 
-      result.hourly = [];
-      result.fullHourly = [];
-      result.timezone = undefined;
-      result.utc_offset_seconds = undefined;
+      // ── Hourly: use real data if the MCP ever starts returning it,
+      //     otherwise synthesise from daily min/max ──────────────────
+      if (Array.isArray(data.hourly) && data.hourly.length > 0) {
+        // Real hourly data arrived from the edge function — pass it through.
+        // Each entry is expected to already have: time, temperature, weather_code,
+        // precipitation_probability, condition, icon  (or close enough).
+        console.log("[weatherService] Using real hourly data from MCP (" + data.hourly.length + " entries)");
+        result.hourly     = data.hourly as WeatherData["hourly"];
+        result.fullHourly = data.hourly as WeatherData["hourly"];
+      } else {
+        // MCP confirmed no hourly endpoint → synthesise from daily.
+        console.log("[weatherService] No real hourly data — synthesising from daily min/max");
+        const { hourly, fullHourly } = synthesiseHourlyFromDaily(dailyArr);
+        result.hourly     = hourly;
+        result.fullHourly = fullHourly;
+      }
+
+      result.timezone            = undefined;
+      result.utc_offset_seconds  = undefined;
 
       return result;
     }
 
+    // ─── Single location-weather response (get_location_weather) ─────────────
     if (this.isLocationWeatherShape(data)) {
       const loc = this.extractLocationFromReturnedLocation(data.returnedLocation, data.location_label || data.geocodedAddress || "Selected location");
       if (loc) result.location = loc;
@@ -196,15 +341,16 @@ class WeatherService {
       const current = this.locationWeatherToCurrent(data);
       if (current) result.current = current;
 
-      result.hourly = [];
+      result.hourly     = [];
       result.fullHourly = [];
-      result.daily = [];
-      result.timezone = undefined;
-      result.utc_offset_seconds = undefined;
+      result.daily      = [];
+      result.timezone            = undefined;
+      result.utc_offset_seconds  = undefined;
 
       return result;
     }
 
+    // ─── Raw lookup_weather response (get_current) ──────────────────────────
     if (this.isLookupWeatherResponse(data)) {
       const current = this.lookupToCurrent(data);
       if (current) result.current = current;
@@ -212,17 +358,19 @@ class WeatherService {
       const loc = this.lookupToLocation(data);
       if (loc) result.location = loc;
 
-      result.hourly = [];
+      result.hourly     = [];
       result.fullHourly = [];
-      result.daily = [];
-      result.timezone = undefined;
-      result.utc_offset_seconds = undefined;
+      result.daily      = [];
+      result.timezone            = undefined;
+      result.utc_offset_seconds  = undefined;
 
       return result;
     }
 
     return result;
   }
+
+  // ── Shape detectors ───────────────────────────────────────────────────────
 
   private isAggregatedDailyForecast(obj: any): boolean {
     return !!obj && typeof obj === "object" && Array.isArray(obj.daily) && (obj.current || obj.unitsSystem);
@@ -245,6 +393,8 @@ class WeatherService {
     );
   }
 
+  // ── Field extractors ──────────────────────────────────────────────────────
+
   private lookupToCurrent(wx: any): WeatherData["current"] | undefined {
     const temp = this.readTemperatureDegrees(wx.temperature) ??
       this.readTemperatureDegrees(wx.feelsLikeTemperature) ??
@@ -263,7 +413,6 @@ class WeatherService {
     const humidity = typeof wx.relativeHumidity === "number" ? wx.relativeHumidity : 0;
     const pressure = this.readAirPressure(wx.airPressure) ?? 0;
 
-    const precipProb = this.readPrecipProbability(wx.precipitation) ?? 0;
     const uv = typeof wx.uvIndex === "number" ? wx.uvIndex : undefined;
 
     const iconBaseUri = wx.weatherCondition?.iconBaseUri || "";
@@ -357,6 +506,8 @@ class WeatherService {
     };
   }
 
+  // ── Primitive readers ─────────────────────────────────────────────────────
+
   private readTemperatureDegrees(t: any): number | null {
     const deg = t?.degrees;
     return typeof deg === "number" ? deg : null;
@@ -386,6 +537,8 @@ class WeatherService {
     const q = p?.qpf?.quantity;
     return typeof q === "number" ? q : null;
   }
+
+  // ── Weather-code mapping ──────────────────────────────────────────────────
 
   private mapGoogleTypeToWeatherCode(type: any): number {
     const t = String(type || "").toUpperCase();
