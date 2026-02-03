@@ -215,8 +215,14 @@ Deno.serve(async (req: Request) => {
         return new Response(JSON.stringify({ data: data || null }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (action === "update_settings" && settings) {
+        // Cap values to reasonable limits
+        const validatedSettings = {
+          ...settings,
+          hourly_hours: settings.hourly_hours ? Math.max(1, Math.min(24, settings.hourly_hours)) : undefined,
+          daily_days: settings.daily_days ? Math.max(1, Math.min(7, settings.daily_days)) : undefined,
+        };
         const { data, error } = await supabase.from("weather_settings")
-          .upsert({ user_id: user.id, ...settings }, { onConflict: "user_id" }).select().single();
+          .upsert({ user_id: user.id, ...validatedSettings }, { onConflict: "user_id" }).select().single();
         if (error) throw error;
         return new Response(JSON.stringify({ data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
