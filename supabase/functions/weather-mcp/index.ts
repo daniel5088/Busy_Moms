@@ -173,9 +173,44 @@ async function searchPlaceId(baseUrl: string, apiKey: string, query: string): Pr
 }
 
 function extractLatLngFromLookup(resp: any): { latitude: number; longitude: number } | null {
+  console.log(`%c[weather-mcp] 🔍 extractLatLngFromLookup - searching for coordinates`, "color: #f59e0b; font-weight: bold");
+
+  // Log the full structure to see what we have
+  console.log(`[weather-mcp]   Full response keys:`, Object.keys(resp || {}));
+  console.log(`[weather-mcp]   returnedLocation:`, JSON.stringify(resp?.returnedLocation));
+
+  // Try multiple possible locations for coordinates
+
+  // 1. Check returnedLocation.latLng (standard)
   const ll = resp?.returnedLocation?.latLng;
-  if (typeof ll?.latitude === "number" && typeof ll?.longitude === "number")
+  if (typeof ll?.latitude === "number" && typeof ll?.longitude === "number") {
+    console.log(`%c[weather-mcp]   ✅ Found in returnedLocation.latLng:`, "color: #22c55e", ll);
     return { latitude: ll.latitude, longitude: ll.longitude };
+  }
+
+  // 2. Check returnedLocation.location.latLng
+  const ll2 = resp?.returnedLocation?.location?.latLng;
+  if (typeof ll2?.latitude === "number" && typeof ll2?.longitude === "number") {
+    console.log(`%c[weather-mcp]   ✅ Found in returnedLocation.location.latLng:`, "color: #22c55e", ll2);
+    return { latitude: ll2.latitude, longitude: ll2.longitude };
+  }
+
+  // 3. Check top-level latLng
+  const ll3 = resp?.latLng;
+  if (typeof ll3?.latitude === "number" && typeof ll3?.longitude === "number") {
+    console.log(`%c[weather-mcp]   ✅ Found in top-level latLng:`, "color: #22c55e", ll3);
+    return { latitude: ll3.latitude, longitude: ll3.longitude };
+  }
+
+  // 4. Check location.latLng (direct)
+  const ll4 = resp?.location?.latLng;
+  if (typeof ll4?.latitude === "number" && typeof ll4?.longitude === "number") {
+    console.log(`%c[weather-mcp]   ✅ Found in location.latLng:`, "color: #22c55e", ll4);
+    return { latitude: ll4.latitude, longitude: ll4.longitude };
+  }
+
+  console.log(`%c[weather-mcp]   ❌ No coordinates found in any expected location`, "color: #ef4444; font-weight: bold");
+  console.log(`[weather-mcp]   Need to see FULL response structure. Dumping:`, JSON.stringify(resp, null, 2).substring(0, 1000));
   return null;
 }
 
