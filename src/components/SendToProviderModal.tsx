@@ -42,6 +42,7 @@ export function SendToProviderModal({
 
   const providerDisplay = {
     instacart: { name: 'Instacart', color: 'bg-green-500', textColor: 'text-green-600' },
+    amazon: { name: 'Amazon', color: 'bg-orange-500', textColor: 'text-orange-600' },
     manual: { name: 'Manual', color: 'bg-gray-500', textColor: 'text-gray-600' },
   };
 
