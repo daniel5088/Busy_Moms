@@ -397,8 +397,13 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const showHumidity = settings?.show_humidity !== false;
   const showPressure = settings?.show_pressure !== false;
   const showHourlyForecast = settings?.show_hourly_forecast !== false;
-  const showSunEvents = settings?.show_sun_events === true;
-  const showMoonEvents = settings?.show_moon_events === true;
+  const showFeelsLike = settings?.show_feels_like !== false;
+  const showHeatIndex = settings?.show_heat_index !== false;
+  const showUvIndex = settings?.show_uv_index !== false;
+  const showCloudCover = settings?.show_cloud_cover !== false;
+  const showThunderstormProb = settings?.show_thunderstorm_probability !== false;
+  const showSunEvents = settings?.show_sun_events !== false;
+  const showMoonEvents = settings?.show_moon_events !== false;
 
   if (loading) {
     return <WeatherSkeleton isDark={isDark} />;
@@ -528,6 +533,68 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                 icon={<Gauge className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
                 label="Pressure"
                 value={`${Math.round(current.pressure)} mb`}
+              />
+            );
+          }
+
+          if (showFeelsLike && current.feels_like !== undefined) {
+            detailCards.push(
+              <DetailPill
+                key="feels-like"
+                isDark={isDark}
+                icon={<Thermometer className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Feels Like"
+                value={`${Math.round(current.feels_like)}°`}
+              />
+            );
+          }
+
+          if (showHeatIndex && current.heat_index !== undefined) {
+            detailCards.push(
+              <DetailPill
+                key="heat-index"
+                isDark={isDark}
+                icon={<Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Heat Index"
+                value={`${Math.round(current.heat_index)}°`}
+              />
+            );
+          }
+
+          if (showUvIndex && current.uv_index !== undefined && current.uv_index > 0) {
+            const uvLevel = current.uv_index <= 2 ? 'Low' : current.uv_index <= 5 ? 'Moderate' : current.uv_index <= 7 ? 'High' : current.uv_index <= 10 ? 'Very High' : 'Extreme';
+            detailCards.push(
+              <DetailPill
+                key="uv"
+                isDark={isDark}
+                icon={<Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="UV Index"
+                value={`${Math.round(current.uv_index)}`}
+                sub={uvLevel}
+              />
+            );
+          }
+
+          if (showCloudCover && current.cloud_cover !== undefined && current.cloud_cover > 0) {
+            detailCards.push(
+              <DetailPill
+                key="cloud-cover"
+                isDark={isDark}
+                icon={<Cloud className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Cloud Cover"
+                value={`${current.cloud_cover}%`}
+              />
+            );
+          }
+
+          if (showThunderstormProb && current.thunderstorm_probability !== undefined && current.thunderstorm_probability > 0) {
+            detailCards.push(
+              <DetailPill
+                key="thunderstorm"
+                isDark={isDark}
+                icon={<Zap className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Thunderstorms"
+                value={`${current.thunderstorm_probability}%`}
               />
             );
           }
