@@ -93,8 +93,34 @@ export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: Eve
     );
   }
 
+  // Show placeholder icon when no weather data loaded yet - click to fetch
   if (!weather) {
-    return null;
+    const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
+    const containerSize = size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
+    
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick?.();
+        }}
+        className={`
+          ${containerSize} rounded-full 
+          bg-gray-100 dark:bg-gray-700
+          text-gray-400 dark:text-gray-500
+          flex items-center justify-center
+          hover:bg-blue-100 dark:hover:bg-blue-900
+          hover:text-blue-500 dark:hover:text-blue-400
+          hover:scale-110 transition-all
+          border border-gray-200 dark:border-gray-600
+          focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500
+        `}
+        title="Click to check weather for this event"
+        aria-label="Check weather for this event location"
+      >
+        <CloudSun className={iconSize} />
+      </button>
+    );
   }
 
   const colors = getSeverityClasses(weather.suggestion.severity);
