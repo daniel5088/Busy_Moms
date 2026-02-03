@@ -21,13 +21,23 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
     include_daily: true,
     hourly_hours: 24,
     daily_days: 7,
-    // Display settings
+    // Display settings - Basic weather
     show_hourly_forecast: true,
-    show_uv_index: false,
-    show_air_quality: false,
     show_wind: true,
     show_humidity: true,
     show_pressure: true,
+    // Display settings - Temperature variants
+    show_feels_like: false,
+    show_heat_index: false,
+    // Display settings - Solar & Atmospheric
+    show_uv_index: false,
+    show_cloud_cover: false,
+    show_thunderstorm_probability: false,
+    // Display settings - Celestial
+    show_sun_events: false,
+    show_moon_events: false,
+    // Display settings - Air Quality (requires separate API)
+    show_air_quality: false,
   });
   const [saving, setSaving] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
@@ -47,13 +57,23 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
         include_daily: settings.include_daily !== false,
         hourly_hours: settings.hourly_hours || 24,
         daily_days: settings.daily_days || 7,
-        // Display settings
+        // Display settings - Basic
         show_hourly_forecast: settings.show_hourly_forecast !== false,
-        show_uv_index: settings.show_uv_index === true,
-        show_air_quality: settings.show_air_quality === true,
         show_wind: settings.show_wind !== false,
         show_humidity: settings.show_humidity !== false,
         show_pressure: settings.show_pressure !== false,
+        // Display settings - Temperature variants
+        show_feels_like: settings.show_feels_like === true,
+        show_heat_index: settings.show_heat_index === true,
+        // Display settings - Solar & Atmospheric
+        show_uv_index: settings.show_uv_index === true,
+        show_cloud_cover: settings.show_cloud_cover === true,
+        show_thunderstorm_probability: settings.show_thunderstorm_probability === true,
+        // Display settings - Celestial
+        show_sun_events: settings.show_sun_events === true,
+        show_moon_events: settings.show_moon_events === true,
+        // Display settings - Air Quality
+        show_air_quality: settings.show_air_quality === true,
       });
     }
   }, [settings]);
@@ -323,46 +343,166 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Widget Display Options
           </label>
-          <div className="space-y-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.show_hourly_forecast}
-                onChange={(e) => setFormData(prev => ({ ...prev, show_hourly_forecast: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Show hourly forecast in widget</span>
-            </label>
+          <div className="space-y-4">
+            {/* Basic Weather Information */}
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                Basic Weather Information
+              </h4>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_hourly_forecast}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_hourly_forecast: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show hourly forecast in widget</span>
+                </label>
 
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.show_wind}
-                onChange={(e) => setFormData(prev => ({ ...prev, show_wind: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Show wind speed</span>
-            </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_wind}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_wind: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show wind speed & direction</span>
+                </label>
 
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.show_humidity}
-                onChange={(e) => setFormData(prev => ({ ...prev, show_humidity: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Show humidity</span>
-            </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_humidity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_humidity: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show relative humidity</span>
+                </label>
 
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.show_pressure}
-                onChange={(e) => setFormData(prev => ({ ...prev, show_pressure: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Show pressure</span>
-            </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_pressure}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_pressure: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show air pressure</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Temperature Variants */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+              <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-3">
+                Temperature Variants
+              </h4>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_feels_like}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_feels_like: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show "feels like" temperature</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_heat_index}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_heat_index: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show heat index</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Solar & Atmospheric Conditions */}
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
+              <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">
+                Solar & Atmospheric Conditions
+              </h4>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_uv_index}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_uv_index: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show UV index</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_cloud_cover}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_cloud_cover: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show cloud cover percentage</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_thunderstorm_probability}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_thunderstorm_probability: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show thunderstorm probability</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Celestial Events */}
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+              <h4 className="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wide mb-3">
+                Celestial Events
+              </h4>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_sun_events}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_sun_events: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show sunrise & sunset times</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_moon_events}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_moon_events: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show moonrise, moonset & moon phase</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Air Quality */}
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+              <h4 className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-3">
+                Air Quality (Requires Additional API)
+              </h4>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.show_air_quality}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_air_quality: e.target.checked }))}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show air quality index (AQI)</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
