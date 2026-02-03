@@ -7,8 +7,6 @@ import {
   Star,
   ExternalLink,
   ChefHat,
-  Package,
-  Filter,
   Store,
   Edit,
   Trash2,
@@ -46,7 +44,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [providerFilter, setProviderFilter] = useState<'all' | ProviderName>('all');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendProvider, setSendProvider] = useState<ProviderName>(null);
@@ -242,10 +239,7 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
   };
 
   const getFilteredItems = () => {
-    if (providerFilter === 'all') {
-      return shoppingList.filter((item) => !item.completed);
-    }
-    return shoppingList.filter((item) => !item.completed && item.provider_name === providerFilter);
+    return shoppingList.filter((item) => !item.completed);
   };
 
   const handleSendToProvider = (provider: ProviderName) => {
@@ -283,32 +277,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
       return shoppingList.filter((item) => selectedItems.has(item.id));
     }
     return getFilteredItems();
-  };
-
-  const getProviderStats = () => {
-    const activeItems = shoppingList.filter((item) => !item.completed);
-    return {
-      all: activeItems.length,
-      instacart: activeItems.filter((item) => item.provider_name === 'instacart').length,
-      manual: activeItems.filter((item) => item.provider_name === 'manual').length,
-      unassigned: activeItems.filter((item) => !item.provider_name || item.provider_name === 'amazon').length,
-    };
-  };
-
-  const getProviderBadge = (provider: ProviderName) => {
-    switch (provider) {
-      case 'instacart':
-        return {
-          type: 'logo',
-          logo: '/Instacart_Carrot.png',
-          color: 'bg-green-500',
-          textColor: 'text-green-600',
-        };
-      case 'manual':
-        return { type: 'text', text: 'Manual', color: 'bg-gray-500', textColor: 'text-gray-600' };
-      default:
-        return null;
-    }
   };
 
   const giftSuggestions = [
@@ -385,46 +353,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
         {/* Shopping List Tab */}
         {activeTab === 'list' && (
           <div className="space-y-4" id="list-panel" role="tabpanel" aria-labelledby="list-tab">
-            {/* Provider Filter Tabs */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-2">
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'all' as const, label: 'All', count: getProviderStats().all },
-                  {
-                    id: 'instacart' as ProviderName,
-                    label: 'Instacart',
-                    count: getProviderStats().instacart,
-                  },
-                  {
-                    id: null as ProviderName,
-                    label: 'Unassigned',
-                    count: getProviderStats().unassigned,
-                  },
-                ].map((filter) => (
-                  <button
-                    type="button"
-                    key={filter.id || 'null'}
-                    onClick={() => setProviderFilter(filter.id)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      providerFilter === filter.id
-                        ? 'bg-green-500 text-white shadow-sm'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    <Filter className="w-4 h-4" aria-hidden="true" />
-                    <span>{filter.label}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs ${
-                        providerFilter === filter.id ? 'bg-white bg-opacity-20' : 'bg-gray-200'
-                      }`}
-                    >
-                      {filter.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Action Buttons */}
             {!loading && getFilteredItems().length > 0 && (
               <div className="flex flex-wrap gap-3">
@@ -466,10 +394,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
             ) : (
               <div className="space-y-3">
                 {getFilteredItems().map((item) => {
-                  const providerBadge = item.provider_name
-                    ? getProviderBadge(item.provider_name)
-                    : null;
-
                   return (
                     <div
                       key={item.id}
@@ -539,25 +463,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                             </p>
                           </div>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {providerBadge && (
-                              <div
-                                className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${providerBadge.color} bg-opacity-10 ${providerBadge.textColor}`}
-                              >
-                                {providerBadge.type === 'logo' ? (
-                                  <img
-                                    src={providerBadge.logo}
-                                    alt=""
-                                    aria-hidden="true"
-                                    className="h-4 w-auto object-contain"
-                                  />
-                                ) : (
-                                  <>
-                                    <Package className="w-3 h-3" aria-hidden="true" />
-                                    <span>{providerBadge.text}</span>
-                                  </>
-                                )}
-                              </div>
-                            )}
                             {item.provider_metadata?.retailer_name && (
                               <div
                                 className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
