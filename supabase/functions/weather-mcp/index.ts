@@ -334,8 +334,13 @@ Deno.serve(async (req: Request) => {
 
       const { data: userSettings } = await supabase.from("weather_settings").select("temperature_unit, wind_speed_unit").eq("user_id", user.id).maybeSingle();
       const unitsSystem = toUnitsSystem((userSettings ?? {}) as Partial<WeatherSettings>);
-      const timeKey = eventTime ? eventTime.replace(/:/g, "") : "allday";
-      const locationKey = `event_${location.trim().toLowerCase().replace(/[^a-z0-9 ]/g, "_")}_${eventDate}_${timeKey}_${unitsSystem}`;
+
+      // Generate cache key using same format as frontend
+      // Format: event_location_date_time_units
+      const normalizedLocation = location.trim().toLowerCase().replace(/[^a-z0-9 ]/g, "_");
+      const normalizedDate = eventDate.trim();
+      const normalizedTime = eventTime ? eventTime.trim().replace(/:/g, "") : "allday";
+      const locationKey = `event_${normalizedLocation}_${normalizedDate}_${normalizedTime}_${unitsSystem}`;
 
       console.log(`[weather-mcp] 🔑 Generated locationKey: "${locationKey}"`);
       console.log(`[weather-mcp] 🌡️  unitsSystem: ${unitsSystem}`);

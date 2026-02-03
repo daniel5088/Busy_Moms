@@ -18,6 +18,7 @@ import {
 import { calendarContextService } from './calendarContext';
 import { formatTimeForDisplay, formatDateForDisplay, parseTimeToMinutes } from '../utils/timeFormatters';
 import { weatherAgentService } from './weatherAgentService';
+import { generateWeatherCacheKey } from '../utils/weatherCacheKey';
 import { detectDate, detectDateRange, parseDuration, getRelativeDateString, DetectedDate } from '../utils/dateDetection';
 
 /** Central brain for "Sara" — routes natural language to concrete app actions. */
@@ -3258,20 +3259,29 @@ class AIAssistantService {
               const stored = localStorage.getItem(WEATHER_CACHE_KEY);
               const cache = stored ? JSON.parse(stored) : {};
 
-              // Generate cache key (same format as useEventWeather)
-              const normalizedLocation = event.location.trim().toLowerCase();
-              const normalizedDate = event.event_date.trim();
-              const normalizedTime = event.event_time?.trim() || 'allday';
-              const cacheKey = `${normalizedLocation}_${normalizedDate}_${normalizedTime}`;
+              // Get user settings to determine units system
+              const { data: userSettings } = await supabase
+                .from('weather_settings')
+                .select('temperature_unit')
+                .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+                .maybeSingle();
+
+              const unitsSystem = userSettings?.temperature_unit === 'celsius' ? 'metric' : 'imperial';
+
+              // Generate cache key using shared utility
+              const cacheKey = generateWeatherCacheKey(
+                event.location,
+                event.event_date,
+                event.event_time,
+                unitsSystem
+              );
 
               console.log(`%c💾 [SARAH WEATHER] Saving to localStorage cache`, 'color: #f59e0b; font-weight: bold');
               console.log(`   🔑 Cache key components:`, {
                 originalLocation: event.location,
-                normalizedLocation,
                 originalDate: event.event_date,
-                normalizedDate,
                 originalTime: event.event_time,
-                normalizedTime,
+                unitsSystem,
                 finalCacheKey: cacheKey,
               });
               console.log(`   📦 Weather data being saved:`, {

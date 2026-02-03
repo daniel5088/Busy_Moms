@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { weatherService, EventWeatherData } from '../services/weatherService';
+import { generateWeatherCacheKey } from '../utils/weatherCacheKey';
 
 const MORNING_PREFETCH_KEY = 'weather_morning_prefetch_timestamp';
 const WEATHER_CACHE_KEY = 'event_weather_cache';
@@ -92,16 +93,17 @@ export function useEventWeather() {
   /**
    * Generate a cache key for an event
    */
-  const getCacheKey = useCallback((location: string, eventDate: string, eventTime?: string | null): string => {
-    const normalizedLocation = location.trim().toLowerCase();
-    const normalizedDate = eventDate.trim();
-    const normalizedTime = eventTime?.trim() || 'allday';
-    const key = `${normalizedLocation}_${normalizedDate}_${normalizedTime}`;
+  const getCacheKey = useCallback(async (location: string, eventDate: string, eventTime?: string | null): Promise<string> => {
+    const settings = await weatherService.getSettings();
+    const unitsSystem = settings?.temperature_unit === 'celsius' ? 'metric' : 'imperial';
+
+    const key = generateWeatherCacheKey(location, eventDate, eventTime, unitsSystem);
 
     console.log(`[useEventWeather] Generated cache key:`, {
       location,
       eventDate,
       eventTime,
+      unitsSystem,
       key
     });
 
@@ -119,9 +121,9 @@ export function useEventWeather() {
     force = false
   ): Promise<EventWeatherData | null> => {
     if (!location || !location.trim()) return null;
-    
-    const cacheKey = getCacheKey(location, eventDate, eventTime);
-    
+
+    const cacheKey = await getCacheKey(location, eventDate, eventTime);
+
     // Return cached data if available and not forcing refresh
     if (!force && eventWeatherCache.has(cacheKey)) {
       console.log('%c[useEventWeather] 💾 Using local cache (no API call)', 'color: #10b981');
@@ -178,16 +180,16 @@ export function useEventWeather() {
   /**
    * Check if weather is loading for a specific event
    */
-  const isLoading = useCallback((location: string, eventDate: string, eventTime?: string | null): boolean => {
-    const cacheKey = getCacheKey(location, eventDate, eventTime);
+  const isLoading = useCallback(async (location: string, eventDate: string, eventTime?: string | null): Promise<boolean> => {
+    const cacheKey = await getCacheKey(location, eventDate, eventTime);
     return loadingEvents.has(cacheKey);
   }, [loadingEvents, getCacheKey]);
 
   /**
    * Get cached weather data without fetching
    */
-  const getCachedWeather = useCallback((location: string, eventDate: string, eventTime?: string | null): EventWeatherData | null => {
-    const cacheKey = getCacheKey(location, eventDate, eventTime);
+  const getCachedWeather = useCallback(async (location: string, eventDate: string, eventTime?: string | null): Promise<EventWeatherData | null> => {
+    const cacheKey = await getCacheKey(location, eventDate, eventTime);
     const cached = eventWeatherCache.get(cacheKey) || null;
 
     console.log(`%c[useEventWeather] 🔍 Cache lookup`, 'color: #8b5cf6; font-weight: bold');
