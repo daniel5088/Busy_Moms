@@ -437,13 +437,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                                   <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
                                 </button>
                               </div>
-                              <input
-                                type="checkbox"
-                                checked={item.completed || false}
-                                onChange={() => toggleItemCompleted(item.id)}
-                                aria-label={`Mark ${item.item} as ${item.completed ? 'incomplete' : 'complete'}`}
-                                className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 rounded focus:ring-green-500 flex-shrink-0"
-                              />
                             </div>
                           </div>
                           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
