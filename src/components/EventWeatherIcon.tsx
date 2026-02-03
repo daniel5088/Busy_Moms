@@ -85,14 +85,18 @@ function getSeverityClasses(severity: WeatherSuggestion['severity']): { bg: stri
  * Small weather icon shown next to events with location
  */
 export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: EventWeatherIconProps) {
-  console.log('[EventWeatherIcon] Rendering with:', {
+  console.log('%c[EventWeatherIcon] Rendering', 'color: #f59e0b; font-weight: bold', {
     hasWeather: !!weather,
     loading,
     weather: weather ? {
       condition: weather.condition,
+      location: weather.location,
       hasSuggestion: !!weather.suggestion,
       severity: weather.suggestion?.severity,
       icon: weather.suggestion?.icon,
+      hasCoordinates: !!(weather.latitude && weather.longitude),
+      latitude: weather.latitude,
+      longitude: weather.longitude,
     } : null,
   });
 

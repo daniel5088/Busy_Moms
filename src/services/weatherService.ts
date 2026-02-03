@@ -125,6 +125,8 @@ export interface EventWeatherData {
   uvIndex?: number;
   icon: string;
   suggestion: WeatherSuggestion;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface WeatherResponse {
@@ -338,6 +340,10 @@ class WeatherService {
     if (!data) return null;
 
     // Data is already in the parsed format from the database
+    // Extract coordinates
+    const latitude = typeof data.latitude === "number" ? data.latitude : undefined;
+    const longitude = typeof data.longitude === "number" ? data.longitude : undefined;
+
     return {
       location: data.location_label || "Unknown",
       eventDate: data.eventDate,
@@ -365,6 +371,8 @@ class WeatherService {
           this.mapGoogleTypeToWeatherCode(data.weatherCondition?.type || "")
         )
       ),
+      latitude,
+      longitude,
     };
   }
 
@@ -393,6 +401,14 @@ class WeatherService {
     const iconBaseUri = data.weatherCondition?.iconBaseUri || "";
     const icon = iconBaseUri ? `${iconBaseUri}.svg` : "";
 
+    // Extract coordinates
+    const latitude = typeof data.latitude === "number" ? data.latitude : undefined;
+    const longitude = typeof data.longitude === "number" ? data.longitude : undefined;
+
+    console.log(`%c[WeatherService] 🗺️  Parsing coordinates from edge function response`, 'color: #8b5cf6');
+    console.log(`   latitude: ${latitude}, longitude: ${longitude}`);
+    console.log(`   Has coordinates: ${!!(latitude && longitude)}`);
+
     return {
       location: data.location_label || "Unknown",
       eventDate: data.eventDate,
@@ -410,6 +426,8 @@ class WeatherService {
       uvIndex: typeof data.uvIndex === "number" ? data.uvIndex : undefined,
       icon,
       suggestion: this.getWeatherSuggestion(weatherCode, precipProb, precipType),
+      latitude,
+      longitude,
     };
   }
 
