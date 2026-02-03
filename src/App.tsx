@@ -33,6 +33,7 @@ import { useDarkMode } from './hooks/useDarkMode';
 import CycleTracker from './components/CycleTracker';
 import { LifeReceipts } from './components/LifeReceipts';
 import { LifeReceiptsView } from './components/LifeReceiptsView';
+import GiftFinder from './components/GiftFinder';
 
 export type Screen =
   | 'dashboard'
@@ -50,7 +51,8 @@ export type SubScreen =
   | 'quick-links'
   | 'wellness'
   | 'life-receipts'
-  | 'life-receipts-view';
+  | 'life-receipts-view'
+  | 'gift-finder';
 
 function App() {
   const session = useSessionContext();
@@ -65,7 +67,6 @@ function App() {
   //Alvaros - Dailyaffirmations: State for unified affirmation settings modal
   const [showAffirmationSettings, setShowAffirmationSettings] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
-  const [openGiftFinder, setOpenGiftFinder] = useState(false);
   const [openCalendarCamera, setOpenCalendarCamera] = useState(false);
   const [openRecipesTab, setOpenRecipesTab] = useState(false);
   const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
@@ -398,8 +399,6 @@ function App() {
               {currentSubScreen === 'shopping' && (
                 <FeatureErrorBoundary featureName="Shopping">
                   <Shopping
-                    openGiftFinder={openGiftFinder}
-                    onGiftFinderOpened={() => setOpenGiftFinder(false)}
                     openRecipesTab={openRecipesTab}
                     onRecipesTabOpened={() => setOpenRecipesTab(false)}
                   />
@@ -454,6 +453,11 @@ function App() {
                   <LifeReceiptsView onBack={() => setCurrentSubScreen('life-receipts')} />
                 </FeatureErrorBoundary>
               )}
+              {currentSubScreen === 'gift-finder' && (
+                <FeatureErrorBoundary featureName="Gift Finder">
+                  <GiftFinder onBack={() => setCurrentSubScreen(null)} />
+                </FeatureErrorBoundary>
+              )}
             </>
           ) : (
             <>
@@ -491,8 +495,7 @@ function App() {
                   <Calendar
                     onNavigateToSubScreen={setCurrentSubScreen}
                     onNavigateToGiftFinder={() => {
-                      setCurrentSubScreen('shopping');
-                      setOpenGiftFinder(true);
+                      setCurrentSubScreen('gift-finder');
                     }}
                     openCalendarCamera={openCalendarCamera}
                     onCalendarCameraOpened={() => setOpenCalendarCamera(false)}

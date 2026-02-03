@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Plus,
   ShoppingCart,
-  Gift,
   Repeat,
   Star,
   ExternalLink,
@@ -24,19 +23,16 @@ import { useAuth } from '../hooks/useAuth';
 import { RecipeBrowser } from './RecipeBrowser';
 import { RecipeDetailModal } from './RecipeDetailModal';
 import { SendToProviderModal } from './SendToProviderModal';
-import { GiftFinderModal } from './GiftFinderModal';
 import { instacartShoppingService } from '../services/instacartShoppingService';
 import { InstacartButton } from './InstacartButton';
 import { measurementPreferencesService, ConvertedMeasurement } from '../services/measurementPreferencesService';
 
 interface ShoppingProps {
-  openGiftFinder?: boolean;
-  onGiftFinderOpened?: () => void;
   openRecipesTab?: boolean;
   onRecipesTabOpened?: () => void;
 }
 
-export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecipesTab = false, onRecipesTabOpened }: ShoppingProps) {
+export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: ShoppingProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('list');
   const [showShoppingForm, setShowShoppingForm] = useState(false);
@@ -49,7 +45,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
   const [sendProvider, setSendProvider] = useState<ProviderName>(null);
   const [sendingToProvider, setSendingToProvider] = useState(false);
   const [preferredRetailer, setPreferredRetailer] = useState<UserPreferredRetailer | null>(null);
-  const [showGiftFinderModal, setShowGiftFinderModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [convertedItems, setConvertedItems] = useState<Map<string, ConvertedMeasurement>>(new Map());
 
@@ -62,17 +57,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
       setLoading(false);
     }
   }, [user?.id]);
-
-  // Auto-open gift finder if prop is set
-  useEffect(() => {
-    if (openGiftFinder) {
-      setActiveTab('gifts');
-      setShowGiftFinderModal(true);
-      if (onGiftFinderOpened) {
-        onGiftFinderOpened();
-      }
-    }
-  }, [openGiftFinder, onGiftFinderOpened]);
 
   // Auto-open recipes tab if prop is set
   useEffect(() => {
@@ -279,21 +263,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
     return getFilteredItems();
   };
 
-  const giftSuggestions = [
-    {
-      id: 1,
-      event: "Jessica's Birthday Party",
-      age: 7,
-      gender: 'Girl',
-      budget: '$15-25',
-      suggestions: [
-        { name: 'Art Supplies Set', price: '$19.99', rating: 4.8, link: '#' },
-        { name: 'Princess Dress-up Kit', price: '$24.99', rating: 4.6, link: '#' },
-        { name: "Children's Book Collection", price: '$16.99', rating: 4.9, link: '#' },
-      ],
-    },
-  ];
-
   // TEMP: Auto-Reorder data hidden until feature is functional
   /* const autoReorders = [
     { item: 'Huggies Size 3', nextOrder: 'March 20', frequency: 'Every 2 weeks', price: '$42.99' },
@@ -324,7 +293,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
           {[
             { id: 'list', label: 'Shopping List', icon: ShoppingCart },
             { id: 'recipes', label: 'Recipes', icon: ChefHat },
-            { id: 'gifts', label: 'Gift Ideas', icon: Gift },
             // TEMP: Auto-Reorder hidden until feature is functional. Re-enable by uncommenting line below.
             // { id: 'auto', label: 'Auto-Reorder', icon: Repeat },
           ].map((tab) => (
@@ -539,71 +507,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
           </div>
         )}
 
-        {/* Gift Ideas Tab */}
-        {activeTab === 'gifts' && (
-          <div className="space-y-6" id="gifts-panel" role="tabpanel" aria-labelledby="gifts-tab">
-            {giftSuggestions.map((eventGifts) => (
-              <div
-                key={eventGifts.id}
-                className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6"
-              >
-                <div className="mb-4">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                    {eventGifts.event}
-                  </h3>
-                  <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm text-gray-600 mt-1">
-                    <span>Age: {eventGifts.age}</span>
-                    <span>Gender: {eventGifts.gender}</span>
-                    <span>Budget: {eventGifts.budget}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {eventGifts.suggestions.map((gift, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-pink-400 to-purple-400 rounded-lg flex items-center justify-center">
-                        <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-white" aria-hidden="true" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 text-sm sm:text-base">
-                          {gift.name}
-                        </h4>
-                        <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-600">
-                          <span className="font-semibold text-green-600">{gift.price}</span>
-                          <div className="flex items-center space-x-1">
-                            <Star className="w-2 h-2 sm:w-3 sm:h-3 fill-yellow-400 text-yellow-400" aria-hidden="true" />
-                            <span>{gift.rating}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <button type="button" aria-label={`Buy ${gift.name}`} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-500 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-600 transition-colors flex items-center space-x-1">
-                        <ExternalLink className="w-2 h-2 sm:w-3 sm:h-3" aria-hidden="true" />
-                        <span>Buy</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            <div className="text-center py-8">
-              <p className="text-sm sm:text-base text-gray-600 mb-4">
-                No upcoming events requiring gifts
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowGiftFinderModal(true)}
-                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-pink-400 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all text-sm sm:text-base"
-              >
-                Browse Gift Ideas
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* TEMP: Auto-Reorder Tab - Hidden until feature is functional. Re-enable by removing comment block.
         {activeTab === 'auto' && (
           <div className="space-y-4">
@@ -684,8 +587,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
           userId={user.id}
         />
       )}
-
-      <GiftFinderModal isOpen={showGiftFinderModal} onClose={() => setShowGiftFinderModal(false)} />
     </main>
   );
 }
