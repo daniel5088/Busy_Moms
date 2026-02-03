@@ -48,6 +48,7 @@ import {
 import { TutorialOverlay } from './TutorialOverlay';
 import { useTutorial } from '../hooks/useTutorial';
 import { dashboardTutorialSteps } from '../utils/tutorialSteps';
+import { MiniEventWeatherIcon } from './MiniEventWeatherIcon';
 
 import { SubScreen } from '../App';
 
@@ -822,10 +823,16 @@ export function Dashboard({
                           onClick={() => onNavigateToEvent?.(event.event_date)}
                           aria-label={`${event.title}, ${formatEventTimeRange(event.start_time, event.end_time)}${event.location ? `, ${event.location}` : ''}. Tap to view event in calendar.`}
                         >
-                          <div className="flex items-center space-x-1.5">
-                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
-                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" aria-hidden="true" />
-                            </div>
+                          <div className="flex items-center space-x-2">
+                            <MiniEventWeatherIcon
+                              eventId={event.id}
+                              location={event.location}
+                              locationLat={event.location_lat}
+                              locationLng={event.location_lng}
+                              eventDate={event.event_date}
+                              eventTime={event.start_time}
+                              fallbackIcon="clock"
+                            />
                             <div className="flex-1 min-w-0 space-y-0.5">
                               <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">
                                 {formatEventTimeRange(event.start_time, event.end_time)}
@@ -877,10 +884,16 @@ export function Dashboard({
                           onClick={() => onNavigateToEvent?.(event.event_date)}
                           aria-label={`${event.title}, ${formatDate(event.event_date)}${event.start_time ? ` at ${formatEventTimeRange(event.start_time, event.end_time)}` : ''}${event.location ? `, ${event.location}` : ''}. Tap to view event in calendar.`}
                         >
-                          <div className="flex items-center space-x-1.5">
-                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center flex-shrink-0">
-                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-rose-600 dark:text-rose-300" aria-hidden="true" />
-                            </div>
+                          <div className="flex items-center space-x-2">
+                            <MiniEventWeatherIcon
+                              eventId={event.id}
+                              location={event.location}
+                              locationLat={event.location_lat}
+                              locationLng={event.location_lng}
+                              eventDate={event.event_date}
+                              eventTime={event.start_time}
+                              fallbackIcon="calendar"
+                            />
                             <div className="flex-1 min-w-0 space-y-0.5">
                               <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">
                                 {formatDate(event.event_date)}
