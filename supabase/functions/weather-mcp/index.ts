@@ -78,12 +78,13 @@ function addDays(d: Date, n: number) {
   return x;
 }
 
-async function callMapsMcpTool<T>(
+async function callMcpTool<T>(
+  mcpUrl: string,
   apiKey: string,
   toolName: string,
   args: Record<string, any>,
 ): Promise<JsonRpcEnvelope<T>> {
-  const resp = await fetch("https://mapstools.googleapis.com/mcp", {
+  const resp = await fetch(mcpUrl, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -97,12 +98,12 @@ async function callMapsMcpTool<T>(
       params: { name: toolName, arguments: args },
     }),
   });
-  if (!resp.ok) throw new Error(`Maps MCP tool call failed: ${resp.status} — ${await resp.text()}`);
+  if (!resp.ok) throw new Error(`MCP tool call failed: ${resp.status} — ${await resp.text()}`);
   return (await resp.json()) as JsonRpcEnvelope<T>;
 }
 
-async function searchPlaceId(apiKey: string, query: string): Promise<string | null> {
-  const env = await callMapsMcpTool<any>(apiKey, "search_places", { textQuery: query });
+async function searchPlaceId(mcpUrl: string, apiKey: string, query: string): Promise<string | null> {
+  const env = await callMcpTool<any>(mcpUrl, apiKey, "search_places", { textQuery: query });
   const r = unwrapMcpResult(env.result ?? null);
   if (!r || looksLikeErrorPayload(r)) return null;
 
@@ -147,8 +148,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const mapsApiKey = (Deno.env.get("MAPS_GROUNDING_LITE_API_KEY") || "").trim();
-    if (!mapsApiKey) throw new Error("MAPS_GROUNDING_LITE_API_KEY not configured");
+    const weatherMcpUrl = (Deno.env.get("WEATHER_MCP_URL") || "").trim();
+    const weatherMcpKey = (Deno.env.get("WEATHER_MCP_KEY") || "").trim();
+    if (!weatherMcpUrl) throw new Error("WEATHER_MCP_URL not configured");
+    if (!weatherMcpKey) throw new Error("WEATHER_MCP_KEY not configured");
 
     const body: WeatherRequest = await req.json();
     const { action, latitude, longitude, location, force, settings } = body;
@@ -237,12 +240,10 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      const placeId = await searchPlaceId(mapsApiKey, location.trim());
-      const locArg = placeId
-        ? { placeId }
-        : { address: location.trim() };
+      const placeId = await searchPlaceId(weatherMcpUrl, weatherMcpKey, location.trim());
+      const locArg = placeId ? { placeId } : { address: location.trim() };
 
-      const toolEnv = await callMapsMcpTool<any>(mapsApiKey, "lookup_weather", {
+      const toolEnv = await callMcpTool<any>(weatherMcpUrl, weatherMcpKey, "lookup_weather", {
         unitsSystem,
         location: locArg,
       });
@@ -337,7 +338,7 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const todayEnv = await callMapsMcpTool<any>(mapsApiKey, "lookup_weather", {
+      const todayEnv = await callMcpTool<any>(weatherMcpUrl, weatherMcpKey, "lookup_weather", {
         unitsSystem,
         location: { latLng: { latitude: lat, longitude: lng } },
         date: dateObj(now),
@@ -353,9 +354,7 @@ Deno.serve(async (req: Request) => {
       const payload = {
         unitsSystem,
         current: todayWx,
-        daily: [
-          { date: dateObj(now), response: todayWx },
-        ],
+        daily: [{ date: dateObj(now), response: todayWx }],
       };
 
       await supabase.from("weather_cache").upsert(
@@ -420,7 +419,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "get_current") {
-      const env = await callMapsMcpTool<any>(mapsApiKey, "lookup_weather", {
+      const env = await callMcpTool<any>(weatherMcpUrl, weatherMcpKey, "lookup_weather", {
         unitsSystem,
         location: { latLng: { latitude, longitude } },
       });
@@ -448,7 +447,7 @@ Deno.serve(async (req: Request) => {
 
     for (let i = 0; i < dailyDays; i++) {
       const d = addDays(today, i);
-      const env = await callMapsMcpTool<any>(mapsApiKey, "lookup_weather", {
+      const env = await callMcpTool<any>(weatherMcpUrl, weatherMcpKey, "lookup_weather", {
         unitsSystem,
         location: { latLng: { latitude, longitude } },
         date: dateObj(d),
