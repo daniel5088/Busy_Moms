@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { weatherService, EventWeatherData } from '../services/weatherService';
-import { supabase } from '../lib/supabase';
 
 const MORNING_PREFETCH_KEY = 'weather_morning_prefetch_timestamp';
 const MORNING_HOUR = 6; // 6 AM local time
@@ -40,7 +39,7 @@ function markMorningPrefetchDone(): void {
 export function useEventWeather() {
   const [eventWeatherCache, setEventWeatherCache] = useState<Map<string, EventWeatherData>>(new Map());
   const [loadingEvents, setLoadingEvents] = useState<Set<string>>(new Set());
-  const [cacheLoaded, setCacheLoaded] = useState(false);
+  const [cacheLoaded, setCacheLoaded] = useState(true); // Always true since we use in-memory cache
 
   /**
    * Generate a cache key for an event
@@ -48,72 +47,6 @@ export function useEventWeather() {
   const getCacheKey = useCallback((location: string, eventDate: string, eventTime?: string | null): string => {
     return `${location.toLowerCase().trim()}_${eventDate}_${eventTime || 'allday'}`;
   }, []);
-
-  /**
-   * Load cached weather data from database on mount
-   */
-  useEffect(() => {
-    async function loadCachedWeather() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        // Load all event weather cache entries (starting with "event_")
-        const { data: cacheRows, error } = await supabase
-          .from('weather_cache')
-          .select('location_key, weather_data, expires_at')
-          .eq('user_id', user.id)
-          .like('location_key', 'event_%')
-          .gt('expires_at', new Date().toISOString());
-
-        if (error) {
-          console.error('[useEventWeather] Error loading cached weather:', error);
-          return;
-        }
-
-        if (!cacheRows || cacheRows.length === 0) {
-          console.log('[useEventWeather] No cached weather data found in database');
-          setCacheLoaded(true);
-          return;
-        }
-
-        // Parse and populate cache
-        const newCache = new Map<string, EventWeatherData>();
-        let loadedCount = 0;
-
-        for (const row of cacheRows) {
-          try {
-            const data = row.weather_data as any;
-            if (!data || !data.location_label || !data.eventDate) continue;
-
-            // Reconstruct the cache key from the weather data
-            const cacheKey = getCacheKey(data.location_label, data.eventDate, data.eventTime);
-
-            // Parse the weather data into EventWeatherData format
-            const weatherData = weatherService.parseEventWeatherFromCache(data);
-            if (weatherData) {
-              newCache.set(cacheKey, weatherData);
-              loadedCount++;
-            }
-          } catch (err) {
-            console.error('[useEventWeather] Error parsing cached row:', err);
-          }
-        }
-
-        if (loadedCount > 0) {
-          console.log(`%c[useEventWeather] ✅ Loaded ${loadedCount} cached weather entries from database`, 'color: #10b981; font-weight: bold');
-          setEventWeatherCache(newCache);
-        }
-
-        setCacheLoaded(true);
-      } catch (error) {
-        console.error('[useEventWeather] Error loading cache from database:', error);
-        setCacheLoaded(true);
-      }
-    }
-
-    loadCachedWeather();
-  }, [getCacheKey]);
 
   /**
    * Get weather for a specific event
@@ -213,9 +146,9 @@ export function useEventWeather() {
     getEventWeather,
     getCachedWeather,
     isLoading,
+    cacheLoaded,
     checkMorningPrefetch,
     clearCache,
-    cacheLoaded,
   };
 }
 
