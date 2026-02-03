@@ -366,12 +366,47 @@ export function Dashboard({
         latitude: existingSettings.latitude,
         longitude: existingSettings.longitude,
       });
-      return;
+    } else {
+      setWeather(null);
+      setWeatherError('Set your location to see weather information');
     }
 
-    setWeather(null);
-    setWeatherError('Set your location to see weather information');
-  }, [loadWeatherSettings, refreshWeather, weatherSettings]);
+    // Fetch weather for all events with locations
+    const eventsWithLocation = events.filter(event =>
+      event.location &&
+      event.location.trim() !== '' &&
+      event.event_date
+    );
+
+    if (eventsWithLocation.length > 0) {
+      console.log(`[Dashboard] Fetching weather for ${eventsWithLocation.length} events with locations`);
+
+      // Batch fetch weather for events (limit to first 20 to avoid overwhelming the API)
+      const eventsToFetch = eventsWithLocation.slice(0, 20);
+
+      // Fetch weather in parallel with a small delay between batches
+      const batchSize = 5;
+      for (let i = 0; i < eventsToFetch.length; i += batchSize) {
+        const batch = eventsToFetch.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(event =>
+            getEventWeather(event.location, event.event_date, event.start_time, false)
+              .catch(err => {
+                console.error(`[Dashboard] Failed to fetch weather for event ${event.id}:`, err);
+                return null;
+              })
+          )
+        );
+
+        // Small delay between batches to avoid rate limiting
+        if (i + batchSize < eventsToFetch.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      console.log(`[Dashboard] Weather fetch complete for ${eventsToFetch.length} events`);
+    }
+  }, [loadWeatherSettings, refreshWeather, weatherSettings, events, getEventWeather]);
 
   // Auto-open About dialog when triggered from Settings
   React.useEffect(() => {
