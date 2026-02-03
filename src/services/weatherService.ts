@@ -102,6 +102,31 @@ export interface WeatherData {
   utc_offset_seconds?: number;
 }
 
+export interface WeatherSuggestion {
+  icon: "umbrella" | "snowflake" | "sun" | "cloud" | "cloud-sun" | "cloud-lightning" | "cloud-fog" | "wind";
+  text: string;
+  severity: "good" | "info" | "warning" | "danger";
+}
+
+export interface EventWeatherData {
+  location: string;
+  eventDate: string;
+  eventTime?: string | null;
+  condition: string;
+  conditionType: string;
+  weatherCode: number;
+  temperature?: number;
+  temperatureMax?: number;
+  temperatureMin?: number;
+  precipitationProbability: number;
+  precipitationType: "rain" | "snow" | "sleet" | "none";
+  windSpeed?: number;
+  humidity?: number;
+  uvIndex?: number;
+  icon: string;
+  suggestion: WeatherSuggestion;
+}
+
 interface WeatherResponse {
   data: any;
   cached?: boolean;
@@ -174,14 +199,29 @@ function synthesiseHourlyFromDaily(dailyArr: WeatherData["daily"]): { hourly: We
 
 class WeatherService {
   private readonly baseUrl: string;
+  private totalApiCalls = 0;
 
   constructor() {
     this.baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/weather-mcp`;
   }
 
+  /**
+   * Get total API calls made during this session
+   */
+  getTotalApiCalls(): number {
+    return this.totalApiCalls;
+  }
+
   private async makeRequest(body: any): Promise<WeatherResponse> {
     const session = await supabase.auth.getSession();
     if (!session.data.session) throw new Error("Not authenticated");
+
+    this.totalApiCalls++;
+    const callNumber = this.totalApiCalls;
+    console.log(`%c[WeatherService] 📡 API Call #${callNumber}`, 'color: #3b82f6; font-weight: bold');
+    console.log(`[WeatherService]   Action: ${body.action}`);
+    console.log(`[WeatherService]   Location: ${body.location || `lat:${body.latitude}, lng:${body.longitude}` || 'from settings'}`);
+    const startTime = performance.now();
 
     const response = await fetch(this.baseUrl, {
       method: "POST",
@@ -192,13 +232,20 @@ class WeatherService {
       body: JSON.stringify(body),
     });
 
+    const duration = Math.round(performance.now() - startTime);
     const text = await response.text();
     let json: any = null;
     try { json = text ? JSON.parse(text) : null; } catch { json = null; }
 
     if (!response.ok) {
+      console.log(`%c[WeatherService] ❌ API Call #${callNumber} FAILED (${duration}ms)`, 'color: #ef4444');
       throw new Error((json && (json.error || json.message)) || text || "Failed to fetch weather data");
     }
+    
+    const cached = json?.cached ? '(cached)' : '(fresh)';
+    console.log(`%c[WeatherService] ✅ API Call #${callNumber} completed ${cached} in ${duration}ms`, 'color: #22c55e');
+    console.log(`[WeatherService]   Total calls this session: ${this.totalApiCalls}`);
+    
     if (!json) throw new Error("Weather function returned non-JSON response");
     return json as WeatherResponse;
   }
@@ -229,6 +276,181 @@ class WeatherService {
 
     const response = await this.getForecast(coords.latitude, coords.longitude);
     return this.parseWeatherData(response.data);
+  }
+
+  /**
+   * Prefetch weather data for the morning - caches until 6 AM next day
+   */
+  async prefetchMorningWeather(): Promise<{ data: any; cached: boolean; prefetched: boolean }> {
+    console.log('%c[WeatherService] 🌅 Morning Prefetch Started', 'color: #f59e0b; font-weight: bold');
+    const response = await this.makeRequest({ action: "prefetch_morning" });
+    console.log(`%c[WeatherService] 🌅 Morning Prefetch Complete (cached: ${response.cached ?? false})`, 'color: #f59e0b');
+    return { data: response.data, cached: response.cached ?? false, prefetched: true };
+  }
+
+  /**
+   * Get weather for a specific event location and date/time
+   * @param location - The event location string (address or place name)
+   * @param eventDate - The event date in YYYY-MM-DD format
+   * @param eventTime - Optional event time in HH:MM format (24-hour)
+   * @param force - Force refresh, bypassing cache
+   */
+  async getEventWeather(
+    location: string,
+    eventDate: string,
+    eventTime?: string | null,
+    force?: boolean
+  ): Promise<EventWeatherData | null> {
+    console.log('%c[WeatherService] 📍 Event Weather Request', 'color: #8b5cf6; font-weight: bold');
+    console.log(`[WeatherService]   Location: ${location}`);
+    console.log(`[WeatherService]   Date: ${eventDate}`);
+    console.log(`[WeatherService]   Time: ${eventTime || 'all day'}`);
+    console.log(`[WeatherService]   Force: ${force || false}`);
+    
+    try {
+      const response = await this.makeRequest({
+        action: "get_event_weather",
+        location,
+        eventDate,
+        eventTime: eventTime ?? undefined,
+        force,
+      } as any);
+      
+      if (!response.data) {
+        console.log('%c[WeatherService] ⚠️ No weather data returned', 'color: #f59e0b');
+        return null;
+      }
+      
+      const parsed = this.parseEventWeatherData(response.data);
+      console.log(`%c[WeatherService] 📍 Event Weather Result: ${parsed?.condition || 'unknown'}`, 'color: #8b5cf6');
+      return parsed;
+    } catch (error) {
+      console.error("%c[WeatherService] ❌ Event Weather Error:", 'color: #ef4444', error);
+      return null;
+    }
+  }
+
+  /**
+   * Parse event-specific weather data into a simplified format
+   */
+  private parseEventWeatherData(data: any): EventWeatherData | null {
+    if (!data) return null;
+
+    const conditionType = data.weatherCondition?.type || "";
+    const conditionText = data.weatherCondition?.description?.text || "Weather";
+    const weatherCode = this.mapGoogleTypeToWeatherCode(conditionType);
+    
+    // Determine precipitation info
+    const precipProb = data.precipitation?.probability?.percent ?? 0;
+    const precipType = this.getPrecipitationType(conditionType, weatherCode);
+    
+    // Temperature
+    const temp = this.readTemperatureDegrees(data.temperature) ??
+      this.readTemperatureDegrees(data.maxTemperature) ??
+      this.readTemperatureDegrees(data.minTemperature);
+    const tempMax = this.readTemperatureDegrees(data.maxTemperature);
+    const tempMin = this.readTemperatureDegrees(data.minTemperature);
+    
+    // Icon from Google or derive from weather code
+    const iconBaseUri = data.weatherCondition?.iconBaseUri || "";
+    const icon = iconBaseUri ? `${iconBaseUri}.svg` : "";
+
+    return {
+      location: data.location_label || "Unknown",
+      eventDate: data.eventDate,
+      eventTime: data.eventTime,
+      condition: conditionText,
+      conditionType: conditionType,
+      weatherCode,
+      temperature: temp ?? undefined,
+      temperatureMax: tempMax ?? undefined,
+      temperatureMin: tempMin ?? undefined,
+      precipitationProbability: precipProb,
+      precipitationType: precipType,
+      windSpeed: this.readSpeedValue(data.wind?.speed) ?? undefined,
+      humidity: typeof data.relativeHumidity === "number" ? data.relativeHumidity : undefined,
+      uvIndex: typeof data.uvIndex === "number" ? data.uvIndex : undefined,
+      icon,
+      suggestion: this.getWeatherSuggestion(weatherCode, precipProb, precipType),
+    };
+  }
+
+  /**
+   * Get precipitation type from condition
+   */
+  private getPrecipitationType(conditionType: string, weatherCode: number): "rain" | "snow" | "sleet" | "none" {
+    const t = conditionType.toUpperCase();
+    if (t.includes("SNOW") || t.includes("FLURR")) return "snow";
+    if (t.includes("SLEET") || t.includes("ICE") || t.includes("FREEZ")) return "sleet";
+    if (t.includes("RAIN") || t.includes("DRIZZ") || t.includes("SHOWER") || weatherCode >= 51 && weatherCode <= 67) return "rain";
+    if (weatherCode >= 71 && weatherCode <= 77) return "snow";
+    return "none";
+  }
+
+  /**
+   * Get weather suggestion icon/text based on conditions
+   */
+  private getWeatherSuggestion(weatherCode: number, precipProb: number, precipType: string): WeatherSuggestion {
+    // Rain expected
+    if ((precipType === "rain" && precipProb >= 30) || (weatherCode >= 51 && weatherCode <= 67)) {
+      return {
+        icon: "umbrella",
+        text: precipProb >= 60 ? "Bring an umbrella!" : "Rain possible - consider an umbrella",
+        severity: precipProb >= 60 ? "warning" : "info",
+      };
+    }
+    
+    // Snow expected
+    if ((precipType === "snow" && precipProb >= 30) || (weatherCode >= 71 && weatherCode <= 77)) {
+      return {
+        icon: "snowflake",
+        text: "Snow expected - dress warmly",
+        severity: "warning",
+      };
+    }
+    
+    // Thunderstorm
+    if (weatherCode >= 95) {
+      return {
+        icon: "cloud-lightning",
+        text: "Thunderstorm expected - stay safe",
+        severity: "danger",
+      };
+    }
+    
+    // Fog
+    if (weatherCode >= 45 && weatherCode <= 48) {
+      return {
+        icon: "cloud-fog",
+        text: "Foggy conditions - drive carefully",
+        severity: "info",
+      };
+    }
+    
+    // Clear/sunny
+    if (weatherCode === 0) {
+      return {
+        icon: "sun",
+        text: "Clear skies!",
+        severity: "good",
+      };
+    }
+    
+    // Partly cloudy
+    if (weatherCode <= 3) {
+      return {
+        icon: "cloud-sun",
+        text: "Partly cloudy",
+        severity: "good",
+      };
+    }
+    
+    // Default cloudy
+    return {
+      icon: "cloud",
+      text: "Cloudy",
+      severity: "info",
+    };
   }
 
   // ── Main parser ─────────────────────────────────────────────────────────
