@@ -15,12 +15,23 @@ export interface WeatherSettings {
   include_daily?: boolean;
   hourly_hours?: number;
   daily_days?: number;
+  // Basic weather display
   show_hourly_forecast?: boolean;
-  show_uv_index?: boolean;
-  show_air_quality?: boolean;
   show_wind?: boolean;
   show_humidity?: boolean;
   show_pressure?: boolean;
+  // Temperature variants
+  show_feels_like?: boolean;
+  show_heat_index?: boolean;
+  // Solar & Atmospheric
+  show_uv_index?: boolean;
+  show_cloud_cover?: boolean;
+  show_thunderstorm_probability?: boolean;
+  // Celestial events
+  show_sun_events?: boolean;
+  show_moon_events?: boolean;
+  // Air quality
+  show_air_quality?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -34,6 +45,10 @@ export interface WeatherData {
     humidity: number;
     pressure: number;
     uv_index?: number;
+    feels_like?: number;
+    heat_index?: number;
+    cloud_cover?: number;
+    thunderstorm_probability?: number;
     condition: string;
     icon: string;
   };
@@ -42,6 +57,15 @@ export interface WeatherData {
     pm2_5?: number;
     pm10?: number;
     category?: string;
+  };
+  sun_events?: {
+    sunrise?: string;
+    sunset?: string;
+  };
+  moon_events?: {
+    moonrise?: string[];
+    moonset?: string[];
+    moon_phase?: string;
   };
   hourly?: Array<{
     time: string;
@@ -231,6 +255,13 @@ class WeatherService {
 
         const loc = this.lookupToLocation(currentSource);
         if (loc) result.location = loc;
+
+        // Extract sun/moon events
+        const sunEvents = this.extractSunEvents(currentSource);
+        if (sunEvents) result.sun_events = sunEvents;
+
+        const moonEvents = this.extractMoonEvents(currentSource);
+        if (moonEvents) result.moon_events = moonEvents;
       }
 
       // ── Daily array ───────────────────────────────────────────────────
@@ -275,6 +306,13 @@ class WeatherService {
       const current = this.locationWeatherToCurrent(data);
       if (current) result.current = current;
 
+      // Extract sun/moon events
+      const sunEvents = this.extractSunEvents(data);
+      if (sunEvents) result.sun_events = sunEvents;
+
+      const moonEvents = this.extractMoonEvents(data);
+      if (moonEvents) result.moon_events = moonEvents;
+
       result.hourly = []; result.fullHourly = []; result.daily = [];
       result.timezone = undefined; result.utc_offset_seconds = undefined;
       return result;
@@ -287,6 +325,13 @@ class WeatherService {
 
       const loc = this.lookupToLocation(data);
       if (loc) result.location = loc;
+
+      // Extract sun/moon events
+      const sunEvents = this.extractSunEvents(data);
+      if (sunEvents) result.sun_events = sunEvents;
+
+      const moonEvents = this.extractMoonEvents(data);
+      if (moonEvents) result.moon_events = moonEvents;
 
       result.hourly = []; result.fullHourly = []; result.daily = [];
       result.timezone = undefined; result.utc_offset_seconds = undefined;
@@ -337,10 +382,28 @@ class WeatherService {
     const humidity      = typeof wx.relativeHumidity === "number" ? wx.relativeHumidity : 0;
     const pressure      = this.readAirPressure(wx.airPressure) ?? 0;
     const uv            = typeof wx.uvIndex === "number" ? wx.uvIndex : undefined;
+    const feelsLike     = this.readTemperatureDegrees(wx.feelsLikeTemperature) ?? undefined;
+    const heatIndex     = this.readTemperatureDegrees(wx.heatIndex) ?? undefined;
+    const cloudCover    = typeof wx.cloudCover === "number" ? wx.cloudCover : undefined;
+    const thunderProb   = typeof wx.thunderstormProbability === "number" ? wx.thunderstormProbability : undefined;
     const iconBaseUri   = wx.weatherCondition?.iconBaseUri || "";
     const icon          = iconBaseUri ? `${iconBaseUri}.svg` : "";
 
-    return { temperature: temp, weather_code, wind_speed: windSpeed, wind_direction: windDir, humidity, pressure, uv_index: uv, condition: conditionText, icon };
+    return { 
+      temperature: temp, 
+      weather_code, 
+      wind_speed: windSpeed, 
+      wind_direction: windDir, 
+      humidity, 
+      pressure, 
+      uv_index: uv,
+      feels_like: feelsLike,
+      heat_index: heatIndex,
+      cloud_cover: cloudCover,
+      thunderstorm_probability: thunderProb,
+      condition: conditionText, 
+      icon 
+    };
   }
 
   private lookupToDaily(wx: any, dateStr: string): WeatherData["daily"][number] | undefined {
@@ -386,10 +449,45 @@ class WeatherService {
     const windDir       = this.readWindDirectionDegrees(obj.wind?.direction) ?? 0;
     const humidity      = typeof obj.relativeHumidity === "number" ? obj.relativeHumidity : 0;
     const pressure      = this.readAirPressure(obj.airPressure) ?? 0;
+    const feelsLike     = this.readTemperatureDegrees(obj.feelsLikeTemperature) ?? undefined;
+    const heatIndex     = this.readTemperatureDegrees(obj.heatIndex) ?? undefined;
+    const cloudCover    = typeof obj.cloudCover === "number" ? obj.cloudCover : undefined;
+    const thunderProb   = typeof obj.thunderstormProbability === "number" ? obj.thunderstormProbability : undefined;
     const iconBaseUri   = obj.weatherCondition?.iconBaseUri || "";
     const icon          = iconBaseUri ? `${iconBaseUri}.svg` : "";
 
-    return { temperature: temp, weather_code, wind_speed: windSpeed, wind_direction: windDir, humidity, pressure, uv_index: typeof obj.uvIndex === "number" ? obj.uvIndex : undefined, condition: conditionText, icon };
+    return { 
+      temperature: temp, 
+      weather_code, 
+      wind_speed: windSpeed, 
+      wind_direction: windDir, 
+      humidity, 
+      pressure, 
+      uv_index: typeof obj.uvIndex === "number" ? obj.uvIndex : undefined,
+      feels_like: feelsLike,
+      heat_index: heatIndex,
+      cloud_cover: cloudCover,
+      thunderstorm_probability: thunderProb,
+      condition: conditionText, 
+      icon 
+    };
+  }
+
+  private extractSunEvents(wx: any): WeatherData["sun_events"] | undefined {
+    if (!wx.sunEvents) return undefined;
+    return {
+      sunrise: wx.sunEvents.sunriseTime || undefined,
+      sunset: wx.sunEvents.sunsetTime || undefined,
+    };
+  }
+
+  private extractMoonEvents(wx: any): WeatherData["moon_events"] | undefined {
+    if (!wx.moonEvents) return undefined;
+    return {
+      moonrise: wx.moonEvents.moonriseTimes || undefined,
+      moonset: wx.moonEvents.moonsetTimes || undefined,
+      moon_phase: wx.moonEvents.moonPhase || undefined,
+    };
   }
 
   // ── Primitive readers ───────────────────────────────────────────────────
