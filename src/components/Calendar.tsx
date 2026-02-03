@@ -24,12 +24,14 @@ import { CalendarSkeleton } from './CalendarSkeleton';
 import { DirectionsButton } from './DirectionsButton';
 import { TravelTimeIndicator, TravelTimeBadge } from './TravelTimeIndicator';
 import { LocationAutocomplete } from './LocationAutocomplete';
+import { EventWeatherIcon, EventWeatherInsightsModal } from './EventWeatherIcon';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
 import { supabase } from '../lib/supabase';
 import type { Event as DbEvent } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCalendarSync } from '../hooks/useCalendarSync';
 import { useDefaultAddress } from '../hooks/useDefaultAddress';
+import { useEventWeather, EventWeatherData } from '../hooks/useEventWeather';
 import { TutorialOverlay } from './TutorialOverlay';
 import { useTutorial } from '../hooks/useTutorial';
 import { calendarTutorialSteps } from '../utils/tutorialSteps';
@@ -94,6 +96,66 @@ const openInAppleMaps = (location: string) => {
   window.open(url, '_blank', 'noopener,noreferrer');
 };
 
+// --- Weather Icon Wrapper Component ------------------------------------------
+interface EventWeatherIconWrapperProps {
+  location: string;
+  eventDate: string;
+  eventTime?: string | null;
+  getEventWeather: (location: string, eventDate: string, eventTime?: string | null, force?: boolean) => Promise<EventWeatherData | null>;
+  getCachedWeather: (location: string, eventDate: string, eventTime?: string | null) => EventWeatherData | null;
+  isWeatherLoading: (location: string, eventDate: string, eventTime?: string | null) => boolean;
+  onShowInsights: (weather: EventWeatherData) => void;
+}
+
+function EventWeatherIconWrapper({
+  location,
+  eventDate,
+  eventTime,
+  getEventWeather,
+  getCachedWeather,
+  isWeatherLoading,
+  onShowInsights,
+}: EventWeatherIconWrapperProps) {
+  const [weather, setWeather] = useState<EventWeatherData | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  // Check for cached weather on mount
+  useEffect(() => {
+    const cached = getCachedWeather(location, eventDate, eventTime);
+    if (cached) {
+      setWeather(cached);
+      setHasLoaded(true);
+    }
+  }, [location, eventDate, eventTime, getCachedWeather]);
+
+  const handleClick = async () => {
+    // If we have weather data, show insights
+    if (weather) {
+      onShowInsights(weather);
+      return;
+    }
+
+    // Otherwise, fetch weather for this specific event location and date/time
+    const data = await getEventWeather(location, eventDate, eventTime, false);
+    if (data) {
+      setWeather(data);
+      setHasLoaded(true);
+      onShowInsights(data);
+    }
+  };
+
+  const loading = isWeatherLoading(location, eventDate, eventTime);
+
+  return (
+    <EventWeatherIcon
+      weather={weather}
+      loading={loading}
+      onClick={handleClick}
+      size="sm"
+    />
+  );
+}
+
 // --- Component ---------------------------------------------------------------
 interface CalendarProps {
   onNavigateToSubScreen?: (screen: SubScreen) => void;
@@ -112,6 +174,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
     useCalendarSync();
+  const { getEventWeather, getCachedWeather, isLoading: isWeatherLoading, checkMorningPrefetch } = useEventWeather();
 
   // Core state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -135,6 +198,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [showConflicts, setShowConflicts] = useState(false);
   const [showNoEventFoundModal, setShowNoEventFoundModal] = useState(false);
+
+  // Weather insights modal state
+  const [weatherInsightsEvent, setWeatherInsightsEvent] = useState<EventWeatherData | null>(null);
+  const [eventWeatherCache, setEventWeatherCache] = useState<Map<string, EventWeatherData>>(new Map());
 
   // Data
   const [events, setEvents] = useState<DbEvent[]>([]);
@@ -177,6 +244,13 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       onDateSelected?.();
     }
   }, [initialSelectedDate, onDateSelected]);
+
+  // Morning weather prefetch - runs once on component mount
+  useEffect(() => {
+    if (user?.id) {
+      checkMorningPrefetch();
+    }
+  }, [user?.id, checkMorningPrefetch]);
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
@@ -1331,8 +1405,18 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           </div>
                           {ev.location && (
                             <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
-                                <MapPin className="w-3 h-3" aria-hidden="true" />
+                              <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 flex-1 min-w-0">
+                                {/* Weather icon for events with location */}
+                                <EventWeatherIconWrapper
+                                  location={ev.location}
+                                  eventDate={ev.event_date}
+                                  eventTime={ev.start_time}
+                                  getEventWeather={getEventWeather}
+                                  getCachedWeather={getCachedWeather}
+                                  isWeatherLoading={isWeatherLoading}
+                                  onShowInsights={setWeatherInsightsEvent}
+                                />
+                                <MapPin className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                                 <span className="truncate">{ev.location}</span>
                               </div>
                               {ev.travel_time_minutes && (
@@ -1387,6 +1471,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           </div>
                           {ev.location && (
                             <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              {/* Weather icon for Google Calendar events with location */}
+                              <EventWeatherIconWrapper
+                                location={ev.location}
+                                eventDate={ev.start?.date || (ev.start?.dateTime ? ev.start.dateTime.split('T')[0] : toLocalISODate(selectedDate || new Date()))}
+                                eventTime={ev.start?.dateTime ? ev.start.dateTime.split('T')[1]?.substring(0, 5) : null}
+                                getEventWeather={getEventWeather}
+                                getCachedWeather={getCachedWeather}
+                                isWeatherLoading={isWeatherLoading}
+                                onShowInsights={setWeatherInsightsEvent}
+                              />
                               <MapPin className="w-3 h-3" aria-hidden="true" />
                               <span>{ev.location}</span>
                             </div>
@@ -2367,6 +2461,14 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
           onBack={handleTutorialBack}
           onSkip={handleTutorialSkip}
         />
+
+        {/* Weather Insights Modal */}
+        {weatherInsightsEvent && (
+          <EventWeatherInsightsModal
+            weather={weatherInsightsEvent}
+            onClose={() => setWeatherInsightsEvent(null)}
+          />
+        )}
       </div>
     </>
   );
