@@ -338,14 +338,9 @@ export function Dashboard({
     }
   }, []);
 
-  // Load weather settings on mount and do morning prefetch
+  // Load weather settings on mount
   React.useEffect(() => {
     loadWeatherSettings();
-    
-    // Attempt morning weather prefetch in the background
-    weatherService.prefetchMorningWeather().catch(err => {
-      console.log('[Dashboard] Morning prefetch skipped:', err.message);
-    });
   }, [loadWeatherSettings]);
 
   // Weather is fetched on-demand when the user clicks the weather icon
