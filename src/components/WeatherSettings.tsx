@@ -26,18 +26,9 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
     show_wind: true,
     show_humidity: true,
     show_pressure: true,
-    // Display settings - Temperature variants
-    show_feels_like: false,
-    show_heat_index: false,
-    // Display settings - Solar & Atmospheric
-    show_uv_index: false,
-    show_cloud_cover: false,
-    show_thunderstorm_probability: false,
     // Display settings - Celestial
-    show_sun_events: false,
-    show_moon_events: false,
-    // Display settings - Air Quality (requires separate API)
-    show_air_quality: false,
+    show_sun_events: true,
+    show_moon_events: true,
   });
   const [saving, setSaving] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
@@ -62,18 +53,9 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
         show_wind: settings.show_wind !== false,
         show_humidity: settings.show_humidity !== false,
         show_pressure: settings.show_pressure !== false,
-        // Display settings - Temperature variants
-        show_feels_like: settings.show_feels_like === true,
-        show_heat_index: settings.show_heat_index === true,
-        // Display settings - Solar & Atmospheric
-        show_uv_index: settings.show_uv_index === true,
-        show_cloud_cover: settings.show_cloud_cover === true,
-        show_thunderstorm_probability: settings.show_thunderstorm_probability === true,
         // Display settings - Celestial
-        show_sun_events: settings.show_sun_events === true,
-        show_moon_events: settings.show_moon_events === true,
-        // Display settings - Air Quality
-        show_air_quality: settings.show_air_quality === true,
+        show_sun_events: settings.show_sun_events !== false,
+        show_moon_events: settings.show_moon_events !== false,
       });
     }
   }, [settings]);
