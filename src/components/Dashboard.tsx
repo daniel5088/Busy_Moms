@@ -87,6 +87,7 @@ interface DashboardEventWeatherIconProps {
   isWeatherLoading: (location: string, eventDate: string, eventTime?: string | null) => boolean;
   cacheLoaded: boolean;
   onShowInsights: (weather: EventWeatherData) => void;
+  weatherBatchFetchTrigger: number;
 }
 
 function DashboardEventWeatherIcon({
@@ -98,11 +99,12 @@ function DashboardEventWeatherIcon({
   isWeatherLoading,
   cacheLoaded,
   onShowInsights,
+  weatherBatchFetchTrigger,
 }: DashboardEventWeatherIconProps) {
   const [weather, setWeather] = React.useState<EventWeatherData | null>(null);
   const [hasLoaded, setHasLoaded] = React.useState(false);
 
-  // Check for cached weather on mount and when cache is loaded
+  // Check for cached weather on mount, when cache is loaded, AND when batch fetch completes
   React.useEffect(() => {
     if (!cacheLoaded) return;
 
@@ -112,7 +114,7 @@ function DashboardEventWeatherIcon({
       setWeather(cached);
       setHasLoaded(true);
     }
-  }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded]);
+  }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded, weatherBatchFetchTrigger]);
 
   const handleClick = async () => {
     // Always fetch fresh weather data when clicked (force refresh)
@@ -178,6 +180,7 @@ export function Dashboard({
 
   const { getEventWeather, getCachedWeather, isLoading: isWeatherLoading, cacheLoaded: weatherCacheLoaded } = useEventWeather();
   const [weatherInsightsEvent, setWeatherInsightsEvent] = React.useState<EventWeatherData | null>(null);
+  const [weatherBatchFetchTrigger, setWeatherBatchFetchTrigger] = React.useState(0);
 
   const [weather, setWeather] = React.useState<WeatherData | null>(null);
   const [weatherSettings, setWeatherSettings] = React.useState<WeatherSettings | null>(null);
@@ -338,10 +341,84 @@ export function Dashboard({
     }
   }, []);
 
-  // Load weather settings on mount
+  // Load weather settings on mount and set up morning prefetch
   React.useEffect(() => {
     loadWeatherSettings();
-  }, [loadWeatherSettings]);
+    
+    // Morning prefetch function
+    const performMorningPrefetch = async () => {
+      try {
+        console.log('[Dashboard] Starting morning weather prefetch...');
+        
+        // Fetch user's location weather
+        const settings = await weatherService.getSettings();
+        if (settings?.latitude && settings?.longitude) {
+          await refreshWeather({
+            latitude: settings.latitude,
+            longitude: settings.longitude,
+          });
+        }
+        
+        // Fetch weather for all events with locations
+        const eventsWithLocation = events.filter(event =>
+          event.location &&
+          event.location.trim() !== '' &&
+          event.event_date
+        );
+
+        if (eventsWithLocation.length > 0) {
+          const eventsToFetch = eventsWithLocation.slice(0, 20);
+          const batchSize = 5;
+          
+          for (let i = 0; i < eventsToFetch.length; i += batchSize) {
+            const batch = eventsToFetch.slice(i, i + batchSize);
+            await Promise.all(
+              batch.map(event =>
+                getEventWeather(event.location, event.event_date, event.start_time, false)
+                  .catch(err => {
+                    console.error(`[Dashboard] Morning prefetch failed for event ${event.id}:`, err);
+                    return null;
+                  })
+              )
+            );
+
+            if (i + batchSize < eventsToFetch.length) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+          }
+          
+          console.log('[Dashboard] Morning prefetch complete');
+          setWeatherBatchFetchTrigger(prev => prev + 1);
+        }
+      } catch (err) {
+        console.log('[Dashboard] Morning prefetch skipped:', err);
+      }
+    };
+    
+    // Check if we should do morning prefetch
+    const checkMorningPrefetch = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const lastPrefetchKey = 'last_weather_prefetch';
+      const lastPrefetch = localStorage.getItem(lastPrefetchKey);
+      const today = now.toDateString();
+      
+      // Prefetch between 6 AM and 10 AM if not already done today
+      if (hour >= 6 && hour < 10 && lastPrefetch !== today) {
+        performMorningPrefetch().then(() => {
+          localStorage.setItem(lastPrefetchKey, today);
+        });
+      }
+    };
+    
+    // Run prefetch check on mount
+    checkMorningPrefetch();
+    
+    // Set up interval to check every hour
+    const interval = setInterval(checkMorningPrefetch, 60 * 60 * 1000); // Check every hour
+    
+    return () => clearInterval(interval);
+  }, [loadWeatherSettings, refreshWeather, events, getEventWeather]);
 
   // Weather is fetched on-demand when the user clicks the weather icon
 
@@ -394,6 +471,9 @@ export function Dashboard({
       }
 
       console.log(`[Dashboard] Weather fetch complete for ${eventsToFetch.length} events`);
+      
+      // Trigger re-render of all event weather icons to pick up newly cached data
+      setWeatherBatchFetchTrigger(prev => prev + 1);
     }
   }, [loadWeatherSettings, refreshWeather, weatherSettings, events, getEventWeather]);
 
@@ -944,6 +1024,7 @@ export function Dashboard({
                                   isWeatherLoading={isWeatherLoading}
                                   cacheLoaded={weatherCacheLoaded}
                                   onShowInsights={setWeatherInsightsEvent}
+                                  weatherBatchFetchTrigger={weatherBatchFetchTrigger}
                                 />
                               </div>
                             )}
@@ -1015,6 +1096,7 @@ export function Dashboard({
                                   isWeatherLoading={isWeatherLoading}
                                   cacheLoaded={weatherCacheLoaded}
                                   onShowInsights={setWeatherInsightsEvent}
+                                  weatherBatchFetchTrigger={weatherBatchFetchTrigger}
                                 />
                               </div>
                             )}
