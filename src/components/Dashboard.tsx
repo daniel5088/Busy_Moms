@@ -48,6 +48,8 @@ import {
 import { TutorialOverlay } from './TutorialOverlay';
 import { useTutorial } from '../hooks/useTutorial';
 import { dashboardTutorialSteps } from '../utils/tutorialSteps';
+import { EventWeatherIcon, EventWeatherInsightsModal } from './EventWeatherIcon';
+import { useEventWeather, EventWeatherData } from '../hooks/useEventWeather';
 
 import { SubScreen } from '../App';
 
@@ -74,6 +76,66 @@ const getWeekLabel = (offset: number): string => {
 };
 
 type AffirmationStage = 'hidden' | 'burst' | 'logo' | 'content' | 'closing' | 'disabled';
+
+// --- Weather Icon Wrapper Component ------------------------------------------
+interface DashboardEventWeatherIconProps {
+  location: string;
+  eventDate: string;
+  eventTime?: string | null;
+  getEventWeather: (location: string, eventDate: string, eventTime?: string | null, force?: boolean) => Promise<EventWeatherData | null>;
+  getCachedWeather: (location: string, eventDate: string, eventTime?: string | null) => EventWeatherData | null;
+  isWeatherLoading: (location: string, eventDate: string, eventTime?: string | null) => boolean;
+  onShowInsights: (weather: EventWeatherData) => void;
+}
+
+function DashboardEventWeatherIcon({
+  location,
+  eventDate,
+  eventTime,
+  getEventWeather,
+  getCachedWeather,
+  isWeatherLoading,
+  onShowInsights,
+}: DashboardEventWeatherIconProps) {
+  const [weather, setWeather] = React.useState<EventWeatherData | null>(null);
+  const [hasLoaded, setHasLoaded] = React.useState(false);
+
+  // Check for cached weather on mount
+  React.useEffect(() => {
+    const cached = getCachedWeather(location, eventDate, eventTime);
+    if (cached) {
+      setWeather(cached);
+      setHasLoaded(true);
+    }
+  }, [location, eventDate, eventTime, getCachedWeather]);
+
+  const handleClick = async () => {
+    // If we have weather data, show insights
+    if (weather) {
+      onShowInsights(weather);
+      return;
+    }
+
+    // Otherwise, fetch weather for this specific event location and date/time
+    const data = await getEventWeather(location, eventDate, eventTime, false);
+    if (data) {
+      setWeather(data);
+      setHasLoaded(true);
+      onShowInsights(data);
+    }
+  };
+
+  const loading = isWeatherLoading(location, eventDate, eventTime);
+
+  return (
+    <EventWeatherIcon
+      weather={weather}
+      loading={loading}
+      onClick={handleClick}
+      size="md"
+    />
+  );
+}
 
 interface DashboardProps {
   onNavigate: (screen: 'calendar' | 'family' | 'more') => void;
@@ -114,6 +176,9 @@ export function Dashboard({
     reminderWeekOffset,
     setReminderWeekOffset,
   } = useDashboardData();
+
+  const { getEventWeather, getCachedWeather, isLoading: isWeatherLoading } = useEventWeather();
+  const [weatherInsightsEvent, setWeatherInsightsEvent] = React.useState<EventWeatherData | null>(null);
 
   const [weather, setWeather] = React.useState<WeatherData | null>(null);
   const [weatherSettings, setWeatherSettings] = React.useState<WeatherSettings | null>(null);
@@ -839,6 +904,19 @@ export function Dashboard({
                                 </p>
                               )}
                             </div>
+                            {event.location && (
+                              <div className="flex-shrink-0">
+                                <DashboardEventWeatherIcon
+                                  location={event.location}
+                                  eventDate={event.event_date}
+                                  eventTime={event.start_time}
+                                  getEventWeather={getEventWeather}
+                                  getCachedWeather={getCachedWeather}
+                                  isWeatherLoading={isWeatherLoading}
+                                  onShowInsights={setWeatherInsightsEvent}
+                                />
+                              </div>
+                            )}
                           </div>
                         </button>
                       ))}
@@ -896,6 +974,19 @@ export function Dashboard({
                                 </p>
                               )}
                             </div>
+                            {event.location && (
+                              <div className="flex-shrink-0">
+                                <DashboardEventWeatherIcon
+                                  location={event.location}
+                                  eventDate={event.event_date}
+                                  eventTime={event.start_time}
+                                  getEventWeather={getEventWeather}
+                                  getCachedWeather={getCachedWeather}
+                                  isWeatherLoading={isWeatherLoading}
+                                  onShowInsights={setWeatherInsightsEvent}
+                                />
+                              </div>
+                            )}
                           </div>
                         </button>
                       ))}
@@ -1185,6 +1276,14 @@ export function Dashboard({
         onBack={handleTutorialBack}
         onSkip={handleTutorialSkip}
       />
+
+      {/* Weather Insights Modal */}
+      {weatherInsightsEvent && (
+        <EventWeatherInsightsModal
+          weather={weatherInsightsEvent}
+          onClose={() => setWeatherInsightsEvent(null)}
+        />
+      )}
     </>
   );
 }
