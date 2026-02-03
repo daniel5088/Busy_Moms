@@ -287,20 +287,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       console.log(`[Calendar]   Time: ${time}`);
 
       if (location && date && weatherData) {
-        // Fetch fresh weather data to update the cache
-        try {
-          const weather = await getCachedWeather(location, date, time);
-          if (weather) {
-            setEventWeatherCache((prev) => {
-              const newCache = new Map(prev);
-              const key = `${location}_${date}_${time || 'allday'}`;
-              newCache.set(key, weather);
-              console.log(`[Calendar] ✅ Updated weather cache for ${key}`);
-              return newCache;
-            });
-          }
-        } catch (error) {
-          console.error('[Calendar] ❌ Error updating weather cache:', error);
+        // Get fresh weather data from cache
+        const weather = getCachedWeather(location, date, time);
+        if (weather) {
+          setEventWeatherCache((prev) => {
+            const newCache = new Map(prev);
+            const key = `${location}_${date}_${time || 'allday'}`;
+            newCache.set(key, weather);
+            console.log(`[Calendar] ✅ Updated weather cache for ${key}`);
+            return newCache;
+          });
         }
       }
     };

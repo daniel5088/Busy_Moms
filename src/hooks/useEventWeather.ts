@@ -82,6 +82,18 @@ export function useEventWeather() {
   const [loadingEvents, setLoadingEvents] = useState<Set<string>>(new Set());
   const [cacheLoaded, setCacheLoaded] = useState(true); // Always true since we use in-memory cache
   const [cacheVersion, setCacheVersion] = useState(0); // Increment to force component updates
+  const [unitsSystem, setUnitsSystem] = useState<'imperial' | 'metric'>('imperial');
+
+  // Load user settings once on mount
+  useEffect(() => {
+    async function loadSettings() {
+      const settings = await weatherService.getSettings();
+      const units = settings?.temperature_unit === 'celsius' ? 'metric' : 'imperial';
+      setUnitsSystem(units);
+      console.log(`[useEventWeather] 🌡️  Loaded units system: ${units}`);
+    }
+    loadSettings();
+  }, []);
 
   // Save cache to localStorage whenever it changes
   useEffect(() => {
@@ -92,12 +104,9 @@ export function useEventWeather() {
   }, [eventWeatherCache]);
 
   /**
-   * Generate a cache key for an event
+   * Generate a cache key for an event (synchronous)
    */
-  const getCacheKey = useCallback(async (location: string, eventDate: string, eventTime?: string | null): Promise<string> => {
-    const settings = await weatherService.getSettings();
-    const unitsSystem = settings?.temperature_unit === 'celsius' ? 'metric' : 'imperial';
-
+  const getCacheKey = useCallback((location: string, eventDate: string, eventTime?: string | null): string => {
     const key = generateWeatherCacheKey(location, eventDate, eventTime, unitsSystem);
 
     console.log(`[useEventWeather] Generated cache key:`, {
@@ -109,7 +118,7 @@ export function useEventWeather() {
     });
 
     return key;
-  }, []);
+  }, [unitsSystem]);
 
   /**
    * Get weather for a specific event
@@ -123,7 +132,7 @@ export function useEventWeather() {
   ): Promise<EventWeatherData | null> => {
     if (!location || !location.trim()) return null;
 
-    const cacheKey = await getCacheKey(location, eventDate, eventTime);
+    const cacheKey = getCacheKey(location, eventDate, eventTime);
 
     // Return cached data if available and not forcing refresh
     if (!force && eventWeatherCache.has(cacheKey)) {
@@ -215,16 +224,16 @@ export function useEventWeather() {
   /**
    * Check if weather is loading for a specific event
    */
-  const isLoading = useCallback(async (location: string, eventDate: string, eventTime?: string | null): Promise<boolean> => {
-    const cacheKey = await getCacheKey(location, eventDate, eventTime);
+  const isLoading = useCallback((location: string, eventDate: string, eventTime?: string | null): boolean => {
+    const cacheKey = getCacheKey(location, eventDate, eventTime);
     return loadingEvents.has(cacheKey);
   }, [loadingEvents, getCacheKey]);
 
   /**
    * Get cached weather data without fetching
    */
-  const getCachedWeather = useCallback(async (location: string, eventDate: string, eventTime?: string | null): Promise<EventWeatherData | null> => {
-    const cacheKey = await getCacheKey(location, eventDate, eventTime);
+  const getCachedWeather = useCallback((location: string, eventDate: string, eventTime?: string | null): EventWeatherData | null => {
+    const cacheKey = getCacheKey(location, eventDate, eventTime);
     const cached = eventWeatherCache.get(cacheKey) || null;
 
     console.log(`%c[useEventWeather] 🔍 Cache lookup`, 'color: #8b5cf6; font-weight: bold');
