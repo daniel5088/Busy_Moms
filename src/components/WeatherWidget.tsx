@@ -396,13 +396,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const showWind = settings?.show_wind !== false;
   const showHumidity = settings?.show_humidity !== false;
   const showPressure = settings?.show_pressure !== false;
-  const showUvIndex = settings?.show_uv_index === true;
-  const showAirQuality = settings?.show_air_quality === true;
   const showHourlyForecast = settings?.show_hourly_forecast !== false;
-  const showFeelsLike = settings?.show_feels_like === true;
-  const showHeatIndex = settings?.show_heat_index === true;
-  const showCloudCover = settings?.show_cloud_cover === true;
-  const showThunderstormProb = settings?.show_thunderstorm_probability === true;
   const showSunEvents = settings?.show_sun_events === true;
   const showMoonEvents = settings?.show_moon_events === true;
 
@@ -534,87 +528,6 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                 icon={<Gauge className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
                 label="Pressure"
                 value={`${Math.round(current.pressure)} mb`}
-              />
-            );
-          }
-          
-          if (showUvIndex && current.uv_index !== undefined && current.uv_index > 0) {
-            const uvLevel = current.uv_index <= 2 ? 'Low' : current.uv_index <= 5 ? 'Moderate' : current.uv_index <= 7 ? 'High' : current.uv_index <= 10 ? 'Very High' : 'Extreme';
-            detailCards.push(
-              <DetailPill
-                key="uv"
-                isDark={isDark}
-                icon={<Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
-                label="UV Index"
-                value={`${Math.round(current.uv_index)}`}
-                sub={uvLevel}
-              />
-            );
-          }
-          
-          if (showAirQuality && weather?.air_quality?.aqi !== undefined) {
-            const aqiCategory = weather.air_quality.category || (
-              weather.air_quality.aqi <= 50 ? 'Good' :
-              weather.air_quality.aqi <= 100 ? 'Moderate' :
-              weather.air_quality.aqi <= 150 ? 'Unhealthy (Sensitive)' :
-              weather.air_quality.aqi <= 200 ? 'Unhealthy' : 'Very Unhealthy'
-            );
-            detailCards.push(
-              <DetailPill
-                key="aqi"
-                isDark={isDark}
-                icon={<Leaf className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
-                label="Air Quality"
-                value={`${weather.air_quality.aqi}`}
-                sub={aqiCategory}
-              />
-            );
-          }
-
-          if (showFeelsLike && current.feels_like !== undefined) {
-            detailCards.push(
-              <DetailPill
-                key="feels-like"
-                isDark={isDark}
-                icon={<Thermometer className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
-                label="Feels Like"
-                value={`${Math.round(current.feels_like)}°`}
-              />
-            );
-          }
-
-          if (showHeatIndex && current.heat_index !== undefined) {
-            detailCards.push(
-              <DetailPill
-                key="heat-index"
-                isDark={isDark}
-                icon={<Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
-                label="Heat Index"
-                value={`${Math.round(current.heat_index)}°`}
-              />
-            );
-          }
-
-          if (showCloudCover && current.cloud_cover !== undefined && current.cloud_cover > 0) {
-            detailCards.push(
-              <DetailPill
-                key="cloud-cover"
-                isDark={isDark}
-                icon={<Cloud className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
-                label="Cloud Cover"
-                value={`${current.cloud_cover}%`}
-              />
-            );
-          }
-
-          if (showThunderstormProb && current.thunderstorm_probability !== undefined && current.thunderstorm_probability > 0) {
-            detailCards.push(
-              <DetailPill
-                key="thunderstorm"
-                isDark={isDark}
-                icon={<Zap className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
-                label="Thunderstorms"
-                value={`${current.thunderstorm_probability}%`}
               />
             );
           }
