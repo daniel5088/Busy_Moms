@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cloud, Droplets, Wind, MapPin, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap, Gauge, Leaf } from 'lucide-react';
+import { Cloud, Droplets, Wind, MapPin, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap, Gauge, Leaf, Thermometer, Sunrise, Sunset } from 'lucide-react';
 import { WeatherData, WeatherSettings } from '../services/weatherService';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { WeatherSkeleton } from './WeatherSkeleton';
@@ -276,6 +276,34 @@ function getHourInfo(timeString: string): { label: string; hour: number } {
   return { label, hour };
 }
 
+// Format time from ISO string
+function formatTime(isoString: string): string {
+  try {
+    const date = new Date(isoString);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  } catch {
+    return isoString;
+  }
+}
+
+// Get moon phase display name and emoji
+function getMoonPhaseDisplay(phase: string): { name: string; emoji: string } {
+  const p = phase.toUpperCase();
+  if (p.includes('NEW')) return { name: 'New Moon', emoji: '🌑' };
+  if (p.includes('WAXING_CRESCENT')) return { name: 'Waxing Crescent', emoji: '🌒' };
+  if (p.includes('FIRST_QUARTER')) return { name: 'First Quarter', emoji: '🌓' };
+  if (p.includes('WAXING_GIBBOUS')) return { name: 'Waxing Gibbous', emoji: '🌔' };
+  if (p.includes('FULL')) return { name: 'Full Moon', emoji: '🌕' };
+  if (p.includes('WANING_GIBBOUS')) return { name: 'Waning Gibbous', emoji: '🌖' };
+  if (p.includes('LAST_QUARTER')) return { name: 'Last Quarter', emoji: '🌗' };
+  if (p.includes('WANING_CRESCENT')) return { name: 'Waning Crescent', emoji: '🌘' };
+  return { name: 'Moon Phase', emoji: '🌙' };
+}
+
 // Shared glass-card style for detail pills
 function DetailPill({ icon, label, value, sub, isDark }: {
   icon: React.ReactNode;
@@ -371,6 +399,12 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const showUvIndex = settings?.show_uv_index === true;
   const showAirQuality = settings?.show_air_quality === true;
   const showHourlyForecast = settings?.show_hourly_forecast !== false;
+  const showFeelsLike = settings?.show_feels_like === true;
+  const showHeatIndex = settings?.show_heat_index === true;
+  const showCloudCover = settings?.show_cloud_cover === true;
+  const showThunderstormProb = settings?.show_thunderstorm_probability === true;
+  const showSunEvents = settings?.show_sun_events === true;
+  const showMoonEvents = settings?.show_moon_events === true;
 
   if (loading) {
     return <WeatherSkeleton isDark={isDark} />;
@@ -520,9 +554,9 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           
           if (showAirQuality && weather?.air_quality?.aqi !== undefined) {
             const aqiCategory = weather.air_quality.category || (
-              weather.air_quality.aqi <= 50 ? 'Good' : 
-              weather.air_quality.aqi <= 100 ? 'Moderate' : 
-              weather.air_quality.aqi <= 150 ? 'Unhealthy (Sensitive)' : 
+              weather.air_quality.aqi <= 50 ? 'Good' :
+              weather.air_quality.aqi <= 100 ? 'Moderate' :
+              weather.air_quality.aqi <= 150 ? 'Unhealthy (Sensitive)' :
               weather.air_quality.aqi <= 200 ? 'Unhealthy' : 'Very Unhealthy'
             );
             detailCards.push(
@@ -536,7 +570,55 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               />
             );
           }
-          
+
+          if (showFeelsLike && current.feels_like !== undefined) {
+            detailCards.push(
+              <DetailPill
+                key="feels-like"
+                isDark={isDark}
+                icon={<Thermometer className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Feels Like"
+                value={`${Math.round(current.feels_like)}°`}
+              />
+            );
+          }
+
+          if (showHeatIndex && current.heat_index !== undefined) {
+            detailCards.push(
+              <DetailPill
+                key="heat-index"
+                isDark={isDark}
+                icon={<Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Heat Index"
+                value={`${Math.round(current.heat_index)}°`}
+              />
+            );
+          }
+
+          if (showCloudCover && current.cloud_cover !== undefined && current.cloud_cover > 0) {
+            detailCards.push(
+              <DetailPill
+                key="cloud-cover"
+                isDark={isDark}
+                icon={<Cloud className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Cloud Cover"
+                value={`${current.cloud_cover}%`}
+              />
+            );
+          }
+
+          if (showThunderstormProb && current.thunderstorm_probability !== undefined && current.thunderstorm_probability > 0) {
+            detailCards.push(
+              <DetailPill
+                key="thunderstorm"
+                isDark={isDark}
+                icon={<Zap className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Thunderstorms"
+                value={`${current.thunderstorm_probability}%`}
+              />
+            );
+          }
+
           if (detailCards.length === 0) return null;
           
           const gridCols = detailCards.length === 1 ? 'grid-cols-1' : 
@@ -548,6 +630,128 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           return (
             <div className={`relative z-10 grid ${gridCols} gap-6 mb-12 animate-fadeIn`} style={{ animationDelay: '0.2s' }}>
               {detailCards}
+            </div>
+          );
+        })()}
+
+        {/* Sun and Moon Events */}
+        {(() => {
+          const celestialEvents = [];
+
+          if (showSunEvents && weather?.sun_events) {
+            const { sunrise, sunset } = weather.sun_events;
+            if (sunrise || sunset) {
+              celestialEvents.push(
+                <div key="sun-events" className={`rounded-2xl p-5 ${
+                  isDark
+                    ? 'bg-[#28283c]/50 border border-[#6478b4]/20'
+                    : 'bg-white/60 border border-[#a8c5d1]/20'
+                }`} style={{ backdropFilter: 'blur(10px)' }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+                    <div className={`text-[11px] uppercase tracking-wider ${
+                      isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                    }`}>
+                      Sun Events
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {sunrise && (
+                      <div className="flex items-center gap-2">
+                        <Sunrise className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
+                        <div>
+                          <div className={`text-xs ${isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'}`}>
+                            Sunrise
+                          </div>
+                          <div className={`text-lg font-medium ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
+                            {formatTime(sunrise)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {sunset && (
+                      <div className="flex items-center gap-2">
+                        <Sunset className={`w-5 h-5 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} />
+                        <div>
+                          <div className={`text-xs ${isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'}`}>
+                            Sunset
+                          </div>
+                          <div className={`text-lg font-medium ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
+                            {formatTime(sunset)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+          }
+
+          if (showMoonEvents && weather?.moon_events) {
+            const { moonrise, moonset, moon_phase } = weather.moon_events;
+            if (moonrise || moonset || moon_phase) {
+              const phaseDisplay = moon_phase ? getMoonPhaseDisplay(moon_phase) : null;
+              celestialEvents.push(
+                <div key="moon-events" className={`rounded-2xl p-5 ${
+                  isDark
+                    ? 'bg-[#28283c]/50 border border-[#6478b4]/20'
+                    : 'bg-white/60 border border-[#a8c5d1]/20'
+                }`} style={{ backdropFilter: 'blur(10px)' }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Moon className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
+                    <div className={`text-[11px] uppercase tracking-wider ${
+                      isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+                    }`}>
+                      Moon Events
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {phaseDisplay && (
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-3xl">{phaseDisplay.emoji}</span>
+                        <div className={`text-base font-medium ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
+                          {phaseDisplay.name}
+                        </div>
+                      </div>
+                    )}
+                    {moonrise && moonrise.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm">🌔</div>
+                        <div>
+                          <div className={`text-xs ${isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'}`}>
+                            Moonrise
+                          </div>
+                          <div className={`text-sm font-medium ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
+                            {moonrise.map(time => formatTime(time)).join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {moonset && moonset.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm">🌘</div>
+                        <div>
+                          <div className={`text-xs ${isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'}`}>
+                            Moonset
+                          </div>
+                          <div className={`text-sm font-medium ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
+                            {moonset.map(time => formatTime(time)).join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+          }
+
+          if (celestialEvents.length === 0) return null;
+
+          return (
+            <div className={`relative z-10 grid ${celestialEvents.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-6 mb-12 animate-fadeIn`} style={{ animationDelay: '0.25s' }}>
+              {celestialEvents}
             </div>
           );
         })()}

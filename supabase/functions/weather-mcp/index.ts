@@ -35,6 +35,18 @@ interface WeatherSettings {
   include_daily?: boolean;
   hourly_hours?: number;
   daily_days?: number;
+  show_wind?: boolean;
+  show_humidity?: boolean;
+  show_pressure?: boolean;
+  show_uv_index?: boolean;
+  show_air_quality?: boolean;
+  show_hourly_forecast?: boolean;
+  show_feels_like?: boolean;
+  show_heat_index?: boolean;
+  show_cloud_cover?: boolean;
+  show_thunderstorm_probability?: boolean;
+  show_sun_events?: boolean;
+  show_moon_events?: boolean;
 }
 
 type JsonRpcEnvelope<T> = { jsonrpc: "2.0"; id: number | string; result?: T; error?: any };
