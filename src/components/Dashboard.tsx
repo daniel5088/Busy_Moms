@@ -144,6 +144,35 @@ function DashboardEventWeatherIcon({
     }
   }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded, weatherBatchFetchTrigger, cacheVersion]);
 
+  // Listen for weather cache updates from voice assistant
+  React.useEffect(() => {
+    const handleWeatherCacheUpdate = (e: CustomEvent) => {
+      console.log('[DashboardEventWeatherIcon] 📢 Received weatherCacheUpdated event:', e.detail);
+
+      // Check if this update is for our event
+      const normalizedLocation = location.trim().toLowerCase();
+      const detailLocation = (e.detail.location || '').trim().toLowerCase();
+
+      if (normalizedLocation === detailLocation && e.detail.date === eventDate) {
+        console.log(`[DashboardEventWeatherIcon] 🔄 This update is for our event! Refreshing cache...`);
+
+        // Reload from cache
+        const cached = getCachedWeather(location, eventDate, eventTime);
+        if (cached) {
+          console.log(`[DashboardEventWeatherIcon] ✅ Updated weather from voice assistant cache`);
+          setWeather(cached);
+          setHasLoaded(true);
+        }
+      }
+    };
+
+    window.addEventListener('weatherCacheUpdated', handleWeatherCacheUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('weatherCacheUpdated', handleWeatherCacheUpdate as EventListener);
+    };
+  }, [location, eventDate, eventTime, getCachedWeather]);
+
   const handleClick = async () => {
     console.log(`[DashboardEventWeatherIcon] 🖱️ Click handler triggered for ${location}`);
     console.log(`[DashboardEventWeatherIcon] Current weather state before fetch:`, weather ? {

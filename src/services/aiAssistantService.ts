@@ -3208,6 +3208,84 @@ class AIAssistantService {
         };
       }
 
+      // If event has a location, fetch specific weather for that location
+      // This will cache the weather and make it appear on Dashboard/Calendar icons
+      let eventWeatherData = null;
+      if (event.location && event.location.trim()) {
+        console.log(`🌤️ Fetching location-specific weather for event at: ${event.location}`);
+        try {
+          const { weatherService } = await import('./weatherService');
+          eventWeatherData = await weatherService.getEventWeather(
+            event.location,
+            event.event_date,
+            event.event_time || null,
+            true // Force refresh
+          );
+
+          if (eventWeatherData) {
+            console.log('✅ Event weather cached - will appear on Dashboard and Calendar icons');
+
+            // Save to localStorage cache so Dashboard/Calendar icons update
+            try {
+              const WEATHER_CACHE_KEY = 'event_weather_cache';
+              const stored = localStorage.getItem(WEATHER_CACHE_KEY);
+              const cache = stored ? JSON.parse(stored) : {};
+
+              // Generate cache key (same format as useEventWeather)
+              const normalizedLocation = event.location.trim().toLowerCase();
+              const normalizedDate = event.event_date.trim();
+              const normalizedTime = event.event_time?.trim() || 'allday';
+              const cacheKey = `${normalizedLocation}_${normalizedDate}_${normalizedTime}`;
+
+              cache[cacheKey] = eventWeatherData;
+              localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(cache));
+              console.log(`💾 Saved weather to localStorage with key: ${cacheKey}`);
+
+              // Dispatch custom event to notify Dashboard/Calendar to refresh
+              window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
+                detail: { cacheKey, location: event.location, date: event.event_date, time: event.event_time }
+              }));
+              console.log('📢 Dispatched weatherCacheUpdated event');
+            } catch (cacheError) {
+              console.error('⚠️ Failed to save to localStorage:', cacheError);
+            }
+
+            // Build a user-friendly message
+            const timeStr = event.event_time
+              ? new Date(`2000-01-01T${event.event_time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+              : 'All day';
+
+            let message = `Weather for "${event.title}" on ${event.event_date} at ${timeStr}:\n`;
+            message += `${eventWeatherData.condition}`;
+
+            if (eventWeatherData.temperature) {
+              message += `, ${Math.round(eventWeatherData.temperature)}°F`;
+            }
+
+            if (eventWeatherData.precipitationProbability > 0) {
+              message += `\n${eventWeatherData.precipitationProbability}% chance of ${eventWeatherData.precipitationType}`;
+            }
+
+            if (eventWeatherData.suggestion) {
+              message += `\n💡 ${eventWeatherData.suggestion.text}`;
+            }
+
+            message += `\n📍 Location: ${event.location}`;
+
+            return {
+              type: 'weather_event_check',
+              success: true,
+              message,
+              data: { event, weather: eventWeatherData },
+            };
+          }
+        } catch (weatherError) {
+          console.error('⚠️ Failed to fetch event-specific weather:', weatherError);
+          // Fall through to general forecast if location-specific fails
+        }
+      }
+
+      // Fallback to general forecast if no location or location-specific failed
       const result = await weatherAgentService.getForecast(undefined, undefined, Math.max(daysUntil + 1, 7));
 
       if (!result.success) {

@@ -128,6 +128,35 @@ function EventWeatherIconWrapper({
     }
   }, [location, eventDate, eventTime, getCachedWeather]);
 
+  // Listen for weather cache updates from voice assistant
+  useEffect(() => {
+    const handleWeatherCacheUpdate = (e: CustomEvent) => {
+      console.log('[CalendarWeatherIcon] 📢 Received weatherCacheUpdated event:', e.detail);
+
+      // Check if this update is for our event
+      const normalizedLocation = location.trim().toLowerCase();
+      const detailLocation = (e.detail.location || '').trim().toLowerCase();
+
+      if (normalizedLocation === detailLocation && e.detail.date === eventDate) {
+        console.log(`[CalendarWeatherIcon] 🔄 This update is for our event! Refreshing cache...`);
+
+        // Reload from cache
+        const cached = getCachedWeather(location, eventDate, eventTime);
+        if (cached) {
+          console.log(`[CalendarWeatherIcon] ✅ Updated weather from voice assistant cache`);
+          setWeather(cached);
+          setHasLoaded(true);
+        }
+      }
+    };
+
+    window.addEventListener('weatherCacheUpdated', handleWeatherCacheUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('weatherCacheUpdated', handleWeatherCacheUpdate as EventListener);
+    };
+  }, [location, eventDate, eventTime, getCachedWeather]);
+
   const handleClick = async () => {
     // Always fetch fresh weather data when clicked (force refresh)
     const data = await getEventWeather(location, eventDate, eventTime, true);
