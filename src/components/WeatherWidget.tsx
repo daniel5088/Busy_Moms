@@ -175,13 +175,10 @@ function WeatherIcon({ weatherCode, isNight, size = 'large' }: { weatherCode: nu
 function getLocationHour(utcOffsetSeconds?: number): number {
   if (utcOffsetSeconds !== undefined) {
     const now = new Date();
-    // Get current UTC time in milliseconds
     const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-    // Add the location's offset to get local time at that location
     const locationTime = new Date(utcTime + (utcOffsetSeconds * 1000));
     return locationTime.getHours();
   }
-  // Fallback to browser time
   return new Date().getHours();
 }
 
@@ -190,36 +187,28 @@ function getTimeBasedGradient(isDark: boolean, utcOffsetSeconds?: number): strin
   const hour = getLocationHour(utcOffsetSeconds);
   
   if (isDark) {
-    // Night time (8pm - 6am)
     if (hour >= 20 || hour < 6) {
       return 'from-[#0f0f23] via-[#1a1a3e] to-[#0f172a]';
     }
-    // Dawn/Dusk (6am-8am or 6pm-8pm)
     else if ((hour >= 6 && hour < 8) || (hour >= 18 && hour < 20)) {
       return 'from-[#1e1e3f] via-[#2d1b4e] to-[#1a1a3e]';
     }
-    // Daytime
     else {
       return 'from-[#1e2a47] via-[#2d3e5f] to-[#1a2a47]';
     }
   } else {
-    // Night time (8pm - 6am)
     if (hour >= 20 || hour < 6) {
       return 'from-[#2d3561] via-[#4a5578] to-[#2d3561]';
     }
-    // Sunrise (6am-8am)
     else if (hour >= 6 && hour < 8) {
       return 'from-[#FFE5B4] via-[#FFD6A0] to-[#FFC680]';
     }
-    // Morning (8am-12pm)
     else if (hour >= 8 && hour < 12) {
       return 'from-[#87CEEB] via-[#B0E2FF] to-[#87CEEB]';
     }
-    // Afternoon (12pm-6pm)
     else if (hour >= 12 && hour < 18) {
       return 'from-[#FFE89C] via-[#FFD67A] to-[#FFA07A]';
     }
-    // Sunset (6pm-8pm)
     else {
       return 'from-[#FF9A76] via-[#FF6B9D] to-[#C06C84]';
     }
@@ -228,67 +217,54 @@ function getTimeBasedGradient(isDark: boolean, utcOffsetSeconds?: number): strin
 
 // Get weather-based gradient overlay
 function getWeatherGradient(weatherCode: number, isDark: boolean): string {
-  // Clear sky
   if (weatherCode === 0) {
     return isDark 
       ? 'from-[#1a1f3a]/90 via-[#2a3555]/80 to-[#1a1f3a]/90'
       : 'from-[#FFD93D]/20 via-[#FFA500]/10 to-transparent';
   }
-  // Partly cloudy
   if (weatherCode <= 3) {
     return isDark
       ? 'from-[#2d3e5f]/90 via-[#3d4e6f]/80 to-[#2d3e5f]/90'
       : 'from-[#87CEEB]/30 via-[#B0E2FF]/20 to-transparent';
   }
-  // Foggy
   if (weatherCode <= 48) {
     return isDark
       ? 'from-[#3a3a4a]/90 via-[#4a4a5a]/80 to-[#3a3a4a]/90'
       : 'from-[#D3D3D3]/40 via-[#C0C0C0]/30 to-transparent';
   }
-  // Rainy
   if (weatherCode <= 65) {
     return isDark
       ? 'from-[#1e2a3a]/90 via-[#2e3a4a]/80 to-[#1e2a3a]/90'
       : 'from-[#4682B4]/30 via-[#5F9EA0]/20 to-transparent';
   }
-  // Snowy
   if (weatherCode <= 77) {
     return isDark
       ? 'from-[#2d3e50]/90 via-[#3d4e60]/80 to-[#2d3e50]/90'
       : 'from-[#E0F2F7]/40 via-[#B0E0E6]/30 to-transparent';
   }
-  // Stormy
   if (weatherCode <= 86) {
     return isDark
       ? 'from-[#1a1a2e]/90 via-[#2a2a3e]/80 to-[#1a1a2e]/90'
       : 'from-[#4B4B5E]/40 via-[#5B5B6E]/30 to-transparent';
   }
-  // Thunderstorm
   return isDark
     ? 'from-[#0f0f1a]/90 via-[#1f1f2a]/80 to-[#0f0f1a]/90'
     : 'from-[#2C2C3E]/50 via-[#3C3C4E]/40 to-transparent';
 }
 
-// Get background gradient that combines time and weather
 function getBackgroundGradient(weatherCode: number | undefined, isDark: boolean, utcOffsetSeconds?: number): string {
   const timeGradient = getTimeBasedGradient(isDark, utcOffsetSeconds);
   return timeGradient;
 }
 
-// Check if it's night time in the location's timezone
 function isNightTime(utcOffsetSeconds?: number): boolean {
-  // If we have UTC offset from the weather data, use it to calculate the location's local time
   if (utcOffsetSeconds !== undefined) {
     const now = new Date();
-    // Get current UTC time in milliseconds
     const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-    // Add the location's offset to get local time at that location
     const locationTime = new Date(utcTime + (utcOffsetSeconds * 1000));
     const hour = locationTime.getHours();
     return hour >= 20 || hour < 6;
   }
-  // Fallback to browser time
   const hour = new Date().getHours();
   return hour >= 20 || hour < 6;
 }
@@ -298,6 +274,40 @@ function getHourInfo(timeString: string): { label: string; hour: number } {
   const hour = match ? parseInt(match[1], 10) : 0;
   const label = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
   return { label, hour };
+}
+
+// Shared glass-card style for detail pills
+function DetailPill({ icon, label, value, sub, isDark }: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub?: string;
+  isDark: boolean;
+}) {
+  return (
+    <div className={`rounded-2xl p-5 ${
+      isDark
+        ? 'bg-[#28283c]/50 border border-[#6478b4]/20'
+        : 'bg-white/60 border border-[#a8c5d1]/20'
+    }`} style={{ backdropFilter: 'blur(10px)' }}>
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <div className={`text-[11px] uppercase tracking-wider ${
+          isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
+        }`}>
+          {label}
+        </div>
+      </div>
+      <div className={`text-[28px] ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
+        {value}
+      </div>
+      {sub && (
+        <div className={`text-xs mt-1 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings, settings }: WeatherWidgetProps) {
@@ -312,7 +322,6 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   const [selectedDay, setSelectedDay] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    // Clear selected day if weather data changes and selected day is no longer valid
     if (weather?.daily?.length && selectedDay) {
       const isValid = weather.daily.some((day) => day.date === selectedDay);
       if (!isValid) {
@@ -375,7 +384,6 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
 
     return (
       <div className={`rounded-[32px] shadow-2xl p-12 transition-all duration-1000 relative overflow-hidden bg-gradient-to-br ${bgGradient}`}>
-        {/* Decorative glow */}
         <div className={`absolute -top-1/2 -right-1/4 w-[400px] h-[400px] rounded-full blur-3xl animate-float transition-all duration-1000 ${
           isDark ? 'bg-[#6478b4]/20' : 'bg-[#a8c5d1]/15'
         }`} />
@@ -460,111 +468,56 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
         {(() => {
           const detailCards = [];
           
-          // Wind
           if (showWind && current.wind_speed > 0) {
             detailCards.push(
-              <div key="wind" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                isDark 
-                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
-                  : 'bg-white/60 border border-[#a8c5d1]/20'
-              }`} style={{ backdropFilter: 'blur(10px)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Wind className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
-                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
-                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-                  }`}>
-                    Wind
-                  </div>
-                </div>
-                <div className={`text-[28px] transition-colors duration-500 ${
-                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-                }`}>
-                  {Math.round(current.wind_speed)} mph
-                </div>
-              </div>
+              <DetailPill
+                key="wind"
+                isDark={isDark}
+                icon={<Wind className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Wind"
+                value={`${Math.round(current.wind_speed)} mph`}
+              />
             );
           }
           
-          // Humidity
           if (showHumidity && current.humidity > 0) {
             detailCards.push(
-              <div key="humidity" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                isDark 
-                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
-                  : 'bg-white/60 border border-[#a8c5d1]/20'
-              }`} style={{ backdropFilter: 'blur(10px)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Droplets className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
-                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
-                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-                  }`}>
-                    Humidity
-                  </div>
-                </div>
-                <div className={`text-[28px] transition-colors duration-500 ${
-                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-                }`}>
-                  {current.humidity}%
-                </div>
-              </div>
+              <DetailPill
+                key="humidity"
+                isDark={isDark}
+                icon={<Droplets className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Humidity"
+                value={`${current.humidity}%`}
+              />
             );
           }
           
-          // Pressure
           if (showPressure && current.pressure > 0) {
             detailCards.push(
-              <div key="pressure" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                isDark 
-                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
-                  : 'bg-white/60 border border-[#a8c5d1]/20'
-              }`} style={{ backdropFilter: 'blur(10px)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Gauge className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
-                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
-                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-                  }`}>
-                    Pressure
-                  </div>
-                </div>
-                <div className={`text-[28px] transition-colors duration-500 ${
-                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-                }`}>
-                  {Math.round(current.pressure)} mb
-                </div>
-              </div>
+              <DetailPill
+                key="pressure"
+                isDark={isDark}
+                icon={<Gauge className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Pressure"
+                value={`${Math.round(current.pressure)} mb`}
+              />
             );
           }
           
-          // UV Index
           if (showUvIndex && current.uv_index !== undefined && current.uv_index > 0) {
             const uvLevel = current.uv_index <= 2 ? 'Low' : current.uv_index <= 5 ? 'Moderate' : current.uv_index <= 7 ? 'High' : current.uv_index <= 10 ? 'Very High' : 'Extreme';
             detailCards.push(
-              <div key="uv" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                isDark 
-                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
-                  : 'bg-white/60 border border-[#a8c5d1]/20'
-              }`} style={{ backdropFilter: 'blur(10px)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
-                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
-                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-                  }`}>
-                    UV Index
-                  </div>
-                </div>
-                <div className={`text-[28px] transition-colors duration-500 ${
-                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-                }`}>
-                  {Math.round(current.uv_index)}
-                </div>
-                <div className={`text-xs mt-1 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
-                  {uvLevel}
-                </div>
-              </div>
+              <DetailPill
+                key="uv"
+                isDark={isDark}
+                icon={<Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="UV Index"
+                value={`${Math.round(current.uv_index)}`}
+                sub={uvLevel}
+              />
             );
           }
           
-          // Air Quality
           if (showAirQuality && weather?.air_quality?.aqi !== undefined) {
             const aqiCategory = weather.air_quality.category || (
               weather.air_quality.aqi <= 50 ? 'Good' : 
@@ -573,34 +526,19 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               weather.air_quality.aqi <= 200 ? 'Unhealthy' : 'Very Unhealthy'
             );
             detailCards.push(
-              <div key="aqi" className={`rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                isDark 
-                  ? 'bg-[#28283c]/50 border border-[#6478b4]/20' 
-                  : 'bg-white/60 border border-[#a8c5d1]/20'
-              }`} style={{ backdropFilter: 'blur(10px)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Leaf className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />
-                  <div className={`text-[11px] uppercase tracking-wider transition-colors duration-500 ${
-                    isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
-                  }`}>
-                    Air Quality
-                  </div>
-                </div>
-                <div className={`text-[28px] transition-colors duration-500 ${
-                  isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-                }`}>
-                  {weather.air_quality.aqi}
-                </div>
-                <div className={`text-xs mt-1 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
-                  {aqiCategory}
-                </div>
-              </div>
+              <DetailPill
+                key="aqi"
+                isDark={isDark}
+                icon={<Leaf className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                label="Air Quality"
+                value={`${weather.air_quality.aqi}`}
+                sub={aqiCategory}
+              />
             );
           }
           
           if (detailCards.length === 0) return null;
           
-          // Determine grid columns based on number of cards
           const gridCols = detailCards.length === 1 ? 'grid-cols-1' : 
                           detailCards.length === 2 ? 'grid-cols-2' : 
                           detailCards.length <= 3 ? 'grid-cols-3' : 
@@ -679,11 +617,9 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             </h2>
             <div className="grid grid-cols-7 gap-3">
               {daily.slice(0, 7).map((day, index) => {
-                // Parse date as local time (day.date is in format YYYY-MM-DD)
                 const [year, month, dayOfMonth] = day.date.split('-').map(Number);
                 const date = new Date(year, month - 1, dayOfMonth);
 
-                // Calculate today's date in the location's timezone
                 let locationTodayStr: string;
                 if (weather?.utc_offset_seconds !== undefined) {
                   const now = new Date();
@@ -695,22 +631,16 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                   locationTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 }
 
-                // Check if this date is today in the location's timezone
                 const isToday = day.date === locationTodayStr;
                 const isSelected = selectedDay === day.date;
 
                 const dayName = isToday ? 'TODAY' : date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
-                // Debug: Log weather code for each day
-                if (index === 0) {
-                  console.log('[WeatherWidget] Daily forecast weather codes:', daily.map(d => ({ date: d.date, code: d.weather_code, condition: d.condition })));
-                }
-
                 return (
                   <button
                     type="button"
                     key={day.date}
-                    onClick={() => setSelectedDay(day.date)}
+                    onClick={() => setSelectedDay(isSelected ? null : day.date)}
                     className={`rounded-[20px] p-5 text-center transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
                       isDark
                         ? 'bg-[#232337]/50 border border-[#6478b4]/20 hover:bg-[#323246]/80'
@@ -751,33 +681,31 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               })}
             </div>
           </div>
-          {selectedDay && (
-            <div className="mt-8 animate-fadeIn" style={{ animationDelay: '0.35s' }}>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-4">
+
+          {/* Daily Insights — expanded when a day is selected */}
+          {selectedDay && selectedDayDetails && (
+            <div className="relative z-10 mt-8 animate-fadeIn" style={{ animationDelay: '0.35s' }}>
+              {/* Header row */}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-6">
                 <div>
-                  <h3
-                    className={`text-xl font-semibold tracking-tight ${
-                      isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
-                    }`}
-                  >
+                  <h3 className={`text-xl font-semibold tracking-tight ${
+                    isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                  }`}>
                     Daily Insights
                   </h3>
                   <p className={`${isDark ? 'text-[#e8e8f0]/70' : 'text-[#2a2a2e]/70'} text-sm`}>
                     {selectedDayLabel}
-                    {selectedDayDetails &&
-                      ` · High ${Math.round(selectedDayDetails.temperature_max)}° / Low ${Math.round(selectedDayDetails.temperature_min)}°`}
+                    {` · High ${Math.round(selectedDayDetails.temperature_max)}° / Low ${Math.round(selectedDayDetails.temperature_min)}°`}
                   </p>
-                  {selectedDayDetails?.condition && (
+                  {selectedDayDetails.condition && (
                     <p className={`${isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'} text-xs`}>
                       {selectedDayDetails.condition}
                     </p>
                   )}
                 </div>
-                <p className={`text-xs ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
-                  Hourly timeline · 12 AM through midnight (local time)
-                </p>
               </div>
 
+              {/* If we have hourly data for this day, render the hourly strip */}
               {selectedDayHourly.length > 0 ? (
                 <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
                   {selectedDayHourly.map((hourEntry) => {
@@ -826,14 +754,68 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                   })}
                 </div>
               ) : (
-                <div
-                  className={`rounded-2xl p-6 text-center ${
-                    isDark ? 'bg-[#232337]/40 border border-[#6478b4]/20' : 'bg-white/60 border border-[#a8c5d1]/20'
-                  }`}
-                  style={{ backdropFilter: 'blur(12px)' }}
-                >
-                  <p className={`${isDark ? 'text-[#e8e8f0]/70' : 'text-[#2a2a2e]/70'} text-sm`}>
-                    Hourly data is not available for this day yet.
+                /* ──────────────────────────────────────────────────────────
+                   No hourly data for this day — render a rich detail card
+                   using the daily summary fields we already have.
+                   ────────────────────────────────────────────────────────── */
+                <div className={`rounded-2xl p-6 ${
+                  isDark ? 'bg-[#232337]/40 border border-[#6478b4]/20' : 'bg-white/60 border border-[#a8c5d1]/20'
+                }`} style={{ backdropFilter: 'blur(12px)' }}>
+                  {/* Big icon + high / low */}
+                  <div className="flex items-center gap-6 mb-6">
+                    <WeatherIcon weatherCode={selectedDayDetails.weather_code} isNight={false} size="large" />
+                    <div>
+                      <div className={`text-[56px] font-light leading-none tracking-tighter ${
+                        isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
+                      }`} style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                        {Math.round(selectedDayDetails.temperature_max)}°
+                      </div>
+                      <div className={`text-lg ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
+                        Low {Math.round(selectedDayDetails.temperature_min)}°
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detail pills grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {/* Precipitation chance — always show */}
+                    <DetailPill
+                      isDark={isDark}
+                      icon={<Droplets className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                      label="Precip. Chance"
+                      value={`${Math.round(selectedDayDetails.precipitation_probability)}%`}
+                    />
+
+                    {/* Precipitation total — show if > 0 */}
+                    {selectedDayDetails.precipitation_sum > 0 && (
+                      <DetailPill
+                        isDark={isDark}
+                        icon={<CloudRain className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                        label="Precip. Total"
+                        value={`${selectedDayDetails.precipitation_sum.toFixed(2)} in`}
+                      />
+                    )}
+
+                    {/* Temperature range */}
+                    <DetailPill
+                      isDark={isDark}
+                      icon={<Sun className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                      label="Temp Range"
+                      value={`${Math.round(selectedDayDetails.temperature_min)}° – ${Math.round(selectedDayDetails.temperature_max)}°`}
+                    />
+
+                    {/* Condition badge */}
+                    <DetailPill
+                      isDark={isDark}
+                      icon={<Cloud className={`w-4 h-4 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`} />}
+                      label="Condition"
+                      value={selectedDayDetails.condition}
+                    />
+                  </div>
+
+                  {/* Subtle note */}
+                  <p className={`text-xs mt-5 ${isDark ? 'text-[#e8e8f0]/35' : 'text-[#2a2a2e]/35'}`}>
+                    Hourly breakdown is not yet available for this day.
                   </p>
                 </div>
               )}
