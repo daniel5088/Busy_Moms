@@ -282,10 +282,18 @@ Deno.serve(async (req: Request) => {
 
     // ─── Event-specific weather (by location + date + time) ────────────────
     if (action === "get_event_weather") {
+      console.log("%c[weather-mcp] 🎯 GET_EVENT_WEATHER started", "color: #10b981; font-weight: bold");
+      console.log(`[weather-mcp]   📍 location: "${location}"`);
+      console.log(`[weather-mcp]   📅 eventDate: "${eventDate}"`);
+      console.log(`[weather-mcp]   ⏰ eventTime: "${eventTime}"`);
+      console.log(`[weather-mcp]   🔄 force: ${force}`);
+
       if (!location || !location.trim()) {
+        console.log("[weather-mcp] ❌ ERROR: location is missing or empty");
         return new Response(JSON.stringify({ error: "location is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (!eventDate || !eventDate.trim()) {
+        console.log("[weather-mcp] ❌ ERROR: eventDate is missing or empty");
         return new Response(JSON.stringify({ error: "eventDate is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
@@ -294,36 +302,61 @@ Deno.serve(async (req: Request) => {
       const timeKey = eventTime ? eventTime.replace(/:/g, "") : "allday";
       const locationKey = `event_${location.trim().toLowerCase().replace(/[^a-z0-9 ]/g, "_")}_${eventDate}_${timeKey}_${unitsSystem}`;
 
+      console.log(`[weather-mcp] 🔑 Generated locationKey: "${locationKey}"`);
+      console.log(`[weather-mcp] 🌡️  unitsSystem: ${unitsSystem}`);
+
       // Check cache first
       if (!force) {
+        console.log("[weather-mcp] 🔍 Checking cache...");
         const { data: cachedRow } = await supabase.from("weather_cache").select("weather_data, expires_at").eq("user_id", user.id).eq("location_key", locationKey).maybeSingle();
         if (cachedRow && new Date((cachedRow as any).expires_at) > new Date() && (cachedRow as any).weather_data && !looksLikeErrorPayload((cachedRow as any).weather_data)) {
-          console.log("[weather-mcp] get_event_weather → HIT cache");
+          console.log("%c[weather-mcp] ✅ Cache HIT - returning cached data", "color: #22c55e; font-weight: bold");
           return new Response(JSON.stringify({ data: (cachedRow as any).weather_data, cached: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
+        console.log("[weather-mcp] ⚠️ Cache MISS or expired - fetching fresh data");
+      } else {
+        console.log("[weather-mcp] 🔄 Force refresh - skipping cache");
       }
 
       // Parse event date and time
       const dateParts = eventDate.split("-").map(Number);
       const dateArg = { year: dateParts[0], month: dateParts[1], day: dateParts[2] };
+      console.log(`[weather-mcp] 📆 Parsed date:`, dateArg);
 
       // Search for place ID
+      console.log(`%c[weather-mcp] 🔍 Searching for placeId for location: "${location.trim()}"`, "color: #3b82f6; font-weight: bold");
       const placeId = await searchPlaceId(mcpUrl, mcpKey, location.trim());
+      console.log(`[weather-mcp] ${placeId ? `✅ Found placeId: "${placeId}"` : `⚠️ No placeId found, will use address: "${location.trim()}"`}`);
+
       const locArg = placeId ? { placeId } : { address: location.trim() };
+      console.log(`[weather-mcp] 📍 Location argument for MCP:`, locArg);
 
       // Fetch weather from MCP
+      console.log(`%c[weather-mcp] 🌐 Calling MCP lookup_weather tool`, "color: #8b5cf6; font-weight: bold");
+      console.log(`[weather-mcp]   Tool params:`, { unitsSystem, location: locArg, date: dateArg });
+
       const toolEnv = await callMcpTool<any>(mcpUrl, mcpKey, "lookup_weather", {
         unitsSystem,
         location: locArg,
         date: dateArg
       });
+
+      console.log(`[weather-mcp] 📦 MCP raw response received`);
       const wx = unwrapMcpResult(toolEnv.result ?? null);
 
+      console.log(`%c[weather-mcp] 📦 MCP unwrapped result:`, "color: #8b5cf6");
+      console.log(`[weather-mcp]   returnedLocation:`, wx?.returnedLocation);
+      console.log(`[weather-mcp]   geocodedAddress:`, wx?.DEPRECATEDGeocodedAddress);
+      console.log(`[weather-mcp]   weatherCondition:`, wx?.weatherCondition?.description?.text);
+
       if (!wx || looksLikeErrorPayload(wx)) {
+        console.log("%c[weather-mcp] ❌ ERROR: Weather data unavailable or error payload", "color: #ef4444; font-weight: bold");
         return new Response(JSON.stringify({ error: "Weather data unavailable", data: null }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       const ll = extractLatLngFromLookup(wx);
+      console.log(`[weather-mcp] 🗺️  Extracted coordinates:`, ll);
+
       const result = {
         unitsSystem,
         location_label: location.trim(),
@@ -356,7 +389,16 @@ Deno.serve(async (req: Request) => {
         { onConflict: "user_id,location_key" },
       );
 
-      console.log("[weather-mcp] get_event_weather → cached for 24h");
+      console.log("%c[weather-mcp] ✅ SUCCESS - Weather cached for 24h", "color: #22c55e; font-weight: bold");
+      console.log(`[weather-mcp] 📊 Final result:`, {
+        location_label: result.location_label,
+        eventDate: result.eventDate,
+        eventTime: result.eventTime,
+        condition: result.weatherCondition?.description?.text,
+        returnedLocation: result.returnedLocation,
+        hasCoordinates: !!(result.latitude && result.longitude)
+      });
+
       return new Response(JSON.stringify({ data: result, cached: false }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

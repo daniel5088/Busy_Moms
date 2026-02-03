@@ -190,11 +190,29 @@ export function useEventWeather() {
     const cacheKey = getCacheKey(location, eventDate, eventTime);
     const cached = eventWeatherCache.get(cacheKey) || null;
 
-    console.log(`[useEventWeather] 🔍 Cache lookup for ${cacheKey}:`, cached ? {
-      found: true,
-      condition: cached.condition,
-      temperature: cached.temperature,
-    } : { found: false, totalInCache: eventWeatherCache.size });
+    console.log(`%c[useEventWeather] 🔍 Cache lookup`, 'color: #8b5cf6; font-weight: bold');
+    console.log(`   Looking for key: "${cacheKey}"`);
+    console.log(`   Key components:`, {
+      originalLocation: location,
+      normalizedLocation: location.trim().toLowerCase(),
+      originalDate: eventDate,
+      normalizedDate: eventDate.trim(),
+      originalTime: eventTime,
+      normalizedTime: eventTime?.trim() || 'allday',
+    });
+    console.log(`   Found: ${!!cached}`);
+
+    if (cached) {
+      console.log(`   ✅ Cache HIT:`, {
+        condition: cached.condition,
+        temperature: cached.temperature,
+        location: cached.location,
+      });
+    } else {
+      console.log(`   ❌ Cache MISS`);
+      console.log(`   Total items in cache: ${eventWeatherCache.size}`);
+      console.log(`   All cached keys:`, Array.from(eventWeatherCache.keys()));
+    }
 
     return cached;
   }, [eventWeatherCache, getCacheKey]);

@@ -3196,6 +3196,18 @@ class AIAssistantService {
       }
 
       const event = events[0];
+
+      // Log the full event details for debugging
+      console.log('🔍 [SARAH WEATHER] Found event:', {
+        id: event.id,
+        title: event.title,
+        date: event.event_date,
+        time: event.event_time,
+        location: event.location,
+        hasLocation: !!event.location,
+        locationLength: event.location?.length || 0,
+      });
+
       const eventDate = new Date(event.event_date);
       const today = new Date();
       const daysUntil = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -3212,15 +3224,30 @@ class AIAssistantService {
       // This will cache the weather and make it appear on Dashboard/Calendar icons
       let eventWeatherData = null;
       if (event.location && event.location.trim()) {
-        console.log(`🌤️ Fetching location-specific weather for event at: ${event.location}`);
+        console.log(`%c🌤️ [SARAH WEATHER] Fetching location-specific weather`, 'color: #10b981; font-weight: bold');
+        console.log(`   📍 Event Location: "${event.location}"`);
+        console.log(`   📅 Event Date: ${event.event_date}`);
+        console.log(`   ⏰ Event Time: ${event.event_time || 'All day'}`);
+
         try {
           const { weatherService } = await import('./weatherService');
+
+          console.log(`%c🚀 [SARAH WEATHER] Calling weatherService.getEventWeather()`, 'color: #3b82f6; font-weight: bold');
+          console.log(`   Parameters:`, {
+            location: event.location,
+            date: event.event_date,
+            time: event.event_time || null,
+            forceRefresh: true,
+          });
+
           eventWeatherData = await weatherService.getEventWeather(
             event.location,
             event.event_date,
             event.event_time || null,
             true // Force refresh
           );
+
+          console.log(`%c✅ [SARAH WEATHER] Weather service returned:`, 'color: #10b981; font-weight: bold', eventWeatherData);
 
           if (eventWeatherData) {
             console.log('✅ Event weather cached - will appear on Dashboard and Calendar icons');
@@ -3237,17 +3264,47 @@ class AIAssistantService {
               const normalizedTime = event.event_time?.trim() || 'allday';
               const cacheKey = `${normalizedLocation}_${normalizedDate}_${normalizedTime}`;
 
+              console.log(`%c💾 [SARAH WEATHER] Saving to localStorage cache`, 'color: #f59e0b; font-weight: bold');
+              console.log(`   🔑 Cache key components:`, {
+                originalLocation: event.location,
+                normalizedLocation,
+                originalDate: event.event_date,
+                normalizedDate,
+                originalTime: event.event_time,
+                normalizedTime,
+                finalCacheKey: cacheKey,
+              });
+              console.log(`   📦 Weather data being saved:`, {
+                location: eventWeatherData.location,
+                condition: eventWeatherData.condition,
+                temperature: eventWeatherData.temperature,
+                eventDate: eventWeatherData.eventDate,
+                eventTime: eventWeatherData.eventTime,
+              });
+
               cache[cacheKey] = eventWeatherData;
               localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(cache));
-              console.log(`💾 Saved weather to localStorage with key: ${cacheKey}`);
+
+              console.log(`%c✅ [SARAH WEATHER] Saved to localStorage`, 'color: #22c55e; font-weight: bold');
+              console.log(`   Total cached items: ${Object.keys(cache).length}`);
+              console.log(`   All cache keys:`, Object.keys(cache));
 
               // Dispatch custom event to notify Dashboard/Calendar to refresh
-              window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
-                detail: { cacheKey, location: event.location, date: event.event_date, time: event.event_time }
-              }));
-              console.log('📢 Dispatched weatherCacheUpdated event');
+              const eventDetail = {
+                cacheKey,
+                location: event.location,
+                date: event.event_date,
+                time: event.event_time
+              };
+
+              console.log(`%c📢 [SARAH WEATHER] Dispatching weatherCacheUpdated event`, 'color: #3b82f6; font-weight: bold');
+              console.log(`   Event detail:`, eventDetail);
+
+              window.dispatchEvent(new CustomEvent('weatherCacheUpdated', { detail: eventDetail }));
+
+              console.log('✅ Event dispatched successfully');
             } catch (cacheError) {
-              console.error('⚠️ Failed to save to localStorage:', cacheError);
+              console.error('%c⚠️ [SARAH WEATHER] Failed to save to localStorage:', 'color: #ef4444; font-weight: bold', cacheError);
             }
 
             // Build a user-friendly message
