@@ -318,17 +318,6 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, provider_name: 'amazon' })}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    formData.provider_name === 'amazon'
-                      ? 'bg-orange-100 dark:bg-orange-900 border-orange-400 dark:border-orange-600 text-orange-900 dark:text-orange-100'
-                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Amazon
-                </button>
-                <button
-                  type="button"
                   onClick={() => setFormData({ ...formData, provider_name: 'manual' })}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                     formData.provider_name === 'manual'

@@ -7,7 +7,6 @@ import {
   Star,
   ExternalLink,
   ChefHat,
-  Send,
   Package,
   Filter,
   Store,
@@ -291,9 +290,8 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
     return {
       all: activeItems.length,
       instacart: activeItems.filter((item) => item.provider_name === 'instacart').length,
-      amazon: activeItems.filter((item) => item.provider_name === 'amazon').length,
       manual: activeItems.filter((item) => item.provider_name === 'manual').length,
-      unassigned: activeItems.filter((item) => !item.provider_name).length,
+      unassigned: activeItems.filter((item) => !item.provider_name || item.provider_name === 'amazon').length,
     };
   };
 
@@ -305,13 +303,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
           logo: '/Instacart_Carrot.png',
           color: 'bg-green-500',
           textColor: 'text-green-600',
-        };
-      case 'amazon':
-        return {
-          type: 'text',
-          text: 'Amazon',
-          color: 'bg-orange-500',
-          textColor: 'text-orange-600',
         };
       case 'manual':
         return { type: 'text', text: 'Manual', color: 'bg-gray-500', textColor: 'text-gray-600' };
@@ -405,11 +396,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                     count: getProviderStats().instacart,
                   },
                   {
-                    id: 'amazon' as ProviderName,
-                    label: 'Amazon',
-                    count: getProviderStats().amazon,
-                  },
-                  {
                     id: null as ProviderName,
                     label: 'Unassigned',
                     count: getProviderStats().unassigned,
@@ -467,16 +453,6 @@ export function Shopping({ openGiftFinder = false, onGiftFinderOpened, openRecip
                   disabled={getItemsToSend().length === 0}
                   showCount={selectedItems.size > 0 ? selectedItems.size : undefined}
                 />
-                <button
-                  type="button"
-                  onClick={() => handleSendToProvider('amazon')}
-                  disabled={getItemsToSend().length === 0}
-                  className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-4 h-4" aria-hidden="true" />
-                  <span>Send to Amazon</span>
-                  {selectedItems.size > 0 && <span>({selectedItems.size})</span>}
-                </button>
               </div>
             )}
 
