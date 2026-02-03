@@ -151,7 +151,7 @@ function EventWeatherIconWrapper({
       weather={weather}
       loading={loading}
       onClick={handleClick}
-      size="sm"
+      size="lg"
     />
   );
 }
@@ -1399,14 +1399,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                             <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors break-words flex-1 pr-2">
                               {ev.title}
                             </h3>
-                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap flex-shrink-0">
-                              {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
-                            </span>
-                          </div>
-                          {ev.location && (
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 flex-1 min-w-0">
-                                {/* Weather icon for events with location */}
+                            <div className="flex items-center space-x-2 flex-shrink-0">
+                              {ev.location && (
                                 <EventWeatherIconWrapper
                                   location={ev.location}
                                   eventDate={ev.event_date}
@@ -1416,6 +1410,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                   isWeatherLoading={isWeatherLoading}
                                   onShowInsights={setWeatherInsightsEvent}
                                 />
+                              )}
+                              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap">
+                                {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
+                              </span>
+                            </div>
+                          </div>
+                          {ev.location && (
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 flex-1 min-w-0">
                                 <MapPin className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                                 <span className="truncate">{ev.location}</span>
                               </div>

@@ -20,7 +20,7 @@ interface EventWeatherIconProps {
   weather: EventWeatherData | null;
   loading?: boolean;
   onClick?: () => void;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 /**
@@ -86,17 +86,19 @@ function getSeverityClasses(severity: WeatherSuggestion['severity']): { bg: stri
  */
 export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: EventWeatherIconProps) {
   if (loading) {
+    const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
+    const spinnerSize = size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-5 h-5' : 'w-6 h-6';
     return (
-      <div className={`flex items-center justify-center ${size === 'sm' ? 'w-6 h-6' : 'w-8 h-8'}`}>
-        <Loader2 className={`${size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'} text-gray-400 animate-spin`} />
+      <div className={`flex items-center justify-center ${containerSize}`}>
+        <Loader2 className={`${spinnerSize} text-gray-400 animate-spin`} />
       </div>
     );
   }
 
   // Show placeholder icon when no weather data loaded yet - click to fetch
   if (!weather) {
-    const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
-    const containerSize = size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
+    const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';
+    const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
     
     return (
       <button
@@ -124,8 +126,8 @@ export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: Eve
   }
 
   const colors = getSeverityClasses(weather.suggestion.severity);
-  const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
-  const containerSize = size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
+  const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';
+  const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
 
   return (
     <button
