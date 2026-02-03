@@ -15,7 +15,6 @@ export interface WeatherSettings {
   include_daily?: boolean;
   hourly_hours?: number;
   daily_days?: number;
-  // Display settings
   show_hourly_forecast?: boolean;
   show_uv_index?: boolean;
   show_air_quality?: boolean;
@@ -75,8 +74,8 @@ export interface WeatherData {
     latitude: number;
     longitude: number;
   };
-  timezone?: string; // Location's timezone (e.g., "Asia/Kolkata", "America/New_York")
-  utc_offset_seconds?: number; // UTC offset in seconds
+  timezone?: string;
+  utc_offset_seconds?: number;
 }
 
 interface WeatherResponse {
@@ -85,14 +84,8 @@ interface WeatherResponse {
   error?: string;
 }
 
-/**
- * This service supports BOTH response formats:
- * 1) New backend format: { data: <open-meteo payload>, cached: boolean }
- * 2) MCP "tool" format: response.data.content[0].text = JSON string (older)
- *
- * Your error came from JSON.parse on a non-JSON string ("Error: ...")
- * so we now parse safely.
- */
+type UnitsSystem = "IMPERIAL" | "METRIC";
+
 class WeatherService {
   private readonly baseUrl: string;
 
@@ -101,16 +94,8 @@ class WeatherService {
   }
 
   private async makeRequest(body: any): Promise<WeatherResponse> {
-    console.log("[WeatherService] Making request to:", this.baseUrl);
-    console.log("[WeatherService] Request body:", body);
-
     const session = await supabase.auth.getSession();
-    if (!session.data.session) {
-      console.error("[WeatherService] Not authenticated");
-      throw new Error("Not authenticated");
-    }
-
-    console.log("[WeatherService] Authenticated, sending request...");
+    if (!session.data.session) throw new Error("Not authenticated");
 
     const response = await fetch(this.baseUrl, {
       method: "POST",
@@ -121,51 +106,29 @@ class WeatherService {
       body: JSON.stringify(body),
     });
 
-    console.log("[WeatherService] Response status:", response.status);
-
-    // Always try to read JSON, but fall back to text for debugging
     const text = await response.text();
     let json: any = null;
     try {
       json = text ? JSON.parse(text) : null;
     } catch {
-      // Not JSON; keep raw text
       json = null;
     }
 
     if (!response.ok) {
-      const message =
-        (json && (json.error || json.message)) ||
-        text ||
-        "Failed to fetch weather data";
-      console.error("[WeatherService] Request failed:", json ?? text);
+      const message = (json && (json.error || json.message)) || text || "Failed to fetch weather data";
       throw new Error(message);
     }
 
-    // For ok responses, we expect JSON
-    if (!json) {
-      console.error("[WeatherService] Expected JSON but got:", text);
-      throw new Error("Weather function returned non-JSON response");
-    }
-
-    console.log("[WeatherService] Request successful:", json);
+    if (!json) throw new Error("Weather function returned non-JSON response");
     return json as WeatherResponse;
   }
 
   async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherResponse> {
-    return this.makeRequest({
-      action: "get_current",
-      latitude,
-      longitude,
-    });
+    return this.makeRequest({ action: "get_current", latitude, longitude });
   }
 
   async getForecast(latitude: number, longitude: number): Promise<WeatherResponse> {
-    return this.makeRequest({
-      action: "get_forecast",
-      latitude,
-      longitude,
-    });
+    return this.makeRequest({ action: "get_forecast", latitude, longitude });
   }
 
   async getSettings(): Promise<WeatherSettings | null> {
@@ -174,383 +137,299 @@ class WeatherService {
   }
 
   async updateSettings(settings: Partial<WeatherSettings>): Promise<WeatherSettings> {
-    const response = await this.makeRequest({
-      action: "update_settings",
-      settings,
-    });
+    const response = await this.makeRequest({ action: "update_settings", settings });
     return response.data;
   }
 
   async getWeatherForLocation(location?: { latitude: number; longitude: number }): Promise<WeatherData> {
-    console.log("[WeatherService] getWeatherForLocation called with:", location);
-
     let coords = location;
 
     if (!coords) {
-      console.log("[WeatherService] No coords provided, fetching settings...");
       const settings = await this.getSettings();
-      console.log("[WeatherService] Settings fetched:", settings);
-
-      if (settings?.latitude && settings?.longitude) {
-        coords = { latitude: settings.latitude, longitude: settings.longitude };
-        console.log("[WeatherService] Using coords from settings:", coords);
-      } else {
-        console.warn("[WeatherService] Settings missing latitude or longitude:", {
-          hasLatitude: !!settings?.latitude,
-          hasLongitude: !!settings?.longitude,
-          latitude: settings?.latitude,
-          longitude: settings?.longitude,
-        });
-      }
+      if (settings?.latitude && settings?.longitude) coords = { latitude: settings.latitude, longitude: settings.longitude };
     }
 
-    if (!coords) {
-      const error = "No location provided and no default location set";
-      console.error("[WeatherService]", error);
-      throw new Error(error);
-    }
+    if (!coords) throw new Error("No location provided and no default location set");
 
-    console.log("[WeatherService] Fetching forecast for coords:", coords);
     const response = await this.getForecast(coords.latitude, coords.longitude);
-    console.log("[WeatherService] Forecast response:", response);
-
-    const parsedData = this.parseWeatherData(response.data);
-    console.log("[WeatherService] Parsed weather data:", parsedData);
-
-    return parsedData;
+    return this.parseWeatherData(response.data);
   }
 
-  /**
-   * Accepts:
-   * - open-meteo payload object (preferred): { current_weather, hourly, daily, ... }
-   * - MCP tool content wrapper: { content: [{ text: "<json string>" }] }
-   */
   private parseWeatherData(data: any): WeatherData {
-    console.log('[WeatherService] parseWeatherData called with:', data);
-    
-    // 1) If backend already returns the open-meteo JSON payload, use it directly.
-    const openMeteoPayload =
-      this.isOpenMeteoPayload(data) ? data : this.extractOpenMeteoPayloadFromMcp(data);
-
-    console.log('[WeatherService] Extracted OpenMeteo payload:', openMeteoPayload);
-
     const result: WeatherData = {};
-    if (!openMeteoPayload) {
-      console.error('[WeatherService] No valid OpenMeteo payload found');
+    if (!data || typeof data !== "object") return result;
+
+    if (this.isAggregatedDailyForecast(data)) {
+      const unitsSystem: UnitsSystem = data.unitsSystem === "IMPERIAL" ? "IMPERIAL" : "METRIC";
+      const first = data.daily?.[0]?.response;
+      if (first && this.isLookupWeatherResponse(first)) {
+        const currentFromFirst = this.lookupToCurrent(first);
+        if (currentFromFirst) result.current = currentFromFirst;
+
+        const loc = this.lookupToLocation(first);
+        if (loc) result.location = loc;
+      }
+
+      const dailyArr: WeatherData["daily"] = [];
+      for (const item of data.daily ?? []) {
+        const d = item?.date;
+        const wx = item?.response;
+        if (!d || !wx || !this.isLookupWeatherResponse(wx)) continue;
+
+        const day = this.lookupToDaily(wx, `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`);
+        if (day) dailyArr.push(day);
+      }
+      if (dailyArr.length) result.daily = dailyArr;
+
+      result.hourly = [];
+      result.fullHourly = [];
+      result.timezone = undefined;
+      result.utc_offset_seconds = undefined;
+
       return result;
     }
 
-    const parsed = openMeteoPayload;
+    if (this.isLocationWeatherShape(data)) {
+      const loc = this.extractLocationFromReturnedLocation(data.returnedLocation, data.location_label || data.geocodedAddress || "Selected location");
+      if (loc) result.location = loc;
 
-    // Get timezone info from the API response - this tells us the location's timezone
-    let locationTimezone = parsed.timezone; // e.g., "Asia/Kolkata", "America/New_York"
-    let utcOffsetSeconds = parsed.utc_offset_seconds ?? 0;
-    
-    // FALLBACK: If API returns GMT/0 but coordinates are clearly not near Greenwich,
-    // estimate the timezone from longitude (longitude / 15 ≈ hour offset)
-    const longitude = parsed.longitude ?? 0;
-    const latitude = parsed.latitude ?? 0;
-    const isNearGreenwich = longitude > -30 && longitude < 30 && latitude > -60 && latitude < 70;
-    
-    if (locationTimezone === 'GMT' && utcOffsetSeconds === 0 && !isNearGreenwich) {
-      // Estimate timezone from longitude: each 15° = 1 hour
-      // Add special handling for India (longitude ~68-97) which is UTC+5:30
-      if (longitude >= 68 && longitude <= 97 && latitude >= 8 && latitude <= 37) {
-        // India Standard Time (IST) = UTC+5:30
-        utcOffsetSeconds = 5.5 * 3600; // 19800 seconds
-        locationTimezone = 'Asia/Kolkata (estimated)';
-        console.log('[WeatherService] Detected India coordinates, using IST (UTC+5:30)');
-      } else {
-        // General estimate from longitude
-        const estimatedHours = Math.round(longitude / 15);
-        utcOffsetSeconds = estimatedHours * 3600;
-        locationTimezone = `UTC${estimatedHours >= 0 ? '+' : ''}${estimatedHours} (estimated)`;
-        console.log('[WeatherService] Estimated timezone from longitude:', locationTimezone);
-      }
-    }
-    
-    // Calculate current time in the location's timezone
-    // UTC offset in milliseconds
-    const locationOffsetMs = utcOffsetSeconds * 1000;
-    // Browser's offset in milliseconds (getTimezoneOffset returns minutes and is inverted)
-    const browserOffsetMs = -new Date().getTimezoneOffset() * 60 * 1000;
-    // Difference between location and browser timezone
-    const offsetDiff = locationOffsetMs - browserOffsetMs;
-    
-    // Current time adjusted to the location's timezone
-    const nowInLocationTz = new Date(Date.now() + offsetDiff);
-    const locationHour = nowInLocationTz.getHours();
-    const locationDateStr = `${nowInLocationTz.getFullYear()}-${String(nowInLocationTz.getMonth() + 1).padStart(2, '0')}-${String(nowInLocationTz.getDate()).padStart(2, '0')}`;
-    
-    console.log('[WeatherService] Location timezone:', locationTimezone, 'UTC offset:', utcOffsetSeconds);
-    console.log('[WeatherService] Browser time:', new Date().toISOString());
-    console.log('[WeatherService] Location local time:', nowInLocationTz.toISOString().replace('Z', ''), 'hour:', locationHour, 'date:', locationDateStr);
+      const current = this.locationWeatherToCurrent(data);
+      if (current) result.current = current;
 
-    // Current - handle multiple formats
-    if (parsed.current) {
-      // New format with "current" object
-      const weatherCode = parsed.current.weather_code ?? 0;
-      console.log('[WeatherService] Current weather_code:', weatherCode);
-      console.log('[WeatherService] Current data keys:', Object.keys(parsed.current));
-      
-      result.current = {
-        temperature: parsed.current.temperature_2m,
-        weather_code: weatherCode,
-        wind_speed: parsed.current.wind_speed_10m || 0,
-        wind_direction: parsed.current.wind_direction_10m || 0,
-        humidity: parsed.current.relative_humidity_2m || 0,
-        pressure: parsed.current.surface_pressure || 0,
-        uv_index: parsed.current.uv_index || parsed.hourly?.uv_index?.[0] || undefined,
-        condition: this.getWeatherCondition(weatherCode),
-        icon: "",
-      };
-    } else if (parsed.current_weather) {
-      // Old format with "current_weather" object
-      console.log('[WeatherService] Using current_weather format');
-      console.log('[WeatherService] current_weather data:', parsed.current_weather);
-      console.log('[WeatherService] hourly data available:', !!parsed.hourly);
-      result.current = {
-        temperature: parsed.current_weather.temperature,
-        weather_code: parsed.current_weather.weathercode,
-        wind_speed: parsed.current_weather.windspeed,
-        wind_direction: parsed.current_weather.winddirection,
-        humidity: parsed.hourly?.relative_humidity_2m?.[0] || 0,
-        pressure: parsed.hourly?.surface_pressure?.[0] || 0,
-        uv_index: parsed.hourly?.uv_index?.[0] || undefined,
-        condition: this.getWeatherCondition(parsed.current_weather.weathercode),
-        icon: "",
-      };
-      console.log('[WeatherService] Parsed current with humidity:', result.current.humidity, 'pressure:', result.current.pressure);
-    } else if (parsed.hourly?.time && parsed.hourly.time.length > 0) {
-      // Fallback: synthesize current weather from hourly data at current hour in location's timezone
-      console.log('[WeatherService] No current weather data, synthesizing from hourly');
-      console.log('[WeatherService] Hourly keys:', Object.keys(parsed.hourly));
-      
-      // Find the index matching current time in the location's timezone
-      let currentIndex = 0;
-      for (let i = 0; i < parsed.hourly.time.length; i++) {
-        const timeStr = parsed.hourly.time[i];
-        // Times are in format "YYYY-MM-DDTHH:00" in the location's timezone
-        if (timeStr.startsWith(locationDateStr)) {
-          const hourMatch = timeStr.match(/T(\d{1,2})/);
-          if (hourMatch) {
-            const hour = parseInt(hourMatch[1], 10);
-            if (hour === locationHour) {
-              currentIndex = i;
-              break;
-            } else if (hour > locationHour) {
-              currentIndex = Math.max(0, i - 1);
-              break;
-            }
-          }
-        }
-      }
-      
-      console.log('[WeatherService] Using hourly index', currentIndex, 'time:', parsed.hourly.time[currentIndex], 'location hour:', locationHour);
-      
-      const weatherCode = parsed.hourly.weather_code?.[currentIndex] ?? parsed.hourly.weathercode?.[currentIndex] ?? 0;
-      result.current = {
-        temperature: parsed.hourly.temperature_2m?.[currentIndex] ?? 0,
-        weather_code: weatherCode,
-        wind_speed: parsed.hourly.wind_speed_10m?.[currentIndex] ?? 0,
-        wind_direction: parsed.hourly.wind_direction_10m?.[currentIndex] ?? 0,
-        humidity: parsed.hourly.relative_humidity_2m?.[currentIndex] ?? 0,
-        pressure: parsed.hourly.surface_pressure?.[currentIndex] ?? 0,
-        uv_index: parsed.hourly.uv_index?.[currentIndex] || undefined,
-        condition: this.getWeatherCondition(weatherCode),
-        icon: "",
-      };
-      console.log('[WeatherService] Synthesized from hourly - temp:', result.current.temperature, 'wind:', result.current.wind_speed, 'humidity:', result.current.humidity);
-    } else if (parsed.daily?.time && parsed.daily.time.length > 0) {
-      // Last fallback: synthesize from daily data (today)
-      console.log('[WeatherService] No current/hourly data, synthesizing from daily');
-      const weatherCodes = parsed.daily.weather_code || parsed.daily.weathercode || [];
-      const weatherCode = weatherCodes[0] ?? 0;
-      const tempMax = parsed.daily.temperature_2m_max?.[0] ?? 0;
-      const tempMin = parsed.daily.temperature_2m_min?.[0] ?? 0;
-      result.current = {
-        temperature: Math.round((tempMax + tempMin) / 2), // Average of max/min
-        weather_code: weatherCode,
-        wind_speed: 0,
-        wind_direction: 0,
-        humidity: 0,
-        pressure: 0,
-        uv_index: parsed.daily.uv_index_max?.[0] || undefined,
-        condition: this.getWeatherCondition(weatherCode),
-        icon: "",
-      };
+      result.hourly = [];
+      result.fullHourly = [];
+      result.daily = [];
+      result.timezone = undefined;
+      result.utc_offset_seconds = undefined;
+
+      return result;
     }
 
-    // Hourly - store full dataset and derive the next 24 hours for UI
-    if (parsed.hourly?.time && Array.isArray(parsed.hourly.time)) {
-      console.log('[WeatherService] Parsing hourly data, has', parsed.hourly.time.length, 'hours');
-      const hourlyWeatherCodes = parsed.hourly.weather_code || parsed.hourly.weathercode || [];
+    if (this.isLookupWeatherResponse(data)) {
+      const current = this.lookupToCurrent(data);
+      if (current) result.current = current;
 
-      const buildHourlyEntry = (index: number) => ({
-        time: parsed.hourly.time[index],
-        temperature: parsed.hourly.temperature_2m?.[index] ?? 0,
-        weather_code: hourlyWeatherCodes[index] ?? 0,
-        precipitation_probability: parsed.hourly.precipitation_probability?.[index] ?? 0,
-        condition: this.getWeatherCondition(hourlyWeatherCodes[index] ?? 0),
-        icon: "",
-      });
+      const loc = this.lookupToLocation(data);
+      if (loc) result.location = loc;
 
-      result.fullHourly = parsed.hourly.time.map((_time: string, index: number) => buildHourlyEntry(index));
+      result.hourly = [];
+      result.fullHourly = [];
+      result.daily = [];
+      result.timezone = undefined;
+      result.utc_offset_seconds = undefined;
 
-      // Find the starting index - match the current hour in the location's timezone
-      let startIndex = 0;
-
-      for (let i = 0; i < parsed.hourly.time.length; i++) {
-        const timeStr = parsed.hourly.time[i];
-        // Times are in format "YYYY-MM-DDTHH:00" in the location's timezone
-        if (timeStr.startsWith(locationDateStr)) {
-          const hourMatch = timeStr.match(/T(\d{1,2})/);
-          if (hourMatch) {
-            const hour = parseInt(hourMatch[1], 10);
-            if (hour >= locationHour) {
-              startIndex = i;
-              break;
-            }
-          }
-        } else if (timeStr > locationDateStr) {
-          // We've passed today, use first hour of next day
-          startIndex = i;
-          break;
-        }
-      }
-
-      const startReferenceTime = parsed.hourly.time[startIndex] ?? parsed.hourly.time[parsed.hourly.time.length - 1];
-      console.log('[WeatherService] Location time:', locationDateStr, 'hour:', locationHour);
-      console.log('[WeatherService] Hourly forecast starting at index', startIndex, 'time:', startReferenceTime);
-
-      // Get 24 hours starting from current hour for UI display
-      result.hourly = result.fullHourly.slice(startIndex, startIndex + 24);
+      return result;
     }
 
-    // Daily - ensure we start from today in the location's timezone
-    if (parsed.daily?.time && Array.isArray(parsed.daily.time)) {
-      const weatherCodes = parsed.daily.weather_code || parsed.daily.weathercode || [];
-      console.log('[WeatherService] Daily weather_code array from API:', weatherCodes);
-      
-      // Find the index of today (in location's timezone) in the daily data
-      let startIndex = 0;
-      for (let i = 0; i < parsed.daily.time.length; i++) {
-        if (parsed.daily.time[i] >= locationDateStr) {
-          startIndex = i;
-          break;
-        }
-      }
-      
-      console.log('[WeatherService] Daily forecast starting from index', startIndex, 'date:', parsed.daily.time[startIndex], 'location today:', locationDateStr);
-      
-      // Get 7 days starting from today
-      const times = parsed.daily.time.slice(startIndex, startIndex + 7);
-      result.daily = times.map((date: string, i: number) => {
-        const actualIndex = startIndex + i;
-        const weatherCode = weatherCodes[actualIndex] ?? 0;
-        console.log(`[WeatherService] Daily forecast for ${date}: weather_code=${weatherCode}, condition=${this.getWeatherCondition(weatherCode)}`);
-        return {
-          date,
-          temperature_max: parsed.daily.temperature_2m_max?.[actualIndex] ?? 0,
-          temperature_min: parsed.daily.temperature_2m_min?.[actualIndex] ?? 0,
-          weather_code: weatherCode,
-          precipitation_sum: parsed.daily.precipitation_sum?.[actualIndex] ?? 0,
-          precipitation_probability: parsed.daily.precipitation_probability_max?.[actualIndex] ?? 0,
-          condition: this.getWeatherCondition(weatherCode),
-          icon: "", // No longer using emoji icons
-        };
-      });
-    }
-
-    // Location (optional)
-    if (typeof parsed.latitude === "number" && typeof parsed.longitude === "number") {
-      result.location = {
-        name: "Selected location",
-        latitude: parsed.latitude,
-        longitude: parsed.longitude,
-      };
-    }
-
-    // Store timezone info for display purposes
-    result.timezone = locationTimezone;
-    result.utc_offset_seconds = utcOffsetSeconds;
-
-    console.log('[WeatherService] Final parsed result:', result);
     return result;
   }
 
-  private isOpenMeteoPayload(obj: any): boolean {
-    // open-meteo payload usually has at least latitude/longitude + hourly/daily/current_weather
+  private isAggregatedDailyForecast(obj: any): boolean {
+    return !!obj && typeof obj === "object" && Array.isArray(obj.daily) && (obj.current || obj.unitsSystem);
+  }
+
+  private isLookupWeatherResponse(obj: any): boolean {
     if (!obj || typeof obj !== "object") return false;
-    const hasCoords = typeof obj.latitude === "number" && typeof obj.longitude === "number";
-    const hasWeather =
-      !!obj.current_weather ||
-      !!obj.hourly ||
-      !!obj.daily;
-    return hasCoords && hasWeather;
+    const hasCondition = !!obj.weatherCondition && typeof obj.weatherCondition === "object";
+    const hasWind = !!obj.wind && typeof obj.wind === "object";
+    const hasReturnedLocation = !!obj.returnedLocation && typeof obj.returnedLocation === "object";
+    return hasCondition && hasWind && hasReturnedLocation;
   }
 
-  /**
-   * Older MCP tool format:
-   * data.content[0].text is a JSON string OR an error string ("Error: ...")
-   */
-  private extractOpenMeteoPayloadFromMcp(data: any): any | null {
-    const text = data?.content?.[0]?.text;
-    if (typeof text !== "string") return null;
-
-    const trimmed = text.trim();
-
-    // If it's not JSON, don't JSON.parse it (prevents "Unexpected token 'E'")
-    const looksJson =
-      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-      (trimmed.startsWith("[") && trimmed.endsWith("]"));
-
-    if (!looksJson) {
-      console.error("Weather MCP returned non-JSON text:", trimmed.slice(0, 200));
-      return null;
-    }
-
-    try {
-      return JSON.parse(trimmed);
-    } catch (e) {
-      console.error("Failed to parse weather JSON text:", e);
-      return null;
-    }
+  private isLocationWeatherShape(obj: any): boolean {
+    return (
+      !!obj &&
+      typeof obj === "object" &&
+      ("weatherCondition" in obj || "temperature" in obj || "wind" in obj) &&
+      ("returnedLocation" in obj || "latitude" in obj || "longitude" in obj)
+    );
   }
 
-  private getWeatherCondition(code: number): string {
-    const conditions: Record<number, string> = {
-      0: "Clear",
-      1: "Mainly Clear",
-      2: "Partly Cloudy",
-      3: "Overcast",
-      45: "Foggy",
-      48: "Foggy",
-      51: "Light Drizzle",
-      53: "Moderate Drizzle",
-      55: "Dense Drizzle",
-      61: "Slight Rain",
-      63: "Moderate Rain",
-      65: "Heavy Rain",
-      71: "Slight Snow",
-      73: "Moderate Snow",
-      75: "Heavy Snow",
-      77: "Snow Grains",
-      80: "Slight Rain Showers",
-      81: "Moderate Rain Showers",
-      82: "Violent Rain Showers",
-      85: "Slight Snow Showers",
-      86: "Heavy Snow Showers",
-      95: "Thunderstorm",
-      96: "Thunderstorm with Hail",
-      99: "Thunderstorm with Hail",
+  private lookupToCurrent(wx: any): WeatherData["current"] | undefined {
+    const temp = this.readTemperatureDegrees(wx.temperature) ??
+      this.readTemperatureDegrees(wx.feelsLikeTemperature) ??
+      this.readTemperatureDegrees(wx.maxTemperature) ??
+      this.readTemperatureDegrees(wx.minTemperature);
+
+    if (typeof temp !== "number") return undefined;
+
+    const conditionText = wx.weatherCondition?.description?.text || "Weather";
+    const type = wx.weatherCondition?.type;
+    const weather_code = this.mapGoogleTypeToWeatherCode(type);
+
+    const windSpeed = this.readSpeedValue(wx.wind?.speed) ?? 0;
+    const windDir = this.readWindDirectionDegrees(wx.wind?.direction) ?? 0;
+
+    const humidity = typeof wx.relativeHumidity === "number" ? wx.relativeHumidity : 0;
+    const pressure = this.readAirPressure(wx.airPressure) ?? 0;
+
+    const precipProb = this.readPrecipProbability(wx.precipitation) ?? 0;
+    const uv = typeof wx.uvIndex === "number" ? wx.uvIndex : undefined;
+
+    const iconBaseUri = wx.weatherCondition?.iconBaseUri || "";
+    const icon = iconBaseUri ? `${iconBaseUri}.svg` : "";
+
+    return {
+      temperature: temp,
+      weather_code,
+      wind_speed: windSpeed,
+      wind_direction: windDir,
+      humidity,
+      pressure,
+      uv_index: uv,
+      condition: conditionText,
+      icon,
     };
-    return conditions[code] || "Unknown";
   }
 
-  private getWeatherIcon(code: number): string {
-    // No longer used - icons are generated by WeatherIcon component based on weather_code
-    return "";
+  private lookupToDaily(wx: any, dateStr: string): WeatherData["daily"][number] | undefined {
+    const tmax = this.readTemperatureDegrees(wx.maxTemperature);
+    const tmin = this.readTemperatureDegrees(wx.minTemperature);
+
+    if (typeof tmax !== "number" && typeof tmin !== "number") return undefined;
+
+    const conditionText = wx.weatherCondition?.description?.text || "Weather";
+    const type = wx.weatherCondition?.type;
+    const weather_code = this.mapGoogleTypeToWeatherCode(type);
+
+    const qpf = this.readQpfQuantity(wx.precipitation) ?? 0;
+    const precipProb = this.readPrecipProbability(wx.precipitation) ?? 0;
+
+    const iconBaseUri = wx.weatherCondition?.iconBaseUri || "";
+    const icon = iconBaseUri ? `${iconBaseUri}.svg` : "";
+
+    return {
+      date: dateStr,
+      temperature_max: typeof tmax === "number" ? tmax : (typeof tmin === "number" ? tmin : 0),
+      temperature_min: typeof tmin === "number" ? tmin : (typeof tmax === "number" ? tmax : 0),
+      weather_code,
+      precipitation_sum: qpf,
+      precipitation_probability: precipProb,
+      condition: conditionText,
+      icon,
+    };
+  }
+
+  private lookupToLocation(wx: any): WeatherData["location"] | undefined {
+    const name = wx.returnedLocation?.address || wx.DEPRECATEDGeocodedAddress || "Selected location";
+    return this.extractLocationFromReturnedLocation(wx.returnedLocation, name) ?? undefined;
+  }
+
+  private extractLocationFromReturnedLocation(rl: any, fallbackName: string): WeatherData["location"] | null {
+    const ll = rl?.latLng;
+    const lat = ll?.latitude;
+    const lng = ll?.longitude;
+    if (typeof lat === "number" && typeof lng === "number") {
+      return { name: fallbackName, latitude: lat, longitude: lng };
+    }
+    return null;
+  }
+
+  private locationWeatherToCurrent(obj: any): WeatherData["current"] | undefined {
+    const temp = this.readTemperatureDegrees(obj.temperature) ??
+      this.readTemperatureDegrees(obj.feelsLikeTemperature);
+
+    if (typeof temp !== "number") return undefined;
+
+    const conditionText = obj.weatherCondition?.description?.text || "Weather";
+    const type = obj.weatherCondition?.type;
+    const weather_code = this.mapGoogleTypeToWeatherCode(type);
+
+    const windSpeed = this.readSpeedValue(obj.wind?.speed) ?? 0;
+    const windDir = this.readWindDirectionDegrees(obj.wind?.direction) ?? 0;
+
+    const humidity = typeof obj.relativeHumidity === "number" ? obj.relativeHumidity : 0;
+    const pressure = this.readAirPressure(obj.airPressure) ?? 0;
+
+    const iconBaseUri = obj.weatherCondition?.iconBaseUri || "";
+    const icon = iconBaseUri ? `${iconBaseUri}.svg` : "";
+
+    return {
+      temperature: temp,
+      weather_code,
+      wind_speed: windSpeed,
+      wind_direction: windDir,
+      humidity,
+      pressure,
+      uv_index: typeof obj.uvIndex === "number" ? obj.uvIndex : undefined,
+      condition: conditionText,
+      icon,
+    };
+  }
+
+  private readTemperatureDegrees(t: any): number | null {
+    const deg = t?.degrees;
+    return typeof deg === "number" ? deg : null;
+  }
+
+  private readAirPressure(ap: any): number | null {
+    const msl = ap?.meanSeaLevelMillibars;
+    return typeof msl === "number" ? msl : null;
+  }
+
+  private readSpeedValue(ws: any): number | null {
+    const v = ws?.value;
+    return typeof v === "number" ? v : null;
+  }
+
+  private readWindDirectionDegrees(wd: any): number | null {
+    const deg = wd?.degrees;
+    return typeof deg === "number" ? deg : null;
+  }
+
+  private readPrecipProbability(p: any): number | null {
+    const percent = p?.probability?.percent;
+    return typeof percent === "number" ? percent : null;
+  }
+
+  private readQpfQuantity(p: any): number | null {
+    const q = p?.qpf?.quantity;
+    return typeof q === "number" ? q : null;
+  }
+
+  private mapGoogleTypeToWeatherCode(type: any): number {
+    const t = String(type || "").toUpperCase();
+    if (!t) return 3;
+
+    const map: Record<string, number> = {
+      CLEAR: 0,
+      MOSTLY_CLEAR: 1,
+      PARTLY_CLOUDY: 2,
+      MOSTLY_CLOUDY: 3,
+      CLOUDY: 3,
+      FOG: 45,
+      HAZE: 45,
+      MIST: 45,
+      DRIZZLE: 51,
+      LIGHT_RAIN: 61,
+      RAIN: 63,
+      HEAVY_RAIN: 65,
+      SHOWERS: 80,
+      THUNDERSTORM: 95,
+      LIGHT_SNOW: 71,
+      SNOW: 73,
+      HEAVY_SNOW: 75,
+      FLURRIES: 77,
+      SLEET: 67,
+      FREEZING_RAIN: 66,
+      ICE_PELLETS: 77,
+      WINDY: 3,
+      DUST: 45,
+      SMOKE: 45,
+    };
+
+    if (t in map) return map[t];
+
+    if (t.includes("THUNDER")) return 95;
+    if (t.includes("SNOW")) return 73;
+    if (t.includes("SLEET") || t.includes("FREEZ")) return 66;
+    if (t.includes("RAIN")) return 63;
+    if (t.includes("DRIZZ")) return 51;
+    if (t.includes("FOG") || t.includes("MIST") || t.includes("HAZE")) return 45;
+    if (t.includes("CLEAR")) return 0;
+    if (t.includes("CLOUD")) return 3;
+
+    return 3;
   }
 }
 
