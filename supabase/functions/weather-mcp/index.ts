@@ -196,8 +196,8 @@ Deno.serve(async (req: Request) => {
     if (!mcpUrl) throw new Error("weather_mcp_url not configured");
 
     const body: WeatherRequest = await req.json();
-    const { action, latitude, longitude, location, force, settings } = body;
-    console.log("[weather-mcp] ──── incoming request ────", JSON.stringify({ action, latitude, longitude, location, force }));
+    const { action, latitude, longitude, location, eventDate, eventTime, force, settings } = body;
+    console.log("[weather-mcp] ──── incoming request ────", JSON.stringify({ action, latitude, longitude, location, eventDate, eventTime, force }));
 
     const { createClient } = await import("jsr:@supabase/supabase-js@2");
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -282,8 +282,6 @@ Deno.serve(async (req: Request) => {
 
     // ─── Event-specific weather (by location + date + time) ────────────────
     if (action === "get_event_weather") {
-      const { location, eventDate, eventTime } = req as any;
-
       if (!location || !location.trim()) {
         return new Response(JSON.stringify({ error: "location is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
