@@ -53,8 +53,8 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
         include_current: settings.include_current !== false,
         include_hourly: settings.include_hourly !== false,
         include_daily: settings.include_daily !== false,
-        hourly_hours: Math.min(24, settings.hourly_hours || 24),
-        daily_days: Math.min(7, settings.daily_days || 7),
+        hourly_hours: settings.hourly_hours || 24,
+        daily_days: settings.daily_days || 7,
         // Display settings - Basic
         show_hourly_forecast: settings.show_hourly_forecast !== false,
         show_wind: settings.show_wind !== false,
@@ -293,14 +293,14 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
             {formData.include_hourly && (
               <div className="ml-6">
                 <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                  Hours to include (1-24)
+                  Hours to include (1-168)
                 </label>
                 <input
                   type="number"
                   min="1"
-                  max="24"
+                  max="168"
                   value={formData.hourly_hours}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hourly_hours: Math.min(24, parseInt(e.target.value)) }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, hourly_hours: parseInt(e.target.value) }))}
                   className="w-24 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -319,14 +319,14 @@ export function WeatherSettings({ settings, onSave }: WeatherSettingsProps) {
             {formData.include_daily && (
               <div className="ml-6">
                 <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                  Days to include (1-7)
+                  Days to include (1-16)
                 </label>
                 <input
                   type="number"
                   min="1"
-                  max="7"
+                  max="16"
                   value={formData.daily_days}
-                  onChange={(e) => setFormData(prev => ({ ...prev, daily_days: Math.min(7, parseInt(e.target.value)) }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, daily_days: parseInt(e.target.value) }))}
                   className="w-24 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>

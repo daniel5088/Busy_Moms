@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Hash, Package, User } from 'lucide-react';
+import { X, ShoppingBag, Hash, User } from 'lucide-react';
 import { supabase, ShoppingItem, ProviderName, FamilyMember } from '../../lib/supabase';
 import { EmailRequiredPopup } from '../shared/EmailRequiredPopup';
 import { useAuth } from '../../hooks/useAuth';
@@ -286,62 +286,6 @@ export function ShoppingForm({ isOpen, onClose, onItemCreated, editItem }: Shopp
                   Add family members in Settings to assign items
                 </p>
               )}
-            </div>
-
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                <Package className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Shopping Provider Preference
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, provider_name: null })}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    formData.provider_name === null
-                      ? 'bg-gray-100 dark:bg-gray-700 border-gray-400 dark:border-gray-500 text-gray-900 dark:text-gray-100'
-                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  No Preference
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, provider_name: 'instacart' })}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    formData.provider_name === 'instacart'
-                      ? 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-600 text-green-900 dark:text-green-100'
-                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Instacart
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, provider_name: 'amazon' })}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    formData.provider_name === 'amazon'
-                      ? 'bg-orange-100 dark:bg-orange-900 border-orange-400 dark:border-orange-600 text-orange-900 dark:text-orange-100'
-                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Amazon
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, provider_name: 'manual' })}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    formData.provider_name === 'manual'
-                      ? 'bg-gray-100 dark:bg-gray-700 border-gray-400 dark:border-gray-500 text-gray-900 dark:text-gray-100'
-                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Manual
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Choose your preferred shopping method for this item
-              </p>
             </div>
 
             <div>

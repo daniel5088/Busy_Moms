@@ -507,13 +507,13 @@ export class InstacartShoppingService {
 
     const stats = {
       instacart: { not_sent: 0, in_cart: 0, purchased: 0, failed: 0 },
-      amazon: { not_sent: 0, in_cart: 0, purchased: 0, failed: 0 },
       manual: { not_sent: 0, in_cart: 0, purchased: 0, failed: 0 },
       unassigned: { not_sent: 0, in_cart: 0, purchased: 0, failed: 0 },
     };
 
     data?.forEach((item) => {
-      const provider = item.provider_name || 'unassigned';
+      let provider = item.provider_name || 'unassigned';
+      if (provider === 'amazon') provider = 'unassigned';
       const status = item.purchase_status || 'not_sent';
       if (stats[provider as keyof typeof stats]) {
         stats[provider as keyof typeof stats][status as keyof typeof stats.instacart]++;
