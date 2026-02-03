@@ -558,19 +558,6 @@ export function Dashboard({
       hoverBg: '',
       action: undefined,
     },
-    {
-      icon: Star,
-      title: 'Favorites',
-      desc: 'Coming soon',
-      bgColor: 'bg-gray-50 dark:bg-gray-800',
-      borderColor: 'border-gray-200 dark:border-gray-700',
-      iconBgColor: 'bg-gray-100 dark:bg-gray-700',
-      iconColor: 'text-gray-400 dark:text-gray-500',
-      textColor: 'text-gray-500 dark:text-gray-400',
-      descColor: 'text-gray-400 dark:text-gray-500',
-      hoverBg: '',
-      action: undefined,
-    },
   ];
 
   if (loading) {
