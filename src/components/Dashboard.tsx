@@ -115,14 +115,8 @@ function DashboardEventWeatherIcon({
   }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded]);
 
   const handleClick = async () => {
-    // If we have weather data, show insights
-    if (weather) {
-      onShowInsights(weather);
-      return;
-    }
-
-    // Otherwise, fetch weather for this specific event location and date/time
-    const data = await getEventWeather(location, eventDate, eventTime, false);
+    // Always fetch fresh weather data when clicked (force refresh)
+    const data = await getEventWeather(location, eventDate, eventTime, true);
     if (data) {
       setWeather(data);
       setHasLoaded(true);
