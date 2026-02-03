@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { weatherService, EventWeatherData } from '../services/weatherService';
 
 const MORNING_PREFETCH_KEY = 'weather_morning_prefetch_timestamp';
+const WEATHER_CACHE_KEY = 'event_weather_cache';
 const MORNING_HOUR = 6; // 6 AM local time
 
 /**
@@ -34,13 +35,59 @@ function markMorningPrefetchDone(): void {
 }
 
 /**
+ * Load weather cache from localStorage
+ */
+function loadCacheFromStorage(): Map<string, EventWeatherData> {
+  try {
+    const stored = localStorage.getItem(WEATHER_CACHE_KEY);
+    if (!stored) {
+      console.log('%c[useEventWeather] 💾 No cached weather in localStorage', 'color: #6b7280');
+      return new Map();
+    }
+
+    const parsed = JSON.parse(stored);
+    const cache = new Map<string, EventWeatherData>(Object.entries(parsed));
+    console.log(`%c[useEventWeather] 💾 Loaded ${cache.size} cached weather items from localStorage`, 'color: #10b981');
+    console.log('[useEventWeather] 📦 Cached locations:', Array.from(cache.keys()));
+    return cache;
+  } catch (error) {
+    console.error('[useEventWeather] ❌ Error loading cache from localStorage:', error);
+    return new Map();
+  }
+}
+
+/**
+ * Save weather cache to localStorage
+ */
+function saveCacheToStorage(cache: Map<string, EventWeatherData>): void {
+  try {
+    const obj = Object.fromEntries(cache.entries());
+    localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(obj));
+    console.log(`%c[useEventWeather] 💾 Saved ${cache.size} weather items to localStorage`, 'color: #10b981');
+  } catch (error) {
+    console.error('[useEventWeather] ❌ Error saving cache to localStorage:', error);
+  }
+}
+
+/**
  * Hook to manage event-specific weather data
  */
 export function useEventWeather() {
-  const [eventWeatherCache, setEventWeatherCache] = useState<Map<string, EventWeatherData>>(new Map());
+  const [eventWeatherCache, setEventWeatherCache] = useState<Map<string, EventWeatherData>>(() => {
+    console.log('%c[useEventWeather] 🚀 Initializing hook, loading cache from localStorage', 'color: #3b82f6; font-weight: bold');
+    return loadCacheFromStorage();
+  });
   const [loadingEvents, setLoadingEvents] = useState<Set<string>>(new Set());
   const [cacheLoaded, setCacheLoaded] = useState(true); // Always true since we use in-memory cache
   const [cacheVersion, setCacheVersion] = useState(0); // Increment to force component updates
+
+  // Save cache to localStorage whenever it changes
+  useEffect(() => {
+    if (eventWeatherCache.size > 0) {
+      console.log(`%c[useEventWeather] 📝 Cache changed, persisting ${eventWeatherCache.size} items to localStorage`, 'color: #8b5cf6');
+      saveCacheToStorage(eventWeatherCache);
+    }
+  }, [eventWeatherCache]);
 
   /**
    * Generate a cache key for an event
@@ -175,7 +222,9 @@ export function useEventWeather() {
    * Clear all cached weather data
    */
   const clearCache = useCallback(() => {
+    console.log('%c[useEventWeather] 🗑️ Clearing weather cache', 'color: #ef4444');
     setEventWeatherCache(new Map());
+    localStorage.removeItem(WEATHER_CACHE_KEY);
   }, []);
 
   return {
