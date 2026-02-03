@@ -275,6 +275,45 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     }
   }, [user?.id, checkMorningPrefetch]);
 
+  // Listen for weather cache updates from Sara
+  useEffect(() => {
+    const handleWeatherCacheUpdate = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { location, date, time, weatherData } = customEvent.detail || {};
+
+      console.log('%c[Calendar] 📡 Received weatherCacheUpdated event', 'color: #f59e0b; font-weight: bold');
+      console.log(`[Calendar]   Location: ${location}`);
+      console.log(`[Calendar]   Date: ${date}`);
+      console.log(`[Calendar]   Time: ${time}`);
+
+      if (location && date && weatherData) {
+        // Fetch fresh weather data to update the cache
+        try {
+          const weather = await getCachedWeather(location, date, time);
+          if (weather) {
+            setEventWeatherCache((prev) => {
+              const newCache = new Map(prev);
+              const key = `${location}_${date}_${time || 'allday'}`;
+              newCache.set(key, weather);
+              console.log(`[Calendar] ✅ Updated weather cache for ${key}`);
+              return newCache;
+            });
+          }
+        } catch (error) {
+          console.error('[Calendar] ❌ Error updating weather cache:', error);
+        }
+      }
+    };
+
+    window.addEventListener('weatherCacheUpdated', handleWeatherCacheUpdate);
+    console.log('[Calendar] 👂 Listening for weatherCacheUpdated events');
+
+    return () => {
+      window.removeEventListener('weatherCacheUpdated', handleWeatherCacheUpdate);
+      console.log('[Calendar] 🔇 Stopped listening for weatherCacheUpdated events');
+    };
+  }, [getCachedWeather]);
+
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
 

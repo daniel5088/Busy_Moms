@@ -323,11 +323,15 @@ Deno.serve(async (req: Request) => {
       console.log(`[weather-mcp]   ⏰ eventTime: "${eventTime}"`);
       console.log(`[weather-mcp]   🔄 force: ${force}`);
 
-      if (!location || !location.trim()) {
+      const eventLocation = String(location ?? '').trim();
+      const eventDateStr = String(eventDate ?? '').trim();
+      const eventTimeStr = eventTime ? String(eventTime).trim() : null;
+
+      if (!eventLocation) {
         console.log("[weather-mcp] ❌ ERROR: location is missing or empty");
         return new Response(JSON.stringify({ error: "location is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      if (!eventDate || !eventDate.trim()) {
+      if (!eventDateStr) {
         console.log("[weather-mcp] ❌ ERROR: eventDate is missing or empty");
         return new Response(JSON.stringify({ error: "eventDate is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -337,9 +341,9 @@ Deno.serve(async (req: Request) => {
 
       // Generate cache key using same format as frontend
       // Format: event_location_date_time_units
-      const normalizedLocation = location.trim().toLowerCase().replace(/[^a-z0-9 ]/g, "_");
-      const normalizedDate = eventDate.trim();
-      const normalizedTime = eventTime ? eventTime.trim().replace(/:/g, "") : "allday";
+      const normalizedLocation = eventLocation.toLowerCase().replace(/[^a-z0-9 ]/g, "_");
+      const normalizedDate = eventDateStr;
+      const normalizedTime = eventTimeStr ? eventTimeStr.replace(/:/g, "") : "allday";
       const locationKey = `event_${normalizedLocation}_${normalizedDate}_${normalizedTime}_${unitsSystem}`;
 
       console.log(`[weather-mcp] 🔑 Generated locationKey: "${locationKey}"`);
@@ -359,16 +363,16 @@ Deno.serve(async (req: Request) => {
       }
 
       // Parse event date and time
-      const dateParts = eventDate.split("-").map(Number);
+      const dateParts = eventDateStr.split("-").map(Number);
       const dateArg = { year: dateParts[0], month: dateParts[1], day: dateParts[2] };
       console.log(`[weather-mcp] 📆 Parsed date:`, dateArg);
 
       // Search for place ID
-      console.log(`%c[weather-mcp] 🔍 Searching for placeId for location: "${location.trim()}"`, "color: #3b82f6; font-weight: bold");
-      const placeId = await searchPlaceId(mcpUrl, mcpKey, location.trim());
-      console.log(`[weather-mcp] ${placeId ? `✅ Found placeId: "${placeId}"` : `⚠️ No placeId found, will use address: "${location.trim()}"`}`);
+      console.log(`%c[weather-mcp] 🔍 Searching for placeId for location: "${eventLocation}"`, "color: #3b82f6; font-weight: bold");
+      const placeId = await searchPlaceId(mcpUrl, mcpKey, eventLocation);
+      console.log(`[weather-mcp] ${placeId ? `✅ Found placeId: "${placeId}"` : `⚠️ No placeId found, will use address: "${eventLocation}"`}`);
 
-      const locArg = placeId ? { placeId } : { address: location.trim() };
+      const locArg = placeId ? { placeId } : { address: eventLocation };
       console.log(`[weather-mcp] 📍 Location argument for MCP:`, locArg);
 
       // Fetch weather from MCP
@@ -399,9 +403,9 @@ Deno.serve(async (req: Request) => {
 
       const result = {
         unitsSystem,
-        location_label: location.trim(),
-        eventDate,
-        eventTime: eventTime || null,
+        location_label: eventLocation,
+        eventDate: eventDateStr,
+        eventTime: eventTimeStr || null,
         returnedLocation: wx.returnedLocation ?? null,
         geocodedAddress: wx.DEPRECATEDGeocodedAddress ?? null,
         weatherCondition: wx.weatherCondition ?? null,

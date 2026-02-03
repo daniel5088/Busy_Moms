@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { weatherService, EventWeatherData } from '../services/weatherService';
 import { generateWeatherCacheKey } from '../utils/weatherCacheKey';
+import { supabase } from '../lib/supabase';
 
 const MORNING_PREFETCH_KEY = 'weather_morning_prefetch_timestamp';
 const WEATHER_CACHE_KEY = 'event_weather_cache';
@@ -126,18 +127,52 @@ export function useEventWeather() {
 
     // Return cached data if available and not forcing refresh
     if (!force && eventWeatherCache.has(cacheKey)) {
-      console.log('%c[useEventWeather] 💾 Using local cache (no API call)', 'color: #10b981');
+      console.log('%c[useEventWeather] 💾 Using in-memory cache (no API call)', 'color: #10b981');
       console.log(`[useEventWeather]   Key: ${cacheKey}`);
       return eventWeatherCache.get(cacheKey)!;
     }
-    
+
+    // Check Supabase cache before calling API
+    if (!force) {
+      console.log('%c[useEventWeather] 🔍 Checking Supabase cache...', 'color: #8b5cf6');
+      try {
+        const { data: cachedRow } = await supabase
+          .from('weather_cache')
+          .select('weather_data, expires_at')
+          .eq('location_key', cacheKey)
+          .gt('expires_at', new Date().toISOString())
+          .maybeSingle();
+
+        if (cachedRow?.weather_data) {
+          console.log('%c[useEventWeather] ✅ Supabase cache HIT', 'color: #22c55e; font-weight: bold');
+          const parsed = weatherService.parseEventWeatherFromCache(cachedRow.weather_data);
+
+          if (parsed) {
+            // Store in memory cache for faster subsequent access
+            setEventWeatherCache((prev: Map<string, EventWeatherData>) => {
+              const newCache = new Map(prev);
+              newCache.set(cacheKey, parsed);
+              return newCache;
+            });
+
+            setCacheVersion((v) => v + 1);
+            return parsed;
+          }
+        } else {
+          console.log('%c[useEventWeather] ⚠️ Supabase cache MISS', 'color: #f59e0b');
+        }
+      } catch (error) {
+        console.error('[useEventWeather] ❌ Error checking Supabase cache:', error);
+      }
+    }
+
     console.log('%c[useEventWeather] 🔄 Fetching weather from API', 'color: #3b82f6; font-weight: bold');
     console.log(`[useEventWeather]   Location: ${location}`);
     console.log(`[useEventWeather]   Date: ${eventDate}`);
-    
+
     // Mark as loading
     setLoadingEvents((prev: Set<string>) => new Set(prev).add(cacheKey));
-    
+
     try {
       const weatherData = await weatherService.getEventWeather(location, eventDate, eventTime, force);
 
