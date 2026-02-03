@@ -10,13 +10,23 @@ Please check your OAuth configuration.
 ```
 
 **Root Cause:**
-A database trigger (`on_auth_user_created`) was attempting to modify Supabase's protected `auth.users` table without proper permissions, causing all signups (including Google OAuth) to fail.
+Multiple orphaned database triggers on the `auth.users` table are causing signup failures:
+
+1. **`on_auth_user_created`** - Attempts to modify `auth.users` table without proper permissions
+2. **`on_auth_user_created_notification_settings`** - References `notification_settings` table that doesn't exist yet
+
+These triggers fire when a new user signs up, but fail because either:
+- They lack permissions to modify protected tables
+- They reference tables that haven't been created yet
+
+This causes ALL signups (including Google OAuth) to fail.
 
 ## What Was Fixed
 
-1. **Created Fix Migration:** `supabase/migrations/20251111000300_fix_signup_error_remove_trigger.sql`
-   - Drops the problematic `on_auth_user_created` trigger
-   - Drops the `handle_new_user()` function
+1. **Created Comprehensive Fix Migration:** `supabase/migrations/20260203000000_fix_orphaned_triggers.sql`
+   - Drops the `on_auth_user_created` trigger and `handle_new_user()` function
+   - Drops the `on_auth_user_created_notification_settings` trigger and `create_default_notification_settings()` function
+   - Cleans up all orphaned triggers on `auth.users` table
 
 2. **Disabled Problematic Migration:** Renamed `20251111000200_assign_roles_on_signup.sql` to `.DISABLED`
 
@@ -46,6 +56,11 @@ This will apply the new migration file automatically.
 5. Copy and paste the following SQL:
 
 ```sql
+-- Drop notification settings trigger (orphaned - table doesn't exist)
+DROP TRIGGER IF EXISTS on_auth_user_created_notification_settings ON auth.users CASCADE;
+DROP FUNCTION IF EXISTS public.create_default_notification_settings() CASCADE;
+
+-- Drop role assignment trigger (permission errors)
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users CASCADE;
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 ```
@@ -55,15 +70,17 @@ DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
 ### Verification
 
-Run this query to confirm the trigger is removed:
+Run this query to confirm all triggers are removed:
 
 ```sql
+-- Check for any remaining triggers on auth.users
 SELECT trigger_name, event_object_table, action_statement
 FROM information_schema.triggers
-WHERE trigger_name = 'on_auth_user_created';
+WHERE event_object_table = 'users'
+AND trigger_schema = 'auth';
 ```
 
-**Expected Result:** No rows (empty result set)
+**Expected Result:** No rows (empty result set) - all orphaned triggers should be gone
 
 ## What Happens After the Fix
 
@@ -76,9 +93,26 @@ WHERE trigger_name = 'on_auth_user_created';
 
 ## Technical Details
 
-### The Problematic Code
+### Problem 1: Orphaned Notification Trigger
 
-The trigger function tried to update `auth.users` directly:
+**Error from Postgres logs:**
+```
+ERROR: relation "notification_settings" does not exist
+Context: PL/pgSQL function public.create_default_notification_settings() line 3
+```
+
+The trigger `on_auth_user_created_notification_settings` tries to insert into `notification_settings` table, but the table doesn't exist because the migration `20260128035241_create_notification_system.sql` hasn't been applied yet.
+
+**Problematic code:**
+```sql
+INSERT INTO notification_settings (user_id)
+VALUES (NEW.id)
+ON CONFLICT (user_id) DO NOTHING;
+```
+
+### Problem 2: Permission-Based Trigger Failure
+
+The trigger function `handle_new_user()` tried to update `auth.users` directly:
 
 ```sql
 update auth.users
@@ -109,7 +143,9 @@ Role assignment is now handled in the application layer (`src/hooks/useAuth.ts`)
 - `src/components/forms/AuthForm.tsx` - UI error handling
 - `src/lib/auth-config.ts` - Google OAuth configuration
 - `src/services/googleTokenStorage.ts` - Token management
-- `supabase/migrations/20251111000300_fix_signup_error_remove_trigger.sql` - Fix migration
+- `supabase/migrations/20260203000000_fix_orphaned_triggers.sql` - Comprehensive fix migration
+- `supabase/migrations/20251111000300_fix_signup_error_remove_trigger.sql` - Partial fix (superseded)
+- `supabase/migrations/20260128035241_create_notification_system.sql` - Notification system (to be applied after fix)
 
 ## Testing the Fix
 
