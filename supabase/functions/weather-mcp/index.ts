@@ -14,10 +14,13 @@ interface WeatherRequest {
     | "get_settings"
     | "update_settings"
     | "get_location_weather"
+    | "get_event_weather"
     | "prefetch_morning";
   latitude?: number;
   longitude?: number;
   location?: string;
+  eventDate?: string;
+  eventTime?: string;
   force?: boolean;
   settings?: WeatherSettings;
 }
@@ -274,6 +277,88 @@ Deno.serve(async (req: Request) => {
         { user_id: user.id, location_key: locationKey, weather_data: result, expires_at: new Date(Date.now() + 6*60*60*1000).toISOString() },
         { onConflict: "user_id,location_key" },
       );
+      return new Response(JSON.stringify({ data: result, cached: false }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ─── Event-specific weather (by location + date + time) ────────────────
+    if (action === "get_event_weather") {
+      const { location, eventDate, eventTime } = req as any;
+
+      if (!location || !location.trim()) {
+        return new Response(JSON.stringify({ error: "location is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (!eventDate || !eventDate.trim()) {
+        return new Response(JSON.stringify({ error: "eventDate is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const { data: userSettings } = await supabase.from("weather_settings").select("temperature_unit, wind_speed_unit").eq("user_id", user.id).maybeSingle();
+      const unitsSystem = toUnitsSystem((userSettings ?? {}) as Partial<WeatherSettings>);
+      const timeKey = eventTime ? eventTime.replace(/:/g, "") : "allday";
+      const locationKey = `event_${location.trim().toLowerCase().replace(/[^a-z0-9 ]/g, "_")}_${eventDate}_${timeKey}_${unitsSystem}`;
+
+      // Check cache first
+      if (!force) {
+        const { data: cachedRow } = await supabase.from("weather_cache").select("weather_data, expires_at").eq("user_id", user.id).eq("location_key", locationKey).maybeSingle();
+        if (cachedRow && new Date((cachedRow as any).expires_at) > new Date() && (cachedRow as any).weather_data && !looksLikeErrorPayload((cachedRow as any).weather_data)) {
+          console.log("[weather-mcp] get_event_weather → HIT cache");
+          return new Response(JSON.stringify({ data: (cachedRow as any).weather_data, cached: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+
+      // Parse event date and time
+      const dateParts = eventDate.split("-").map(Number);
+      const dateArg = { year: dateParts[0], month: dateParts[1], day: dateParts[2] };
+
+      // Search for place ID
+      const placeId = await searchPlaceId(mcpUrl, mcpKey, location.trim());
+      const locArg = placeId ? { placeId } : { address: location.trim() };
+
+      // Fetch weather from MCP
+      const toolEnv = await callMcpTool<any>(mcpUrl, mcpKey, "lookup_weather", {
+        unitsSystem,
+        location: locArg,
+        date: dateArg
+      });
+      const wx = unwrapMcpResult(toolEnv.result ?? null);
+
+      if (!wx || looksLikeErrorPayload(wx)) {
+        return new Response(JSON.stringify({ error: "Weather data unavailable", data: null }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const ll = extractLatLngFromLookup(wx);
+      const result = {
+        unitsSystem,
+        location_label: location.trim(),
+        eventDate,
+        eventTime: eventTime || null,
+        returnedLocation: wx.returnedLocation ?? null,
+        geocodedAddress: wx.DEPRECATEDGeocodedAddress ?? null,
+        weatherCondition: wx.weatherCondition ?? null,
+        precipitation: wx.precipitation ?? null,
+        wind: wx.wind ?? null,
+        temperature: wx.temperature ?? null,
+        maxTemperature: wx.maxTemperature ?? null,
+        minTemperature: wx.minTemperature ?? null,
+        feelsLikeTemperature: wx.feelsLikeTemperature ?? null,
+        heatIndex: wx.heatIndex ?? null,
+        airPressure: wx.airPressure ?? null,
+        relativeHumidity: wx.relativeHumidity ?? null,
+        uvIndex: wx.uvIndex ?? null,
+        thunderstormProbability: wx.thunderstormProbability ?? null,
+        cloudCover: wx.cloudCover ?? null,
+        sunEvents: wx.sunEvents ?? null,
+        moonEvents: wx.moonEvents ?? null,
+        latitude: ll?.latitude ?? null,
+        longitude: ll?.longitude ?? null,
+      };
+
+      // Cache for 24 hours
+      await supabase.from("weather_cache").upsert(
+        { user_id: user.id, location_key: locationKey, weather_data: result, expires_at: new Date(Date.now() + 24*60*60*1000).toISOString() },
+        { onConflict: "user_id,location_key" },
+      );
+
+      console.log("[weather-mcp] get_event_weather → cached for 24h");
       return new Response(JSON.stringify({ data: result, cached: false }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

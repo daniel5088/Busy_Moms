@@ -331,6 +331,44 @@ class WeatherService {
   }
 
   /**
+   * Parse event weather data from cached database format
+   * This is used to restore cached weather from the database
+   */
+  parseEventWeatherFromCache(data: any): EventWeatherData | null {
+    if (!data) return null;
+
+    // Data is already in the parsed format from the database
+    return {
+      location: data.location_label || "Unknown",
+      eventDate: data.eventDate,
+      eventTime: data.eventTime,
+      condition: data.weatherCondition?.description?.text || "Weather",
+      conditionType: data.weatherCondition?.type || "",
+      weatherCode: this.mapGoogleTypeToWeatherCode(data.weatherCondition?.type || ""),
+      temperature: this.readTemperatureDegrees(data.temperature),
+      temperatureMax: this.readTemperatureDegrees(data.maxTemperature),
+      temperatureMin: this.readTemperatureDegrees(data.minTemperature),
+      precipitationProbability: data.precipitation?.probability?.percent ?? 0,
+      precipitationType: this.getPrecipitationType(
+        data.weatherCondition?.type || "",
+        this.mapGoogleTypeToWeatherCode(data.weatherCondition?.type || "")
+      ),
+      windSpeed: this.readSpeedValue(data.wind?.speed),
+      humidity: typeof data.relativeHumidity === "number" ? data.relativeHumidity : undefined,
+      uvIndex: typeof data.uvIndex === "number" ? data.uvIndex : undefined,
+      icon: data.weatherCondition?.iconBaseUri ? `${data.weatherCondition.iconBaseUri}.svg` : "",
+      suggestion: this.getWeatherSuggestion(
+        this.mapGoogleTypeToWeatherCode(data.weatherCondition?.type || ""),
+        data.precipitation?.probability?.percent ?? 0,
+        this.getPrecipitationType(
+          data.weatherCondition?.type || "",
+          this.mapGoogleTypeToWeatherCode(data.weatherCondition?.type || "")
+        )
+      ),
+    };
+  }
+
+  /**
    * Parse event-specific weather data into a simplified format
    */
   private parseEventWeatherData(data: any): EventWeatherData | null {

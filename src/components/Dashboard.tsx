@@ -85,6 +85,7 @@ interface DashboardEventWeatherIconProps {
   getEventWeather: (location: string, eventDate: string, eventTime?: string | null, force?: boolean) => Promise<EventWeatherData | null>;
   getCachedWeather: (location: string, eventDate: string, eventTime?: string | null) => EventWeatherData | null;
   isWeatherLoading: (location: string, eventDate: string, eventTime?: string | null) => boolean;
+  cacheLoaded: boolean;
   onShowInsights: (weather: EventWeatherData) => void;
 }
 
@@ -95,19 +96,23 @@ function DashboardEventWeatherIcon({
   getEventWeather,
   getCachedWeather,
   isWeatherLoading,
+  cacheLoaded,
   onShowInsights,
 }: DashboardEventWeatherIconProps) {
   const [weather, setWeather] = React.useState<EventWeatherData | null>(null);
   const [hasLoaded, setHasLoaded] = React.useState(false);
 
-  // Check for cached weather on mount
+  // Check for cached weather on mount and when cache is loaded
   React.useEffect(() => {
+    if (!cacheLoaded) return;
+
     const cached = getCachedWeather(location, eventDate, eventTime);
     if (cached) {
+      console.log(`[DashboardEventWeatherIcon] ✅ Using cached weather for ${location} on ${eventDate}`);
       setWeather(cached);
       setHasLoaded(true);
     }
-  }, [location, eventDate, eventTime, getCachedWeather]);
+  }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded]);
 
   const handleClick = async () => {
     // If we have weather data, show insights
@@ -177,7 +182,7 @@ export function Dashboard({
     setReminderWeekOffset,
   } = useDashboardData();
 
-  const { getEventWeather, getCachedWeather, isLoading: isWeatherLoading } = useEventWeather();
+  const { getEventWeather, getCachedWeather, isLoading: isWeatherLoading, cacheLoaded: weatherCacheLoaded } = useEventWeather();
   const [weatherInsightsEvent, setWeatherInsightsEvent] = React.useState<EventWeatherData | null>(null);
 
   const [weather, setWeather] = React.useState<WeatherData | null>(null);
@@ -913,6 +918,7 @@ export function Dashboard({
                                   getEventWeather={getEventWeather}
                                   getCachedWeather={getCachedWeather}
                                   isWeatherLoading={isWeatherLoading}
+                                  cacheLoaded={weatherCacheLoaded}
                                   onShowInsights={setWeatherInsightsEvent}
                                 />
                               </div>
@@ -983,6 +989,7 @@ export function Dashboard({
                                   getEventWeather={getEventWeather}
                                   getCachedWeather={getCachedWeather}
                                   isWeatherLoading={isWeatherLoading}
+                                  cacheLoaded={weatherCacheLoaded}
                                   onShowInsights={setWeatherInsightsEvent}
                                 />
                               </div>
