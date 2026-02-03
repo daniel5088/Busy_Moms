@@ -501,7 +501,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
         {(() => {
           const detailCards = [];
           
-          if (showWind && current.wind_speed > 0) {
+          if (showWind && current.wind_speed !== undefined) {
             detailCards.push(
               <DetailPill
                 key="wind"
@@ -512,8 +512,8 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               />
             );
           }
-          
-          if (showHumidity && current.humidity > 0) {
+
+          if (showHumidity && current.humidity !== undefined) {
             detailCards.push(
               <DetailPill
                 key="humidity"
@@ -524,8 +524,8 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
               />
             );
           }
-          
-          if (showPressure && current.pressure > 0) {
+
+          if (showPressure && current.pressure !== undefined) {
             detailCards.push(
               <DetailPill
                 key="pressure"
@@ -561,7 +561,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             );
           }
 
-          if (showUvIndex && current.uv_index !== undefined && current.uv_index > 0) {
+          if (showUvIndex && current.uv_index !== undefined) {
             const uvLevel = current.uv_index <= 2 ? 'Low' : current.uv_index <= 5 ? 'Moderate' : current.uv_index <= 7 ? 'High' : current.uv_index <= 10 ? 'Very High' : 'Extreme';
             detailCards.push(
               <DetailPill
@@ -575,7 +575,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             );
           }
 
-          if (showCloudCover && current.cloud_cover !== undefined && current.cloud_cover > 0) {
+          if (showCloudCover && current.cloud_cover !== undefined) {
             detailCards.push(
               <DetailPill
                 key="cloud-cover"
@@ -587,7 +587,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             );
           }
 
-          if (showThunderstormProb && current.thunderstorm_probability !== undefined && current.thunderstorm_probability > 0) {
+          if (showThunderstormProb && current.thunderstorm_probability !== undefined) {
             detailCards.push(
               <DetailPill
                 key="thunderstorm"
