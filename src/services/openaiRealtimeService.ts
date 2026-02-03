@@ -1490,8 +1490,42 @@ export class OpenAIRealtimeService extends Emitter {
     const upcomingEvent = events.find((event) => event.event_date >= today);
     const targetEvent = upcomingEvent || events[0];
 
-    const weatherData = await weatherService.getWeatherForLocation();
-    if ((!weatherData.daily || weatherData.daily.length === 0) && (!weatherData.fullHourly && !weatherData.hourly)) {
+    // Check if event has a location
+    if (!targetEvent.location || !targetEvent.location.trim()) {
+      return {
+        success: false,
+        message: `I found your ${targetEvent.title} on ${new Date(`${targetEvent.event_date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}, but it doesn't have a location set. Would you like to add a location to get the weather forecast?`
+      };
+    }
+
+    // Get event-specific weather using the event's location
+    const eventWeather = await weatherService.getEventWeather(
+      targetEvent.location,
+      targetEvent.event_date,
+      targetEvent.start_time
+    );
+
+    if (!eventWeather) {
+      return {
+        success: false,
+        message: `I found your ${targetEvent.title} at ${targetEvent.location}, but I couldn't fetch the weather for that location. Please try again shortly.`
+      };
+    }
+
+    // Convert event weather to the format expected by the rest of the function
+    const weatherData = {
+      daily: [{
+        date: targetEvent.event_date,
+        condition: eventWeather.condition,
+        temperature_max: eventWeather.temperatureMax || eventWeather.temperature,
+        temperature_min: eventWeather.temperatureMin || eventWeather.temperature,
+        precipitation_probability: eventWeather.precipitationProbability
+      }],
+      hourly: null,
+      fullHourly: null
+    };
+
+    if ((!weatherData.daily || weatherData.daily.length === 0)) {
       return {
         success: false,
         message: 'Weather data is unavailable right now. Please try again shortly.'
