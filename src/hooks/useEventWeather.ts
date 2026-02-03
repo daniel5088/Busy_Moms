@@ -40,12 +40,25 @@ export function useEventWeather() {
   const [eventWeatherCache, setEventWeatherCache] = useState<Map<string, EventWeatherData>>(new Map());
   const [loadingEvents, setLoadingEvents] = useState<Set<string>>(new Set());
   const [cacheLoaded, setCacheLoaded] = useState(true); // Always true since we use in-memory cache
+  const [cacheVersion, setCacheVersion] = useState(0); // Increment to force component updates
 
   /**
    * Generate a cache key for an event
    */
   const getCacheKey = useCallback((location: string, eventDate: string, eventTime?: string | null): string => {
-    return `${location.toLowerCase().trim()}_${eventDate}_${eventTime || 'allday'}`;
+    const normalizedLocation = location.trim().toLowerCase();
+    const normalizedDate = eventDate.trim();
+    const normalizedTime = eventTime?.trim() || 'allday';
+    const key = `${normalizedLocation}_${normalizedDate}_${normalizedTime}`;
+
+    console.log(`[useEventWeather] Generated cache key:`, {
+      location,
+      eventDate,
+      eventTime,
+      key
+    });
+
+    return key;
   }, []);
 
   /**
@@ -78,18 +91,33 @@ export function useEventWeather() {
     
     try {
       const weatherData = await weatherService.getEventWeather(location, eventDate, eventTime, force);
-      
+
+      console.log(`[useEventWeather] ✅ Fetched weather data for ${cacheKey}:`, weatherData ? {
+        condition: weatherData.condition,
+        temperature: weatherData.temperature,
+        location: weatherData.location
+      } : null);
+
       if (weatherData) {
         setEventWeatherCache((prev: Map<string, EventWeatherData>) => {
           const newCache = new Map(prev);
           newCache.set(cacheKey, weatherData);
+          console.log(`[useEventWeather] 💾 Stored in cache with key ${cacheKey}. Total cached: ${newCache.size}`);
+          console.log(`[useEventWeather] 📦 All cache keys:`, Array.from(newCache.keys()));
           return newCache;
         });
+
+        // Increment cache version to trigger component updates
+        setCacheVersion((v) => {
+          const newVersion = v + 1;
+          console.log(`[useEventWeather] 🔄 Cache version updated: ${v} -> ${newVersion}`);
+          return newVersion;
+        });
       }
-      
+
       return weatherData;
     } catch (error) {
-      console.error('[useEventWeather] Error fetching weather:', error);
+      console.error('[useEventWeather] ❌ Error fetching weather:', error);
       return null;
     } finally {
       setLoadingEvents((prev: Set<string>) => {
@@ -113,7 +141,15 @@ export function useEventWeather() {
    */
   const getCachedWeather = useCallback((location: string, eventDate: string, eventTime?: string | null): EventWeatherData | null => {
     const cacheKey = getCacheKey(location, eventDate, eventTime);
-    return eventWeatherCache.get(cacheKey) || null;
+    const cached = eventWeatherCache.get(cacheKey) || null;
+
+    console.log(`[useEventWeather] 🔍 Cache lookup for ${cacheKey}:`, cached ? {
+      found: true,
+      condition: cached.condition,
+      temperature: cached.temperature,
+    } : { found: false, totalInCache: eventWeatherCache.size });
+
+    return cached;
   }, [eventWeatherCache, getCacheKey]);
 
   /**
@@ -147,6 +183,7 @@ export function useEventWeather() {
     getCachedWeather,
     isLoading,
     cacheLoaded,
+    cacheVersion,
     checkMorningPrefetch,
     clearCache,
   };

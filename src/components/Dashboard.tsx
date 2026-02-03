@@ -88,6 +88,7 @@ interface DashboardEventWeatherIconProps {
   cacheLoaded: boolean;
   onShowInsights: (weather: EventWeatherData) => void;
   weatherBatchFetchTrigger: number;
+  cacheVersion: number;
 }
 
 function DashboardEventWeatherIcon({
@@ -100,21 +101,48 @@ function DashboardEventWeatherIcon({
   cacheLoaded,
   onShowInsights,
   weatherBatchFetchTrigger,
+  cacheVersion,
 }: DashboardEventWeatherIconProps) {
   const [weather, setWeather] = React.useState<EventWeatherData | null>(null);
   const [hasLoaded, setHasLoaded] = React.useState(false);
 
   // Check for cached weather on mount, when cache is loaded, AND when batch fetch completes
   React.useEffect(() => {
-    if (!cacheLoaded) return;
+    console.log(`[DashboardEventWeatherIcon] Effect triggered for ${location}:`, {
+      cacheLoaded,
+      weatherBatchFetchTrigger,
+      cacheVersion,
+      location,
+      eventDate,
+      eventTime,
+    });
+
+    if (!cacheLoaded) {
+      console.log(`[DashboardEventWeatherIcon] ⏳ Cache not loaded yet for ${location}`);
+      return;
+    }
 
     const cached = getCachedWeather(location, eventDate, eventTime);
+    console.log(`[DashboardEventWeatherIcon] Cache check for ${location}:`, {
+      hasCached: !!cached,
+      cached: cached ? {
+        condition: cached.condition,
+        temperature: cached.temperature,
+        location: cached.location,
+      } : null,
+    });
+
     if (cached) {
-      console.log(`[DashboardEventWeatherIcon] ✅ Using cached weather for ${location} on ${eventDate}`);
+      console.log(`[DashboardEventWeatherIcon] ✅ Using cached weather for ${location} on ${eventDate}`, {
+        condition: cached.condition,
+        temperature: cached.temperature,
+      });
       setWeather(cached);
       setHasLoaded(true);
+    } else {
+      console.log(`[DashboardEventWeatherIcon] ⚠️ No cached weather found for ${location} on ${eventDate}`);
     }
-  }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded, weatherBatchFetchTrigger]);
+  }, [location, eventDate, eventTime, getCachedWeather, cacheLoaded, weatherBatchFetchTrigger, cacheVersion]);
 
   const handleClick = async () => {
     // Always fetch fresh weather data when clicked (force refresh)
@@ -178,7 +206,7 @@ export function Dashboard({
     setReminderWeekOffset,
   } = useDashboardData();
 
-  const { getEventWeather, getCachedWeather, isLoading: isWeatherLoading, cacheLoaded: weatherCacheLoaded } = useEventWeather();
+  const { getEventWeather, getCachedWeather, isLoading: isWeatherLoading, cacheLoaded: weatherCacheLoaded, cacheVersion: weatherCacheVersion } = useEventWeather();
   const [weatherInsightsEvent, setWeatherInsightsEvent] = React.useState<EventWeatherData | null>(null);
   const [weatherBatchFetchTrigger, setWeatherBatchFetchTrigger] = React.useState(0);
 
@@ -1025,6 +1053,7 @@ export function Dashboard({
                                   cacheLoaded={weatherCacheLoaded}
                                   onShowInsights={setWeatherInsightsEvent}
                                   weatherBatchFetchTrigger={weatherBatchFetchTrigger}
+                                  cacheVersion={weatherCacheVersion}
                                 />
                               </div>
                             )}
@@ -1097,6 +1126,7 @@ export function Dashboard({
                                   cacheLoaded={weatherCacheLoaded}
                                   onShowInsights={setWeatherInsightsEvent}
                                   weatherBatchFetchTrigger={weatherBatchFetchTrigger}
+                                  cacheVersion={weatherCacheVersion}
                                 />
                               </div>
                             )}
