@@ -38,9 +38,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [showClearModal, setShowClearModal] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-
-  const addFormRef = useRef<HTMLDivElement>(null);
+  const [showTextModal, setShowTextModal] = useState(false);
 
   useEffect(() => {
     loadReceipts();
@@ -71,7 +69,8 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
       const newReceipt = await lifeReceiptsService.createReceipt(trimmedContent);
       setReceipts((prev) => [newReceipt, ...prev]);
       setContentInput('');
-      setShowAddForm(false);
+      setShowTextModal(false);
+      setShowAddModal(false);
     } catch (error) {
       console.error('Error creating receipt:', error);
     } finally {
@@ -98,10 +97,13 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
   const handleTextOption = () => {
     setShowAddModal(false);
-    setShowAddForm(true);
-    setTimeout(() => {
-      addFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    setShowTextModal(true);
+  };
+
+  const handleBackFromText = () => {
+    setShowTextModal(false);
+    setShowAddModal(true);
+    setContentInput('');
   };
 
   const handleVoiceOption = () => {
@@ -175,49 +177,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
         </div>
 
         <main className="px-3 pb-3 sm:px-4 sm:pb-4 space-y-4">
-          {showAddForm && (
-            <div ref={addFormRef} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Add a thought
-                </h2>
-                <button
-                  onClick={() => setShowAddForm(false)}
-                  className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  aria-label="Close"
-                >
-                  <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                </button>
-              </div>
-              <form onSubmit={handleSubmit} className="space-y-2">
-                <div>
-                  <label
-                    htmlFor="content"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-                  >
-                    What's on your mind?
-                  </label>
-                  <textarea
-                    id="content"
-                    value={contentInput}
-                    onChange={(e) => setContentInput(e.target.value)}
-                    placeholder="e.g., Pick up kids at 3pm, Call dentist tomorrow, Buy birthday gift for Sarah..."
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 text-sm sm:text-base resize-none"
-                    autoFocus
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={!isFormValid || submitting}
-                  className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-                >
-                  {submitting ? 'Adding...' : 'Add Receipt'}
-                </button>
-              </form>
-            </div>
-          )}
         </main>
       </div>
 
@@ -328,6 +287,53 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                 <span className="text-sm">Upload a photo</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showTextModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="text-modal-title">
+            <div className="flex items-center justify-between mb-6">
+              <h3 id="text-modal-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">Add a thought</h3>
+              <button
+                onClick={() => setShowTextModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                aria-label="Close dialog"
+              >
+                <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <textarea
+                value={contentInput}
+                onChange={(e) => setContentInput(e.target.value)}
+                placeholder="What's on your mind?"
+                rows={5}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                autoFocus
+              />
+
+              <div className="flex flex-col gap-2">
+                <button
+                  type="submit"
+                  disabled={!isFormValid || submitting}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Adding...' : 'Add Receipt'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleBackFromText}
+                  disabled={submitting}
+                  className="w-full px-6 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 font-medium transition-colors disabled:opacity-50"
+                >
+                  Back
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
