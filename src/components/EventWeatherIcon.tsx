@@ -87,10 +87,20 @@ function getSeverityClasses(severity: WeatherSuggestion['severity']): { bg: stri
 export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: EventWeatherIconProps) {
   if (loading) {
     const containerSize = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10';
-    const spinnerSize = size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-5 h-5' : 'w-6 h-6';
+    const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : size === 'md' ? 'w-4 h-4' : 'w-6 h-6';
     return (
-      <div className={`flex items-center justify-center ${containerSize}`}>
-        <Loader2 className={`${spinnerSize} text-gray-400 animate-spin`} />
+      <div
+        className={`
+          ${containerSize} rounded-full
+          bg-gray-200 dark:bg-gray-700
+          flex items-center justify-center
+          border border-gray-300 dark:border-gray-600
+          animate-pulse
+        `}
+        title="Loading weather..."
+        aria-label="Loading weather data"
+      >
+        <div className={`${iconSize} bg-gray-300 dark:bg-gray-600 rounded-full`} />
       </div>
     );
   }
