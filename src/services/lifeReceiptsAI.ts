@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface ExtractedReceiptInfo {
   content: string;
-  what?: string;
+  where?: string;
   who?: string;
   when?: string;
   obligation?: string;

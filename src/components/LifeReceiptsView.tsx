@@ -12,7 +12,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState('');
-  const [editedWhat, setEditedWhat] = useState('');
+  const [editedWhere, setEditedWhere] = useState('');
   const [editedWho, setEditedWho] = useState('');
   const [editedWhen, setEditedWhen] = useState('');
   const [editedAction, setEditedAction] = useState('');
@@ -57,10 +57,15 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
     const receipt = receipts.find((r) => r.id === expandedId);
     if (!receipt) return;
 
+    // Validate when value, default to "someday" if invalid
+    const validWhenValues = ['now', 'soon', 'someday', 'very_important'];
+    const normalizedWhen = receipt.when_bucket?.toLowerCase().trim();
+    const whenValue = validWhenValues.includes(normalizedWhen || '') ? normalizedWhen : 'someday';
+
     setEditedContent(receipt.content || '');
-    setEditedWhat(receipt.what || '');
+    setEditedWhere(receipt.where || '');
     setEditedWho(receipt.who || '');
-    setEditedWhen(receipt.when_bucket || '');
+    setEditedWhen(whenValue || 'someday');
     setEditedAction(receipt.obligation || '');
     setIsEditMode(true);
   };
@@ -71,7 +76,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
     try {
       await lifeReceiptsService.updateReceipt(expandedId, {
         content: editedContent,
-        what: editedWhat,
+        where: editedWhere,
         who: editedWho,
         when_bucket: editedWhen,
         obligation: editedAction,
@@ -87,7 +92,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditedContent('');
-    setEditedWhat('');
+    setEditedWhere('');
     setEditedWho('');
     setEditedWhen('');
     setEditedAction('');
@@ -227,12 +232,12 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                  What
+                                  Where
                                 </label>
                                 <input
                                   type="text"
-                                  value={editedWhat}
-                                  onChange={(e) => setEditedWhat(e.target.value)}
+                                  value={editedWhere}
+                                  onChange={(e) => setEditedWhere(e.target.value)}
                                   className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
                                 />
                               </div>
@@ -253,12 +258,16 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                                 <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                   When
                                 </label>
-                                <input
-                                  type="text"
+                                <select
                                   value={editedWhen}
                                   onChange={(e) => setEditedWhen(e.target.value)}
                                   className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                                />
+                                >
+                                  <option value="now">Now</option>
+                                  <option value="soon">Soon</option>
+                                  <option value="someday">Someday</option>
+                                  <option value="very_important">Very Important</option>
+                                </select>
                               </div>
 
                               <div>
@@ -286,10 +295,10 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                What
+                                Where
                               </div>
                               <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                                {receipt.what || 'unknown'}
+                                {receipt.where || 'unknown'}
                               </div>
                             </div>
 
@@ -307,7 +316,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                                 When
                               </div>
                               <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                                {receipt.when_bucket || 'unknown'}
+                                {receipt.when_bucket || 'someday'}
                               </div>
                             </div>
 

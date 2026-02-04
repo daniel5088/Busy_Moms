@@ -273,9 +273,9 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
       const content = extractedInfo.content || 'Unknown';
       const newReceipt = await lifeReceiptsService.createReceipt(
         content,
-        extractedInfo.what || 'unknown',
+        extractedInfo.where || 'unknown',
         extractedInfo.who || 'unknown',
-        extractedInfo.when || 'unknown',
+        extractedInfo.when || 'someday',
         extractedInfo.obligation || 'unknown'
       );
       setReceipts((prev) => [newReceipt, ...prev]);
@@ -604,8 +604,8 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">What</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.what || 'unknown'}</p>
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">Where</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.where || 'unknown'}</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
@@ -615,7 +615,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">When</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.when || 'unknown'}</p>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.when || 'someday'}</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">

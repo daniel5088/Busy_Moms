@@ -5,7 +5,7 @@ export interface LifeReceipt {
   user_id: string;
   content: string;
   created_at: string;
-  what: string;
+  where: string;
   who: string;
   obligation: string;
   when_bucket: string;
@@ -17,7 +17,7 @@ export interface LifeReceipt {
 export const lifeReceiptsService = {
   async createReceipt(
     content: string,
-    what?: string,
+    where?: string,
     who?: string,
     when?: string,
     obligation?: string
@@ -30,9 +30,9 @@ export const lifeReceiptsService = {
       .insert({
         user_id: user.id,
         content,
-        what: what || 'unknown',
+        where: where || 'unknown',
         who: who || 'unknown',
-        when_bucket: when || 'unknown',
+        when_bucket: when || 'someday',
         obligation: obligation || 'unknown',
       })
       .select()
@@ -72,7 +72,7 @@ export const lifeReceiptsService = {
 
   async updateReceipt(
     id: string,
-    updates: Partial<Pick<LifeReceipt, 'content' | 'what' | 'who' | 'when_bucket' | 'obligation'>>
+    updates: Partial<Pick<LifeReceipt, 'content' | 'where' | 'who' | 'when_bucket' | 'obligation'>>
   ): Promise<LifeReceipt> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
