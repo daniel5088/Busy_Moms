@@ -149,6 +149,11 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
       };
 
       mediaRecorder.onstop = async () => {
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        }
+
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await processVoiceRecording(audioBlob);
       };
@@ -166,16 +171,11 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   };
 
   const stopVoiceRecording = () => {
-    if (isRecording) {
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
-        audioStreamRef.current = null;
-      }
+    if (!mediaRecorderRef.current) return;
 
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-
+    const state = mediaRecorderRef.current.state;
+    if (state === 'recording' || state === 'paused') {
+      mediaRecorderRef.current.stop();
       setIsRecording(false);
 
       if (recordingIntervalRef.current) {
@@ -210,10 +210,11 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const closeVoiceModal = () => {
     if (isRecording) {
       stopVoiceRecording();
-    }
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-      audioStreamRef.current = null;
+    } else {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      }
     }
     setShowVoiceModal(false);
     setRecordingTime(0);
@@ -637,12 +638,12 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                   <div className="relative">
                     <button
                       onClick={stopVoiceRecording}
-                      className="w-32 h-32 rounded-full bg-red-500 hover:bg-red-600 transition-all shadow-2xl hover:shadow-red-500/50 flex items-center justify-center animate-pulse"
+                      className="w-32 h-32 rounded-full bg-red-500 hover:bg-red-600 transition-all shadow-2xl hover:shadow-red-500/50 flex items-center justify-center animate-pulse relative z-10"
                       aria-label="Stop recording"
                     >
                       <MicOff className="w-16 h-16 text-white" />
                     </button>
-                    <div className="absolute inset-0 rounded-full border-4 border-red-400 animate-ping opacity-75"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-red-400 animate-ping opacity-75 pointer-events-none"></div>
                   </div>
                   <div className="mt-6 text-center">
                     <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
