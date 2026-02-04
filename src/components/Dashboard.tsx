@@ -86,7 +86,8 @@ interface DashboardEventWeatherIconProps {
   getCachedWeather: (location: string, eventDate: string, eventTime?: string | null) => EventWeatherData | null;
   isWeatherLoading: (location: string, eventDate: string, eventTime?: string | null) => boolean;
   cacheLoaded: boolean;
-  onShowInsights: (weather: EventWeatherData) => void;
+  onShowInsights: (weather: EventWeatherData | null) => void;
+  onShowLoading: () => void;
   weatherBatchFetchTrigger: number;
   cacheVersion: number;
 }
@@ -100,6 +101,7 @@ function DashboardEventWeatherIcon({
   isWeatherLoading,
   cacheLoaded,
   onShowInsights,
+  onShowLoading,
   weatherBatchFetchTrigger,
   cacheVersion,
 }: DashboardEventWeatherIconProps) {
@@ -143,6 +145,9 @@ function DashboardEventWeatherIcon({
   }, [location, eventDate, eventTime, getCachedWeather]);
 
   const handleClick = async () => {
+    // Show modal immediately in loading state
+    onShowLoading();
+
     // Always fetch fresh weather data when clicked (force refresh)
     const data = await getEventWeather(location, eventDate, eventTime, true);
 
@@ -160,6 +165,9 @@ function DashboardEventWeatherIcon({
           weatherData: data
         }
       }));
+    } else {
+      // If fetch failed, close the modal
+      onShowInsights(null);
     }
   };
 
@@ -217,6 +225,8 @@ export function Dashboard({
 
   const { getEventWeather, getCachedWeather, isLoading: isWeatherLoading, cacheLoaded: weatherCacheLoaded, cacheVersion: weatherCacheVersion } = useEventWeather();
   const [weatherInsightsEvent, setWeatherInsightsEvent] = React.useState<EventWeatherData | null>(null);
+  const [weatherInsightsLoading, setWeatherInsightsLoading] = React.useState(false);
+  const [showWeatherInsights, setShowWeatherInsights] = React.useState(false);
   const [weatherBatchFetchTrigger, setWeatherBatchFetchTrigger] = React.useState(0);
 
   const [weather, setWeather] = React.useState<WeatherData | null>(null);
@@ -250,6 +260,32 @@ export function Dashboard({
       setTimeout(() => onNavigate('calendar'), 500);
     },
   });
+
+  // Weather insights modal handlers
+  const handleShowWeatherInsightsLoading = React.useCallback(() => {
+    setShowWeatherInsights(true);
+    setWeatherInsightsLoading(true);
+    setWeatherInsightsEvent(null);
+  }, []);
+
+  const handleShowWeatherInsights = React.useCallback((weather: EventWeatherData | null) => {
+    if (weather) {
+      setWeatherInsightsEvent(weather);
+      setWeatherInsightsLoading(false);
+      setShowWeatherInsights(true);
+    } else {
+      // Close modal if no weather data (fetch failed)
+      setShowWeatherInsights(false);
+      setWeatherInsightsLoading(false);
+      setWeatherInsightsEvent(null);
+    }
+  }, []);
+
+  const handleCloseWeatherInsights = React.useCallback(() => {
+    setShowWeatherInsights(false);
+    setWeatherInsightsLoading(false);
+    setWeatherInsightsEvent(null);
+  }, []);
 
   const shouldShowReminder = React.useCallback((reminder: Reminder, now: Date): boolean => {
     const today = getTodayISO();
@@ -1060,7 +1096,8 @@ export function Dashboard({
                                   getCachedWeather={getCachedWeather}
                                   isWeatherLoading={isWeatherLoading}
                                   cacheLoaded={weatherCacheLoaded}
-                                  onShowInsights={setWeatherInsightsEvent}
+                                  onShowInsights={handleShowWeatherInsights}
+                                  onShowLoading={handleShowWeatherInsightsLoading}
                                   weatherBatchFetchTrigger={weatherBatchFetchTrigger}
                                   cacheVersion={weatherCacheVersion}
                                 />
@@ -1133,7 +1170,8 @@ export function Dashboard({
                                   getCachedWeather={getCachedWeather}
                                   isWeatherLoading={isWeatherLoading}
                                   cacheLoaded={weatherCacheLoaded}
-                                  onShowInsights={setWeatherInsightsEvent}
+                                  onShowInsights={handleShowWeatherInsights}
+                                  onShowLoading={handleShowWeatherInsightsLoading}
                                   weatherBatchFetchTrigger={weatherBatchFetchTrigger}
                                   cacheVersion={weatherCacheVersion}
                                 />
@@ -1430,10 +1468,11 @@ export function Dashboard({
       />
 
       {/* Weather Insights Modal */}
-      {weatherInsightsEvent && (
+      {showWeatherInsights && (
         <EventWeatherInsightsModal
           weather={weatherInsightsEvent}
-          onClose={() => setWeatherInsightsEvent(null)}
+          loading={weatherInsightsLoading}
+          onClose={handleCloseWeatherInsights}
         />
       )}
     </>

@@ -191,14 +191,83 @@ export function EventWeatherIcon({ weather, loading, onClick, size = 'sm' }: Eve
 }
 
 interface EventWeatherInsightsModalProps {
-  weather: EventWeatherData;
+  weather: EventWeatherData | null;
+  loading?: boolean;
   onClose: () => void;
+}
+
+/**
+ * Skeleton loader for weather insights modal
+ */
+function EventWeatherInsightsModalSkeleton({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Loading weather insights"
+    >
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-pulse">
+        {/* Header skeleton */}
+        <div className="bg-gray-200 dark:bg-gray-700 px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-gray-600" />
+            <div className="space-y-2">
+              <div className="h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded" />
+              <div className="h-3 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/50 dark:bg-gray-700/50 flex items-center justify-center hover:bg-white/80 dark:hover:bg-gray-700/80 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+          </button>
+        </div>
+
+        {/* Content skeleton */}
+        <div className="p-5 space-y-4">
+          {/* Date & Time skeleton */}
+          <div className="text-center pb-3 border-b border-gray-200 dark:border-gray-700 space-y-1">
+            <div className="h-3 w-40 bg-gray-200 dark:bg-gray-700 rounded mx-auto" />
+            <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mx-auto" />
+          </div>
+
+          {/* Suggestion banner skeleton */}
+          <div className="bg-gray-200 dark:bg-gray-700 rounded-xl p-3 h-12" />
+
+          {/* Weather details grid skeleton */}
+          <div className="grid grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded" />
+                  <div className="h-3 w-16 bg-gray-300 dark:bg-gray-600 rounded" />
+                </div>
+                <div className="h-6 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
+                <div className="h-3 w-20 bg-gray-300 dark:bg-gray-600 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /**
  * Modal showing detailed weather insights for an event
  */
-export function EventWeatherInsightsModal({ weather, onClose }: EventWeatherInsightsModalProps) {
+export function EventWeatherInsightsModal({ weather, loading, onClose }: EventWeatherInsightsModalProps) {
+  // Show skeleton while loading
+  if (loading || !weather) {
+    return <EventWeatherInsightsModalSkeleton onClose={onClose} />;
+  }
   const colors = getSeverityClasses(weather.suggestion.severity);
 
   // Format date for display

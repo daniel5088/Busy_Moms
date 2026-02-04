@@ -104,7 +104,8 @@ interface EventWeatherIconWrapperProps {
   getEventWeather: (location: string, eventDate: string, eventTime?: string | null, force?: boolean) => Promise<EventWeatherData | null>;
   getCachedWeather: (location: string, eventDate: string, eventTime?: string | null) => EventWeatherData | null;
   isWeatherLoading: (location: string, eventDate: string, eventTime?: string | null) => boolean;
-  onShowInsights: (weather: EventWeatherData) => void;
+  onShowInsights: (weather: EventWeatherData | null) => void;
+  onShowLoading: () => void;
 }
 
 function EventWeatherIconWrapper({
@@ -115,6 +116,7 @@ function EventWeatherIconWrapper({
   getCachedWeather,
   isWeatherLoading,
   onShowInsights,
+  onShowLoading,
 }: EventWeatherIconWrapperProps) {
   const [weather, setWeather] = useState<EventWeatherData | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -153,6 +155,9 @@ function EventWeatherIconWrapper({
   }, [location, eventDate, eventTime, getCachedWeather]);
 
   const handleClick = async () => {
+    // Show modal immediately in loading state
+    onShowLoading();
+
     // Always fetch fresh weather data when clicked (force refresh)
     const data = await getEventWeather(location, eventDate, eventTime, true);
     if (data) {
@@ -169,6 +174,9 @@ function EventWeatherIconWrapper({
           weatherData: data
         }
       }));
+    } else {
+      // If fetch failed, close the modal
+      onShowInsights(null);
     }
   };
 
@@ -229,6 +237,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
   // Weather insights modal state
   const [weatherInsightsEvent, setWeatherInsightsEvent] = useState<EventWeatherData | null>(null);
+  const [weatherInsightsLoading, setWeatherInsightsLoading] = useState(false);
+  const [showWeatherInsights, setShowWeatherInsights] = useState(false);
   const [eventWeatherCache, setEventWeatherCache] = useState<Map<string, EventWeatherData>>(new Map());
 
   // Data
@@ -262,6 +272,32 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       }
     },
   });
+
+  // Weather insights modal handlers
+  const handleShowWeatherInsightsLoading = useCallback(() => {
+    setShowWeatherInsights(true);
+    setWeatherInsightsLoading(true);
+    setWeatherInsightsEvent(null);
+  }, []);
+
+  const handleShowWeatherInsights = useCallback((weather: EventWeatherData | null) => {
+    if (weather) {
+      setWeatherInsightsEvent(weather);
+      setWeatherInsightsLoading(false);
+      setShowWeatherInsights(true);
+    } else {
+      // Close modal if no weather data (fetch failed)
+      setShowWeatherInsights(false);
+      setWeatherInsightsLoading(false);
+      setWeatherInsightsEvent(null);
+    }
+  }, []);
+
+  const handleCloseWeatherInsights = useCallback(() => {
+    setShowWeatherInsights(false);
+    setWeatherInsightsLoading(false);
+    setWeatherInsightsEvent(null);
+  }, []);
 
   // Handle initial selected date from dashboard navigation
   useEffect(() => {
@@ -1463,7 +1499,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                   getEventWeather={getEventWeather}
                                   getCachedWeather={getCachedWeather}
                                   isWeatherLoading={isWeatherLoading}
-                                  onShowInsights={setWeatherInsightsEvent}
+                                  onShowInsights={handleShowWeatherInsights}
+                                  onShowLoading={handleShowWeatherInsightsLoading}
                                 />
                               )}
                               <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap">
@@ -2521,10 +2558,11 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         />
 
         {/* Weather Insights Modal */}
-        {weatherInsightsEvent && (
+        {showWeatherInsights && (
           <EventWeatherInsightsModal
             weather={weatherInsightsEvent}
-            onClose={() => setWeatherInsightsEvent(null)}
+            loading={weatherInsightsLoading}
+            onClose={handleCloseWeatherInsights}
           />
         )}
       </div>
