@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Trash2, X, Plus, Eye } from 'lucide-react';
+import { Trash2, X, Plus, Eye, Type, Mic, Camera, Image } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 
 function formatReceiptDate(createdAt: string): string {
@@ -37,6 +37,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [submitting, setSubmitting] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
 
   const addFormRef = useRef<HTMLDivElement>(null);
@@ -92,10 +93,30 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   };
 
   const handleAddClick = () => {
+    setShowAddModal(true);
+  };
+
+  const handleTextOption = () => {
+    setShowAddModal(false);
     setShowAddForm(true);
     setTimeout(() => {
       addFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
+  };
+
+  const handleVoiceOption = () => {
+    setShowAddModal(false);
+    console.log('Voice input - Coming soon');
+  };
+
+  const handleTakePhotoOption = () => {
+    setShowAddModal(false);
+    console.log('Take photo - Coming soon');
+  };
+
+  const handleUploadPhotoOption = () => {
+    setShowAddModal(false);
+    console.log('Upload photo - Coming soon');
   };
 
   const handleSeeClick = () => {
@@ -255,6 +276,57 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                   {clearing ? 'Clearing...' : 'Yes, clear all'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+            <div className="flex items-center justify-between mb-4">
+              <h3 id="add-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Life Receipt</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                aria-label="Close dialog"
+              >
+                <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={handleTextOption}
+                className="h-32 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl font-medium hover:from-blue-600 hover:to-blue-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
+              >
+                <Type className="w-8 h-8" aria-hidden="true" />
+                <span className="text-sm">Text</span>
+              </button>
+
+              <button
+                onClick={handleVoiceOption}
+                className="h-32 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl font-medium hover:from-green-600 hover:to-green-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
+              >
+                <Mic className="w-8 h-8" aria-hidden="true" />
+                <span className="text-sm">Voice</span>
+              </button>
+
+              <button
+                onClick={handleTakePhotoOption}
+                className="h-32 bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl font-medium hover:from-rose-600 hover:to-rose-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
+              >
+                <Camera className="w-8 h-8" aria-hidden="true" />
+                <span className="text-sm">Take a photo</span>
+              </button>
+
+              <button
+                onClick={handleUploadPhotoOption}
+                className="h-32 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl font-medium hover:from-amber-600 hover:to-amber-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
+              >
+                <Image className="w-8 h-8" aria-hidden="true" />
+                <span className="text-sm">Upload a photo</span>
+              </button>
             </div>
           </div>
         </div>
