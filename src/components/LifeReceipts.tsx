@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Trash2, X, Plus, Eye, Type, Mic, Camera, Image, Loader2, MicOff } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
-import { processReceiptImage, processReceiptAudio, ExtractedReceiptInfo } from '../services/lifeReceiptsAI';
+import { processReceiptImage, processReceiptAudio, extractReceiptFromText, ExtractedReceiptInfo } from '../services/lifeReceiptsAI';
 
 function formatReceiptDate(createdAt: string): string {
   const receiptDate = new Date(createdAt);
@@ -51,7 +51,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [extractionSource, setExtractionSource] = useState<'image' | 'voice' | null>(null);
+  const [extractionSource, setExtractionSource] = useState<'image' | 'voice' | 'text' | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -85,17 +85,33 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
       return;
     }
 
-    setSubmitting(true);
+    setExtractionSource('text');
+    setIsProcessing(true);
+    setShowTextModal(false);
+
     try {
-      const newReceipt = await lifeReceiptsService.createReceipt(trimmedContent);
-      setReceipts((prev) => [newReceipt, ...prev]);
-      setContentInput('');
-      setShowTextModal(false);
-      setShowAddModal(false);
+      const receiptData = await extractReceiptFromText(trimmedContent);
+
+      if (receiptData) {
+        setExtractedInfo(receiptData);
+      } else {
+        const newReceipt = await lifeReceiptsService.createReceipt(trimmedContent);
+        setReceipts((prev) => [newReceipt, ...prev]);
+        setContentInput('');
+        setShowAddModal(false);
+      }
     } catch (error) {
-      console.error('Error creating receipt:', error);
+      console.error('Error processing text:', error);
+      try {
+        const newReceipt = await lifeReceiptsService.createReceipt(trimmedContent);
+        setReceipts((prev) => [newReceipt, ...prev]);
+        setContentInput('');
+        setShowAddModal(false);
+      } catch (fallbackError) {
+        console.error('Error creating receipt:', fallbackError);
+      }
     } finally {
-      setSubmitting(false);
+      setIsProcessing(false);
     }
   };
 
@@ -726,11 +742,13 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-sm w-full text-center border border-gray-200 dark:border-gray-700 shadow-2xl">
             <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
             <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              {extractionSource === 'voice' ? 'Processing Recording' : 'Processing Image'}
+              {extractionSource === 'voice' ? 'Processing Recording' : extractionSource === 'text' ? 'Processing Text' : 'Processing Image'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
               {extractionSource === 'voice'
                 ? 'Transcribing and analyzing your recording...'
+                : extractionSource === 'text'
+                ? 'Analyzing your text with AI...'
                 : 'Analyzing your image with AI...'}
             </p>
           </div>
@@ -797,6 +815,8 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                   setExtractedInfo(null);
                   if (extractionSource === 'voice') {
                     setShowVoiceModal(true);
+                  } else if (extractionSource === 'text') {
+                    setShowTextModal(true);
                   } else {
                     setShowAddModal(true);
                   }
@@ -804,7 +824,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                 disabled={submitting}
                 className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
               >
-                {extractionSource === 'voice' ? 'Record Another' : 'Try Another Image'}
+                {extractionSource === 'voice' ? 'Record Another' : extractionSource === 'text' ? 'Edit Text' : 'Try Another Image'}
               </button>
             </div>
           </div>

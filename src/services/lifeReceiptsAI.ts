@@ -79,3 +79,28 @@ export async function processReceiptAudio(audioBlob: Blob): Promise<ExtractedRec
     throw error;
   }
 }
+
+export async function extractReceiptFromText(text: string): Promise<ExtractedReceiptInfo | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('life-receipts-text-agent', {
+      body: {
+        action: 'process_text',
+        text: text,
+      },
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      throw error;
+    }
+
+    if (data.receipt) {
+      return data.receipt;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error processing receipt text:', error);
+    throw error;
+  }
+}
