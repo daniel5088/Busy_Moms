@@ -493,7 +493,7 @@ export function Dashboard({
         const batch = eventsToFetch.slice(i, i + batchSize);
         await Promise.all(
           batch.map(event =>
-            getEventWeather(event.location, event.event_date, event.start_time, false)
+            getEventWeather(event.location, event.event_date, event.start_time, true)
               .catch(err => {
                 console.error(`[Dashboard] Failed to fetch weather for event ${event.id}:`, err);
                 return null;
