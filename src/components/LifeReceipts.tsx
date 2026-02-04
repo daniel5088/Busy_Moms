@@ -57,6 +57,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<number | null>(null);
 
@@ -135,6 +136,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const startVoiceRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -147,8 +149,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
       };
 
       mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(track => track.stop());
-
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await processVoiceRecording(audioBlob);
       };
@@ -166,8 +166,16 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   };
 
   const stopVoiceRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (isRecording) {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      }
+
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+
       setIsRecording(false);
 
       if (recordingIntervalRef.current) {
@@ -178,6 +186,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   };
 
   const processVoiceRecording = async (audioBlob: Blob) => {
+    setExtractionSource('voice');
     setIsProcessing(true);
     setShowVoiceModal(false);
 
@@ -186,7 +195,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
       if (receiptData) {
         setExtractedInfo(receiptData);
-        setExtractionSource('voice');
       } else {
         setShowNoReceiptFoundModal(true);
       }
@@ -203,6 +211,10 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
     if (isRecording) {
       stopVoiceRecording();
     }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
     setShowVoiceModal(false);
     setRecordingTime(0);
   };
@@ -218,6 +230,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   };
 
   const processImage = async (file: File) => {
+    setExtractionSource('image');
     setIsProcessing(true);
 
     try {
@@ -225,7 +238,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
       if (receiptData) {
         setExtractedInfo(receiptData);
-        setExtractionSource('image');
       } else {
         setShowNoReceiptFoundModal(true);
       }
