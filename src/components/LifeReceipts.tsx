@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Trash2, X, Plus, Eye, Type, Mic, Camera, Image } from 'lucide-react';
+import { Trash2, X, Plus, Eye, Type, Mic, Camera, Image, Loader2 } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
+import { processReceiptImage, ExtractedReceiptInfo } from '../services/lifeReceiptsAI';
 
 function formatReceiptDate(createdAt: string): string {
   const receiptDate = new Date(createdAt);
@@ -39,6 +40,19 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [clearing, setClearing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTextModal, setShowTextModal] = useState(false);
+
+  const [showCameraMenu, setShowCameraMenu] = useState(false);
+  const [showCameraView, setShowCameraView] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [extractedInfo, setExtractedInfo] = useState<ExtractedReceiptInfo | null>(null);
+  const [showNoReceiptFoundModal, setShowNoReceiptFoundModal] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     loadReceipts();
@@ -113,12 +127,171 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
   const handleTakePhotoOption = () => {
     setShowAddModal(false);
-    console.log('Take photo - Coming soon');
+    setShowCameraMenu(true);
   };
 
   const handleUploadPhotoOption = () => {
     setShowAddModal(false);
-    console.log('Upload photo - Coming soon');
+    setShowCameraMenu(true);
+  };
+
+  const processImage = async (file: File) => {
+    setIsProcessing(true);
+    setShowCameraMenu(false);
+
+    try {
+      const receiptData = await processReceiptImage(file);
+
+      if (receiptData) {
+        setExtractedInfo(receiptData);
+      } else {
+        setShowNoReceiptFoundModal(true);
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      alert('Failed to process image. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      processImage(file);
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+
+      const constraints = {
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      setCameraStream(stream);
+      setShowCameraView(true);
+      setShowCameraMenu(false);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(err => {
+          console.log('Video play error (can be ignored):', err);
+        });
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      alert('Unable to access camera. Please check permissions or use the gallery option.');
+    }
+  };
+
+  const switchCamera = async () => {
+    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newFacingMode);
+
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: { ideal: newFacingMode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      setCameraStream(stream);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(err => {
+          console.log('Video play error (can be ignored):', err);
+        });
+      }
+    } catch (error) {
+      console.error('Error switching camera:', error);
+      alert('Unable to switch camera.');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+
+    if (!context) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    context.drawImage(video, 0, 0);
+
+    canvas.toBlob(async (blob) => {
+      if (blob) {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          setCameraStream(null);
+        }
+        setShowCameraView(false);
+        setShowCameraMenu(false);
+
+        const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+        await processImage(file);
+      }
+    }, 'image/jpeg', 0.95);
+  };
+
+  const closeCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCameraView(false);
+    setShowCameraMenu(false);
+  };
+
+  const addReceiptFromImage = async () => {
+    if (!extractedInfo) return;
+
+    setSubmitting(true);
+    try {
+      const content = extractedInfo.content || 'Unknown';
+      const newReceipt = await lifeReceiptsService.createReceipt(
+        content,
+        extractedInfo.what || 'unknown',
+        extractedInfo.who || 'unknown',
+        extractedInfo.when || 'unknown',
+        extractedInfo.obligation || 'unknown'
+      );
+      setReceipts((prev) => [newReceipt, ...prev]);
+      setExtractedInfo(null);
+    } catch (error) {
+      console.error('Error creating receipt from image:', error);
+      alert('Failed to create receipt. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSeeClick = () => {
@@ -334,6 +507,241 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showCameraMenu && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="camera-menu-title">
+            <div className="flex items-center justify-between mb-4">
+              <h3 id="camera-menu-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Receipt from Image</h3>
+              <button
+                onClick={() => setShowCameraMenu(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                aria-label="Close dialog"
+              >
+                <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+              </button>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+              Capture or select an image with receipt details
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={startCamera}
+                className="h-32 bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl font-medium hover:from-rose-600 hover:to-rose-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
+              >
+                <Camera className="w-8 h-8" aria-hidden="true" />
+                <span className="text-sm">Camera</span>
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="h-32 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl font-medium hover:from-amber-600 hover:to-amber-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
+              >
+                <Image className="w-8 h-8" aria-hidden="true" />
+                <span className="text-sm">Gallery</span>
+              </button>
+            </div>
+
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="user"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </div>
+        </div>
+      )}
+
+      {showCameraView && (
+        <div className="fixed inset-0 bg-black z-50 flex flex-col" role="dialog" aria-modal="true" aria-labelledby="camera-view-title">
+          <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/50 to-transparent">
+            <h2 id="camera-view-title" className="sr-only">Camera View</h2>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={closeCamera}
+                className="p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition"
+                aria-label="Close camera"
+              >
+                <X className="w-6 h-6 text-white" aria-hidden="true" />
+              </button>
+              <button
+                onClick={switchCamera}
+                className="p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition"
+                aria-label="Switch camera"
+              >
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="flex-1 w-full h-full object-cover"
+          />
+
+          <canvas ref={canvasRef} className="hidden" />
+
+          <div className="absolute bottom-0 left-0 right-0 z-10 p-8 bg-gradient-to-t from-black/50 to-transparent">
+            <div className="flex items-center justify-center">
+              <button
+                onClick={capturePhoto}
+                className="w-20 h-20 rounded-full bg-white border-4 border-white/30 hover:scale-110 transition-transform shadow-lg"
+                aria-label="Capture photo"
+              >
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                  <Camera className="w-8 h-8 text-gray-800" aria-hidden="true" />
+                </div>
+              </button>
+            </div>
+            <p className="text-white text-center mt-4 text-sm">
+              Tap to capture • {facingMode === 'user' ? 'Front' : 'Back'} Camera
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-sm w-full text-center border border-gray-200 dark:border-gray-700 shadow-2xl">
+            <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              Processing Image
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Analyzing your image with AI...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {extractedInfo && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-2xl w-full my-8 border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="extracted-modal-title">
+            <div className="flex items-center justify-between mb-6">
+              <h3 id="extracted-modal-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Receipt Extracted
+              </h3>
+              <button
+                onClick={() => setExtractedInfo(null)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                aria-label="Close dialog"
+              >
+                <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Content</h4>
+                <p className="text-gray-700 dark:text-gray-300">{extractedInfo.content || 'No content found'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">What</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.what || 'unknown'}</p>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">Who</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.who || 'unknown'}</p>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">When</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.when || 'unknown'}</p>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">Action</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.obligation || 'unknown'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={addReceiptFromImage}
+                disabled={submitting}
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Plus className="w-5 h-5" />
+                <span>{submitting ? 'Adding...' : 'Add Receipt'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setExtractedInfo(null);
+                  setShowCameraMenu(true);
+                }}
+                disabled={submitting}
+                className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+              >
+                Try Another Image
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showNoReceiptFoundModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="no-receipt-modal-title">
+            <div className="flex items-center justify-between mb-4">
+              <h3 id="no-receipt-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                No Receipt Found
+              </h3>
+              <button
+                onClick={() => setShowNoReceiptFoundModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                aria-label="Close dialog"
+              >
+                <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+              </button>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              We couldn't find any receipt information in the image. Please try with a different image or add the receipt manually.
+            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setShowNoReceiptFoundModal(false);
+                  setShowCameraMenu(true);
+                }}
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl"
+              >
+                Try Another Image
+              </button>
+
+              <button
+                onClick={() => setShowNoReceiptFoundModal(false)}
+                className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

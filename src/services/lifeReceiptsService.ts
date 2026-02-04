@@ -15,7 +15,13 @@ export interface LifeReceipt {
 }
 
 export const lifeReceiptsService = {
-  async createReceipt(content: string): Promise<LifeReceipt> {
+  async createReceipt(
+    content: string,
+    what?: string,
+    who?: string,
+    when?: string,
+    obligation?: string
+  ): Promise<LifeReceipt> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -24,6 +30,10 @@ export const lifeReceiptsService = {
       .insert({
         user_id: user.id,
         content,
+        what: what || 'unknown',
+        who: who || 'unknown',
+        when_bucket: when || 'unknown',
+        obligation: obligation || 'unknown',
       })
       .select()
       .single();
