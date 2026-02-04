@@ -192,10 +192,10 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                   className="flex flex-col gap-4 animate-scaleIn"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full max-w-xs p-4 relative">
+                  <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full max-w-md min-h-[400px] p-6 relative">
                     <button
                       onClick={handleCloseModal}
-                      className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
+                      className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-10"
                       aria-label="Close modal"
                     >
                       <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -207,13 +207,13 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
 
                       if (isEditMode) {
                         return (
-                          <div className="flex flex-col">
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                          <div className="flex flex-col pt-2">
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pr-8">
                               Edit Receipt
                             </h3>
 
-                            <div className="mb-3">
-                              <label className="block text-[10px] font-semibold tracking-wide uppercase opacity-70 mb-1">
+                            <div className="mb-4">
+                              <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                 Content
                               </label>
                               <textarea
@@ -226,50 +226,50 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
 
                             <div className="grid grid-cols-2 gap-3">
                               <div>
-                                <label className="block text-[10px] font-semibold tracking-wide uppercase opacity-70 mb-1">
+                                <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                   What
                                 </label>
                                 <input
                                   type="text"
                                   value={editedWhat}
                                   onChange={(e) => setEditedWhat(e.target.value)}
-                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-2 py-1 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
                                 />
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-semibold tracking-wide uppercase opacity-70 mb-1">
+                                <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                   Who
                                 </label>
                                 <input
                                   type="text"
                                   value={editedWho}
                                   onChange={(e) => setEditedWho(e.target.value)}
-                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-2 py-1 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
                                 />
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-semibold tracking-wide uppercase opacity-70 mb-1">
+                                <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                   When
                                 </label>
                                 <input
                                   type="text"
                                   value={editedWhen}
                                   onChange={(e) => setEditedWhen(e.target.value)}
-                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-2 py-1 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
                                 />
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-semibold tracking-wide uppercase opacity-70 mb-1">
+                                <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                   Action
                                 </label>
                                 <input
                                   type="text"
                                   value={editedAction}
                                   onChange={(e) => setEditedAction(e.target.value)}
-                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-2 py-1 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
                                 />
                               </div>
                             </div>
@@ -278,44 +278,44 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                       }
 
                       return (
-                        <div className="flex flex-col">
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 leading-relaxed text-center px-1 break-words">
+                        <div className="flex flex-col pt-2">
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-8 leading-relaxed text-center pr-10 break-words">
                             {receipt.content}
                           </h3>
 
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <div className="text-[10px] font-semibold tracking-wide uppercase opacity-70">
+                              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                 What
                               </div>
-                              <div className="mt-1 rounded-lg bg-white/80 px-2 py-1 text-center text-sm">
+                              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
                                 {receipt.what || 'unknown'}
                               </div>
                             </div>
 
                             <div>
-                              <div className="text-[10px] font-semibold tracking-wide uppercase opacity-70">
+                              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                 Who
                               </div>
-                              <div className="mt-1 rounded-lg bg-white/80 px-2 py-1 text-center text-sm">
+                              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
                                 {receipt.who || 'unknown'}
                               </div>
                             </div>
 
                             <div>
-                              <div className="text-[10px] font-semibold tracking-wide uppercase opacity-70">
+                              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                 When
                               </div>
-                              <div className="mt-1 rounded-lg bg-white/80 px-2 py-1 text-center text-sm">
+                              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
                                 {receipt.when_bucket || 'unknown'}
                               </div>
                             </div>
 
                             <div>
-                              <div className="text-[10px] font-semibold tracking-wide uppercase opacity-70">
+                              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                 Action
                               </div>
-                              <div className="mt-1 rounded-lg bg-white/80 px-2 py-1 text-center text-sm">
+                              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
                                 {receipt.obligation || 'unknown'}
                               </div>
                             </div>
