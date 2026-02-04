@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Trash2, X, Plus, Eye, Type, Mic, Camera, Image, Loader2 } from 'lucide-react';
+import { Trash2, X, Plus, Eye, Type, Mic, Camera, Image, Loader2, MicOff } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
-import { processReceiptImage, ExtractedReceiptInfo } from '../services/lifeReceiptsAI';
+import { processReceiptImage, processReceiptAudio, ExtractedReceiptInfo } from '../services/lifeReceiptsAI';
 
 function formatReceiptDate(createdAt: string): string {
   const receiptDate = new Date(createdAt);
@@ -48,9 +48,17 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [extractedInfo, setExtractedInfo] = useState<ExtractedReceiptInfo | null>(null);
   const [showNoReceiptFoundModal, setShowNoReceiptFoundModal] = useState(false);
 
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [extractionSource, setExtractionSource] = useState<'image' | 'voice' | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     loadReceipts();
@@ -120,7 +128,83 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
   const handleVoiceOption = () => {
     setShowAddModal(false);
-    console.log('Voice input - Coming soon');
+    setShowVoiceModal(true);
+    setRecordingTime(0);
+  };
+
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await processVoiceRecording(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+
+      recordingIntervalRef.current = window.setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      alert('Unable to access microphone. Please check permissions.');
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
+      }
+    }
+  };
+
+  const processVoiceRecording = async (audioBlob: Blob) => {
+    setIsProcessing(true);
+    setShowVoiceModal(false);
+
+    try {
+      const receiptData = await processReceiptAudio(audioBlob);
+
+      if (receiptData) {
+        setExtractedInfo(receiptData);
+        setExtractionSource('voice');
+      } else {
+        setShowNoReceiptFoundModal(true);
+      }
+    } catch (error) {
+      console.error('Error processing voice recording:', error);
+      alert('Failed to process recording. Please try again.');
+    } finally {
+      setIsProcessing(false);
+      setRecordingTime(0);
+    }
+  };
+
+  const closeVoiceModal = () => {
+    if (isRecording) {
+      stopVoiceRecording();
+    }
+    setShowVoiceModal(false);
+    setRecordingTime(0);
   };
 
   const handleTakePhotoOption = () => {
@@ -141,6 +225,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
       if (receiptData) {
         setExtractedInfo(receiptData);
+        setExtractionSource('image');
       } else {
         setShowNoReceiptFoundModal(true);
       }
@@ -505,6 +590,63 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
         </div>
       )}
 
+      {showVoiceModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="voice-modal-title">
+            <div className="flex items-center justify-between mb-6">
+              <h3 id="voice-modal-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {isRecording ? 'Recording...' : 'Voice Note'}
+              </h3>
+              <button
+                onClick={closeVoiceModal}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                aria-label="Close dialog"
+              >
+                <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center justify-center py-8">
+              {!isRecording ? (
+                <>
+                  <button
+                    onClick={startVoiceRecording}
+                    className="w-32 h-32 rounded-full bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 transition-all shadow-2xl hover:shadow-green-500/50 flex items-center justify-center group"
+                    aria-label="Start recording"
+                  >
+                    <Mic className="w-16 h-16 text-white group-hover:scale-110 transition-transform" />
+                  </button>
+                  <p className="text-gray-600 dark:text-gray-400 mt-6 text-center">
+                    Tap the microphone to start recording
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="relative">
+                    <button
+                      onClick={stopVoiceRecording}
+                      className="w-32 h-32 rounded-full bg-red-500 hover:bg-red-600 transition-all shadow-2xl hover:shadow-red-500/50 flex items-center justify-center animate-pulse"
+                      aria-label="Stop recording"
+                    >
+                      <MicOff className="w-16 h-16 text-white" />
+                    </button>
+                    <div className="absolute inset-0 rounded-full border-4 border-red-400 animate-ping opacity-75"></div>
+                  </div>
+                  <div className="mt-6 text-center">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                      {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Tap to stop recording
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <input
         ref={fileInputRef}
         type="file"
@@ -571,10 +713,12 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-sm w-full text-center border border-gray-200 dark:border-gray-700 shadow-2xl">
             <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
             <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Processing Image
+              {extractionSource === 'voice' ? 'Processing Recording' : 'Processing Image'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Analyzing your image with AI...
+              {extractionSource === 'voice'
+                ? 'Transcribing and analyzing your recording...'
+                : 'Analyzing your image with AI...'}
             </p>
           </div>
         </div>
@@ -638,12 +782,16 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
               <button
                 onClick={() => {
                   setExtractedInfo(null);
-                  setShowAddModal(true);
+                  if (extractionSource === 'voice') {
+                    setShowVoiceModal(true);
+                  } else {
+                    setShowAddModal(true);
+                  }
                 }}
                 disabled={submitting}
                 className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
               >
-                Try Another Image
+                {extractionSource === 'voice' ? 'Record Another' : 'Try Another Image'}
               </button>
             </div>
           </div>
