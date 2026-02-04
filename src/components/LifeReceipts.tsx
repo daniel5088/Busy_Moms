@@ -41,7 +41,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTextModal, setShowTextModal] = useState(false);
 
-  const [showCameraMenu, setShowCameraMenu] = useState(false);
   const [showCameraView, setShowCameraView] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
@@ -50,7 +49,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [showNoReceiptFoundModal, setShowNoReceiptFoundModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -127,17 +125,16 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
   const handleTakePhotoOption = () => {
     setShowAddModal(false);
-    setShowCameraMenu(true);
+    startCamera();
   };
 
   const handleUploadPhotoOption = () => {
     setShowAddModal(false);
-    setShowCameraMenu(true);
+    fileInputRef.current?.click();
   };
 
   const processImage = async (file: File) => {
     setIsProcessing(true);
-    setShowCameraMenu(false);
 
     try {
       const receiptData = await processReceiptImage(file);
@@ -181,7 +178,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
       setCameraStream(stream);
       setShowCameraView(true);
-      setShowCameraMenu(false);
 
       await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -254,7 +250,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
           setCameraStream(null);
         }
         setShowCameraView(false);
-        setShowCameraMenu(false);
 
         const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
         await processImage(file);
@@ -268,7 +263,6 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
       setCameraStream(null);
     }
     setShowCameraView(false);
-    setShowCameraMenu(false);
   };
 
   const addReceiptFromImage = async () => {
@@ -511,61 +505,13 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
         </div>
       )}
 
-      {showCameraMenu && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="camera-menu-title">
-            <div className="flex items-center justify-between mb-4">
-              <h3 id="camera-menu-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Receipt from Image</h3>
-              <button
-                onClick={() => setShowCameraMenu(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                aria-label="Close dialog"
-              >
-                <X className="w-6 h-6 text-gray-600 dark:text-gray-400" aria-hidden="true" />
-              </button>
-            </div>
-
-            <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-              Capture or select an image with receipt details
-            </p>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={startCamera}
-                className="h-32 bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl font-medium hover:from-rose-600 hover:to-rose-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
-              >
-                <Camera className="w-8 h-8" aria-hidden="true" />
-                <span className="text-sm">Camera</span>
-              </button>
-
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="h-32 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl font-medium hover:from-amber-600 hover:to-amber-700 transition flex flex-col items-center justify-center gap-2 shadow-lg"
-              >
-                <Image className="w-8 h-8" aria-hidden="true" />
-                <span className="text-sm">Gallery</span>
-              </button>
-            </div>
-
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="user"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
-        </div>
-      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
 
       {showCameraView && (
         <div className="fixed inset-0 bg-black z-50 flex flex-col" role="dialog" aria-modal="true" aria-labelledby="camera-view-title">
@@ -692,7 +638,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
               <button
                 onClick={() => {
                   setExtractedInfo(null);
-                  setShowCameraMenu(true);
+                  setShowAddModal(true);
                 }}
                 disabled={submitting}
                 className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
@@ -728,7 +674,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
               <button
                 onClick={() => {
                   setShowNoReceiptFoundModal(false);
-                  setShowCameraMenu(true);
+                  setShowAddModal(true);
                 }}
                 className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl"
               >
