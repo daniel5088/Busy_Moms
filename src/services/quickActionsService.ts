@@ -134,6 +134,37 @@ export const quickActionsService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Check if action already exists (even if disabled)
+    const { data: existing } = await supabase
+      .from('user_quick_actions')
+      .select(`
+        *,
+        action_type:quick_action_types(*)
+      `)
+      .eq('user_id', user.id)
+      .eq('action_type_id', actionTypeId)
+      .maybeSingle();
+
+    // If exists, re-enable and update position
+    if (existing) {
+      const { data, error } = await supabase
+        .from('user_quick_actions')
+        .update({
+          position,
+          enabled: true
+        })
+        .eq('id', existing.id)
+        .select(`
+          *,
+          action_type:quick_action_types(*)
+        `)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    // Otherwise, insert new
     const { data, error } = await supabase
       .from('user_quick_actions')
       .insert({
