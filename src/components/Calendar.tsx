@@ -16,6 +16,15 @@ import {
   Bell,
   Camera,
   Image,
+  Heart,
+  Droplet,
+  Activity,
+  Sparkles,
+  TrendingUp,
+  Moon,
+  Sun,
+  Zap,
+  AlertCircle,
 } from 'lucide-react';
 
 import { EventForm } from './forms/EventForm';
@@ -26,6 +35,7 @@ import { TravelTimeIndicator, TravelTimeBadge } from './TravelTimeIndicator';
 import { LocationAutocomplete } from './LocationAutocomplete';
 import { EventWeatherIcon, EventWeatherInsightsModal } from './EventWeatherIcon';
 import { googleCalendarService, GoogleCalendarEvent } from '../services/googleCalendar';
+import { cycleTrackerService, CycleSymptom } from '../services/cycleTrackerService';
 import { supabase } from '../lib/supabase';
 import type { Event as DbEvent } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -104,8 +114,7 @@ interface EventWeatherIconWrapperProps {
   getEventWeather: (location: string, eventDate: string, eventTime?: string | null, force?: boolean) => Promise<EventWeatherData | null>;
   getCachedWeather: (location: string, eventDate: string, eventTime?: string | null) => EventWeatherData | null;
   isWeatherLoading: (location: string, eventDate: string, eventTime?: string | null) => boolean;
-  onShowInsights: (weather: EventWeatherData | null) => void;
-  onShowLoading: () => void;
+  onShowInsights: (weather: EventWeatherData) => void;
 }
 
 function EventWeatherIconWrapper({
@@ -116,7 +125,6 @@ function EventWeatherIconWrapper({
   getCachedWeather,
   isWeatherLoading,
   onShowInsights,
-  onShowLoading,
 }: EventWeatherIconWrapperProps) {
   const [weather, setWeather] = useState<EventWeatherData | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -130,53 +138,19 @@ function EventWeatherIconWrapper({
     }
   }, [location, eventDate, eventTime, getCachedWeather]);
 
-  // Listen for weather cache updates from voice assistant
-  useEffect(() => {
-    const handleWeatherCacheUpdate = (e: CustomEvent) => {
-      // Check if this update is for our event
-      const normalizedLocation = location.trim().toLowerCase();
-      const detailLocation = (e.detail.location || '').trim().toLowerCase();
-
-      if (normalizedLocation === detailLocation && e.detail.date === eventDate) {
-        // Reload from cache
-        const cached = getCachedWeather(location, eventDate, eventTime);
-        if (cached) {
-          setWeather(cached);
-          setHasLoaded(true);
-        }
-      }
-    };
-
-    window.addEventListener('weatherCacheUpdated', handleWeatherCacheUpdate as EventListener);
-
-    return () => {
-      window.removeEventListener('weatherCacheUpdated', handleWeatherCacheUpdate as EventListener);
-    };
-  }, [location, eventDate, eventTime, getCachedWeather]);
-
   const handleClick = async () => {
-    // Show modal immediately in loading state
-    onShowLoading();
+    // If we have weather data, show insights
+    if (weather) {
+      onShowInsights(weather);
+      return;
+    }
 
-    // Always fetch fresh weather data when clicked (force refresh)
-    const data = await getEventWeather(location, eventDate, eventTime, true);
+    // Otherwise, fetch weather for this specific event location and date/time
+    const data = await getEventWeather(location, eventDate, eventTime, false);
     if (data) {
       setWeather(data);
       setHasLoaded(true);
       onShowInsights(data);
-
-      // Dispatch event to update other components (Dashboard)
-      window.dispatchEvent(new CustomEvent('weatherCacheUpdated', {
-        detail: {
-          location,
-          date: eventDate,
-          time: eventTime,
-          weatherData: data
-        }
-      }));
-    } else {
-      // If fetch failed, close the modal
-      onShowInsights(null);
     }
   };
 
@@ -187,7 +161,7 @@ function EventWeatherIconWrapper({
       weather={weather}
       loading={loading}
       onClick={handleClick}
-      size="lg"
+      size="sm"
     />
   );
 }
@@ -237,8 +211,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
 
   // Weather insights modal state
   const [weatherInsightsEvent, setWeatherInsightsEvent] = useState<EventWeatherData | null>(null);
-  const [weatherInsightsLoading, setWeatherInsightsLoading] = useState(false);
-  const [showWeatherInsights, setShowWeatherInsights] = useState(false);
   const [eventWeatherCache, setEventWeatherCache] = useState<Map<string, EventWeatherData>>(new Map());
 
   // Data
@@ -257,6 +229,20 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const [giftEventTitle, setGiftEventTitle] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<Set<number>>(new Set());
 
+  // Cycle Tracker state
+  const [cycleTrackerMode, setCycleTrackerMode] = useState(false);
+  const [periodStart, setPeriodStart] = useState<Date | null>(null);
+  const [cycleLength, setCycleLength] = useState(28);
+  const [periodLength, setPeriodLength] = useState(5);
+  const [symptoms, setSymptoms] = useState<Record<string, CycleSymptom>>({});
+  const [aiInsights, setAiInsights] = useState<any>(null);
+  const [prediction, setPrediction] = useState<any>(null);
+  const [symptomAnalysis, setSymptomAnalysis] = useState<any>(null);
+  const [cycleLoading, setCycleLoading] = useState(false);
+  const [loadingType, setLoadingType] = useState('');
+  const [cycleHistory, setCycleHistory] = useState<any[]>([]);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+
   // Tutorial
   const {
     visible: tutorialVisible,
@@ -272,32 +258,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       }
     },
   });
-
-  // Weather insights modal handlers
-  const handleShowWeatherInsightsLoading = useCallback(() => {
-    setShowWeatherInsights(true);
-    setWeatherInsightsLoading(true);
-    setWeatherInsightsEvent(null);
-  }, []);
-
-  const handleShowWeatherInsights = useCallback((weather: EventWeatherData | null) => {
-    if (weather) {
-      setWeatherInsightsEvent(weather);
-      setWeatherInsightsLoading(false);
-      setShowWeatherInsights(true);
-    } else {
-      // Close modal if no weather data (fetch failed)
-      setShowWeatherInsights(false);
-      setWeatherInsightsLoading(false);
-      setWeatherInsightsEvent(null);
-    }
-  }, []);
-
-  const handleCloseWeatherInsights = useCallback(() => {
-    setShowWeatherInsights(false);
-    setWeatherInsightsLoading(false);
-    setWeatherInsightsEvent(null);
-  }, []);
 
   // Handle initial selected date from dashboard navigation
   useEffect(() => {
@@ -315,33 +275,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       checkMorningPrefetch();
     }
   }, [user?.id, checkMorningPrefetch]);
-
-  // Listen for weather cache updates from Sara
-  useEffect(() => {
-    const handleWeatherCacheUpdate = async (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { location, date, time, weatherData } = customEvent.detail || {};
-
-      if (location && date && weatherData) {
-        // Get fresh weather data from cache
-        const weather = getCachedWeather(location, date, time);
-        if (weather) {
-          setEventWeatherCache((prev) => {
-            const newCache = new Map(prev);
-            const key = `${location}_${date}_${time || 'allday'}`;
-            newCache.set(key, weather);
-            return newCache;
-          });
-        }
-      }
-    };
-
-    window.addEventListener('weatherCacheUpdated', handleWeatherCacheUpdate);
-
-    return () => {
-      window.removeEventListener('weatherCacheUpdated', handleWeatherCacheUpdate);
-    };
-  }, [getCachedWeather]);
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
@@ -662,7 +595,153 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     const now = new Date();
     setCurrentDate(new Date(now.getFullYear(), now.getMonth(), 1));
     setSelectedDate(now);
+    // Exit cycle tracker mode when going to today
+    setCycleTrackerMode(false);
+    setShowAIPanel(false);
   }, []);
+
+  // Cycle Tracker functions
+  const loadCycleData = useCallback(async () => {
+    try {
+      const [cycleData, symptomsData, historyData] = await Promise.all([
+        cycleTrackerService.getCycleData(),
+        cycleTrackerService.getSymptoms(),
+        cycleTrackerService.getCycleHistory(),
+      ]);
+
+      if (cycleData) {
+        setPeriodStart(new Date(cycleData.period_start_date));
+        setCycleLength(cycleData.cycle_length);
+        setPeriodLength(cycleData.period_length);
+      }
+
+      const symptomsMap: Record<string, CycleSymptom> = {};
+      symptomsData.forEach(symptom => {
+        symptomsMap[symptom.symptom_date] = symptom;
+      });
+      setSymptoms(symptomsMap);
+      setCycleHistory(historyData);
+    } catch (error) {
+      console.error('Error loading cycle data:', error);
+    }
+  }, []);
+
+  const calculatePhase = useCallback((date: Date) => {
+    if (!periodStart) return null;
+    const daysSinceStart = Math.floor((date.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
+    const dayInCycle = ((daysSinceStart % cycleLength) + cycleLength) % cycleLength;
+    if (dayInCycle < periodLength) return { phase: 'period', cycleDay: dayInCycle + 1 };
+    if (dayInCycle < 14) return { phase: 'follicular', cycleDay: dayInCycle + 1 };
+    if (dayInCycle >= 12 && dayInCycle <= 16) return { phase: 'ovulation', cycleDay: dayInCycle + 1 };
+    return { phase: 'luteal', cycleDay: dayInCycle + 1 };
+  }, [periodStart, cycleLength, periodLength]);
+
+  const getPhaseColor = useCallback((phase: string) => {
+    const colors = {
+      period: 'bg-pink-500/20 border-pink-500',
+      follicular: 'bg-teal-500/20 border-teal-500',
+      ovulation: 'bg-amber-500/20 border-amber-500',
+      luteal: 'bg-blue-500/20 border-blue-500'
+    };
+    return colors[phase as keyof typeof colors] || '';
+  }, []);
+
+  const toggleCycleTracker = useCallback(() => {
+    if (!cycleTrackerMode) {
+      loadCycleData();
+    }
+    setCycleTrackerMode(!cycleTrackerMode);
+    setShowAIPanel(false);
+  }, [cycleTrackerMode, loadCycleData]);
+
+  const getAIInsights = async () => {
+    setCycleLoading(true);
+    setLoadingType('insights');
+    const currentPhase = calculatePhase(new Date());
+    if (!currentPhase) {
+      alert('Set your period start date first!');
+      setCycleLoading(false);
+      return;
+    }
+    try {
+      const symptomsList = Object.entries(symptoms)
+        .filter(([_, data]) => data.symptoms?.length > 0)
+        .map(([date, data]) => ({ date, symptoms: data.symptoms }));
+
+      const insights = await cycleTrackerService.callEdgeFunction('get_insights', {
+        currentPhase: currentPhase.phase as any,
+        cycleDay: currentPhase.cycleDay,
+        cycleLength,
+        periodLength,
+        symptoms: symptomsList,
+        cycleHistory,
+      });
+      setAiInsights(insights);
+      setShowAIPanel(true);
+    } catch (error) {
+      console.error('Error getting insights:', error);
+      alert('Failed to get AI insights');
+    }
+    setCycleLoading(false);
+    setLoadingType('');
+  };
+
+  const predictNextPeriod = async () => {
+    setCycleLoading(true);
+    setLoadingType('prediction');
+    const currentPhase = calculatePhase(new Date());
+    if (!currentPhase) {
+      alert('Set your period start date first!');
+      setCycleLoading(false);
+      return;
+    }
+    try {
+      const predictionData = await cycleTrackerService.callEdgeFunction('predict_period', {
+        currentPhase: currentPhase.phase as any,
+        cycleDay: currentPhase.cycleDay,
+        cycleLength,
+        periodLength,
+        cycleHistory,
+      });
+      setPrediction(predictionData);
+      setShowAIPanel(true);
+    } catch (error) {
+      console.error('Error predicting period:', error);
+      alert('Failed to predict next period');
+    }
+    setCycleLoading(false);
+    setLoadingType('');
+  };
+
+  const analyzeSymptoms = async () => {
+    setCycleLoading(true);
+    setLoadingType('analysis');
+    const symptomsList = Object.entries(symptoms)
+      .filter(([_, data]) => data.symptoms?.length > 0)
+      .map(([date, data]) => ({ date, symptoms: data.symptoms }));
+    if (symptomsList.length === 0) {
+      alert('Log some symptoms first!');
+      setCycleLoading(false);
+      return;
+    }
+    const currentPhase = calculatePhase(new Date());
+    try {
+      const analysis = await cycleTrackerService.callEdgeFunction('analyze_symptoms', {
+        currentPhase: currentPhase?.phase as any || 'period',
+        cycleDay: currentPhase?.cycleDay || 0,
+        cycleLength,
+        periodLength,
+        symptoms: symptomsList,
+      });
+      setSymptomAnalysis(analysis);
+      setShowAIPanel(true);
+    } catch (error) {
+      console.error('Error analyzing symptoms:', error);
+      alert('Failed to analyze symptoms');
+    }
+    setCycleLoading(false);
+    setLoadingType('');
+  };
 
   const onDayClick = useCallback((day: Date) => {
     setSelectedDate(day);
@@ -1318,6 +1397,19 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     >
                       Today
                     </button>
+                    <button
+                      onClick={toggleCycleTracker}
+                      className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+                        cycleTrackerMode
+                          ? 'bg-pink-500 text-white hover:bg-pink-600'
+                          : 'bg-pink-50 dark:bg-pink-900 text-pink-600 dark:text-pink-300 hover:bg-pink-100 dark:hover:bg-pink-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Heart className="w-4 h-4" />
+                        <span>Cycle Tracker</span>
+                      </div>
+                    </button>
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={goPrevMonth}
@@ -1361,12 +1453,15 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                     const inCurrentMonth = isCurrentMonth(day);
                     const isSelected = selectedDate && isSameDay(day, selectedDate);
                     const isToday = isSameDay(day, new Date());
+                    const phaseInfo = cycleTrackerMode ? calculatePhase(day) : null;
+                    const phaseColorClass = phaseInfo ? getPhaseColor(phaseInfo.phase) : '';
 
                     const dateLabel = day.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
                     const eventLabel = count > 0 ? `, ${count} event${count > 1 ? 's' : ''}` : '';
                     const selectedLabel = isSelected ? ', selected' : '';
                     const todayLabel = isToday ? ', today' : '';
-                    const ariaLabel = `${dateLabel}${eventLabel}${selectedLabel}${todayLabel}`;
+                    const phaseLabel = phaseInfo ? `, ${phaseInfo.phase} phase` : '';
+                    const ariaLabel = `${dateLabel}${eventLabel}${selectedLabel}${todayLabel}${phaseLabel}`;
 
                     return (
                       <button
@@ -1376,16 +1471,18 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                         aria-label={ariaLabel}
                         aria-pressed={isSelected}
                         className={`
-                          relative aspect-square rounded-xl p-2 transition-all
+                          relative aspect-square rounded-xl p-2 transition-all border-2
                           flex flex-col items-center justify-center
                           ${
-                            isSelected
-                              ? 'bg-rose-500 text-white shadow-lg scale-105'
+                            cycleTrackerMode && phaseInfo
+                              ? `${phaseColorClass} ${isSelected ? 'ring-2 ring-white shadow-lg scale-105' : ''}`
+                              : isSelected
+                              ? 'bg-rose-500 text-white shadow-lg scale-105 border-rose-500'
                               : isToday
-                                ? 'bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 font-bold border-2 border-rose-500 dark:border-rose-400'
+                                ? 'bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 font-bold border-rose-500 dark:border-rose-400'
                                 : inCurrentMonth
-                                  ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                  : 'text-gray-400 dark:text-gray-600'
+                                  ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent'
+                                  : 'text-gray-400 dark:text-gray-600 border-transparent'
                           }
                         `}
                       >
@@ -1427,6 +1524,149 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   >
                     <Camera className="w-6 h-6" aria-hidden="true" />
                   </button>
+                </div>
+
+                {/* Cycle Tracker AI Buttons */}
+                {cycleTrackerMode && (
+                  <div className="mt-4 space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={getAIInsights}
+                        disabled={cycleLoading && loadingType === 'insights'}
+                        className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 px-3 py-2 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm text-white"
+                      >
+                        {cycleLoading && loadingType === 'insights' ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" />Loading...</>
+                        ) : (
+                          <><Sparkles className="w-4 h-4" />Insights</>
+                        )}
+                      </button>
+                      <button
+                        onClick={predictNextPeriod}
+                        disabled={cycleLoading && loadingType === 'prediction'}
+                        className="flex-1 bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 px-3 py-2 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm text-white"
+                      >
+                        {cycleLoading && loadingType === 'prediction' ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" />Loading...</>
+                        ) : (
+                          <><TrendingUp className="w-4 h-4" />Predict</>
+                        )}
+                      </button>
+                      <button
+                        onClick={analyzeSymptoms}
+                        disabled={cycleLoading && loadingType === 'analysis'}
+                        className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 px-3 py-2 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm text-white"
+                      >
+                        {cycleLoading && loadingType === 'analysis' ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" />Loading...</>
+                        ) : (
+                          <><Activity className="w-4 h-4" />Analyze</>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Phase Legend */}
+                    <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
+                      {[
+                        { color: 'pink', label: 'Period' },
+                        { color: 'teal', label: 'Follicular' },
+                        { color: 'amber', label: 'Ovulation' },
+                        { color: 'blue', label: 'Luteal' }
+                      ].map(({ color, label }) => (
+                        <div key={label} className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded bg-${color}-500/20 border-2 border-${color}-500`} />
+                          <span className="text-gray-700 dark:text-gray-300">{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Insights Panel with Roll-out Animation */}
+                <div
+                  className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                    showAIPanel ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  {aiInsights && (
+                    <div className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-xl p-4 border border-pink-200 dark:border-pink-500/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-pink-500" />
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">AI Insights</h3>
+                        </div>
+                        <button
+                          onClick={() => setShowAIPanel(false)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="space-y-3 text-sm">
+                        <p className="text-gray-700 dark:text-gray-300">{aiInsights.currentPhaseInsight}</p>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Recommendations:</h4>
+                          <ul className="space-y-1">
+                            {aiInsights.recommendations.map((rec: string, i: number) => (
+                              <li key={i} className="text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                                <span className="text-pink-400">•</span><span>{rec}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {prediction && (
+                    <div className="bg-gradient-to-br from-teal-50 to-blue-50 dark:from-teal-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-teal-200 dark:border-teal-500/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-5 h-5 text-teal-500" />
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Period Prediction</h3>
+                        </div>
+                        <button
+                          onClick={() => setShowAIPanel(false)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <p className="text-lg font-bold text-teal-600 dark:text-teal-400">{prediction.nextPeriodDate}</p>
+                        <p className="text-gray-600 dark:text-gray-400">Confidence: {prediction.confidenceLevel}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {symptomAnalysis && (
+                    <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-rose-200 dark:border-rose-500/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Activity className="w-5 h-5 text-rose-500" />
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Symptom Analysis</h3>
+                        </div>
+                        <button
+                          onClick={() => setShowAIPanel(false)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Insights:</h4>
+                          <ul className="space-y-1">
+                            {symptomAnalysis.insights.map((ins: string, i: number) => (
+                              <li key={i} className="text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                                <span className="text-rose-400">•</span><span>{ins}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1490,8 +1730,14 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                             <h3 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors break-words flex-1 pr-2">
                               {ev.title}
                             </h3>
-                            <div className="flex items-center space-x-2 flex-shrink-0">
-                              {ev.location && (
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap flex-shrink-0">
+                              {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
+                            </span>
+                          </div>
+                          {ev.location && (
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 flex-1 min-w-0">
+                                {/* Weather icon for events with location */}
                                 <EventWeatherIconWrapper
                                   location={ev.location}
                                   eventDate={ev.event_date}
@@ -1499,18 +1745,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                                   getEventWeather={getEventWeather}
                                   getCachedWeather={getCachedWeather}
                                   isWeatherLoading={isWeatherLoading}
-                                  onShowInsights={handleShowWeatherInsights}
-                                  onShowLoading={handleShowWeatherInsightsLoading}
+                                  onShowInsights={setWeatherInsightsEvent}
                                 />
-                              )}
-                              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium whitespace-nowrap">
-                                {formatTimeRange(ev.start_time, ev.end_time) || 'All day'}
-                              </span>
-                            </div>
-                          </div>
-                          {ev.location && (
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 flex-1 min-w-0">
                                 <MapPin className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                                 <span className="truncate">{ev.location}</span>
                               </div>
@@ -2558,11 +2794,10 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
         />
 
         {/* Weather Insights Modal */}
-        {showWeatherInsights && (
+        {weatherInsightsEvent && (
           <EventWeatherInsightsModal
             weather={weatherInsightsEvent}
-            loading={weatherInsightsLoading}
-            onClose={handleCloseWeatherInsights}
+            onClose={() => setWeatherInsightsEvent(null)}
           />
         )}
       </div>
