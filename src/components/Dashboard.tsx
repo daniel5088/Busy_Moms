@@ -24,7 +24,9 @@ import {
   CloudSun,
   XCircle,
   Receipt,
+  Sliders,
 } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
@@ -50,6 +52,8 @@ import { useTutorial } from '../hooks/useTutorial';
 import { dashboardTutorialSteps } from '../utils/tutorialSteps';
 import { EventWeatherIcon, EventWeatherInsightsModal } from './EventWeatherIcon';
 import { useEventWeather, EventWeatherData } from '../hooks/useEventWeather';
+import { QuickActionsCustomizer } from './QuickActionsCustomizer';
+import { useQuickActions } from '../hooks/useQuickActions';
 
 import { SubScreen } from '../App';
 
@@ -248,6 +252,9 @@ export function Dashboard({
   const [affirmationStatus, setAffirmationStatus] = React.useState<string>('');
   const [showAboutMenu, setShowAboutMenu] = React.useState(false);
   const [showWeatherModal, setShowWeatherModal] = React.useState(false);
+  const [showQuickActionsCustomizer, setShowQuickActionsCustomizer] = React.useState(false);
+
+  const { quickActions: userQuickActions, loading: quickActionsLoading } = useQuickActions();
 
   const {
     visible: tutorialVisible,
