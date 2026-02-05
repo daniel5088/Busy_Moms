@@ -95,21 +95,22 @@ export function useQuickActions() {
       const actionType = availableTypes.find(t => t.id === actionTypeId);
       if (actionType) {
         const optimisticAction: UserQuickAction = {
-          id: `temp-${Date.now()}`,
+          id: `temp-${actionTypeId}-${Date.now()}`,
           user_id: '',
           action_type_id: actionTypeId,
           position: position,
           enabled: true,
           created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           action_type: actionType
         };
-        setQuickActions(prev => [...prev, optimisticAction]);
+        setQuickActions(prev => [...prev, optimisticAction].sort((a, b) => a.position - b.position));
       }
 
       // Update server in background
       await quickActionsService.addQuickAction(actionTypeId, position);
 
-      // Refresh from server to get the real ID
+      // Refresh from server to get the real ID and normalized positions
       await loadQuickActions(false);
     } catch (err) {
       console.error('Error adding action:', err);

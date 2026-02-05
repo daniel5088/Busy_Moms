@@ -94,8 +94,10 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
   };
 
   const handleAdd = async (typeId: string) => {
-    const maxPosition = quickActions.length > 0
-      ? Math.max(...quickActions.map(a => a.position))
+    // Filter out temporary items when calculating position
+    const realActions = quickActions.filter(a => !a.id.startsWith('temp-'));
+    const maxPosition = realActions.length > 0
+      ? Math.max(...realActions.map(a => a.position))
       : -1;
 
     setAddingActionId(typeId);

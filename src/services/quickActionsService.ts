@@ -147,12 +147,28 @@ export const quickActionsService = {
       .eq('action_type_id', actionTypeId)
       .maybeSingle();
 
-    // If exists, re-enable and update position
+    // If exists, re-enable it
     if (existing) {
+      // Get all current actions to find safe position
+      const { data: allActions } = await supabase
+        .from('user_quick_actions')
+        .select('position')
+        .eq('user_id', user.id)
+        .order('position');
+
+      // Find a safe position (max + 1 or fill gaps)
+      let safePosition = position;
+      const positions = new Set((allActions || []).map(a => a.position));
+
+      // If position is taken, use max + 1
+      if (positions.has(position)) {
+        safePosition = Math.max(...Array.from(positions)) + 1;
+      }
+
       const { data, error } = await supabase
         .from('user_quick_actions')
         .update({
-          position,
+          position: safePosition,
           enabled: true
         })
         .eq('id', existing.id)
@@ -166,13 +182,29 @@ export const quickActionsService = {
       return data;
     }
 
+    // Get all current actions to find safe position
+    const { data: allActions } = await supabase
+      .from('user_quick_actions')
+      .select('position')
+      .eq('user_id', user.id)
+      .order('position');
+
+    // Find a safe position
+    let safePosition = position;
+    const positions = new Set((allActions || []).map(a => a.position));
+
+    // If position is taken, use max + 1
+    if (positions.has(position)) {
+      safePosition = Math.max(0, ...Array.from(positions)) + 1;
+    }
+
     // Otherwise, insert new
     const { data, error } = await supabase
       .from('user_quick_actions')
       .insert({
         user_id: user.id,
         action_type_id: actionTypeId,
-        position,
+        position: safePosition,
         enabled: true
       })
       .select(`
@@ -204,5 +236,34 @@ export const quickActionsService = {
       .eq('user_id', user.id);
 
     await this.initializeQuickActions();
+  },
+
+  async normalizePositions(): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Get all actions ordered by current position
+    const { data: actions } = await supabase
+      .from('user_quick_actions')
+      .select('id, position')
+      .eq('user_id', user.id)
+      .order('position');
+
+    if (!actions || actions.length === 0) return;
+
+    // Create updates to normalize positions (0, 1, 2, 3...)
+    const updates = actions.map((action, index) => ({
+      id: action.id,
+      position: index
+    }));
+
+    // Only update if positions need normalization
+    const needsUpdate = updates.some((update, index) =>
+      actions[index].position !== update.position
+    );
+
+    if (needsUpdate) {
+      await this.updateMultiplePositions(updates);
+    }
   }
 };
