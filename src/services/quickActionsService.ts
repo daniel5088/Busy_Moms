@@ -85,18 +85,36 @@ export const quickActionsService = {
   async updateMultiplePositions(
     updates: { id: string; position: number }[]
   ): Promise<void> {
-    const promises = updates.map(({ id, position }) =>
+    // To avoid UNIQUE constraint violations, we need to update positions in two phases:
+    // 1. Set all positions to temporary values (1000+)
+    // 2. Set them to final values
+
+    // Phase 1: Set temporary positions
+    const tempUpdates = updates.map(({ id }, index) =>
+      supabase
+        .from('user_quick_actions')
+        .update({ position: 1000 + index })
+        .eq('id', id)
+    );
+
+    const tempResults = await Promise.all(tempUpdates);
+    const tempErrors = tempResults.filter(r => r.error);
+    if (tempErrors.length > 0) {
+      throw tempErrors[0].error;
+    }
+
+    // Phase 2: Set final positions
+    const finalUpdates = updates.map(({ id, position }) =>
       supabase
         .from('user_quick_actions')
         .update({ position })
         .eq('id', id)
     );
 
-    const results = await Promise.all(promises);
-    const errors = results.filter(r => r.error);
-
-    if (errors.length > 0) {
-      throw errors[0].error;
+    const finalResults = await Promise.all(finalUpdates);
+    const finalErrors = finalResults.filter(r => r.error);
+    if (finalErrors.length > 0) {
+      throw finalErrors[0].error;
     }
   },
 
