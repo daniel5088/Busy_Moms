@@ -51,6 +51,8 @@ import type { SubScreen } from '../App';
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
 const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 
+const COMMON_SYMPTOMS = ['Cramps', 'Headache', 'Bloating', 'Fatigue', 'Mood Swings', 'Breast Tenderness', 'Acne', 'Back Pain', 'Cravings', 'Insomnia'];
+
 interface ExtractedCalendarEvent {
   title: string;
   date: string;
@@ -664,7 +666,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       return;
     }
     try {
-      const symptomsList = Object.entries(symptoms)
+      const symptomsList = (Object.entries(symptoms) as [string, CycleSymptom][])
         .filter(([_, data]) => data.symptoms?.length > 0)
         .map(([date, data]) => ({ date, symptoms: data.symptoms }));
 
@@ -716,7 +718,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
   const analyzeSymptoms = async () => {
     setCycleLoading(true);
     setLoadingType('analysis');
-    const symptomsList = Object.entries(symptoms)
+    const symptomsList = (Object.entries(symptoms) as [string, CycleSymptom][])
       .filter(([_, data]) => data.symptoms?.length > 0)
       .map(([date, data]) => ({ date, symptoms: data.symptoms }));
     if (symptomsList.length === 0) {
@@ -1571,27 +1573,29 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   })}
                 </div>
 
-                {/* Add Event Button */}
-                <div className="flex gap-3 mt-6">
-                  <button
-                    id="add-event-button"
-                    onClick={() => {
-                      setSelectedEvent(null);
-                      setShowEventForm(true);
-                    }}
-                    className="flex-1 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2"
-                  >
-                    <Plus className="w-5 h-5" />
-                    <span>Add Event</span>
-                  </button>
-                  <button
-                    onClick={() => setShowCamera(true)}
-                    className="w-14 h-14 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-xl transition-all flex items-center justify-center shadow-lg flex-shrink-0"
-                    aria-label="Add event from image"
-                  >
-                    <Camera className="w-6 h-6" aria-hidden="true" />
-                  </button>
-                </div>
+                {/* Add Event Button - hidden in cycle tracker mode */}
+                {!cycleTrackerMode && (
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      id="add-event-button"
+                      onClick={() => {
+                        setSelectedEvent(null);
+                        setShowEventForm(true);
+                      }}
+                      className="flex-1 py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span>Add Event</span>
+                    </button>
+                    <button
+                      onClick={() => setShowCamera(true)}
+                      className="w-14 h-14 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-xl transition-all flex items-center justify-center shadow-lg flex-shrink-0"
+                      aria-label="Add event from image"
+                    >
+                      <Camera className="w-6 h-6" aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Cycle Tracker AI Buttons */}
                 {cycleTrackerMode && (
@@ -1738,8 +1742,89 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
               </div>
             </div>
 
-            {/* Events List - Right Side */}
+            {/* Right Side Panel */}
             <div className="lg:col-span-1">
+              {/* Cycle Tracker Symptoms & Settings Panel */}
+              {cycleTrackerMode ? (
+                <div className="space-y-4">
+                  {/* Symptoms Panel */}
+                  <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Symptoms</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      {selectedDate ? selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'Select a date'}
+                    </p>
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {COMMON_SYMPTOMS.map(symptom => {
+                        const dateKey = selectedDate ? toLocalISODate(selectedDate) : '';
+                        const selectedSymptoms = symptoms[dateKey]?.symptoms || [];
+                        return (
+                          <button key={symptom} onClick={() => logSymptom(symptom)}
+                            className={`w-full text-left px-4 py-2 rounded-lg transition-all text-sm ${
+                              selectedSymptoms.includes(symptom)
+                                ? 'bg-pink-500/30 border-2 border-pink-500 text-gray-900 dark:text-gray-100'
+                                : 'bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
+                            }`}>
+                            {symptom}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Cycle Settings Panel */}
+                  <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Cycle Settings</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">Last Period Start</label>
+                        <input type="date" value={periodStart ? toLocalISODate(periodStart) : ''}
+                          onChange={(e) => handlePeriodStart(new Date(e.target.value + 'T00:00:00'))}
+                          className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent" />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">Cycle Length (days)</label>
+                        <input type="number" value={cycleLength}
+                          onChange={(e) => updateCycleSettings(parseInt(e.target.value), periodLength)}
+                          className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent" min="20" max="40" />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">Period Length (days)</label>
+                        <input type="number" value={periodLength}
+                          onChange={(e) => updateCycleSettings(cycleLength, parseInt(e.target.value))}
+                          className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent" min="2" max="10" />
+                      </div>
+                    </div>
+
+                    {/* Phase Info Cards */}
+                    {(() => {
+                      const currentPhase = selectedDate ? calculatePhase(selectedDate) : null;
+                      const nextPeriod = periodStart ? new Date(periodStart.getTime() + cycleLength * 24 * 60 * 60 * 1000) : null;
+                      return (
+                        <div className="grid grid-cols-2 gap-2 mt-4">
+                          <div className="bg-pink-50 dark:bg-pink-900/20 rounded-lg p-3 border border-pink-200 dark:border-pink-700">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Next Period</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                              {nextPeriod ? nextPeriod.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Set date'}
+                            </p>
+                          </div>
+                          <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-3 border border-teal-200 dark:border-teal-700">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Current Phase</p>
+                            <p className="text-sm font-bold capitalize text-gray-900 dark:text-gray-100">{currentPhase ? currentPhase.phase : 'N/A'}</p>
+                          </div>
+                          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Cycle Day</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentPhase ? currentPhase.cycleDay : '-'}</p>
+                          </div>
+                          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border border-amber-200 dark:border-amber-700">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Cycle Length</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{cycleLength}d</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              ) : (
               <div id="calendar-events" className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                   {selectedDate && isSameDay(selectedDate, new Date()) ? 'Today' : 'Selected Day'}
@@ -1932,6 +2017,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   )}
                 </div>
               </div>
+              )}
             </div>
           </div>
 
