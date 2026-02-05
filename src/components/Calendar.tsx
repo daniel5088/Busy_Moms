@@ -1556,17 +1556,27 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                         `}
                       >
                         <span className="text-sm">{day.getDate()}</span>
-                        {count > 0 && (
-                          <div className="flex gap-0.5 mt-1" aria-hidden="true">
-                            {Array.from({ length: Math.min(count, 3) }).map((_, idx) => (
-                              <div
-                                key={idx}
-                                className={`w-1 h-1 rounded-full ${
-                                  isSelected ? 'bg-white' : 'bg-rose-500'
-                                }`}
-                              />
-                            ))}
-                          </div>
+                        {cycleTrackerMode ? (
+                          (() => {
+                            const dateKey = toLocalISODate(day);
+                            const hasSymptoms = symptoms[dateKey]?.symptoms?.length > 0;
+                            return hasSymptoms ? (
+                              <div className="absolute bottom-1 w-1.5 h-1.5 bg-pink-400 rounded-full" />
+                            ) : null;
+                          })()
+                        ) : (
+                          count > 0 && (
+                            <div className="flex gap-0.5 mt-1" aria-hidden="true">
+                              {Array.from({ length: Math.min(count, 3) }).map((_, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`w-1 h-1 rounded-full ${
+                                    isSelected ? 'bg-white' : 'bg-rose-500'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          )
                         )}
                       </button>
                     );
