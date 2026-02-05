@@ -2,18 +2,18 @@
 export function getGradientClasses(from: string, to: string): string {
   const key = `${from}-${to}`;
   const gradientMap: Record<string, string> = {
-    // Original hardcoded colors (solid colors, not gradients)
-    'amber-100-amber-900': 'from-amber-100 to-amber-100',
-    'purple-100-purple-900': 'from-purple-100 to-purple-100',
-    'green-100-green-900': 'from-green-100 to-green-100',
-    'blue-100-blue-900': 'from-blue-100 to-blue-100',
-    'teal-100-teal-900': 'from-teal-100 to-teal-100',
-    'rose-100-rose-900': 'from-rose-100 to-rose-100',
-    'indigo-100-indigo-900': 'from-indigo-100 to-indigo-100',
-    'pink-100-pink-900': 'from-pink-100 to-pink-100',
-    'gray-100-gray-700': 'from-gray-100 to-gray-100',
+    // Solid colors matching original design
+    'amber-600-amber-600': 'from-amber-600 to-amber-600',
+    'purple-600-purple-600': 'from-purple-600 to-purple-600',
+    'green-600-green-600': 'from-green-600 to-green-600',
+    'blue-600-blue-600': 'from-blue-600 to-blue-600',
+    'teal-600-teal-600': 'from-teal-600 to-teal-600',
+    'rose-600-rose-600': 'from-rose-600 to-rose-600',
+    'indigo-600-indigo-600': 'from-indigo-600 to-indigo-600',
+    'pink-600-pink-600': 'from-pink-600 to-pink-600',
+    'gray-500-gray-500': 'from-gray-500 to-gray-500',
     
-    // Legacy gradient mappings (if needed)
+    // Legacy gradient mappings
     'orange-500-pink-500': 'from-orange-500 to-pink-500',
     'purple-500-violet-500': 'from-purple-500 to-violet-500',
     'green-500-emerald-500': 'from-green-500 to-emerald-500',
@@ -30,16 +30,16 @@ export function getGradientClasses(from: string, to: string): string {
 export function getGradientHoverClasses(from: string, to: string): string {
   const key = `${from}-${to}`;
   const hoverMap: Record<string, string> = {
-    // Hover states for original colors (slightly darker on hover)
-    'amber-100-amber-900': 'hover:from-amber-200 hover:to-amber-200',
-    'purple-100-purple-900': 'hover:from-purple-200 hover:to-purple-200',
-    'green-100-green-900': 'hover:from-green-200 hover:to-green-200',
-    'blue-100-blue-900': 'hover:from-blue-200 hover:to-blue-200',
-    'teal-100-teal-900': 'hover:from-teal-200 hover:to-teal-200',
-    'rose-100-rose-900': 'hover:from-rose-200 hover:to-rose-200',
-    'indigo-100-indigo-900': 'hover:from-indigo-200 hover:to-indigo-200',
-    'pink-100-pink-900': 'hover:from-pink-200 hover:to-pink-200',
-    'gray-100-gray-700': 'hover:from-gray-200 hover:to-gray-200',
+    // Hover states (slightly darker)
+    'amber-600-amber-600': 'hover:from-amber-700 hover:to-amber-700',
+    'purple-600-purple-600': 'hover:from-purple-700 hover:to-purple-700',
+    'green-600-green-600': 'hover:from-green-700 hover:to-green-700',
+    'blue-600-blue-600': 'hover:from-blue-700 hover:to-blue-700',
+    'teal-600-teal-600': 'hover:from-teal-700 hover:to-teal-700',
+    'rose-600-rose-600': 'hover:from-rose-700 hover:to-rose-700',
+    'indigo-600-indigo-600': 'hover:from-indigo-700 hover:to-indigo-700',
+    'pink-600-pink-600': 'hover:from-pink-700 hover:to-pink-700',
+    'gray-500-gray-500': 'hover:from-gray-600 hover:to-gray-600',
     
     // Legacy hover states
     'orange-500-pink-500': 'hover:from-orange-600 hover:to-pink-600',
