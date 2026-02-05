@@ -255,7 +255,7 @@ export function Dashboard({
   const [showWeatherModal, setShowWeatherModal] = React.useState(false);
   const [showQuickActionsCustomizer, setShowQuickActionsCustomizer] = React.useState(false);
 
-  const { quickActions: userQuickActions, loading: quickActionsLoading } = useQuickActions();
+  const { quickActions: userQuickActions, loading: quickActionsLoading, reload: reloadQuickActions } = useQuickActions();
 
   const {
     visible: tutorialVisible,
@@ -1455,7 +1455,10 @@ export function Dashboard({
       {/* Quick Actions Customizer Modal */}
       {showQuickActionsCustomizer && (
         <QuickActionsCustomizer
-          onClose={() => setShowQuickActionsCustomizer(false)}
+          onClose={() => {
+            setShowQuickActionsCustomizer(false);
+            reloadQuickActions(false);
+          }}
         />
       )}
     </>
