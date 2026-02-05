@@ -36,6 +36,8 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [addingActionId, setAddingActionId] = useState<string | null>(null);
+  const [justAddedIds, setJustAddedIds] = useState<Set<string>>(new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
 
   const getIconComponent = (iconName: string) => {
     const Icon = (Icons as any)[iconName];
@@ -99,8 +101,19 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
     setAddingActionId(typeId);
     try {
       await addAction(typeId, maxPosition + 1);
+      // Track just added items for animation
+      const tempId = `temp-${typeId}`;
+      setJustAddedIds(prev => new Set(prev).add(tempId));
+
       // Don't close the menu so users can add multiple actions
-      setTimeout(() => setAddingActionId(null), 500);
+      setTimeout(() => {
+        setAddingActionId(null);
+        setJustAddedIds(prev => {
+          const next = new Set(prev);
+          next.delete(tempId);
+          return next;
+        });
+      }, 800);
     } catch (err) {
       console.error('Failed to add action:', err);
       setAddingActionId(null);
@@ -108,11 +121,26 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
   };
 
   const handleRemove = async (actionId: string) => {
-    try {
-      await removeAction(actionId);
-    } catch (err) {
-      console.error('Failed to remove action:', err);
-    }
+    setRemovingIds(prev => new Set(prev).add(actionId));
+
+    // Wait for animation before actually removing
+    setTimeout(async () => {
+      try {
+        await removeAction(actionId);
+        setRemovingIds(prev => {
+          const next = new Set(prev);
+          next.delete(actionId);
+          return next;
+        });
+      } catch (err) {
+        console.error('Failed to remove action:', err);
+        setRemovingIds(prev => {
+          const next = new Set(prev);
+          next.delete(actionId);
+          return next;
+        });
+      }
+    }, 300);
   };
 
   const handleReset = async () => {
@@ -125,8 +153,15 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
     }
   };
 
-  const usedActionTypes = new Set(quickActions.map(a => a.action_type_id));
-  const availableToAdd = availableTypes.filter(t => !usedActionTypes.has(t.id));
+  // Recalculate available actions whenever quickActions or availableTypes change
+  const usedActionTypes = React.useMemo(
+    () => new Set(quickActions.map(a => a.action_type_id)),
+    [quickActions]
+  );
+  const availableToAdd = React.useMemo(
+    () => availableTypes.filter(t => !usedActionTypes.has(t.id)),
+    [availableTypes, usedActionTypes]
+  );
 
   if (loading) {
     return (
@@ -178,26 +213,34 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
               </button>
             </div>
 
-            <div className="space-y-2">
-              {quickActions.map((action, index) => {
+            <div className="space-y-2 relative">
+              {quickActions.filter(action => !removingIds.has(action.id)).map((action, index) => {
                 const Icon = getIconComponent(action.action_type?.icon || 'HelpCircle');
                 const isDragging = draggedItem?.id === action.id;
                 const isDragOver = dragOverIndex === index;
+                const isJustAdded = action.id.startsWith('temp-') || justAddedIds.has(`temp-${action.action_type_id}`);
+                const isRemoving = removingIds.has(action.id);
 
                 return (
                   <div
                     key={action.id}
-                    draggable
+                    draggable={!isRemoving}
                     onDragStart={(e) => handleDragStart(e, action)}
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDrop={(e) => handleDrop(e, index)}
                     onDragEnd={() => setDraggedItem(null)}
+                    style={{
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transform: isDragging ? 'scale(0.95)' : 'scale(1)',
+                      animation: isJustAdded ? 'slideInUp 0.4s ease-out' : isRemoving ? 'slideOut 0.3s ease-in forwards' : 'none',
+                    }}
                     className={`
-                      group flex items-center gap-3 p-4 rounded-xl border-2 transition-all
-                      ${isDragging ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}
+                      group flex items-center gap-3 p-4 rounded-xl border-2
+                      ${isDragging ? 'opacity-50 shadow-2xl z-50' : 'opacity-100'}
                       ${isDragOver ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700/50'}
+                      ${isJustAdded ? 'border-green-400 ring-2 ring-green-200 dark:ring-green-800' : ''}
                       ${action.enabled ? '' : 'opacity-60'}
-                      hover:shadow-md cursor-move
+                      ${isRemoving ? '' : 'hover:shadow-md cursor-move'}
                     `}
                   >
                     <GripVertical className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />

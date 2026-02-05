@@ -19,7 +19,7 @@ export function useQuickActions() {
         quickActionsService.getActionTypes()
       ]);
 
-      if (actions.length === 0) {
+      if (actions.length === 0 && showLoading) {
         await quickActionsService.initializeQuickActions();
         const newActions = await quickActionsService.getUserQuickActions();
         setQuickActions(newActions);
