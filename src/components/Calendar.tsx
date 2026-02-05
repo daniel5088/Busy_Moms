@@ -1611,6 +1611,34 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   </div>
                 )}
 
+                {/* Phase Info Cards - shown between calendar and AI buttons */}
+                {cycleTrackerMode && (() => {
+                  const currentPhase = selectedDate ? calculatePhase(selectedDate) : null;
+                  const nextPeriod = periodStart ? new Date(periodStart.getTime() + cycleLength * 24 * 60 * 60 * 1000) : null;
+                  return (
+                    <div className="grid grid-cols-4 gap-2 mt-4">
+                      <div className="bg-pink-50 dark:bg-pink-900/20 rounded-lg p-3 border border-pink-200 dark:border-pink-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Next Period</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                          {nextPeriod ? nextPeriod.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Set date'}
+                        </p>
+                      </div>
+                      <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-3 border border-teal-200 dark:border-teal-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Phase</p>
+                        <p className="text-sm font-bold capitalize text-gray-900 dark:text-gray-100">{currentPhase ? currentPhase.phase : 'N/A'}</p>
+                      </div>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Cycle Day</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentPhase ? currentPhase.cycleDay : '-'}</p>
+                      </div>
+                      <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border border-amber-200 dark:border-amber-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Cycle</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{cycleLength}d</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Cycle Tracker AI Buttons */}
                 {cycleTrackerMode && (
                   <div className="mt-4 space-y-2">
@@ -1808,34 +1836,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent" min="2" max="10" />
                       </div>
                     </div>
-
-                    {/* Phase Info Cards */}
-                    {(() => {
-                      const currentPhase = selectedDate ? calculatePhase(selectedDate) : null;
-                      const nextPeriod = periodStart ? new Date(periodStart.getTime() + cycleLength * 24 * 60 * 60 * 1000) : null;
-                      return (
-                        <div className="grid grid-cols-2 gap-2 mt-4">
-                          <div className="bg-pink-50 dark:bg-pink-900/20 rounded-lg p-3 border border-pink-200 dark:border-pink-700">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Next Period</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                              {nextPeriod ? nextPeriod.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Set date'}
-                            </p>
-                          </div>
-                          <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-3 border border-teal-200 dark:border-teal-700">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Current Phase</p>
-                            <p className="text-sm font-bold capitalize text-gray-900 dark:text-gray-100">{currentPhase ? currentPhase.phase : 'N/A'}</p>
-                          </div>
-                          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Cycle Day</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentPhase ? currentPhase.cycleDay : '-'}</p>
-                          </div>
-                          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border border-amber-200 dark:border-amber-700">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Cycle Length</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{cycleLength}d</p>
-                          </div>
-                        </div>
-                      );
-                    })()}
                   </div>
                 </div>
               ) : (
