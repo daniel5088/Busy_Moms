@@ -89,11 +89,14 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
   };
 
   const handleSkip = () => {
-    if (queue.length <= 1) return;
+    if (queue.length === 0) return;
 
-    const currentReceipt = queue[0];
-    const newQueue = [...queue.slice(1), currentReceipt];
+    const newQueue = queue.slice(1);
     setQueue(newQueue);
+
+    if (newQueue.length === 0) {
+      onClose();
+    }
   };
 
   if (queue.length === 0) {
@@ -178,13 +181,13 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
 
           {queue.length >= 2 && (
             <div
-              className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-10 opacity-60"
+              className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-10 opacity-60 transition-all duration-300"
               style={{ transform: 'translateY(-8px) scale(0.97)' }}
             />
           )}
           {queue.length >= 3 && (
             <div
-              className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-20 opacity-40"
+              className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-20 opacity-40 transition-all duration-300"
               style={{ transform: 'translateY(-16px) scale(0.94)' }}
             />
           )}
@@ -220,8 +223,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
 
           <button
             onClick={handleSkip}
-            disabled={queue.length <= 1}
-            className="px-6 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
             aria-label="Skip to next receipt"
           >
             <div className="flex items-center gap-2">
