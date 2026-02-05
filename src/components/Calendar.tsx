@@ -743,6 +743,73 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     setLoadingType('');
   };
 
+  const logSymptom = async (symptom: string) => {
+    if (!selectedDate) return;
+    const dateKey = toLocalISODate(selectedDate);
+    const currentSymptoms = symptoms[dateKey]?.symptoms || [];
+    const updatedSymptoms = currentSymptoms.includes(symptom)
+      ? currentSymptoms.filter(s => s !== symptom)
+      : [...currentSymptoms, symptom];
+
+    try {
+      await cycleTrackerService.saveSymptom({
+        symptom_date: dateKey,
+        symptoms: updatedSymptoms,
+      });
+
+      setSymptoms({
+        ...symptoms,
+        [dateKey]: {
+          ...symptoms[dateKey],
+          symptom_date: dateKey,
+          symptoms: updatedSymptoms,
+        },
+      });
+    } catch (error) {
+      console.error('Error saving symptom:', error);
+    }
+  };
+
+  const handlePeriodStart = async (date: Date) => {
+    try {
+      setPeriodStart(date);
+
+      await cycleTrackerService.saveCycleData({
+        period_start_date: toLocalISODate(date),
+        cycle_length: cycleLength,
+        period_length: periodLength,
+      });
+
+      await cycleTrackerService.addCycleHistory({
+        period_start_date: toLocalISODate(date),
+        cycle_length: cycleLength,
+        period_length: periodLength,
+      });
+
+      const historyData = await cycleTrackerService.getCycleHistory();
+      setCycleHistory(historyData);
+    } catch (error) {
+      console.error('Error saving period start:', error);
+    }
+  };
+
+  const updateCycleSettings = async (newCycleLength: number, newPeriodLength: number) => {
+    try {
+      setCycleLength(newCycleLength);
+      setPeriodLength(newPeriodLength);
+
+      if (periodStart) {
+        await cycleTrackerService.saveCycleData({
+          period_start_date: toLocalISODate(periodStart),
+          cycle_length: newCycleLength,
+          period_length: newPeriodLength,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating cycle settings:', error);
+    }
+  };
+
   const onDayClick = useCallback((day: Date) => {
     setSelectedDate(day);
   }, []);
