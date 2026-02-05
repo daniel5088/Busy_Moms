@@ -170,7 +170,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-400"></div>
           </div>
         </div>
       </div>
@@ -180,7 +180,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Settings className="w-6 h-6 text-white" />
             <h2 className="text-xl font-bold text-white">Customize Quick Actions</h2>
@@ -239,7 +239,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                     className={`
                       group flex items-center gap-3 p-4 rounded-xl border-2
                       ${isDragging ? 'opacity-50 shadow-2xl z-50' : 'opacity-100'}
-                      ${isDragOver ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700/50'}
+                      ${isDragOver ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700/50'}
                       ${isJustAdded ? 'border-green-400 ring-2 ring-green-200 dark:ring-green-800' : ''}
                       ${action.enabled ? '' : 'opacity-60'}
                       ${isRemoving ? '' : 'hover:shadow-md cursor-move'}
@@ -299,7 +299,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                 {!showAddMenu ? (
                   <button
                     onClick={() => setShowAddMenu(true)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-orange-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-pink-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all"
                   >
                     <Plus className="w-5 h-5" />
                     Add Quick Action
@@ -326,7 +326,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                           className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${
                             isAdding
                               ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                              : 'border-gray-200 dark:border-gray-700 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20'
                           }`}
                         >
                           <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getGradientClasses(type.gradient_from, type.gradient_to)} flex items-center justify-center text-white flex-shrink-0`}>
@@ -362,7 +362,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
         <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-900/50">
           <button
             onClick={onClose}
-            className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+            className="w-full px-6 py-3 bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
           >
             Done
           </button>
