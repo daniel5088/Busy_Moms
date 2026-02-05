@@ -54,6 +54,7 @@ import { EventWeatherIcon, EventWeatherInsightsModal } from './EventWeatherIcon'
 import { useEventWeather, EventWeatherData } from '../hooks/useEventWeather';
 import { QuickActionsCustomizer } from './QuickActionsCustomizer';
 import { useQuickActions } from '../hooks/useQuickActions';
+import { getGradientClasses, getGradientHoverClasses } from '../utils/gradientMapper';
 
 import { SubScreen } from '../App';
 
@@ -743,22 +744,17 @@ export function Dashboard({
       },
     };
 
-    const gradients = [
-      { bg: 'from-orange-500 to-pink-500', hover: 'hover:from-orange-600 hover:to-pink-600' },
-      { bg: 'from-blue-500 to-cyan-500', hover: 'hover:from-blue-600 hover:to-cyan-600' },
-      { bg: 'from-green-500 to-emerald-500', hover: 'hover:from-green-600 hover:to-emerald-600' },
-      { bg: 'from-purple-500 to-violet-500', hover: 'hover:from-purple-600 hover:to-violet-600' },
-      { bg: 'from-teal-500 to-cyan-500', hover: 'hover:from-teal-600 hover:to-cyan-600' },
-      { bg: 'from-rose-500 to-pink-500', hover: 'hover:from-rose-600 hover:to-pink-600' },
-      { bg: 'from-slate-500 to-gray-600', hover: 'hover:from-slate-600 hover:to-gray-700' },
-      { bg: 'from-amber-500 to-orange-500', hover: 'hover:from-amber-600 hover:to-orange-600' },
-      { bg: 'from-yellow-500 to-orange-500', hover: 'hover:from-yellow-600 hover:to-orange-600' },
-    ];
-
-    return userQuickActions.map((userAction, index) => {
+    return userQuickActions.map((userAction) => {
       const config = actionMap[userAction.action_type_id] || {};
       const Icon = getIconComponent(userAction.action_type?.icon || 'HelpCircle');
-      const gradient = gradients[index % gradients.length];
+
+      // Use gradient from database
+      const gradientFrom = userAction.action_type?.gradient_from || 'orange-500';
+      const gradientTo = userAction.action_type?.gradient_to || 'pink-500';
+      const gradient = {
+        bg: getGradientClasses(gradientFrom, gradientTo),
+        hover: getGradientHoverClasses(gradientFrom, gradientTo),
+      };
 
       return {
         icon: Icon,

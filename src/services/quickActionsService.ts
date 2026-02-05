@@ -7,6 +7,8 @@ export interface QuickActionType {
   icon: string;
   default_enabled: boolean;
   sort_order: number;
+  gradient_from: string;
+  gradient_to: string;
   created_at: string;
 }
 

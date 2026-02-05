@@ -12,6 +12,7 @@ import {
 import * as Icons from 'lucide-react';
 import { useQuickActions } from '../hooks/useQuickActions';
 import { UserQuickAction, QuickActionType } from '../services/quickActionsService';
+import { getGradientClasses } from '../utils/gradientMapper';
 
 interface QuickActionsCustomizerProps {
   onClose: () => void;
@@ -199,7 +200,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                     <div className={`
                       flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center
                       ${action.enabled
-                        ? 'bg-gradient-to-br from-orange-500 to-pink-500 text-white'
+                        ? `bg-gradient-to-br ${getGradientClasses(action.action_type?.gradient_from || 'orange-500', action.action_type?.gradient_to || 'pink-500')} text-white`
                         : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
                       }
                     `}>
@@ -272,7 +273,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                           onClick={() => handleAdd(type.id)}
                           className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all text-left"
                         >
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white flex-shrink-0">
+                          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getGradientClasses(type.gradient_from, type.gradient_to)} flex items-center justify-center text-white flex-shrink-0`}>
                             <Icon className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
