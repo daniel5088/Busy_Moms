@@ -195,6 +195,7 @@ interface DashboardProps {
   onOpenAffirmationSettings?: () => void;
   onNavigateToCalendarCamera?: () => void;
   onNavigateToWellness?: () => void;
+  onNavigateToRecipes?: () => void;
   onNavigateToEvent?: (eventDate: string) => void;
   openAboutDialog?: boolean;
   onAboutDialogOpened?: () => void;
@@ -208,6 +209,7 @@ export function Dashboard({
   onOpenAffirmationSettings,
   onNavigateToCalendarCamera,
   onNavigateToWellness,
+  onNavigateToRecipes,
   onNavigateToEvent,
   openAboutDialog = false,
   onAboutDialogOpened,
@@ -739,7 +741,7 @@ export function Dashboard({
         desc: 'Find perfect gifts',
       },
       'recipes': {
-        action: () => onNavigateToSubScreen('recipes'),
+        action: onNavigateToRecipes,
         desc: 'Browse recipes',
       },
     };
@@ -764,7 +766,7 @@ export function Dashboard({
         gradient: gradient,
       };
     });
-  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToWellness]);
+  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToWellness, onNavigateToRecipes]);
 
   if (loading) {
     return <DashboardSkeleton />;

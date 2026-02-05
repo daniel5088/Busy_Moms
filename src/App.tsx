@@ -480,6 +480,10 @@ function App() {
                     onNavigateToWellness={() => {
                       setCurrentSubScreen('wellness');
                     }}
+                    onNavigateToRecipes={() => {
+                      setCurrentSubScreen('shopping');
+                      setOpenRecipesTab(true);
+                    }}
                     onNavigateToEvent={(eventDate: string) => {
                       setSelectedEventDate(eventDate);
                       setCurrentScreen('calendar');
