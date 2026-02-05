@@ -1,0 +1,238 @@
+import React, { useState, useEffect } from 'react';
+import { X, Check, Sparkles, SkipForward } from 'lucide-react';
+import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
+
+interface ReceiptTriageFlowProps {
+  receipts: LifeReceipt[];
+  onClose: () => void;
+  onReceiptDeleted: (id: string) => void;
+}
+
+const getPriorityOrder = (whenBucket: string): number => {
+  const priorities: Record<string, number> = {
+    very_important: 0,
+    now: 1,
+    soon: 2,
+    someday: 3,
+  };
+  return priorities[whenBucket.toLowerCase()] ?? 4;
+};
+
+const getBorderStyle = (whenBucket: string): string => {
+  const bucket = whenBucket.toLowerCase();
+  switch (bucket) {
+    case 'very_important':
+      return 'border-4 border-red-500';
+    case 'now':
+      return 'border-4 border-orange-500';
+    case 'soon':
+      return 'border-2 border-orange-400';
+    case 'someday':
+      return 'border-2 border-yellow-400';
+    default:
+      return 'border-2 border-yellow-400';
+  }
+};
+
+export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: ReceiptTriageFlowProps) {
+  const [stack, setStack] = useState<LifeReceipt[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const sortedReceipts = [...receipts].sort((a, b) => {
+      return getPriorityOrder(a.when_bucket) - getPriorityOrder(b.when_bucket);
+    });
+    setStack(sortedReceipts);
+  }, [receipts]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  const handleDone = async () => {
+    const currentReceipt = stack[currentIndex];
+    if (!currentReceipt || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      await lifeReceiptsService.deleteReceipt(currentReceipt.id);
+      onReceiptDeleted(currentReceipt.id);
+
+      const newStack = stack.filter((_, idx) => idx !== currentIndex);
+      setStack(newStack);
+
+      if (newStack.length === 0) {
+        onClose();
+      } else if (currentIndex >= newStack.length) {
+        setCurrentIndex(newStack.length - 1);
+      }
+    } catch (error) {
+      console.error('Error deleting receipt:', error);
+      alert('Failed to delete receipt. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSolve = () => {
+    // Placeholder - does nothing
+  };
+
+  const handleSkip = () => {
+    if (stack.length <= 1) return;
+
+    const newStack = [...stack];
+    const currentReceipt = newStack[currentIndex];
+    newStack.splice(currentIndex, 1);
+    newStack.push(currentReceipt);
+    setStack(newStack);
+  };
+
+  if (stack.length === 0) {
+    return null;
+  }
+
+  const currentReceipt = stack[currentIndex];
+  const remainingCount = stack.length;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="flex flex-col gap-4 animate-scaleIn w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-2">
+          <div className="text-white font-semibold text-sm">
+            {remainingCount} {remainingCount === 1 ? 'receipt' : 'receipts'} remaining
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+            aria-label="Close triage flow"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </div>
+
+        <div className="relative">
+          <div
+            className={`bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full min-h-[400px] p-6 ${getBorderStyle(
+              currentReceipt.when_bucket
+            )} transition-all duration-300`}
+          >
+            <div className="flex flex-col pt-2">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-8 leading-relaxed text-center break-words">
+                {currentReceipt.content}
+              </h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
+                    Where
+                  </div>
+                  <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
+                    {currentReceipt.where || 'unknown'}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
+                    Who
+                  </div>
+                  <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
+                    {currentReceipt.who || 'unknown'}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
+                    When
+                  </div>
+                  <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
+                    {currentReceipt.when_bucket || 'someday'}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
+                    Action
+                  </div>
+                  <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
+                    {currentReceipt.obligation || 'unknown'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {stack.length > 1 && (
+            <>
+              <div
+                className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-10 opacity-60"
+                style={{ transform: 'translateY(-8px) scale(0.97)' }}
+              />
+              <div
+                className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-20 opacity-40"
+                style={{ transform: 'translateY(-16px) scale(0.94)' }}
+              />
+            </>
+          )}
+        </div>
+
+        <div className="flex justify-center gap-3">
+          <button
+            onClick={handleDone}
+            disabled={isDeleting}
+            className="px-6 py-3 rounded-lg bg-green-50 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-700 shadow-sm hover:bg-green-100 dark:hover:bg-green-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 dark:focus:ring-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Mark as done and delete receipt"
+          >
+            <div className="flex items-center gap-2">
+              <Check className="w-5 h-5 text-green-700 dark:text-green-400" />
+              <span className="font-semibold text-green-700 dark:text-green-400 text-sm">
+                Done
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={handleSolve}
+            className="px-6 py-3 rounded-lg bg-pink-50 dark:bg-pink-900/30 border-2 border-pink-300 dark:border-pink-700 shadow-sm hover:bg-pink-100 dark:hover:bg-pink-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600"
+            aria-label="Solve receipt (placeholder)"
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-pink-700 dark:text-pink-400" />
+              <span className="font-semibold text-pink-700 dark:text-pink-400 text-sm">
+                Solve
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={handleSkip}
+            disabled={stack.length <= 1}
+            className="px-6 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Skip to next receipt"
+          >
+            <div className="flex items-center gap-2">
+              <SkipForward className="w-5 h-5 text-blue-700 dark:text-blue-400" />
+              <span className="font-semibold text-blue-700 dark:text-blue-400 text-sm">
+                Skip
+              </span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

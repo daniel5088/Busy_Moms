@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Trash2, X, Plus, Eye, Type, Mic, Camera, Image, Loader2, MicOff } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 import { processReceiptImage, processReceiptAudio, extractReceiptFromText, ExtractedReceiptInfo } from '../services/lifeReceiptsAI';
+import { ReceiptTriageFlow } from './ReceiptTriageFlow';
 
 function formatReceiptDate(createdAt: string): string {
   const receiptDate = new Date(createdAt);
@@ -36,8 +37,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
   const [contentInput, setContentInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [showClearModal, setShowClearModal] = useState(false);
-  const [clearing, setClearing] = useState(false);
+  const [showTriageFlow, setShowTriageFlow] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTextModal, setShowTextModal] = useState(false);
 
@@ -115,17 +115,8 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
     }
   };
 
-  const handleClearAll = async () => {
-    setClearing(true);
-    try {
-      await lifeReceiptsService.clearAllReceipts();
-      setReceipts([]);
-      setShowClearModal(false);
-    } catch (error) {
-      console.error('Error clearing receipts:', error);
-    } finally {
-      setClearing(false);
-    }
+  const handleReceiptDeleted = (id: string) => {
+    setReceipts((prev) => prev.filter((r) => r.id !== id));
   };
 
   const handleAddClick = () => {
@@ -445,7 +436,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
             </button>
           </div>
           <button
-            onClick={() => setShowClearModal(true)}
+            onClick={() => setShowTriageFlow(true)}
             disabled={receipts.length === 0}
             className="w-full h-40 sm:h-44 p-3 sm:p-4 rounded-xl bg-red-50 dark:bg-gray-800 border border-red-200 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center transition-all duration-200 ease-in-out hover:bg-red-100 dark:hover:bg-gray-700 hover:shadow-md hover:border-opacity-80 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
           >
@@ -461,64 +452,12 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
         </main>
       </div>
 
-      {showClearModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="clear-modal-title"
-        >
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => !clearing && setShowClearModal(false)}
-          />
-
-          <div className="relative bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setShowClearModal(false)}
-              disabled={clearing}
-              className="absolute top-4 right-4 w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-              aria-label="Close"
-            >
-              <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-            </button>
-
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full mb-4">
-                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-300" />
-              </div>
-
-              <h2
-                id="clear-modal-title"
-                className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3"
-              >
-                Clear your mind?
-              </h2>
-
-              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base mb-6 leading-relaxed">
-                This will delete all {receipts.length} receipt{receipts.length === 1 ? '' : 's'}.
-                This action cannot be undone.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={() => setShowClearModal(false)}
-                  disabled={clearing}
-                  className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleClearAll}
-                  disabled={clearing}
-                  className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
-                >
-                  {clearing ? 'Clearing...' : 'Yes, clear all'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {showTriageFlow && (
+        <ReceiptTriageFlow
+          receipts={receipts}
+          onClose={() => setShowTriageFlow(false)}
+          onReceiptDeleted={handleReceiptDeleted}
+        />
       )}
 
       {showAddModal && (
