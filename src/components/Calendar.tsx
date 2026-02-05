@@ -1461,23 +1461,27 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                   </h2>
                   <div className="flex items-center space-x-3">
                     <button
-                      onClick={goToday}
-                      className="px-4 py-2 text-sm font-medium bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-800 transition-colors"
-                    >
-                      Today
-                    </button>
-                    <button
                       onClick={toggleCycleTracker}
-                      className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+                      className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${
                         cycleTrackerMode
-                          ? 'bg-pink-500 text-white hover:bg-pink-600'
-                          : 'bg-pink-50 dark:bg-pink-900 text-pink-600 dark:text-pink-300 hover:bg-pink-100 dark:hover:bg-pink-800'
+                          ? 'bg-rose-500 text-white hover:bg-rose-600 scale-110 shadow-lg'
+                          : 'bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-800 scale-100'
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         <Heart className="w-4 h-4" />
                         <span>Cycle Tracker</span>
                       </div>
+                    </button>
+                    <button
+                      onClick={goToday}
+                      className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${
+                        !cycleTrackerMode
+                          ? 'bg-rose-500 text-white hover:bg-rose-600 scale-110 shadow-lg'
+                          : 'bg-rose-50 dark:bg-rose-900 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-800 scale-100'
+                      }`}
+                    >
+                      Today
                     </button>
                     <div className="flex items-center space-x-1">
                       <button
