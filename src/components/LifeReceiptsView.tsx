@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Receipt, X, Pencil, Sparkles, Check } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
+import { formatWhenBucketLabel } from '../utils/lifeReceiptsFormatters';
 
 interface LifeReceiptsViewProps {
   onBack: () => void;
@@ -316,7 +317,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                                 When
                               </div>
                               <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                                {receipt.when_bucket || 'someday'}
+                                {formatWhenBucketLabel(receipt.when_bucket)}
                               </div>
                             </div>
 

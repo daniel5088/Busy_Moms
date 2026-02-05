@@ -3,6 +3,7 @@ import { Trash2, X, Plus, Eye, Type, Mic, Camera, Image, Loader2, MicOff } from 
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 import { processReceiptImage, processReceiptAudio, extractReceiptFromText, ExtractedReceiptInfo } from '../services/lifeReceiptsAI';
 import { ReceiptTriageFlow } from './ReceiptTriageFlow';
+import { formatWhenBucketLabel } from '../utils/lifeReceiptsFormatters';
 
 function formatReceiptDate(createdAt: string): string {
   const receiptDate = new Date(createdAt);
@@ -729,7 +730,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">When</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.when || 'someday'}</p>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">{formatWhenBucketLabel(extractedInfo.when)}</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">

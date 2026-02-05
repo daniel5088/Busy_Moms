@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Sparkles, SkipForward } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
+import { formatWhenBucketLabel } from '../utils/lifeReceiptsFormatters';
 
 interface ReceiptTriageFlowProps {
   receipts: LifeReceipt[];
@@ -159,7 +160,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
                     When
                   </div>
                   <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                    {currentReceipt.when_bucket || 'someday'}
+                    {formatWhenBucketLabel(currentReceipt.when_bucket)}
                   </div>
                 </div>
 
@@ -175,17 +176,17 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
             </div>
           </div>
 
-          {queue.length > 1 && (
-            <>
-              <div
-                className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-10 opacity-60"
-                style={{ transform: 'translateY(-8px) scale(0.97)' }}
-              />
-              <div
-                className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-20 opacity-40"
-                style={{ transform: 'translateY(-16px) scale(0.94)' }}
-              />
-            </>
+          {queue.length >= 2 && (
+            <div
+              className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-10 opacity-60"
+              style={{ transform: 'translateY(-8px) scale(0.97)' }}
+            />
+          )}
+          {queue.length >= 3 && (
+            <div
+              className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-20 opacity-40"
+              style={{ transform: 'translateY(-16px) scale(0.94)' }}
+            />
           )}
         </div>
 
