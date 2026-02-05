@@ -35,16 +35,19 @@ const getBorderStyle = (whenBucket: string): string => {
 };
 
 export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: ReceiptTriageFlowProps) {
-  const [stack, setStack] = useState<LifeReceipt[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [queue, setQueue] = useState<LifeReceipt[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const sortedReceipts = [...receipts].sort((a, b) => {
-      return getPriorityOrder(a.when_bucket) - getPriorityOrder(b.when_bucket);
-    });
-    setStack(sortedReceipts);
-  }, [receipts]);
+    if (!isInitialized && receipts.length > 0) {
+      const sortedReceipts = [...receipts].sort((a, b) => {
+        return getPriorityOrder(a.when_bucket) - getPriorityOrder(b.when_bucket);
+      });
+      setQueue(sortedReceipts);
+      setIsInitialized(true);
+    }
+  }, [receipts, isInitialized]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -58,7 +61,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
   }, [onClose]);
 
   const handleDone = async () => {
-    const currentReceipt = stack[currentIndex];
+    const currentReceipt = queue[0];
     if (!currentReceipt || isDeleting) return;
 
     setIsDeleting(true);
@@ -66,13 +69,11 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
       await lifeReceiptsService.deleteReceipt(currentReceipt.id);
       onReceiptDeleted(currentReceipt.id);
 
-      const newStack = stack.filter((_, idx) => idx !== currentIndex);
-      setStack(newStack);
+      const newQueue = queue.slice(1);
+      setQueue(newQueue);
 
-      if (newStack.length === 0) {
+      if (newQueue.length === 0) {
         onClose();
-      } else if (currentIndex >= newStack.length) {
-        setCurrentIndex(newStack.length - 1);
       }
     } catch (error) {
       console.error('Error deleting receipt:', error);
@@ -87,21 +88,19 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
   };
 
   const handleSkip = () => {
-    if (stack.length <= 1) return;
+    if (queue.length <= 1) return;
 
-    const newStack = [...stack];
-    const currentReceipt = newStack[currentIndex];
-    newStack.splice(currentIndex, 1);
-    newStack.push(currentReceipt);
-    setStack(newStack);
+    const currentReceipt = queue[0];
+    const newQueue = [...queue.slice(1), currentReceipt];
+    setQueue(newQueue);
   };
 
-  if (stack.length === 0) {
+  if (queue.length === 0) {
     return null;
   }
 
-  const currentReceipt = stack[currentIndex];
-  const remainingCount = stack.length;
+  const currentReceipt = queue[0];
+  const remainingCount = queue.length;
 
   return (
     <div
@@ -176,7 +175,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
             </div>
           </div>
 
-          {stack.length > 1 && (
+          {queue.length > 1 && (
             <>
               <div
                 className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-10 opacity-60"
@@ -220,7 +219,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
 
           <button
             onClick={handleSkip}
-            disabled={stack.length <= 1}
+            disabled={queue.length <= 1}
             className="px-6 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Skip to next receipt"
           >
