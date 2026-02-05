@@ -1475,7 +1475,7 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                           flex flex-col items-center justify-center
                           ${
                             cycleTrackerMode && phaseInfo
-                              ? `${phaseColorClass} ${isSelected ? 'ring-2 ring-white shadow-lg scale-105' : ''}`
+                              ? `${phaseColorClass} text-gray-900 dark:text-gray-100 ${isSelected ? 'ring-2 ring-white shadow-lg scale-105' : ''}`
                               : isSelected
                               ? 'bg-rose-500 text-white shadow-lg scale-105 border-rose-500'
                               : isToday
