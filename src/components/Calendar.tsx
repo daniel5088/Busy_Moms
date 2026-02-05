@@ -453,16 +453,6 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     }
   }, [openCalendarCamera, onCalendarCameraOpened]);
 
-  useEffect(() => {
-    if (openCycleTracker && !cycleTrackerMode) {
-      loadCycleData();
-      setCycleTrackerMode(true);
-      if (onCycleTrackerOpened) {
-        onCycleTrackerOpened();
-      }
-    }
-  }, [openCycleTracker, cycleTrackerMode, onCycleTrackerOpened, loadCycleData]);
-
   const loadGoogleEvents = async () => {
     if (!user?.id) return;
 
@@ -667,6 +657,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
     setCycleTrackerMode(!cycleTrackerMode);
     setShowAIPanel(false);
   }, [cycleTrackerMode, loadCycleData]);
+
+  useEffect(() => {
+    if (openCycleTracker && !cycleTrackerMode) {
+      loadCycleData();
+      setCycleTrackerMode(true);
+      if (onCycleTrackerOpened) {
+        onCycleTrackerOpened();
+      }
+    }
+  }, [openCycleTracker, cycleTrackerMode, onCycleTrackerOpened, loadCycleData]);
 
   const getAIInsights = async () => {
     setCycleLoading(true);
