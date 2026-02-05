@@ -128,9 +128,28 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
           </button>
         </div>
 
-        <div className="relative">
+        <div className="relative pl-8">
+          {queue.length >= 4 && (
+            <div
+              className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-40 transition-all duration-300"
+              style={{ transform: 'translateX(-24px) translateY(4px)' }}
+            />
+          )}
+          {queue.length >= 3 && (
+            <div
+              className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-50 transition-all duration-300"
+              style={{ transform: 'translateX(-16px) translateY(3px)' }}
+            />
+          )}
+          {queue.length >= 2 && (
+            <div
+              className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-60 transition-all duration-300"
+              style={{ transform: 'translateX(-8px) translateY(2px)' }}
+            />
+          )}
+
           <div
-            className={`bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full min-h-[400px] p-6 ${getBorderStyle(
+            className={`relative z-10 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full min-h-[400px] p-6 ${getBorderStyle(
               currentReceipt.when_bucket
             )} transition-all duration-300`}
           >
@@ -178,19 +197,6 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
               </div>
             </div>
           </div>
-
-          {queue.length >= 2 && (
-            <div
-              className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-10 opacity-60 transition-all duration-300"
-              style={{ transform: 'translateY(-8px) scale(0.97)' }}
-            />
-          )}
-          {queue.length >= 3 && (
-            <div
-              className="absolute top-2 left-2 right-2 h-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg -z-20 opacity-40 transition-all duration-300"
-              style={{ transform: 'translateY(-16px) scale(0.94)' }}
-            />
-          )}
         </div>
 
         <div className="flex justify-center gap-3">
