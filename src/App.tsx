@@ -68,6 +68,7 @@ function App() {
   const [showAffirmationSettings, setShowAffirmationSettings] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [openCalendarCamera, setOpenCalendarCamera] = useState(false);
+  const [openCycleTracker, setOpenCycleTracker] = useState(false);
   const [openRecipesTab, setOpenRecipesTab] = useState(false);
   const [selectedEventDate, setSelectedEventDate] = useState<string | null>(null);
   const [scrollToGoogleCalendar, setScrollToGoogleCalendar] = useState(false);
@@ -477,6 +478,10 @@ function App() {
                       setCurrentScreen('calendar');
                       setOpenCalendarCamera(true);
                     }}
+                    onNavigateToCycleTracker={() => {
+                      setCurrentScreen('calendar');
+                      setOpenCycleTracker(true);
+                    }}
                     onNavigateToWellness={() => {
                       setCurrentSubScreen('wellness');
                     }}
@@ -503,6 +508,8 @@ function App() {
                     }}
                     openCalendarCamera={openCalendarCamera}
                     onCalendarCameraOpened={() => setOpenCalendarCamera(false)}
+                    openCycleTracker={openCycleTracker}
+                    onCycleTrackerOpened={() => setOpenCycleTracker(false)}
                     initialSelectedDate={selectedEventDate}
                     onDateSelected={() => setSelectedEventDate(null)}
                     onNavigateToGoogleCalendarSettings={() => {

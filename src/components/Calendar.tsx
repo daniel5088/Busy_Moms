@@ -174,6 +174,8 @@ interface CalendarProps {
   onNavigateToGiftFinder?: () => void;
   openCalendarCamera?: boolean;
   onCalendarCameraOpened?: () => void;
+  openCycleTracker?: boolean;
+  onCycleTrackerOpened?: () => void;
   initialSelectedDate?: string | null;
   onDateSelected?: () => void;
   onNavigateToGoogleCalendarSettings?: () => void;
@@ -181,7 +183,7 @@ interface CalendarProps {
   autoStartTutorial?: boolean;
 }
 
-export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCalendarCamera, onCalendarCameraOpened, initialSelectedDate, onDateSelected, onNavigateToGoogleCalendarSettings, onNavigate, autoStartTutorial }: CalendarProps) {
+export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCalendarCamera, onCalendarCameraOpened, openCycleTracker, onCycleTrackerOpened, initialSelectedDate, onDateSelected, onNavigateToGoogleCalendarSettings, onNavigate, autoStartTutorial }: CalendarProps) {
   const { user } = useAuth();
   const { defaultAddress } = useDefaultAddress();
   const { pendingConflicts, resolveConflict, performSync, loadPendingConflicts } =
@@ -450,6 +452,16 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       }
     }
   }, [openCalendarCamera, onCalendarCameraOpened]);
+
+  useEffect(() => {
+    if (openCycleTracker && !cycleTrackerMode) {
+      loadCycleData();
+      setCycleTrackerMode(true);
+      if (onCycleTrackerOpened) {
+        onCycleTrackerOpened();
+      }
+    }
+  }, [openCycleTracker, cycleTrackerMode, onCycleTrackerOpened, loadCycleData]);
 
   const loadGoogleEvents = async () => {
     if (!user?.id) return;

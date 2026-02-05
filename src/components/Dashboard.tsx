@@ -194,6 +194,7 @@ interface DashboardProps {
   onVoiceChatOpen?: () => void;
   onOpenAffirmationSettings?: () => void;
   onNavigateToCalendarCamera?: () => void;
+  onNavigateToCycleTracker?: () => void;
   onNavigateToWellness?: () => void;
   onNavigateToRecipes?: () => void;
   onNavigateToEvent?: (eventDate: string) => void;
@@ -208,6 +209,7 @@ export function Dashboard({
   onVoiceChatOpen,
   onOpenAffirmationSettings,
   onNavigateToCalendarCamera,
+  onNavigateToCycleTracker,
   onNavigateToWellness,
   onNavigateToRecipes,
   onNavigateToEvent,
@@ -729,7 +731,7 @@ export function Dashboard({
         desc: 'Add events from photos',
       },
       'cycle-tracker': {
-        action: () => onNavigateToWellness?.(),
+        action: () => onNavigateToCycleTracker?.(),
         desc: 'Track your wellness',
       },
       'life-receipts': {
@@ -766,7 +768,7 @@ export function Dashboard({
         gradient: gradient,
       };
     });
-  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToWellness, onNavigateToRecipes]);
+  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToCycleTracker, onNavigateToWellness, onNavigateToRecipes]);
 
   if (loading) {
     return <DashboardSkeleton />;
