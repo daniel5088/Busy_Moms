@@ -195,7 +195,6 @@ interface DashboardProps {
   onOpenAffirmationSettings?: () => void;
   onNavigateToCalendarCamera?: () => void;
   onNavigateToCycleTracker?: () => void;
-  onNavigateToWellness?: () => void;
   onNavigateToRecipes?: () => void;
   onNavigateToEvent?: (eventDate: string) => void;
   openAboutDialog?: boolean;
@@ -210,7 +209,6 @@ export function Dashboard({
   onOpenAffirmationSettings,
   onNavigateToCalendarCamera,
   onNavigateToCycleTracker,
-  onNavigateToWellness,
   onNavigateToRecipes,
   onNavigateToEvent,
   openAboutDialog = false,
@@ -768,7 +766,7 @@ export function Dashboard({
         gradient: gradient,
       };
     });
-  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToCycleTracker, onNavigateToWellness, onNavigateToRecipes]);
+  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToCycleTracker, onNavigateToRecipes]);
 
   if (loading) {
     return <DashboardSkeleton />;

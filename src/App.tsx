@@ -30,7 +30,6 @@ import { captureAndStoreGoogleTokens } from './services/googleTokenStorage';
 import { Diagnostics } from './pages/Diagnostics';
 import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Import QuickLinks component
 import { useDarkMode } from './hooks/useDarkMode';
-import CycleTracker from './components/CycleTracker';
 import { LifeReceipts } from './components/LifeReceipts';
 import { LifeReceiptsView } from './components/LifeReceiptsView';
 import GiftFinder from './components/GiftFinder';
@@ -49,7 +48,6 @@ export type SubScreen =
   | 'family-folders'
   | 'settings'
   | 'quick-links'
-  | 'wellness'
   | 'life-receipts'
   | 'life-receipts-view'
   | 'gift-finder';
@@ -439,11 +437,6 @@ function App() {
                   <QuickLinks />
                 </FeatureErrorBoundary>
               )}
-              {currentSubScreen === 'wellness' && (
-                <FeatureErrorBoundary featureName="Wellness">
-                  <CycleTracker />
-                </FeatureErrorBoundary>
-              )}
               {currentSubScreen === 'life-receipts' && (
                 <FeatureErrorBoundary featureName="Life Receipts">
                   <LifeReceipts onNavigateToView={() => setCurrentSubScreen('life-receipts-view')} />
@@ -481,9 +474,6 @@ function App() {
                     onNavigateToCycleTracker={() => {
                       setCurrentScreen('calendar');
                       setOpenCycleTracker(true);
-                    }}
-                    onNavigateToWellness={() => {
-                      setCurrentSubScreen('wellness');
                     }}
                     onNavigateToRecipes={() => {
                       setCurrentSubScreen('shopping');
