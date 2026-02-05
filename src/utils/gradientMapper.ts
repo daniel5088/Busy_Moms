@@ -1,4 +1,3 @@
-// Maps gradient color names to Tailwind CSS classes
 export function getGradientClasses(from: string, to: string): string {
   const key = `${from}-${to}`;
   const gradientMap: Record<string, string> = {
