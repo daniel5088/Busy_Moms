@@ -734,7 +734,7 @@ export function Dashboard({
         desc: `${lifeReceipts.length} item${lifeReceipts.length === 1 ? '' : 's'}`,
       },
       'gift-finder': {
-        action: () => onNavigateToGiftFinder?.(),
+        action: () => onNavigateToSubScreen('gift-finder'),
         desc: 'Find perfect gifts',
       },
       'recipes': {
@@ -768,7 +768,7 @@ export function Dashboard({
         gradient: gradient,
       };
     });
-  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToWellness, onNavigateToGiftFinder]);
+  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToWellness]);
 
   if (loading) {
     return <DashboardSkeleton />;
