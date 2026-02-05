@@ -698,126 +698,77 @@ export function Dashboard({
     }
   }, [affirmationStage]);
 
-  // Quick Actions - 3x2 grid with specific actions
-  const quickActions = [
-    {
-      icon: ShoppingBag,
-      title: 'Shopping',
-      desc: `${tasks.length} item${tasks.length === 1 ? '' : 's'} needed`,
-      bgColor: 'bg-amber-50 dark:bg-gray-800',
-      borderColor: 'border-amber-200 dark:border-gray-700',
-      iconBgColor: 'bg-amber-100 dark:bg-amber-900',
-      iconColor: 'text-amber-600 dark:text-amber-400',
-      textColor: 'text-gray-900 dark:text-gray-100',
-      descColor: 'text-gray-600 dark:text-gray-400',
-      hoverBg: 'hover:bg-amber-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('shopping'),
-    },
-    {
-      icon: Link,
-      title: 'Quick Links',
-      desc: 'Your favorite shortcuts',
-      bgColor: 'bg-purple-50 dark:bg-gray-800',
-      borderColor: 'border-purple-200 dark:border-gray-700',
-      iconBgColor: 'bg-purple-100 dark:bg-purple-900',
-      iconColor: 'text-purple-600 dark:text-purple-400',
-      textColor: 'text-gray-900 dark:text-gray-100',
-      descColor: 'text-gray-600 dark:text-gray-400',
-      hoverBg: 'hover:bg-purple-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('quick-links'),
-    },
-    {
-      icon: ListTodo,
-      title: 'Tasks',
-      desc: 'Manage your to-do list',
-      bgColor: 'bg-green-50 dark:bg-gray-800',
-      borderColor: 'border-green-200 dark:border-gray-700',
-      iconBgColor: 'bg-green-100 dark:bg-green-900',
-      iconColor: 'text-green-700 dark:text-green-400',
-      textColor: 'text-gray-900 dark:text-gray-100',
-      descColor: 'text-gray-600 dark:text-gray-400',
-      hoverBg: 'hover:bg-green-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('tasks'),
-    },
-    {
-      icon: UserCircle,
-      title: 'Contacts',
-      desc: 'Your trusted network',
-      bgColor: 'bg-blue-50 dark:bg-gray-800',
-      borderColor: 'border-blue-200 dark:border-gray-700',
-      iconBgColor: 'bg-blue-100 dark:bg-blue-900',
-      iconColor: 'text-blue-600 dark:text-blue-400',
-      textColor: 'text-gray-900 dark:text-gray-100',
-      descColor: 'text-gray-600 dark:text-gray-400',
-      hoverBg: 'hover:bg-blue-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('contacts'),
-    },
-    {
-      icon: Camera,
-      title: 'Scan Events',
-      desc: 'Add from photo',
-      bgColor: 'bg-teal-50 dark:bg-gray-800',
-      borderColor: 'border-teal-200 dark:border-gray-700',
-      iconBgColor: 'bg-teal-100 dark:bg-teal-900',
-      iconColor: 'text-teal-700 dark:text-teal-400',
-      textColor: 'text-gray-900 dark:text-gray-100',
-      descColor: 'text-gray-600 dark:text-gray-400',
-      hoverBg: 'hover:bg-teal-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToCalendarCamera?.(),
-    },
-    {
-      icon: Heart,
-      title: 'Cycle tracker',
-      desc: 'Track your wellness',
-      bgColor: 'bg-rose-50 dark:bg-gray-800',
-      borderColor: 'border-rose-200 dark:border-gray-700',
-      iconBgColor: 'bg-rose-100 dark:bg-rose-900',
-      iconColor: 'text-rose-600 dark:text-rose-400',
-      textColor: 'text-gray-900 dark:text-gray-100',
-      descColor: 'text-gray-600 dark:text-gray-400',
-      hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToWellness?.(),
-    },
-    {
-      icon: Receipt,
-      title: 'Life Receipts',
-      desc: `${lifeReceipts.length} items`,
-      bgColor: 'bg-indigo-50 dark:bg-gray-800',
-      borderColor: 'border-indigo-200 dark:border-gray-700',
-      iconBgColor: 'bg-indigo-100 dark:bg-indigo-900',
-      iconColor: 'text-indigo-600 dark:text-indigo-400',
-      textColor: 'text-gray-900 dark:text-gray-100',
-      descColor: 'text-gray-600 dark:text-gray-400',
-      hoverBg: 'hover:bg-indigo-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('life-receipts'),
-    },
-    {
-      icon: Gift,
-      title: 'Gift Finder',
-      desc: 'Find perfect gifts',
-      bgColor: 'bg-pink-50 dark:bg-gray-800',
-      borderColor: 'border-pink-200 dark:border-gray-700',
-      iconBgColor: 'bg-pink-100 dark:bg-pink-900',
-      iconColor: 'text-pink-600 dark:text-pink-400',
-      textColor: 'text-gray-900 dark:text-gray-100',
-      descColor: 'text-gray-600 dark:text-gray-400',
-      hoverBg: 'hover:bg-pink-100 dark:hover:bg-gray-700',
-      action: () => onNavigateToSubScreen('gift-finder'),
-    },
-    {
-      icon: Star,
-      title: 'Favorites',
-      desc: 'Coming soon',
-      bgColor: 'bg-gray-50 dark:bg-gray-800',
-      borderColor: 'border-gray-200 dark:border-gray-700',
-      iconBgColor: 'bg-gray-100 dark:bg-gray-700',
-      iconColor: 'text-gray-400 dark:text-gray-500',
-      textColor: 'text-gray-500 dark:text-gray-400',
-      descColor: 'text-gray-400 dark:text-gray-500',
-      hoverBg: '',
-      action: undefined,
-    },
-  ];
+  const getIconComponent = (iconName: string) => {
+    const Icon = (Icons as any)[iconName];
+    return Icon || Icons.HelpCircle;
+  };
+
+  const quickActions = React.useMemo(() => {
+    const actionMap: Record<string, any> = {
+      'shopping': {
+        action: () => onNavigateToSubScreen('shopping'),
+        desc: `${tasks.length} item${tasks.length === 1 ? '' : 's'} needed`,
+      },
+      'quick-links': {
+        action: () => onNavigateToSubScreen('quick-links'),
+        desc: 'Your favorite shortcuts',
+      },
+      'tasks': {
+        action: () => onNavigateToSubScreen('tasks'),
+        desc: 'Manage your to-do list',
+      },
+      'contacts': {
+        action: () => onNavigateToSubScreen('contacts'),
+        desc: 'Your trusted network',
+      },
+      'scan-events': {
+        action: () => onNavigateToCalendarCamera?.(),
+        desc: 'Add events from photos',
+      },
+      'cycle-tracker': {
+        action: () => onNavigateToWellness?.(),
+        desc: 'Track your wellness',
+      },
+      'life-receipts': {
+        action: () => onNavigateToSubScreen('life-receipts'),
+        desc: `${lifeReceipts.length} item${lifeReceipts.length === 1 ? '' : 's'}`,
+      },
+      'gift-finder': {
+        action: () => onNavigateToGiftFinder?.(),
+        desc: 'Find perfect gifts',
+      },
+      'recipes': {
+        action: () => onNavigateToSubScreen('recipes'),
+        desc: 'Browse recipes',
+      },
+    };
+
+    const gradients = [
+      { bg: 'from-orange-500 to-pink-500', hover: 'hover:from-orange-600 hover:to-pink-600' },
+      { bg: 'from-blue-500 to-cyan-500', hover: 'hover:from-blue-600 hover:to-cyan-600' },
+      { bg: 'from-green-500 to-emerald-500', hover: 'hover:from-green-600 hover:to-emerald-600' },
+      { bg: 'from-purple-500 to-violet-500', hover: 'hover:from-purple-600 hover:to-violet-600' },
+      { bg: 'from-teal-500 to-cyan-500', hover: 'hover:from-teal-600 hover:to-cyan-600' },
+      { bg: 'from-rose-500 to-pink-500', hover: 'hover:from-rose-600 hover:to-pink-600' },
+      { bg: 'from-slate-500 to-gray-600', hover: 'hover:from-slate-600 hover:to-gray-700' },
+      { bg: 'from-amber-500 to-orange-500', hover: 'hover:from-amber-600 hover:to-orange-600' },
+      { bg: 'from-yellow-500 to-orange-500', hover: 'hover:from-yellow-600 hover:to-orange-600' },
+    ];
+
+    return userQuickActions.map((userAction, index) => {
+      const config = actionMap[userAction.action_type_id] || {};
+      const Icon = getIconComponent(userAction.action_type?.icon || 'HelpCircle');
+      const gradient = gradients[index % gradients.length];
+
+      return {
+        icon: Icon,
+        title: userAction.action_type?.name || 'Unknown',
+        desc: config.desc || userAction.action_type?.description || '',
+        action: config.action,
+        gradient: gradient,
+      };
+    });
+  }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToWellness, onNavigateToGiftFinder]);
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -1209,37 +1160,59 @@ export function Dashboard({
 
           {/* Quick Actions - 3x2 Grid */}
           <div id="quick-links">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
-              Quick Actions
-            </h2>
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              {quickActions.map((action, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    if (action.action) {
-                      action.action();
-                    }
-                  }}
-                  disabled={!action.action}
-                  className={`p-3 sm:p-4 rounded-xl ${action.bgColor} border ${action.borderColor} shadow-sm flex flex-col items-center
-                    transition-all duration-200 ease-in-out
-                    ${action.action ? `${action.hoverBg} hover:shadow-md hover:border-opacity-80` : 'cursor-not-allowed opacity-60'}
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2`}
-                  aria-label={`${action.title}: ${action.desc}`}
-                >
-                  <div
-                    className={`${action.iconBgColor} p-2 sm:p-3 rounded-xl mb-2 sm:mb-3`}
-                  >
-                    <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} aria-hidden="true" />
-                  </div>
-                  <h3 className={`font-semibold ${action.textColor} mb-1 text-sm sm:text-base text-center`}>
-                    {action.title}
-                  </h3>
-                  <p className={`text-xs sm:text-sm ${action.descColor} text-center`}>{action.desc}</p>
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
+                Quick Actions
+              </h2>
+              <button
+                onClick={() => setShowQuickActionsCustomizer(true)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                aria-label="Customize Quick Actions"
+              >
+                <Sliders className="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors" />
+              </button>
             </div>
+
+            {quickActionsLoading ? (
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="p-3 sm:p-4 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 dark:bg-gray-700 rounded-xl mb-2 sm:mb-3 mx-auto"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-1"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mx-auto"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                {quickActions.map((action, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (action.action) {
+                        action.action();
+                      }
+                    }}
+                    disabled={!action.action}
+                    className={`group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col items-center
+                      transition-all duration-300 ease-out
+                      ${action.action ? 'hover:shadow-lg hover:scale-105 hover:-translate-y-0.5 cursor-pointer' : 'cursor-not-allowed opacity-60'}
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2`}
+                    aria-label={`${action.title}: ${action.desc}`}
+                  >
+                    <div
+                      className={`bg-gradient-to-br ${action.gradient.bg} ${action.action ? action.gradient.hover : ''} p-2.5 sm:p-3 rounded-xl mb-2 sm:mb-3 transition-all duration-300`}
+                    >
+                      <action.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" aria-hidden="true" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm sm:text-base text-center leading-tight">
+                      {action.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center leading-tight">{action.desc}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Smart Reminders */}
@@ -1480,6 +1453,13 @@ export function Dashboard({
           weather={weatherInsightsEvent}
           loading={weatherInsightsLoading}
           onClose={handleCloseWeatherInsights}
+        />
+      )}
+
+      {/* Quick Actions Customizer Modal */}
+      {showQuickActionsCustomizer && (
+        <QuickActionsCustomizer
+          onClose={() => setShowQuickActionsCustomizer(false)}
         />
       )}
     </>
