@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   Sparkles,
+  Check,
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { useQuickActions } from '../hooks/useQuickActions';
@@ -34,6 +35,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
   const [draggedItem, setDraggedItem] = useState<UserQuickAction | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [addingActionId, setAddingActionId] = useState<string | null>(null);
 
   const getIconComponent = (iconName: string) => {
     const Icon = (Icons as any)[iconName];
@@ -94,11 +96,14 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
       ? Math.max(...quickActions.map(a => a.position))
       : -1;
 
+    setAddingActionId(typeId);
     try {
       await addAction(typeId, maxPosition + 1);
-      setShowAddMenu(false);
+      // Don't close the menu so users can add multiple actions
+      setTimeout(() => setAddingActionId(null), 500);
     } catch (err) {
       console.error('Failed to add action:', err);
+      setAddingActionId(null);
     }
   };
 
@@ -267,11 +272,17 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                     </div>
                     {availableToAdd.map((type) => {
                       const Icon = getIconComponent(type.icon);
+                      const isAdding = addingActionId === type.id;
                       return (
                         <button
                           key={type.id}
                           onClick={() => handleAdd(type.id)}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all text-left"
+                          disabled={isAdding}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${
+                            isAdding
+                              ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                          }`}
                         >
                           <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getGradientClasses(type.gradient_from, type.gradient_to)} flex items-center justify-center text-white flex-shrink-0`}>
                             <Icon className="w-5 h-5" />
@@ -280,7 +291,11 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                             <h4 className="font-medium text-gray-900 dark:text-white">{type.name}</h4>
                             <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{type.description}</p>
                           </div>
-                          <Plus className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                          {isAdding ? (
+                            <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          ) : (
+                            <Plus className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                          )}
                         </button>
                       );
                     })}

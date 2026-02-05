@@ -7,9 +7,11 @@ export function useQuickActions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadQuickActions = useCallback(async () => {
+  const loadQuickActions = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       setError(null);
 
       const [actions, types] = await Promise.all([
@@ -30,7 +32,9 @@ export function useQuickActions() {
       console.error('Error loading quick actions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load quick actions');
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -41,7 +45,7 @@ export function useQuickActions() {
   const updatePositions = useCallback(async (updates: { id: string; position: number }[]) => {
     try {
       await quickActionsService.updateMultiplePositions(updates);
-      await loadQuickActions();
+      await loadQuickActions(false);
     } catch (err) {
       console.error('Error updating positions:', err);
       throw err;
@@ -51,7 +55,7 @@ export function useQuickActions() {
   const toggleAction = useCallback(async (actionId: string, enabled: boolean) => {
     try {
       await quickActionsService.toggleQuickAction(actionId, enabled);
-      await loadQuickActions();
+      await loadQuickActions(false);
     } catch (err) {
       console.error('Error toggling action:', err);
       throw err;
@@ -61,7 +65,7 @@ export function useQuickActions() {
   const addAction = useCallback(async (actionTypeId: string, position: number) => {
     try {
       await quickActionsService.addQuickAction(actionTypeId, position);
-      await loadQuickActions();
+      await loadQuickActions(false);
     } catch (err) {
       console.error('Error adding action:', err);
       throw err;
@@ -71,7 +75,7 @@ export function useQuickActions() {
   const removeAction = useCallback(async (actionId: string) => {
     try {
       await quickActionsService.removeQuickAction(actionId);
-      await loadQuickActions();
+      await loadQuickActions(false);
     } catch (err) {
       console.error('Error removing action:', err);
       throw err;
@@ -81,7 +85,7 @@ export function useQuickActions() {
   const resetToDefaults = useCallback(async () => {
     try {
       await quickActionsService.resetToDefaults();
-      await loadQuickActions();
+      await loadQuickActions(false);
     } catch (err) {
       console.error('Error resetting to defaults:', err);
       throw err;
