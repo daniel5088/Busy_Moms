@@ -22,8 +22,8 @@ export function WeatherSkeleton({ isDark }: { isDark: boolean }) {
           <div className={`h-24 rounded-2xl w-48 ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-12">
-          {[1, 2, 3].map((i) => (
+        <div className="grid grid-cols-2 gap-6 mb-12 justify-items-center">
+          {[1, 2].map((i) => (
             <div
               key={i}
               className={`rounded-2xl p-5 ${
@@ -39,28 +39,41 @@ export function WeatherSkeleton({ isDark }: { isDark: boolean }) {
               </div>
             </div>
           ))}
+          <div
+            className={`col-span-2 rounded-2xl p-5 flex justify-center ${
+              isDark
+                ? 'bg-[#28283c]/50 border border-[#6478b4]/20'
+                : 'bg-white/60 border border-[#a8c5d1]/20'
+            }`}
+            style={{ backdropFilter: 'blur(10px)' }}
+          >
+            <div className="space-y-3">
+              <div className={`h-4 rounded-xl w-16 ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
+              <div className={`h-8 rounded-xl w-24 ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
+            </div>
+          </div>
         </div>
 
         <div className="space-y-6">
           <div className={`h-8 rounded-2xl w-48 ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
-          <div className="grid grid-cols-7 gap-3">
+          <div className="flex flex-col gap-2">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
-                className={`rounded-[20px] p-5 text-center ${
+                className={`rounded-xl px-4 py-3 flex items-center justify-between ${
                   isDark
-                    ? 'bg-[#232337]/50 border border-[#6478b4]/20'
-                    : 'bg-white/50 border border-[#a8c5d1]/15'
+                    ? 'bg-[#232337]/50 border border-[#6478b4]/10'
+                    : 'bg-white/50 border border-[#a8c5d1]/10'
                 }`}
                 style={{ backdropFilter: 'blur(10px)' }}
               >
-                <div className="space-y-3">
-                  <div className={`h-4 rounded-xl w-12 mx-auto ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
-                  <div className={`h-14 w-14 rounded-full mx-auto ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
-                  <div className="space-y-1">
-                    <div className={`h-6 rounded-xl w-10 mx-auto ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
-                    <div className={`h-5 rounded-xl w-8 mx-auto ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
-                  </div>
+                <div className="flex items-center gap-3">
+                  <div className={`h-4 rounded-xl w-14 ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
+                  <div className={`w-10 h-10 rounded-full ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <div className={`h-6 rounded-xl w-10 ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
+                  <div className={`h-5 rounded-xl w-8 ${isDark ? 'bg-[#e8e8f0]/10' : 'bg-[#2a2a2e]/10'}`} />
                 </div>
               </div>
             ))}
