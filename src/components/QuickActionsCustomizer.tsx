@@ -262,9 +262,6 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         {action.action_type?.name || 'Unknown'}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                        {action.action_type?.description || ''}
-                      </p>
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -336,7 +333,6 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-gray-900 dark:text-white">{type.name}</h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{type.description}</p>
                           </div>
                           {isAdding ? (
                             <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
