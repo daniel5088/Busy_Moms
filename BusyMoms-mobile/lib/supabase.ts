@@ -112,6 +112,7 @@ export interface Profile {
   user_type?: 'Mom' | 'Dad' | 'Guardian' | 'Other' | null;
   onboarding_completed?: boolean | null;
   ai_personality?: 'Friendly' | 'Professional' | 'Humorous' | null;
+  dark_mode?: boolean | null;
   created_at?: string;
   updated_at?: string;
 }

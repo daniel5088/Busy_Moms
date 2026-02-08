@@ -116,6 +116,7 @@ export function useAuth() {
           user_type: 'Mom' as const,
           onboarding_completed: false,
           ai_personality: 'Friendly' as const,
+          dark_mode: null,
         };
 
         const { error: createError } = await supabase.from('profiles').insert([profileData]);
@@ -267,6 +268,7 @@ export function useAuth() {
             user_type: 'Mom' as const,
             onboarding_completed: false,
             ai_personality: 'Friendly' as const,
+            dark_mode: null,
           };
 
           await supabase.from('profiles').insert([profileData]);
