@@ -1402,38 +1402,25 @@ export function Dashboard({
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="weather-modal-title"
+          aria-label="Weather information"
         >
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowWeatherModal(false)}
           />
-          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-              <h2 id="weather-modal-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Weather
-              </h2>
-              <button
-                onClick={() => setShowWeatherModal(false)}
-                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                aria-label="Close weather"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6">
-              <WeatherWidget
-                weather={weather}
-                loading={weatherLoading}
-                error={weatherError}
-                locationName={weatherSettings?.default_location || 'Your Location'}
-                settings={weatherSettings}
-                onOpenSettings={() => {
-                  setShowWeatherModal(false);
-                  onNavigate('more');
-                }}
-              />
-            </div>
+          <div className="relative max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <WeatherWidget
+              weather={weather}
+              loading={weatherLoading}
+              error={weatherError}
+              locationName={weatherSettings?.default_location || 'Your Location'}
+              settings={weatherSettings}
+              onOpenSettings={() => {
+                setShowWeatherModal(false);
+                onNavigate('more');
+              }}
+              onClose={() => setShowWeatherModal(false)}
+            />
           </div>
         </div>
       )}

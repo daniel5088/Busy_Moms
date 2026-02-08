@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cloud, Droplets, Wind, MapPin, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap, Gauge, Leaf, Thermometer, Sunrise, Sunset } from 'lucide-react';
+import { Cloud, Droplets, Wind, MapPin, Settings, Sun, Moon, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, CloudFog, Zap, Gauge, Leaf, Thermometer, Sunrise, Sunset, X } from 'lucide-react';
 import { WeatherData, WeatherSettings } from '../services/weatherService';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { WeatherSkeleton } from './WeatherSkeleton';
@@ -11,6 +11,7 @@ interface WeatherWidgetProps {
   locationName?: string;
   onOpenSettings?: () => void;
   settings?: WeatherSettings | null;
+  onClose?: () => void;
 }
 
 // Enhanced weather icon component
@@ -338,7 +339,7 @@ function DetailPill({ icon, label, value, sub, isDark }: {
   );
 }
 
-export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings, settings }: WeatherWidgetProps) {
+export function WeatherWidget({ weather, loading, error, locationName, onOpenSettings, settings, onClose }: WeatherWidgetProps) {
   const { darkMode } = useDarkMode();
   const isDark = darkMode;
   const isNight = isNightTime(weather?.utc_offset_seconds);
@@ -456,6 +457,17 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
   return (
     <div className="relative">
       <div className={`rounded-[32px] shadow-2xl p-12 transition-all duration-1000 relative overflow-hidden bg-gradient-to-br ${bgGradient}`}>
+        {/* Close button - only shown when onClose is provided */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/20 dark:bg-black/20 backdrop-blur-sm hover:bg-white/30 dark:hover:bg-black/30 transition-all duration-200 text-white dark:text-gray-200 hover:scale-110"
+            aria-label="Close weather"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+
         {/* Weather-specific overlay */}
         {weatherOverlay && (
           <div className={`absolute inset-0 bg-gradient-to-br ${weatherOverlay} transition-all duration-1000`} />
