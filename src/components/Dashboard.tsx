@@ -920,8 +920,8 @@ export function Dashboard({
 
       <div className="pb-20 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen">
         {/* Greeting Header */}
-        <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 text-white p-4 pb-6 dark:border-b dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 text-white p-4 pb-4 dark:border-b dark:border-gray-700">
+          <div className="flex items-center justify-between mb-3">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold">
                 Hello,{' '}
@@ -976,34 +976,34 @@ export function Dashboard({
 
           {/* Mini Stats */}
           <div className="bg-white/10 dark:bg-gray-900/50 rounded-lg p-2">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
               <button
                 onClick={() => setShowEventsPopup(true)}
                 className="flex items-center gap-1 hover:bg-white/20 px-1 py-0.5 rounded-md transition-colors"
                 aria-label={`View all ${events.length} events`}
                 aria-haspopup="dialog"
               >
-                <Calendar className="w-2.5 h-2.5 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
                 <span>{events.length} events</span>
               </button>
-          
+
               <button
                 onClick={() => setShowTasksPopup(true)}
                 className="flex items-center gap-1 hover:bg-white/20 px-1 py-0.5 rounded-md transition-colors"
                 aria-label={`View all ${tasks.length} shopping items`}
                 aria-haspopup="dialog"
               >
-                <ShoppingBag className="w-2.5 h-2.5 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
+                <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
                 <span>{tasks.length} shopping items</span>
               </button>
-          
+
               <button
                 onClick={() => setShowRemindersPopup(true)}
                 className="flex items-center gap-1 hover:bg-white/20 px-1 py-0.5 rounded-md transition-colors"
                 aria-label={`View all ${reminders.length} reminders`}
                 aria-haspopup="dialog"
               >
-                <Clock className="w-2.5 h-2.5 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
                 <span>{reminders.length} reminders</span>
               </button>
             </div>
