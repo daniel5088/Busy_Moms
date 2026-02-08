@@ -314,12 +314,13 @@ function DetailPill({ icon, label, value, sub, isDark }: {
   isDark: boolean;
 }) {
   return (
-    <div className={`rounded-2xl p-5 flex flex-col items-center justify-center text-center ${
+    <div className={`rounded-2xl p-5 flex flex-col items-center text-center ${
       isDark
         ? 'bg-[#28283c]/50 border border-[#6478b4]/20'
         : 'bg-white/60 border border-[#a8c5d1]/20'
     }`} style={{ backdropFilter: 'blur(10px)' }}>
-      <div className="w-full flex items-center justify-center gap-2 mb-2">
+      {/* Title container - at the top */}
+      <div className="w-full flex items-center justify-center gap-2 mb-2 flex-none">
         {icon}
         <div className={`text-[11px] uppercase tracking-wider text-center ${
           isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
@@ -327,14 +328,18 @@ function DetailPill({ icon, label, value, sub, isDark }: {
           {label}
         </div>
       </div>
-      <div className={`text-[28px] w-full text-center ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
-        {value}
-      </div>
-      {sub && (
-        <div className={`text-xs mt-1 w-full text-center ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
-          {sub}
+
+      {/* Value container - vertically centered in remaining space */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full">
+        <div className={`text-[28px] text-center ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
+          {value}
         </div>
-      )}
+        {sub && (
+          <div className={`text-xs mt-1 text-center ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
+            {sub}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
