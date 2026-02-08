@@ -916,7 +916,7 @@ export function Dashboard({
         </div>
       )}
 
-      <div className="pb-20 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div className="pb-20 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen">
         {/* Greeting Header */}
         <div className="bg-gradient-to-r from-rose-400 via-pink-400 to-orange-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 text-white p-4 pb-6 dark:border-b dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
