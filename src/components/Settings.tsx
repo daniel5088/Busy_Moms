@@ -824,14 +824,6 @@ export function Settings({
                   </div>
                 ))}
               </div>
-
-              {section.title === 'Measurement Preferences' && (
-                <div className="mt-3 bg-blue-50 dark:bg-blue-900 bg-opacity-50 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    Automatic unit conversion is always enabled. Measurements convert to your preferred system (Metric or Imperial) automatically.
-                  </p>
-                </div>
-              )}
             </div>
           ))}
         </div>
