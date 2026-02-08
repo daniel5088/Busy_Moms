@@ -56,7 +56,10 @@ export default function CalendarScreen() {
       if (!grouped[event.event_date]) {
         grouped[event.event_date] = [];
       }
-      grouped[event.event_date].push(event);
+      const dateGroup = grouped[event.event_date];
+      if (dateGroup) {
+        dateGroup.push(event);
+      }
     });
     return grouped;
   };
@@ -88,10 +91,13 @@ export default function CalendarScreen() {
             <Text style={styles.emptyText}>No upcoming events</Text>
           </View>
         ) : (
-          dates.map((date) => (
+          dates.map((date) => {
+            const dateEvents = groupedEvents[date];
+            if (!dateEvents) return null;
+            return (
             <View key={date} style={styles.dateSection}>
               <Text style={styles.dateHeader}>{formatDate(date)}</Text>
-              {groupedEvents[date].map((event) => (
+              {dateEvents.map((event) => (
                 <View key={event.id} style={styles.eventCard}>
                   <View style={styles.eventContent}>
                     <Text style={styles.eventTitle}>{event.title}</Text>
@@ -112,7 +118,8 @@ export default function CalendarScreen() {
                 </View>
               ))}
             </View>
-          ))
+            );
+          })
         )}
         <View style={styles.bottomPadding} />
       </ScrollView>

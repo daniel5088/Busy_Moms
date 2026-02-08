@@ -3,7 +3,8 @@
  */
 export function getTodayISO(): string {
   const today = new Date();
-  return today.toISOString().split('T')[0];
+  const isoString = today.toISOString().split('T')[0];
+  return isoString || '';
 }
 
 /**
@@ -12,7 +13,8 @@ export function getTodayISO(): string {
 export function getDateInDays(days: number): string {
   const date = new Date();
   date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
+  const isoString = date.toISOString().split('T')[0];
+  return isoString || '';
 }
 
 /**
@@ -21,7 +23,12 @@ export function getDateInDays(days: number): string {
 export function formatTime(time: string | null | undefined): string {
   if (!time) return '';
 
-  const [hours, minutes] = time.split(':').map(Number);
+  const parts = time.split(':').map(Number);
+  const hours = parts[0];
+  const minutes = parts[1];
+
+  if (hours === undefined || minutes === undefined) return '';
+
   const period = hours >= 12 ? 'PM' : 'AM';
   const displayHours = hours % 12 || 12;
 
