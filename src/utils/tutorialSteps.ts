@@ -115,12 +115,6 @@ export const familyHubTutorialSteps: TutorialStep[] = [
     targetId: 'shopping-section',
     placement: 'bottom',
   },
-  {
-    title: 'Wellness Tracking',
-    description: 'Track menstrual cycles and health insights. Keep your wellness data private and organized.',
-    targetId: 'wellness-section',
-    placement: 'top',
-  },
 ];
 
 export const sarahTutorialSteps: TutorialStep[] = [
