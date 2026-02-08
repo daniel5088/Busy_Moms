@@ -13,7 +13,7 @@ import {
 import * as Icons from 'lucide-react';
 import { useQuickActions } from '../hooks/useQuickActions';
 import { UserQuickAction, QuickActionType } from '../services/quickActionsService';
-import { getGradientClasses } from '../utils/gradientMapper';
+import { getGradientClasses, getQuickActionColors } from '../utils/gradientMapper';
 
 interface QuickActionsCustomizerProps {
   onClose: () => void;
@@ -222,6 +222,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                 const isDragOver = dragOverIndex === index;
                 const isJustAdded = action.id.startsWith('temp-') || justAddedIds.has(`temp-${action.action_type_id}`);
                 const isRemoving = removingIds.has(action.id);
+                const colors = getQuickActionColors(action.action_type_id);
 
                 return (
                   <div
@@ -239,7 +240,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                     className={`
                       group flex items-center gap-3 p-4 rounded-xl border-2
                       ${isDragging ? 'opacity-50 shadow-2xl z-50' : 'opacity-100'}
-                      ${isDragOver ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700/50'}
+                      ${isDragOver ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/20' : `${colors.borderColor} ${colors.bgColor}`}
                       ${isJustAdded ? 'border-green-400 ring-2 ring-green-200 dark:ring-green-800' : ''}
                       ${action.enabled ? '' : 'opacity-60'}
                       ${isRemoving ? '' : 'hover:shadow-md cursor-move'}
@@ -250,7 +251,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                     <div className={`
                       flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center
                       ${action.enabled
-                        ? `bg-gradient-to-br ${getGradientClasses(action.action_type?.gradient_from || 'orange-500', action.action_type?.gradient_to || 'pink-500')} text-white`
+                        ? `${colors.iconBgColor} ${colors.iconColor}`
                         : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
                       }
                     `}>
@@ -318,6 +319,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                     {availableToAdd.map((type) => {
                       const Icon = getIconComponent(type.icon);
                       const isAdding = addingActionId === type.id;
+                      const colors = getQuickActionColors(type.id);
                       return (
                         <button
                           key={type.id}
@@ -329,7 +331,7 @@ export function QuickActionsCustomizer({ onClose }: QuickActionsCustomizerProps)
                               : 'border-gray-200 dark:border-gray-700 hover:border-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20'
                           }`}
                         >
-                          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getGradientClasses(type.gradient_from, type.gradient_to)} flex items-center justify-center text-white flex-shrink-0`}>
+                          <div className={`w-10 h-10 rounded-lg ${colors.iconBgColor} ${colors.iconColor} flex items-center justify-center flex-shrink-0`}>
                             <Icon className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
