@@ -746,8 +746,81 @@ export function Dashboard({
       },
     };
 
+    const colorMap: Record<string, any> = {
+      'shopping': {
+        bgColor: 'bg-amber-50 dark:bg-gray-800',
+        borderColor: 'border-amber-200 dark:border-gray-700',
+        iconBgColor: 'bg-amber-100 dark:bg-amber-900',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        hoverBg: 'hover:bg-amber-100 dark:hover:bg-gray-700',
+      },
+      'quick-links': {
+        bgColor: 'bg-purple-50 dark:bg-gray-800',
+        borderColor: 'border-purple-200 dark:border-gray-700',
+        iconBgColor: 'bg-purple-100 dark:bg-purple-900',
+        iconColor: 'text-purple-600 dark:text-purple-400',
+        hoverBg: 'hover:bg-purple-100 dark:hover:bg-gray-700',
+      },
+      'tasks': {
+        bgColor: 'bg-green-50 dark:bg-gray-800',
+        borderColor: 'border-green-200 dark:border-gray-700',
+        iconBgColor: 'bg-green-100 dark:bg-green-900',
+        iconColor: 'text-green-700 dark:text-green-400',
+        hoverBg: 'hover:bg-green-100 dark:hover:bg-gray-700',
+      },
+      'contacts': {
+        bgColor: 'bg-blue-50 dark:bg-gray-800',
+        borderColor: 'border-blue-200 dark:border-gray-700',
+        iconBgColor: 'bg-blue-100 dark:bg-blue-900',
+        iconColor: 'text-blue-600 dark:text-blue-400',
+        hoverBg: 'hover:bg-blue-100 dark:hover:bg-gray-700',
+      },
+      'scan-events': {
+        bgColor: 'bg-teal-50 dark:bg-gray-800',
+        borderColor: 'border-teal-200 dark:border-gray-700',
+        iconBgColor: 'bg-teal-100 dark:bg-teal-900',
+        iconColor: 'text-teal-700 dark:text-teal-400',
+        hoverBg: 'hover:bg-teal-100 dark:hover:bg-gray-700',
+      },
+      'cycle-tracker': {
+        bgColor: 'bg-rose-50 dark:bg-gray-800',
+        borderColor: 'border-rose-200 dark:border-gray-700',
+        iconBgColor: 'bg-rose-100 dark:bg-rose-900',
+        iconColor: 'text-rose-600 dark:text-rose-400',
+        hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
+      },
+      'life-receipts': {
+        bgColor: 'bg-indigo-50 dark:bg-gray-800',
+        borderColor: 'border-indigo-200 dark:border-gray-700',
+        iconBgColor: 'bg-indigo-100 dark:bg-indigo-900',
+        iconColor: 'text-indigo-600 dark:text-indigo-400',
+        hoverBg: 'hover:bg-indigo-100 dark:hover:bg-gray-700',
+      },
+      'gift-finder': {
+        bgColor: 'bg-pink-50 dark:bg-gray-800',
+        borderColor: 'border-pink-200 dark:border-gray-700',
+        iconBgColor: 'bg-pink-100 dark:bg-pink-900',
+        iconColor: 'text-pink-600 dark:text-pink-400',
+        hoverBg: 'hover:bg-pink-100 dark:hover:bg-gray-700',
+      },
+      'recipes': {
+        bgColor: 'bg-orange-50 dark:bg-gray-800',
+        borderColor: 'border-orange-200 dark:border-gray-700',
+        iconBgColor: 'bg-orange-100 dark:bg-orange-900',
+        iconColor: 'text-orange-600 dark:text-orange-400',
+        hoverBg: 'hover:bg-orange-100 dark:hover:bg-gray-700',
+      },
+    };
+
     return userQuickActions.map((userAction) => {
       const config = actionMap[userAction.action_type_id] || {};
+      const colors = colorMap[userAction.action_type_id] || {
+        bgColor: 'bg-gray-50 dark:bg-gray-800',
+        borderColor: 'border-gray-200 dark:border-gray-700',
+        iconBgColor: 'bg-gray-100 dark:bg-gray-900',
+        iconColor: 'text-gray-600 dark:text-gray-400',
+        hoverBg: 'hover:bg-gray-100 dark:hover:bg-gray-700',
+      };
       const Icon = getIconComponent(userAction.action_type?.icon || 'HelpCircle');
 
       // Use gradient from database
@@ -764,6 +837,7 @@ export function Dashboard({
         desc: config.desc || userAction.action_type?.description || '',
         action: config.action,
         gradient: gradient,
+        ...colors,
       };
     });
   }, [userQuickActions, tasks.length, lifeReceipts.length, onNavigateToSubScreen, onNavigateToCalendarCamera, onNavigateToCycleTracker, onNavigateToRecipes]);
@@ -1192,16 +1266,16 @@ export function Dashboard({
                       }
                     }}
                     disabled={!action.action}
-                    className={`group relative p-3 sm:p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col items-center
+                    className={`group relative p-3 sm:p-4 rounded-2xl ${action.bgColor} border ${action.borderColor} ${action.hoverBg} shadow-sm flex flex-col items-center
                       transition-all duration-300 ease-out
                       ${action.action ? 'hover:shadow-lg hover:scale-105 hover:-translate-y-0.5 cursor-pointer' : 'cursor-not-allowed opacity-60'}
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2`}
                     aria-label={`${action.title}: ${action.desc}`}
                   >
                     <div
-                      className={`bg-gradient-to-br ${action.gradient.bg} ${action.action ? action.gradient.hover : ''} p-2.5 sm:p-3 rounded-xl mb-2 sm:mb-3 transition-all duration-300`}
+                      className={`${action.iconBgColor} p-2.5 sm:p-3 rounded-xl mb-2 sm:mb-3 transition-all duration-300`}
                     >
-                      <action.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" aria-hidden="true" />
+                      <action.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${action.iconColor}`} aria-hidden="true" />
                     </div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm sm:text-base text-center leading-tight">
                       {action.title}
