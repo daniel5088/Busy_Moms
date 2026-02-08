@@ -975,33 +975,35 @@ export function Dashboard({
           </div>
 
           {/* Mini Stats */}
-          <div className="bg-white bg-opacity-10 dark:bg-gray-900 dark:bg-opacity-50 rounded-xl p-3">
-            <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
+          <div className="bg-white/10 dark:bg-gray-900/50 rounded-lg p-2">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs">
               <button
                 onClick={() => setShowEventsPopup(true)}
-                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+                className="flex items-center gap-1 hover:bg-white/20 px-1 py-0.5 rounded-md transition-colors"
                 aria-label={`View all ${events.length} events`}
                 aria-haspopup="dialog"
               >
-                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                <Calendar className="w-2.5 h-2.5 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
                 <span>{events.length} events</span>
               </button>
+          
               <button
                 onClick={() => setShowTasksPopup(true)}
-                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+                className="flex items-center gap-1 hover:bg-white/20 px-1 py-0.5 rounded-md transition-colors"
                 aria-label={`View all ${tasks.length} shopping items`}
                 aria-haspopup="dialog"
               >
-                <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                <ShoppingBag className="w-2.5 h-2.5 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
                 <span>{tasks.length} shopping items</span>
               </button>
+          
               <button
                 onClick={() => setShowRemindersPopup(true)}
-                className="flex items-center space-x-1 hover:bg-white hover:bg-opacity-20 px-1.5 py-1 rounded transition-colors"
+                className="flex items-center gap-1 hover:bg-white/20 px-1 py-0.5 rounded-md transition-colors"
                 aria-label={`View all ${reminders.length} reminders`}
                 aria-haspopup="dialog"
               >
-                <Clock className="w-3 h-3 sm:w-4 sm:h-4" aria-hidden="true" />
+                <Clock className="w-2.5 h-2.5 sm:w-4 sm:h-4 opacity-90" aria-hidden="true" />
                 <span>{reminders.length} reminders</span>
               </button>
             </div>
