@@ -5,40 +5,61 @@
 
 export interface ColorPalette {
   // Primary brand colors
-  primary: string;
-  primaryDark: string;
-  primaryLight: string;
+  primary: {
+    main: string;
+    dark: string;
+    light: string;
+  };
 
   // Secondary colors
-  secondary: string;
-  secondaryDark: string;
-  secondaryLight: string;
+  secondary: {
+    main: string;
+    dark: string;
+    light: string;
+  };
 
   // Background colors
-  background: string;
-  backgroundSecondary: string;
-  surface: string;
-  surfaceHighlight: string;
+  background: {
+    primary: string;
+    secondary: string;
+    card: string;
+    input: string;
+  };
 
   // Text colors
-  text: string;
-  textSecondary: string;
-  textTertiary: string;
-  textInverse: string;
+  text: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    inverse: string;
+  };
 
   // Border colors
-  border: string;
-  borderLight: string;
+  border: {
+    default: string;
+    light: string;
+  };
 
   // Status colors
-  success: string;
-  successLight: string;
-  warning: string;
-  warningLight: string;
-  error: string;
-  errorLight: string;
-  info: string;
-  infoLight: string;
+  status: {
+    success: string;
+    warning: string;
+    error: string;
+    info: string;
+  };
+
+  // Gray scale
+  gray: {
+    100: string;
+    200: string;
+    300: string;
+    400: string;
+    500: string;
+    600: string;
+    700: string;
+    800: string;
+    900: string;
+  };
 
   // Instacart brand colors (for integrations)
   instacart: {
@@ -71,40 +92,61 @@ export interface ColorPalette {
 
 export const lightColors: ColorPalette = {
   // Primary (blue)
-  primary: '#3B82F6',
-  primaryDark: '#2563EB',
-  primaryLight: '#93C5FD',
+  primary: {
+    main: '#3B82F6',
+    dark: '#2563EB',
+    light: '#93C5FD',
+  },
 
   // Secondary (green)
-  secondary: '#10B981',
-  secondaryDark: '#059669',
-  secondaryLight: '#6EE7B7',
+  secondary: {
+    main: '#10B981',
+    dark: '#059669',
+    light: '#6EE7B7',
+  },
 
   // Backgrounds
-  background: '#FFFFFF',
-  backgroundSecondary: '#F9FAFB',
-  surface: '#FFFFFF',
-  surfaceHighlight: '#F3F4F6',
+  background: {
+    primary: '#FFFFFF',
+    secondary: '#F9FAFB',
+    card: '#FFFFFF',
+    input: '#FFFFFF',
+  },
 
   // Text
-  text: '#111827',
-  textSecondary: '#6B7280',
-  textTertiary: '#9CA3AF',
-  textInverse: '#FFFFFF',
+  text: {
+    primary: '#111827',
+    secondary: '#6B7280',
+    tertiary: '#9CA3AF',
+    inverse: '#FFFFFF',
+  },
 
   // Borders
-  border: '#E5E7EB',
-  borderLight: '#F3F4F6',
+  border: {
+    default: '#E5E7EB',
+    light: '#F3F4F6',
+  },
 
   // Status
-  success: '#10B981',
-  successLight: '#D1FAE5',
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
-  error: '#EF4444',
-  errorLight: '#FEE2E2',
-  info: '#3B82F6',
-  infoLight: '#DBEAFE',
+  status: {
+    success: '#10B981',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    info: '#3B82F6',
+  },
+
+  // Gray scale
+  gray: {
+    100: '#F9FAFB',
+    200: '#F3F4F6',
+    300: '#E5E7EB',
+    400: '#9CA3AF',
+    500: '#6B7280',
+    600: '#4B5563',
+    700: '#374151',
+    800: '#1F2937',
+    900: '#111827',
+  },
 
   // Instacart
   instacart: {
@@ -137,40 +179,61 @@ export const lightColors: ColorPalette = {
 
 export const darkColors: ColorPalette = {
   // Primary (blue)
-  primary: '#60A5FA',
-  primaryDark: '#3B82F6',
-  primaryLight: '#93C5FD',
+  primary: {
+    main: '#60A5FA',
+    dark: '#3B82F6',
+    light: '#93C5FD',
+  },
 
   // Secondary (green)
-  secondary: '#34D399',
-  secondaryDark: '#10B981',
-  secondaryLight: '#6EE7B7',
+  secondary: {
+    main: '#34D399',
+    dark: '#10B981',
+    light: '#6EE7B7',
+  },
 
   // Backgrounds
-  background: '#111827',
-  backgroundSecondary: '#1F2937',
-  surface: '#1F2937',
-  surfaceHighlight: '#374151',
+  background: {
+    primary: '#111827',
+    secondary: '#1F2937',
+    card: '#1F2937',
+    input: '#374151',
+  },
 
   // Text
-  text: '#F9FAFB',
-  textSecondary: '#D1D5DB',
-  textTertiary: '#9CA3AF',
-  textInverse: '#111827',
+  text: {
+    primary: '#F9FAFB',
+    secondary: '#D1D5DB',
+    tertiary: '#9CA3AF',
+    inverse: '#111827',
+  },
 
   // Borders
-  border: '#374151',
-  borderLight: '#4B5563',
+  border: {
+    default: '#374151',
+    light: '#4B5563',
+  },
 
   // Status
-  success: '#34D399',
-  successLight: '#064E3B',
-  warning: '#FBBF24',
-  warningLight: '#78350F',
-  error: '#F87171',
-  errorLight: '#7F1D1D',
-  info: '#60A5FA',
-  infoLight: '#1E3A8A',
+  status: {
+    success: '#34D399',
+    warning: '#FBBF24',
+    error: '#F87171',
+    info: '#60A5FA',
+  },
+
+  // Gray scale
+  gray: {
+    100: '#111827',
+    200: '#1F2937',
+    300: '#374151',
+    400: '#4B5563',
+    500: '#6B7280',
+    600: '#9CA3AF',
+    700: '#D1D5DB',
+    800: '#E5E7EB',
+    900: '#F9FAFB',
+  },
 
   // Instacart (same as light)
   instacart: {
