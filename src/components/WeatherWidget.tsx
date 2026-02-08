@@ -815,7 +815,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             }`} style={{ fontFamily: "'Cormorant Garamond', serif" }}>
               7-Day Forecast
             </h2>
-            <div className="grid grid-cols-7 gap-3">
+            <div className="flex flex-col gap-2">
               {daily.slice(0, 7).map((day, index) => {
                 const [year, month, dayOfMonth] = day.date.split('-').map(Number);
                 const date = new Date(year, month - 1, dayOfMonth);
@@ -841,10 +841,10 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                     type="button"
                     key={day.date}
                     onClick={() => setSelectedDay(isSelected ? null : day.date)}
-                    className={`rounded-[20px] p-5 text-center transition-all duration-300 hover:-translate-y-1.5 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
+                    className={`rounded-xl px-4 py-3 flex items-center justify-between border-b last:border-b-0 transition-all duration-300 hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
                       isDark
-                        ? 'bg-[#232337]/50 border border-[#6478b4]/20 hover:bg-[#323246]/80'
-                        : 'bg-white/50 border border-[#a8c5d1]/15 hover:bg-white/80'
+                        ? 'bg-[#232337]/50 border-[#6478b4]/10 hover:bg-[#323246]/80'
+                        : 'bg-white/50 border-[#a8c5d1]/10 hover:bg-white/80'
                     } ${isSelected ? 'ring-2 ring-rose-300/70' : ''}`}
                     style={{
                       backdropFilter: 'blur(10px)',
@@ -854,17 +854,22 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                     aria-pressed={isSelected}
                     aria-label={`${dayName} forecast. High ${Math.round(day.temperature_max)} degrees, low ${Math.round(day.temperature_min)} degrees.`}
                   >
-                    <div className={`text-[13px] uppercase tracking-wider mb-3 font-medium transition-colors duration-500 ${
-                      isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'
-                    }`}>
-                      {dayName}
-                    </div>
-                    <div className="mb-3 flex justify-center items-center" style={{ height: '70px' }}>
-                      <div className="scale-90">
-                        <WeatherIcon weatherCode={day.weather_code} isNight={false} size="small" />
+                    {/* Left group: Day + Icon */}
+                    <div className="flex items-center gap-3">
+                      <div className={`text-[13px] uppercase tracking-wider font-medium w-14 text-left transition-colors duration-500 ${
+                        isDark ? 'text-[#e8e8f0]/60' : 'text-[#2a2a2e]/60'
+                      }`}>
+                        {dayName}
+                      </div>
+                      <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                        <div className="scale-75">
+                          <WeatherIcon weatherCode={day.weather_code} isNight={false} size="small" />
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+
+                    {/* Right group: Temps */}
+                    <div className="flex items-baseline gap-2">
                       <div className={`text-2xl font-medium transition-colors duration-500 ${
                         isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'
                       }`}>
