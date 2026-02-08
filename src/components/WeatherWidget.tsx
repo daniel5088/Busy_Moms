@@ -499,10 +499,11 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
 
         {/* Weather Details - dynamically show based on settings */}
         {(() => {
-          const detailCards = [];
-          
+          const primaryStats = [];
+          const additionalStats = [];
+
           if (showWind && current.wind_speed !== undefined) {
-            detailCards.push(
+            primaryStats.push(
               <DetailPill
                 key="wind"
                 isDark={isDark}
@@ -514,7 +515,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           }
 
           if (showHumidity && current.humidity !== undefined) {
-            detailCards.push(
+            primaryStats.push(
               <DetailPill
                 key="humidity"
                 isDark={isDark}
@@ -526,7 +527,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           }
 
           if (showPressure && current.pressure !== undefined) {
-            detailCards.push(
+            primaryStats.push(
               <DetailPill
                 key="pressure"
                 isDark={isDark}
@@ -538,7 +539,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           }
 
           if (showFeelsLike && current.feels_like !== undefined) {
-            detailCards.push(
+            additionalStats.push(
               <DetailPill
                 key="feels-like"
                 isDark={isDark}
@@ -550,7 +551,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           }
 
           if (showHeatIndex && current.heat_index !== undefined) {
-            detailCards.push(
+            additionalStats.push(
               <DetailPill
                 key="heat-index"
                 isDark={isDark}
@@ -563,7 +564,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
 
           if (showUvIndex && current.uv_index !== undefined) {
             const uvLevel = current.uv_index <= 2 ? 'Low' : current.uv_index <= 5 ? 'Moderate' : current.uv_index <= 7 ? 'High' : current.uv_index <= 10 ? 'Very High' : 'Extreme';
-            detailCards.push(
+            additionalStats.push(
               <DetailPill
                 key="uv"
                 isDark={isDark}
@@ -576,7 +577,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           }
 
           if (showCloudCover && current.cloud_cover !== undefined) {
-            detailCards.push(
+            additionalStats.push(
               <DetailPill
                 key="cloud-cover"
                 isDark={isDark}
@@ -588,7 +589,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           }
 
           if (showThunderstormProb && current.thunderstorm_probability !== undefined) {
-            detailCards.push(
+            additionalStats.push(
               <DetailPill
                 key="thunderstorm"
                 isDark={isDark}
@@ -599,18 +600,33 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
             );
           }
 
-          if (detailCards.length === 0) return null;
-          
-          const gridCols = detailCards.length === 1 ? 'grid-cols-1' : 
-                          detailCards.length === 2 ? 'grid-cols-2' : 
-                          detailCards.length <= 3 ? 'grid-cols-3' : 
-                          detailCards.length <= 4 ? 'grid-cols-2 md:grid-cols-4' : 
-                          'grid-cols-3 md:grid-cols-5';
-          
+          if (primaryStats.length === 0 && additionalStats.length === 0) return null;
+
           return (
-            <div className={`relative z-10 grid ${gridCols} gap-6 mb-12 animate-fadeIn`} style={{ animationDelay: '0.2s' }}>
-              {detailCards}
-            </div>
+            <>
+              {primaryStats.length > 0 && (
+                <div className="relative z-10 grid grid-cols-2 gap-6 mb-12 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+                  {primaryStats.slice(0, 2).map(stat => stat)}
+                  {primaryStats[2] && (
+                    <div className="col-span-2">
+                      {primaryStats[2]}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {additionalStats.length > 0 && (
+                <div className={`relative z-10 grid ${
+                  additionalStats.length === 1 ? 'grid-cols-1' :
+                  additionalStats.length === 2 ? 'grid-cols-2' :
+                  additionalStats.length === 3 ? 'grid-cols-3' :
+                  additionalStats.length === 4 ? 'grid-cols-2 md:grid-cols-4' :
+                  'grid-cols-2 md:grid-cols-3 lg:grid-cols-5'
+                } gap-6 mb-12 animate-fadeIn`} style={{ animationDelay: '0.25s' }}>
+                  {additionalStats}
+                </div>
+              )}
+            </>
           );
         })()}
 
