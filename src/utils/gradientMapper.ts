@@ -54,3 +54,87 @@ export function getGradientHoverClasses(from: string, to: string): string {
   };
   return hoverMap[key] || 'hover:from-orange-600 hover:to-pink-600';
 }
+
+export interface QuickActionColors {
+  bgColor: string;
+  borderColor: string;
+  iconBgColor: string;
+  iconColor: string;
+  hoverBg: string;
+}
+
+export function getQuickActionColors(actionTypeId: string): QuickActionColors {
+  const colorMap: Record<string, QuickActionColors> = {
+    'shopping': {
+      bgColor: 'bg-amber-50 dark:bg-gray-800',
+      borderColor: 'border-amber-200 dark:border-gray-700',
+      iconBgColor: 'bg-amber-100 dark:bg-amber-900',
+      iconColor: 'text-amber-600 dark:text-amber-400',
+      hoverBg: 'hover:bg-amber-100 dark:hover:bg-gray-700',
+    },
+    'quick-links': {
+      bgColor: 'bg-purple-50 dark:bg-gray-800',
+      borderColor: 'border-purple-200 dark:border-gray-700',
+      iconBgColor: 'bg-purple-100 dark:bg-purple-900',
+      iconColor: 'text-purple-600 dark:text-purple-400',
+      hoverBg: 'hover:bg-purple-100 dark:hover:bg-gray-700',
+    },
+    'tasks': {
+      bgColor: 'bg-green-50 dark:bg-gray-800',
+      borderColor: 'border-green-200 dark:border-gray-700',
+      iconBgColor: 'bg-green-100 dark:bg-green-900',
+      iconColor: 'text-green-700 dark:text-green-400',
+      hoverBg: 'hover:bg-green-100 dark:hover:bg-gray-700',
+    },
+    'contacts': {
+      bgColor: 'bg-blue-50 dark:bg-gray-800',
+      borderColor: 'border-blue-200 dark:border-gray-700',
+      iconBgColor: 'bg-blue-100 dark:bg-blue-900',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      hoverBg: 'hover:bg-blue-100 dark:hover:bg-gray-700',
+    },
+    'scan-events': {
+      bgColor: 'bg-teal-50 dark:bg-gray-800',
+      borderColor: 'border-teal-200 dark:border-gray-700',
+      iconBgColor: 'bg-teal-100 dark:bg-teal-900',
+      iconColor: 'text-teal-700 dark:text-teal-400',
+      hoverBg: 'hover:bg-teal-100 dark:hover:bg-gray-700',
+    },
+    'cycle-tracker': {
+      bgColor: 'bg-rose-50 dark:bg-gray-800',
+      borderColor: 'border-rose-200 dark:border-gray-700',
+      iconBgColor: 'bg-rose-100 dark:bg-rose-900',
+      iconColor: 'text-rose-600 dark:text-rose-400',
+      hoverBg: 'hover:bg-rose-100 dark:hover:bg-gray-700',
+    },
+    'life-receipts': {
+      bgColor: 'bg-indigo-50 dark:bg-gray-800',
+      borderColor: 'border-indigo-200 dark:border-gray-700',
+      iconBgColor: 'bg-indigo-100 dark:bg-indigo-900',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      hoverBg: 'hover:bg-indigo-100 dark:hover:bg-gray-700',
+    },
+    'gift-finder': {
+      bgColor: 'bg-pink-50 dark:bg-gray-800',
+      borderColor: 'border-pink-200 dark:border-gray-700',
+      iconBgColor: 'bg-pink-100 dark:bg-pink-900',
+      iconColor: 'text-pink-600 dark:text-pink-400',
+      hoverBg: 'hover:bg-pink-100 dark:hover:bg-gray-700',
+    },
+    'recipes': {
+      bgColor: 'bg-orange-50 dark:bg-gray-800',
+      borderColor: 'border-orange-200 dark:border-gray-700',
+      iconBgColor: 'bg-orange-100 dark:bg-orange-900',
+      iconColor: 'text-orange-600 dark:text-orange-400',
+      hoverBg: 'hover:bg-orange-100 dark:hover:bg-gray-700',
+    },
+  };
+
+  return colorMap[actionTypeId] || {
+    bgColor: 'bg-gray-50 dark:bg-gray-800',
+    borderColor: 'border-gray-200 dark:border-gray-700',
+    iconBgColor: 'bg-gray-100 dark:bg-gray-900',
+    iconColor: 'text-gray-600 dark:text-gray-400',
+    hoverBg: 'hover:bg-gray-100 dark:hover:bg-gray-700',
+  };
+}
