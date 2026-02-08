@@ -1018,7 +1018,7 @@ export function Dashboard({
               <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
                 Daily Schedule
               </h2>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-80 flex flex-col">
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-72 flex flex-col">
                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
                   {todayEvents.length > 0 ? (
                     <div className="space-y-3">
@@ -1090,7 +1090,7 @@ export function Dashboard({
               <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
                 Weekly Schedule
               </h2>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-80 flex flex-col">
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm h-72 flex flex-col">
                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
                   {thisWeekEvents.length > 0 ? (
                     <div className="space-y-3">
