@@ -319,19 +319,19 @@ function DetailPill({ icon, label, value, sub, isDark }: {
         ? 'bg-[#28283c]/50 border border-[#6478b4]/20'
         : 'bg-white/60 border border-[#a8c5d1]/20'
     }`} style={{ backdropFilter: 'blur(10px)' }}>
-      <div className="flex items-center justify-center gap-2 mb-2">
+      <div className="w-full flex items-center justify-center gap-2 mb-2">
         {icon}
-        <div className={`text-[11px] uppercase tracking-wider ${
+        <div className={`text-[11px] uppercase tracking-wider text-center ${
           isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
         }`}>
           {label}
         </div>
       </div>
-      <div className={`text-[28px] ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
+      <div className={`text-[28px] w-full text-center ${isDark ? 'text-[#e8e8f0]' : 'text-[#2a2a2e]'}`}>
         {value}
       </div>
       {sub && (
-        <div className={`text-xs mt-1 ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
+        <div className={`text-xs mt-1 w-full text-center ${isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'}`}>
           {sub}
         </div>
       )}
