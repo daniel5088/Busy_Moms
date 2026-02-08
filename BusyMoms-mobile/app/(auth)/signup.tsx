@@ -11,40 +11,65 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { useToast } from '../../src/hooks/useToast';
 import { useTheme } from '../../src/hooks/useTheme';
 
-export default function LoginScreen() {
+export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const { showToast } = useToast();
   const { theme } = useTheme();
   const router = useRouter();
 
-  const handleSignIn = async () => {
-    if (!email || !password) {
-      showToast('Please enter both email and password', 'error');
+  const handleSignUp = async () => {
+    // Validation
+    if (!email || !password || !confirmPassword) {
+      showToast('Please fill in all fields', 'error');
+      return;
+    }
+
+    if (password.length < 6) {
+      showToast('Password must be at least 6 characters', 'error');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showToast('Passwords do not match', 'error');
       return;
     }
 
     setLoading(true);
     try {
-      const { error } = await signIn(email, password);
+      const { data, error } = await signUp(email, password);
 
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          showToast('Invalid email or password', 'error');
-        } else if (error.message.includes('Email not confirmed')) {
-          showToast('Please confirm your email before signing in', 'warning');
+        if (error.message.includes('User already registered')) {
+          showToast('Email already registered. Please sign in.', 'error');
+          router.replace('/(auth)/login');
         } else {
-          showToast(error.message || 'Sign in failed', 'error');
+          showToast(error.message || 'Sign up failed', 'error');
         }
         return;
       }
 
+      // Check if email confirmation is required
+      if (data?.user && !data.session) {
+        showToast(
+          'Account created! Please check your email to confirm.',
+          'success'
+        );
+        // Redirect to login after showing message
+        setTimeout(() => {
+          router.replace('/(auth)/login');
+        }, 2000);
+        return;
+      }
+
+      // If we have a session, user is logged in
       // Navigation will be handled by AuthGuard
-      showToast('Welcome back!', 'success');
+      showToast('Account created successfully!', 'success');
     } catch (error: any) {
       showToast(error.message || 'An unexpected error occurred', 'error');
     } finally {
@@ -72,10 +97,10 @@ export default function LoginScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={[styles.title, { color: theme.colors.text.primary }]}>
-              Busy Moms
+              Create Account
             </Text>
             <Text style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
-              Welcome back! Sign in to continue.
+              Join Busy Moms Assistant today
             </Text>
           </View>
 
@@ -93,25 +118,27 @@ export default function LoginScreen() {
 
             <FormField label="Password" required>
               <Input
-                placeholder="Enter your password"
+                placeholder="At least 6 characters"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                autoComplete="password"
+                autoComplete="password-new"
               />
             </FormField>
 
-            <Link href="/(auth)/forgot-password" asChild>
-              <Pressable style={styles.forgotPassword}>
-                <Text style={[styles.forgotPasswordText, { color: theme.colors.primary.main }]}>
-                  Forgot password?
-                </Text>
-              </Pressable>
-            </Link>
+            <FormField label="Confirm Password" required>
+              <Input
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                autoComplete="password-new"
+              />
+            </FormField>
 
             <Button
-              title="Sign In"
-              onPress={handleSignIn}
+              title="Sign Up"
+              onPress={handleSignUp}
               loading={loading}
               fullWidth
             />
@@ -119,25 +146,29 @@ export default function LoginScreen() {
             <Divider label="OR" />
 
             <Button
-              title="Sign in with Google"
+              title="Sign up with Google"
               onPress={handleGoogleSignIn}
               variant="outline"
               loading={googleLoading}
               fullWidth
             />
 
-            <View style={styles.signupPrompt}>
-              <Text style={[styles.signupText, { color: theme.colors.text.secondary }]}>
-                Don't have an account?{' '}
+            <View style={styles.signinPrompt}>
+              <Text style={[styles.signinText, { color: theme.colors.text.secondary }]}>
+                Already have an account?{' '}
               </Text>
-              <Link href="/(auth)/signup" asChild>
+              <Link href="/(auth)/login" asChild>
                 <Pressable>
-                  <Text style={[styles.signupLink, { color: theme.colors.primary.main }]}>
-                    Sign Up
+                  <Text style={[styles.signinLink, { color: theme.colors.primary.main }]}>
+                    Sign In
                   </Text>
                 </Pressable>
               </Link>
             </View>
+
+            <Text style={[styles.emailNotice, { color: theme.colors.text.tertiary }]}>
+              You'll receive an email verification link after signing up.
+            </Text>
           </View>
         </View>
       </KeyboardAvoid>
@@ -168,25 +199,22 @@ const styles = StyleSheet.create({
   form: {
     gap: 20,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginTop: -12,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  signupPrompt: {
+  signinPrompt: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
   },
-  signupText: {
+  signinText: {
     fontSize: 14,
   },
-  signupLink: {
+  signinLink: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  emailNotice: {
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

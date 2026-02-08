@@ -1,25 +1,16 @@
-import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../src/hooks/useTheme';
 
+/**
+ * Index route - serves as a loading screen
+ * AuthGuard in _layout.tsx handles all routing logic
+ */
 export default function Index() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    if (!loading) {
-      if (user) {
-        router.replace('/(tabs)/dashboard');
-      } else {
-        router.replace('/(auth)/login');
-      }
-    }
-  }, [user, loading]);
+  const { theme } = useTheme();
 
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#3B82F6" />
+    <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+      <ActivityIndicator size="large" color={theme.colors.primary.main} />
     </View>
   );
 }
@@ -29,6 +20,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
   },
 });
