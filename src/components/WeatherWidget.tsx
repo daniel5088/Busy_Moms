@@ -314,12 +314,12 @@ function DetailPill({ icon, label, value, sub, isDark }: {
   isDark: boolean;
 }) {
   return (
-    <div className={`rounded-2xl p-5 ${
+    <div className={`rounded-2xl p-5 flex flex-col items-center justify-center text-center ${
       isDark
         ? 'bg-[#28283c]/50 border border-[#6478b4]/20'
         : 'bg-white/60 border border-[#a8c5d1]/20'
     }`} style={{ backdropFilter: 'blur(10px)' }}>
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center justify-center gap-2 mb-2">
         {icon}
         <div className={`text-[11px] uppercase tracking-wider ${
           isDark ? 'text-[#e8e8f0]/50' : 'text-[#2a2a2e]/50'
@@ -617,10 +617,10 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
           return (
             <>
               {primaryStats.length > 0 && (
-                <div className="relative z-10 grid grid-cols-2 gap-6 mb-12 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+                <div className="relative z-10 grid grid-cols-2 gap-6 mb-12 animate-fadeIn justify-items-center" style={{ animationDelay: '0.2s' }}>
                   {primaryStats.slice(0, 2).map(stat => stat)}
                   {primaryStats[2] && (
-                    <div className="col-span-2">
+                    <div className="col-span-2 flex justify-center w-full">
                       {primaryStats[2]}
                     </div>
                   )}
@@ -634,7 +634,7 @@ export function WeatherWidget({ weather, loading, error, locationName, onOpenSet
                   additionalStats.length === 3 ? 'grid-cols-3' :
                   additionalStats.length === 4 ? 'grid-cols-2 md:grid-cols-4' :
                   'grid-cols-2 md:grid-cols-3 lg:grid-cols-5'
-                } gap-6 mb-12 animate-fadeIn`} style={{ animationDelay: '0.25s' }}>
+                } gap-6 mb-12 animate-fadeIn justify-items-center`} style={{ animationDelay: '0.25s' }}>
                   {additionalStats}
                 </div>
               )}
