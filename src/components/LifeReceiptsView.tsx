@@ -207,7 +207,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
 
             {expandedId && (
               <div
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 animate-fadeIn"
                 onClick={handleCloseModal}
               >
                 {(() => {
@@ -219,8 +219,11 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                     <>
                       {hasPrevious && (
                         <button
-                          onClick={handlePreviousNote}
-                          className="fixed left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-[60] flex items-center justify-center"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePreviousNote();
+                          }}
+                          className="fixed left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-[60] flex items-center justify-center"
                           aria-label="Previous note"
                         >
                           <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -229,8 +232,11 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
 
                       {hasNext && (
                         <button
-                          onClick={handleNextNote}
-                          className="fixed right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-[60] flex items-center justify-center"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleNextNote();
+                          }}
+                          className="fixed right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-[60] flex items-center justify-center"
                           aria-label="Next note"
                         >
                           <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -241,10 +247,10 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                 })()}
 
                 <div
-                  className="flex flex-col gap-4 animate-scaleIn"
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-4 animate-scaleIn"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-[min(92vw,280px)] h-[min(75vh,300px)] flex flex-col">
+                  <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-[280px] max-w-[calc(100vw-140px)] h-[min(75vh,300px)] flex flex-col">
                     <div className="h-12 flex items-center justify-end px-4 flex-shrink-0">
                       <button
                         onClick={handleCloseModal}
