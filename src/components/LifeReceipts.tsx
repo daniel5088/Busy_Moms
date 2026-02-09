@@ -690,7 +690,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
               {extractionSource === 'voice'
                 ? 'Transcribing and analyzing your recording...'
                 : extractionSource === 'text'
-                ? 'Analyzing your text with AI...'
+                ? 'Analyzing your text...'
                 : 'Analyzing your image with AI...'}
             </p>
           </div>
