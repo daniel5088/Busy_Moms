@@ -86,7 +86,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
       setIsEditMode(false);
     } catch (error) {
       console.error('Error updating receipt:', error);
-      alert('Failed to update receipt. Please try again.');
+      alert('Failed to update mental note. Please try again.');
     }
   };
 
@@ -106,7 +106,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
   const handleDoneClick = async () => {
     if (!expandedId) return;
 
-    const confirmed = window.confirm('Are you sure you want to delete this receipt?');
+    const confirmed = window.confirm('Are you sure you want to delete this mental note?');
     if (!confirmed) return;
 
     try {
@@ -116,7 +116,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
       setIsEditMode(false);
     } catch (error) {
       console.error('Error deleting receipt:', error);
-      alert('Failed to delete receipt. Please try again.');
+      alert('Failed to delete mental note. Please try again.');
     }
   };
 
@@ -133,7 +133,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
           </button>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Your Receipts
+              Your Mental Notes
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {receipts.length} {receipts.length === 1 ? 'thought' : 'thoughts'} stored
@@ -147,7 +147,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100 mx-auto mb-4"></div>
-              <p className="text-gray-600 dark:text-gray-400">Loading your receipts...</p>
+              <p className="text-gray-600 dark:text-gray-400">Loading your mental notes...</p>
             </div>
           </div>
         ) : receipts.length === 0 ? (
@@ -155,7 +155,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
             <div className="text-center">
               <Receipt className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                No receipts yet
+                No mental notes yet
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
                 Add your first thought to see it here
@@ -177,7 +177,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                   }}
                   tabIndex={0}
                   role="button"
-                  aria-label={`View receipt: ${receipt.content}`}
+                  aria-label={`View mental note: ${receipt.content}`}
                   className="aspect-square p-3 sm:p-4 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
                 >
                   <div className="flex items-center justify-center h-full">
@@ -215,7 +215,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                         return (
                           <div className="flex flex-col pt-2">
                             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pr-8">
-                              Edit Receipt
+                              Edit Note
                             </h3>
 
                             <div className="mb-4">

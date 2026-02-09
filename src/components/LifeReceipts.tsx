@@ -406,7 +406,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
         <header className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="text-center">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Life Receipts
+              Mental Notes
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Clear your mind, one thought at a time
@@ -465,7 +465,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
             <div className="flex items-center justify-between mb-4">
-              <h3 id="add-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Life Receipt</h3>
+              <h3 id="add-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">Add Mental Note</h3>
               <button
                 onClick={() => setShowAddModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
@@ -542,7 +542,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                   disabled={!isFormValid || submitting}
                   className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? 'Adding...' : 'Add Receipt'}
+                  {submitting ? 'Adding...' : 'Add Note'}
                 </button>
 
                 <button
@@ -700,7 +700,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-2xl w-full my-8 border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="extracted-modal-title">
             <div className="flex items-center justify-between mb-6">
               <h3 id="extracted-modal-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Receipt Extracted
+                Note Extracted
               </h3>
               <button
                 onClick={() => setExtractedInfo(null)}
@@ -747,7 +747,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                 className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Plus className="w-5 h-5" />
-                <span>{submitting ? 'Adding...' : 'Add Receipt'}</span>
+                <span>{submitting ? 'Adding...' : 'Add Note'}</span>
               </button>
 
               <button
@@ -776,7 +776,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-200 dark:border-gray-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="no-receipt-modal-title">
             <div className="flex items-center justify-between mb-4">
               <h3 id="no-receipt-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                No Receipt Found
+                No Note Found
               </h3>
               <button
                 onClick={() => setShowNoReceiptFoundModal(false)}
@@ -788,7 +788,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
             </div>
 
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              We couldn't find any receipt information in the image. Please try with a different image or add the receipt manually.
+              We couldn't find any note information in the image. Please try with a different image or add the note manually.
             </p>
 
             <div className="space-y-3">

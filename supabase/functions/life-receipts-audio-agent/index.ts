@@ -168,7 +168,7 @@ Deno.serve(async (req: Request) => {
           messages: [
             {
               role: 'user',
-              content: `Analyze this transcribed voice note and extract information for a "Life Receipt" - a thought, task, or reminder someone wants to capture.
+              content: `Analyze this transcribed voice note and extract information for a "Mental Note" - a thought, task, or reminder someone wants to capture.
 
 CRITICAL RULES:
 

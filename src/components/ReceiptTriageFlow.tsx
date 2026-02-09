@@ -78,7 +78,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
       }
     } catch (error) {
       console.error('Error deleting receipt:', error);
-      alert('Failed to delete receipt. Please try again.');
+      alert('Failed to delete mental note. Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -117,7 +117,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
       >
         <div className="flex items-center justify-between px-2">
           <div className="text-white font-semibold text-sm">
-            {remainingCount} {remainingCount === 1 ? 'receipt' : 'receipts'} remaining
+            {remainingCount} {remainingCount === 1 ? 'note' : 'notes'} remaining
           </div>
           <button
             onClick={onClose}
@@ -204,7 +204,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
             onClick={handleDone}
             disabled={isDeleting}
             className="px-6 py-3 rounded-lg bg-green-50 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-700 shadow-sm hover:bg-green-100 dark:hover:bg-green-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 dark:focus:ring-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Mark as done and delete receipt"
+            aria-label="Mark as done and delete mental note"
           >
             <div className="flex items-center gap-2">
               <Check className="w-5 h-5 text-green-700 dark:text-green-400" />
@@ -217,7 +217,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
           <button
             onClick={handleSolve}
             className="px-6 py-3 rounded-lg bg-pink-50 dark:bg-pink-900/30 border-2 border-pink-300 dark:border-pink-700 shadow-sm hover:bg-pink-100 dark:hover:bg-pink-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600"
-            aria-label="Solve receipt (placeholder)"
+            aria-label="Solve mental note (placeholder)"
           >
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-pink-700 dark:text-pink-400" />
@@ -230,7 +230,7 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
           <button
             onClick={handleSkip}
             className="px-6 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-700 shadow-sm hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-            aria-label="Skip to next receipt"
+            aria-label="Skip to next mental note"
           >
             <div className="flex items-center gap-2">
               <SkipForward className="w-5 h-5 text-blue-700 dark:text-blue-400" />

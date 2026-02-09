@@ -438,12 +438,12 @@ function App() {
                 </FeatureErrorBoundary>
               )}
               {currentSubScreen === 'life-receipts' && (
-                <FeatureErrorBoundary featureName="Life Receipts">
+                <FeatureErrorBoundary featureName="Mental Notes">
                   <LifeReceipts onNavigateToView={() => setCurrentSubScreen('life-receipts-view')} />
                 </FeatureErrorBoundary>
               )}
               {currentSubScreen === 'life-receipts-view' && (
-                <FeatureErrorBoundary featureName="Life Receipts View">
+                <FeatureErrorBoundary featureName="Mental Notes View">
                   <LifeReceiptsView onBack={() => setCurrentSubScreen('life-receipts')} />
                 </FeatureErrorBoundary>
               )}

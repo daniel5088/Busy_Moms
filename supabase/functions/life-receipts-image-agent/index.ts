@@ -114,7 +114,7 @@ Deno.serve(async (req: Request) => {
               content: [
                 {
                   type: 'text',
-                  text: `Analyze this image and extract information for a "Life Receipt" - a thought, task, or reminder someone wants to capture.
+                  text: `Analyze this image and extract information for a "Mental Note" - a thought, task, or reminder someone wants to capture.
 
 CRITICAL RULES:
 
