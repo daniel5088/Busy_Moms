@@ -1,215 +1,191 @@
-import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar as CalendarIcon, MapPin, Clock } from 'lucide-react-native';
-import { supabase, Event } from '../../lib/supabase';
-import { useAuth } from '../../hooks/useAuth';
-import { formatEventTime, formatDate, getTodayISO, getDateInDays } from '../../utils/timeFormatters';
+/**
+ * Calendar Tab Screen - Main calendar with month view and events
+ * Complete rewrite for Phase 5
+ */
+
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
+import { Screen } from '../../src/components/layout/Screen';
+import { Header } from '../../src/components/layout/Header';
+import { CalendarView } from '../../src/components/calendar/CalendarView';
+import { EventList } from '../../src/components/calendar/EventList';
+import { useTheme } from '../../src/hooks/useTheme';
+import { useEventsForMonth, useEventsForDate } from '../../src/hooks/useEvents';
+import { getTodayISO } from '../../src/utils/timeFormatters';
+import type { DateData } from 'react-native-calendars';
 
 export default function CalendarScreen() {
-  const { user } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
+  const router = useRouter();
+  const today = getTodayISO();
 
-  useEffect(() => {
-    if (user?.id) {
-      loadEvents();
-    }
-  }, [user?.id]);
+  const [selectedDate, setSelectedDate] = useState(today);
 
-  const loadEvents = async () => {
-    if (!user?.id) return;
+  // Parse current year and month from selected date
+  const currentYear = parseInt(selectedDate.split('-')[0] || '2024', 10);
+  const currentMonth = parseInt(selectedDate.split('-')[1] || '1', 10);
 
-    setLoading(true);
-    try {
-      const today = getTodayISO();
-      const futureDate = getDateInDays(30);
+  // Fetch events for the current month (for calendar markers)
+  const { data: monthEvents = [], isLoading: monthLoading, refetch: refetchMonth } = useEventsForMonth(
+    currentYear,
+    currentMonth
+  );
 
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('event_date', today)
-        .lte('event_date', futureDate)
-        .order('event_date', { ascending: true })
-        .order('start_time', { ascending: true });
+  // Fetch events for the selected day
+  const { data: dayEvents = [], isLoading: dayLoading, refetch: refetchDay } = useEventsForDate(selectedDate);
 
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isRefreshing = monthLoading || dayLoading;
 
-  const groupEventsByDate = () => {
-    const grouped: { [key: string]: Event[] } = {};
-    events.forEach((event) => {
-      if (!grouped[event.event_date]) {
-        grouped[event.event_date] = [];
-      }
-      const dateGroup = grouped[event.event_date];
-      if (dateGroup) {
-        dateGroup.push(event);
+  // Create marked dates for calendar
+  const markedDates = useMemo(() => {
+    const marked: {
+      [date: string]: {
+        marked?: boolean;
+        dotColor?: string;
+        selected?: boolean;
+        selectedColor?: string;
+      };
+    } = {};
+
+    monthEvents.forEach((event) => {
+      if (event.event_date) {
+        marked[event.event_date] = {
+          marked: true,
+          dotColor: theme.colors.primary.main,
+        };
       }
     });
-    return grouped;
+
+    return marked;
+  }, [monthEvents, theme.colors.primary.main]);
+
+  const handleDayPress = (day: DateData) => {
+    setSelectedDate(day.dateString);
   };
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const handleRefresh = async () => {
+    await Promise.all([refetchMonth(), refetchDay()]);
+  };
 
-  const groupedEvents = groupEventsByDate();
-  const dates = Object.keys(groupedEvents).sort();
+  const handleCreateEvent = () => {
+    router.push({
+      pathname: '/event/create',
+      params: { date: selectedDate },
+    });
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        {/* @ts-ignore */}<CalendarIcon width={24} height={24} stroke="#1F2937" />
-        <Text style={styles.headerTitle}>Calendar</Text>
-      </View>
+    <Screen>
+      <Header title="Calendar" />
 
-      <ScrollView style={styles.scrollView}>
-        {dates.length === 0 ? (
-          <View style={styles.emptyState}>
-            <CalendarIcon size={48} color="#D1D5DB" />
-            <Text style={styles.emptyText}>No upcoming events</Text>
-          </View>
-        ) : (
-          dates.map((date) => {
-            const dateEvents = groupedEvents[date];
-            if (!dateEvents) return null;
-            return (
-            <View key={date} style={styles.dateSection}>
-              <Text style={styles.dateHeader}>{formatDate(date)}</Text>
-              {dateEvents.map((event) => (
-                <View key={event.id} style={styles.eventCard}>
-                  <View style={styles.eventContent}>
-                    <Text style={styles.eventTitle}>{event.title}</Text>
-                    {event.description && (
-                      <Text style={styles.eventDescription}>{event.description}</Text>
-                    )}
-                    <View style={styles.eventMeta}>
-                      {/* @ts-ignore */}<Clock width={14} height={14} stroke="#6B7280" />
-                      <Text style={styles.eventMetaText}>{formatEventTime(event)}</Text>
-                    </View>
-                    {event.location && (
-                      <View style={styles.eventMeta}>
-                        {/* @ts-ignore */}<MapPin width={14} height={14} stroke="#6B7280" />
-                        <Text style={styles.eventMetaText}>{event.location}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              ))}
-            </View>
-            );
-          })
-        )}
-        <View style={styles.bottomPadding} />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.primary.main}
+          />
+        }
+      >
+        {/* Calendar Month View */}
+        <View style={styles.calendarSection}>
+          <CalendarView
+            selectedDate={selectedDate}
+            onDayPress={handleDayPress}
+            markedDates={markedDates}
+          />
+        </View>
+
+        {/* Selected Date Header */}
+        <View style={styles.dateHeader}>
+          <Text style={[styles.dateText, { color: theme.colors.text.primary }]}>
+            {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </Text>
+          {dayEvents.length > 0 && (
+            <Text style={[styles.eventCount, { color: theme.colors.text.secondary }]}>
+              {dayEvents.length} {dayEvents.length === 1 ? 'event' : 'events'}
+            </Text>
+          )}
+        </View>
+
+        {/* Events for Selected Day */}
+        <View style={styles.eventsSection}>
+          <EventList
+            events={dayEvents}
+            loading={dayLoading}
+            emptyMessage="No events for this day"
+          />
+        </View>
+
+        {/* TODO: Google Calendar Connection Banner (will be added in Task #6) */}
+        {/* TODO: Sync Status Indicator (will be added in Task #7) */}
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Floating Action Button */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.fab,
+          {
+            backgroundColor: theme.colors.primary.main,
+            opacity: pressed ? 0.8 : 1,
+          },
+        ]}
+        onPress={handleCreateEvent}
+      >
+        <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
+      </Pressable>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  content: {
+    paddingBottom: 80, // Space for FAB
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  dateSection: {
-    marginTop: 16,
-    paddingHorizontal: 20,
+  calendarSection: {
+    padding: 16,
   },
   dateHeader: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#3B82F6',
-    marginBottom: 12,
-  },
-  eventCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
-  },
-  eventContent: {
-    gap: 6,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  eventDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-  },
-  eventMeta: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
   },
-  eventMetaText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 64,
-    gap: 12,
-  },
-  emptyText: {
+  dateText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#6B7280',
   },
-  bottomPadding: {
-    height: 24,
+  eventCount: {
+    fontSize: 14,
+  },
+  eventsSection: {
+    flex: 1,
+  },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
 });
