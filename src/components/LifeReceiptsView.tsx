@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Receipt, X, Pencil, Sparkles, Check } from 'lucide-react';
+import { ArrowLeft, Receipt, X, Pencil, Check } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 import { formatWhenBucketLabel } from '../utils/lifeReceiptsFormatters';
 
@@ -97,10 +97,6 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
     setEditedWho('');
     setEditedWhen('');
     setEditedAction('');
-  };
-
-  const handleSolveClick = () => {
-    // Placeholder - does nothing for now
   };
 
   const handleDoneClick = async () => {
@@ -374,20 +370,6 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                             </div>
                             <span className="font-semibold text-blue-700 dark:text-blue-300 text-xs">
                               Edit
-                            </span>
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={handleSolveClick}
-                          className="px-4 py-2.5 rounded-lg bg-pink-50 dark:bg-pink-900/30 border-2 border-pink-300 dark:border-pink-700 shadow-sm hover:bg-pink-100 dark:hover:bg-pink-900/50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600"
-                        >
-                          <div className="flex flex-col items-center gap-1">
-                            <div className="bg-pink-100 dark:bg-pink-800 p-1.5 rounded-lg">
-                              <Sparkles className="w-4 h-4 text-pink-700 dark:text-pink-300" />
-                            </div>
-                            <span className="font-semibold text-pink-700 dark:text-pink-300 text-xs">
-                              Solve
                             </span>
                           </div>
                         </button>
