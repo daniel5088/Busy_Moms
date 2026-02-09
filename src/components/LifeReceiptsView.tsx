@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Receipt, X, Pencil, Check } from 'lucide-react';
+import { ArrowLeft, Receipt, X, Pencil, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 import { formatWhenBucketLabel } from '../utils/lifeReceiptsFormatters';
 
@@ -23,15 +23,29 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
   }, []);
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && expandedId) {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (!expandedId) return;
+
+      if (e.key === 'Escape') {
         setExpandedId(null);
+        return;
+      }
+
+      const currentIndex = receipts.findIndex((r) => r.id === expandedId);
+      if (currentIndex === -1) return;
+
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        setExpandedId(receipts[currentIndex - 1].id);
+        setIsEditMode(false);
+      } else if (e.key === 'ArrowRight' && currentIndex < receipts.length - 1) {
+        setExpandedId(receipts[currentIndex + 1].id);
+        setIsEditMode(false);
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [expandedId]);
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [expandedId, receipts]);
 
   const loadReceipts = async () => {
     setLoading(true);
@@ -116,6 +130,24 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
     }
   };
 
+  const handlePreviousNote = () => {
+    if (!expandedId) return;
+    const currentIndex = receipts.findIndex((r) => r.id === expandedId);
+    if (currentIndex > 0) {
+      setExpandedId(receipts[currentIndex - 1].id);
+      setIsEditMode(false);
+    }
+  };
+
+  const handleNextNote = () => {
+    if (!expandedId) return;
+    const currentIndex = receipts.findIndex((r) => r.id === expandedId);
+    if (currentIndex < receipts.length - 1) {
+      setExpandedId(receipts[currentIndex + 1].id);
+      setIsEditMode(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col overflow-y-auto pb-20 sm:pb-24 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <header className="bg-white dark:bg-gray-800 p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
@@ -191,9 +223,38 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                 onClick={handleCloseModal}
               >
                 <div
-                  className="flex flex-col gap-4 animate-scaleIn"
+                  className="flex flex-col gap-4 animate-scaleIn relative"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  {(() => {
+                    const currentIndex = receipts.findIndex((r) => r.id === expandedId);
+                    const hasPrevious = currentIndex > 0;
+                    const hasNext = currentIndex < receipts.length - 1;
+
+                    return (
+                      <>
+                        {hasPrevious && (
+                          <button
+                            onClick={handlePreviousNote}
+                            className="absolute left-[-16px] sm:left-[-60px] top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-20 flex items-center justify-center"
+                            aria-label="Previous note"
+                          >
+                            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 dark:text-gray-300" />
+                          </button>
+                        )}
+
+                        {hasNext && (
+                          <button
+                            onClick={handleNextNote}
+                            className="absolute right-[-16px] sm:right-[-60px] top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-20 flex items-center justify-center"
+                            aria-label="Next note"
+                          >
+                            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 dark:text-gray-300" />
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
                   <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full max-w-md min-h-[400px] p-6 relative">
                     <button
                       onClick={handleCloseModal}
