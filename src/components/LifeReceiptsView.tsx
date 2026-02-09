@@ -197,7 +197,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                   className="aspect-square p-3 sm:p-4 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
                 >
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-3 text-center break-words">
+                    <p className="text-s sm:text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-3 text-center break-words">
                       {receipt.content}
                     </p>
                   </div>
