@@ -140,20 +140,20 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
         <div className="relative pl-8">
           {queue.length >= 4 && (
             <div
-              className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-40 transition-all duration-300"
-              style={{ transform: 'translateX(-24px) translateY(4px)' }}
+              className="absolute top-0 bottom-0 right-0 w-[280px] max-w-[calc(100vw-140px)] bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-40 transition-all duration-300"
+              style={{ transform: 'translateX(-24px) translateY(3px) scale(0.98)' }}
             />
           )}
           {queue.length >= 3 && (
             <div
-              className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-50 transition-all duration-300"
-              style={{ transform: 'translateX(-16px) translateY(3px)' }}
+              className="absolute top-0 bottom-0 right-0 w-[280px] max-w-[calc(100vw-140px)] bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-50 transition-all duration-300"
+              style={{ transform: 'translateX(-16px) translateY(2px) scale(0.99)' }}
             />
           )}
           {queue.length >= 2 && (
             <div
-              className="absolute top-0 bottom-0 left-0 w-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-60 transition-all duration-300"
-              style={{ transform: 'translateX(-8px) translateY(2px)' }}
+              className="absolute top-0 bottom-0 right-0 w-[280px] max-w-[calc(100vw-140px)] bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-lg border border-yellow-300 dark:border-yellow-700 opacity-60 transition-all duration-300"
+              style={{ transform: 'translateX(-8px) translateY(1px) scale(0.995)' }}
             />
           )}
 
