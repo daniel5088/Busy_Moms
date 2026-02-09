@@ -210,42 +210,42 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                 className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
                 onClick={handleCloseModal}
               >
-                {(() => {
-                  const currentIndex = receipts.findIndex((r) => r.id === expandedId);
-                  const hasPrevious = currentIndex > 0;
-                  const hasNext = currentIndex < receipts.length - 1;
-
-                  return (
-                    <>
-                      {hasPrevious && (
-                        <button
-                          onClick={handlePreviousNote}
-                          className="fixed left-3 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-[60] flex items-center justify-center"
-                          aria-label="Previous note"
-                        >
-                          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 dark:text-gray-300" />
-                        </button>
-                      )}
-
-                      {hasNext && (
-                        <button
-                          onClick={handleNextNote}
-                          className="fixed right-3 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-[60] flex items-center justify-center"
-                          aria-label="Next note"
-                        >
-                          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700 dark:text-gray-300" />
-                        </button>
-                      )}
-                    </>
-                  );
-                })()}
-
                 <div
-                  className="flex flex-col gap-4 animate-scaleIn relative"
+                  className="flex flex-col gap-4 animate-scaleIn"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-[min(92vw,440px)] h-[min(75vh,480px)] flex flex-col relative">
-                    <div className="h-14 flex items-center justify-end px-4 flex-shrink-0">
+                  <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-[min(92vw,380px)] h-[min(75vh,400px)] flex flex-col relative">
+                    {(() => {
+                      const currentIndex = receipts.findIndex((r) => r.id === expandedId);
+                      const hasPrevious = currentIndex > 0;
+                      const hasNext = currentIndex < receipts.length - 1;
+
+                      return (
+                        <>
+                          {hasPrevious && (
+                            <button
+                              onClick={handlePreviousNote}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-10 flex items-center justify-center"
+                              aria-label="Previous note"
+                            >
+                              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                            </button>
+                          )}
+
+                          {hasNext && (
+                            <button
+                              onClick={handleNextNote}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 border-2 border-gray-300 dark:border-gray-600 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600 z-10 flex items-center justify-center"
+                              aria-label="Next note"
+                            >
+                              <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
+
+                    <div className="h-12 flex items-center justify-end px-4 flex-shrink-0">
                       <button
                         onClick={handleCloseModal}
                         className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 dark:focus:ring-amber-600"
@@ -262,12 +262,12 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                       if (isEditMode) {
                         return (
                           <>
-                            <div className="flex-1 overflow-y-auto px-6">
-                              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                            <div className="flex-1 overflow-y-auto px-6 pb-3">
+                              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
                                 Edit Note
                               </h3>
 
-                              <div className="mb-4">
+                              <div className="mb-3">
                                 <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                   Content
                                 </label>
@@ -280,7 +280,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                               </div>
                             </div>
 
-                            <div className="h-24 flex-shrink-0 px-6 pb-4">
+                            <div className="flex-shrink-0 px-6 pb-4">
                               <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
                                 When
                               </label>
@@ -301,13 +301,13 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
 
                       return (
                         <>
-                          <div className="flex-1 overflow-y-auto px-6 flex items-center justify-center">
+                          <div className="flex-1 overflow-y-auto px-6 pb-3 flex items-center justify-center">
                             <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-relaxed text-center break-words">
                               {receipt.content}
                             </p>
                           </div>
 
-                          <div className="h-20 flex-shrink-0 px-6 pb-4">
+                          <div className="flex-shrink-0 px-6 pb-4">
                             <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5 text-center">
                               When
                             </div>
