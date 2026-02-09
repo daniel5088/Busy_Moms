@@ -46,6 +46,7 @@ import { TutorialOverlay } from './TutorialOverlay';
 import { useTutorial } from '../hooks/useTutorial';
 import { calendarTutorialSteps } from '../utils/tutorialSteps';
 import type { SubScreen } from '../App';
+import { detectPurchaseIntent } from '../utils/purchaseIntentDetector';
 
 // --- Helpers -----------------------------------------------------------------
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
@@ -1050,19 +1051,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
       showToast(`"${event.title}" added to your calendar!`, 'success');
 
       // Check if it's a gift-worthy event
-      const titleLower = event.title.toLowerCase();
-      const descriptionLower = (event.description || '').toLowerCase();
-      const combinedText = titleLower + ' ' + descriptionLower;
-      
-      const isGiftEvent = 
-        combinedText.includes('birthday') ||
-        combinedText.includes('anniversary') ||
-        combinedText.includes('wedding') ||
-        combinedText.includes('graduation') ||
-        combinedText.includes('baby shower') ||
-        combinedText.includes('housewarming') ||
-        combinedText.includes('retirement') ||
-        combinedText.match(/\b(gift|present)\b/);
+      const combinedText = event.title + ' ' + (event.description || '');
+      const isGiftEvent = detectPurchaseIntent(combinedText);
 
       if (isGiftEvent) {
         // Show gift suggestion modal after a short delay
@@ -2268,19 +2258,8 @@ export function Calendar({ onNavigateToSubScreen, onNavigateToGiftFinder, openCa
                       </button>
                       {/* Add Gift Finder button for gift-worthy events */}
                       {(() => {
-                        const titleLower = selectedEvent.title.toLowerCase();
-                        const descriptionLower = (selectedEvent.description || '').toLowerCase();
-                        const combinedText = titleLower + ' ' + descriptionLower;
-
-                        const isGiftEvent =
-                          combinedText.includes('birthday') ||
-                          combinedText.includes('anniversary') ||
-                          combinedText.includes('wedding') ||
-                          combinedText.includes('graduation') ||
-                          combinedText.includes('baby shower') ||
-                          combinedText.includes('housewarming') ||
-                          combinedText.includes('retirement') ||
-                          combinedText.match(/\b(gift|present)\b/);
+                        const combinedText = selectedEvent.title + ' ' + (selectedEvent.description || '');
+                        const isGiftEvent = detectPurchaseIntent(combinedText);
 
                         if (!isGiftEvent) return null;
 

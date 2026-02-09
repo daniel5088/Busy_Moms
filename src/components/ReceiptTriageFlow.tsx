@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, SkipForward } from 'lucide-react';
+import { X, Check, SkipForward, ShoppingBag } from 'lucide-react';
 import { lifeReceiptsService, LifeReceipt } from '../services/lifeReceiptsService';
 import { formatWhenBucketLabel } from '../utils/lifeReceiptsFormatters';
+import { detectPurchaseIntent } from '../utils/purchaseIntentDetector';
 
 interface ReceiptTriageFlowProps {
   receipts: LifeReceipt[];
   onClose: () => void;
   onReceiptDeleted: (id: string) => void;
+  onNavigateToGiftFinder?: () => void;
 }
 
 const getPriorityOrder = (whenBucket: string): number => {
@@ -35,10 +37,11 @@ const getBorderStyle = (whenBucket: string): string => {
   }
 };
 
-export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: ReceiptTriageFlowProps) {
+export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted, onNavigateToGiftFinder }: ReceiptTriageFlowProps) {
   const [queue, setQueue] = useState<LifeReceipt[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasPurchaseIntent, setHasPurchaseIntent] = useState(false);
 
   useEffect(() => {
     if (!isInitialized && receipts.length > 0) {
@@ -73,6 +76,16 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
+
+  useEffect(() => {
+    const currentReceipt = queue[0];
+    if (currentReceipt?.content) {
+      const shouldShow = detectPurchaseIntent(currentReceipt.content);
+      setHasPurchaseIntent(shouldShow);
+    } else {
+      setHasPurchaseIntent(false);
+    }
+  }, [queue]);
 
   const handleDone = async () => {
     const currentReceipt = queue[0];
@@ -178,6 +191,23 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
             </div>
           </div>
         </div>
+
+        {hasPurchaseIntent && onNavigateToGiftFinder && (
+          <div className="flex justify-center">
+            <button
+              onClick={onNavigateToGiftFinder}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/30 dark:to-rose-900/30 border-2 border-pink-300 dark:border-pink-700 shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400 dark:focus:ring-pink-600"
+              aria-label="Find a gift for this"
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-pink-700 dark:text-pink-400" />
+                <span className="font-semibold text-pink-700 dark:text-pink-400 text-sm">
+                  Find a Gift
+                </span>
+              </div>
+            </button>
+          </div>
+        )}
 
         <div className="flex justify-center gap-3">
           <button

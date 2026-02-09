@@ -31,9 +31,10 @@ function formatReceiptDate(createdAt: string): string {
 
 interface LifeReceiptsProps {
   onNavigateToView: () => void;
+  onNavigateToGiftFinder?: () => void;
 }
 
-export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
+export function LifeReceipts({ onNavigateToView, onNavigateToGiftFinder }: LifeReceiptsProps) {
   const [receipts, setReceipts] = useState<LifeReceipt[]>([]);
   const [contentInput, setContentInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -460,6 +461,7 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
           receipts={receipts}
           onClose={() => setShowTriageFlow(false)}
           onReceiptDeleted={handleReceiptDeleted}
+          onNavigateToGiftFinder={onNavigateToGiftFinder}
         />
       )}
 
