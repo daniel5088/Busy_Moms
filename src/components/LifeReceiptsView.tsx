@@ -214,7 +214,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                   className="flex flex-col gap-4 animate-scaleIn"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-[min(92vw,380px)] h-[min(75vh,400px)] flex flex-col relative">
+                  <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-[min(92vw,280px)] h-[min(75vh,300px)] flex flex-col relative">
                     {(() => {
                       const currentIndex = receipts.findIndex((r) => r.id === expandedId);
                       const hasPrevious = currentIndex > 0;
