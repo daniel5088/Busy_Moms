@@ -43,7 +43,20 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
   useEffect(() => {
     if (!isInitialized && receipts.length > 0) {
       const sortedReceipts = [...receipts].sort((a, b) => {
-        return getPriorityOrder(a.when_bucket) - getPriorityOrder(b.when_bucket);
+        const priorityDiff = getPriorityOrder(a.when_bucket) - getPriorityOrder(b.when_bucket);
+
+        if (priorityDiff !== 0) {
+          return priorityDiff;
+        }
+
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : null;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : null;
+
+        if (aTime !== null && bTime !== null && !isNaN(aTime) && !isNaN(bTime)) {
+          return aTime - bTime;
+        }
+
+        return a.id.localeCompare(b.id);
       });
       setQueue(sortedReceipts);
       setIsInitialized(true);
