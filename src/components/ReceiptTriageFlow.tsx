@@ -158,22 +158,22 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
           )}
 
           <div
-            className={`relative z-10 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-full min-h-[400px] p-6 ${getBorderStyle(
+            className={`relative z-10 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-[280px] max-w-[calc(100vw-140px)] h-[min(75vh,300px)] flex flex-col ${getBorderStyle(
               currentReceipt.when_bucket
             )} transition-all duration-300`}
           >
-            <div className="flex flex-col pt-2">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-8 leading-relaxed text-center break-words">
+            <div className="flex-1 overflow-y-auto px-6 pb-3 flex items-center justify-center">
+              <p className="text-xl font-semibold text-gray-900 dark:text-gray-100 leading-relaxed text-center break-words">
                 {currentReceipt.content}
-              </h3>
+              </p>
+            </div>
 
-              <div>
-                <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5 text-center">
-                  When
-                </div>
-                <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                  {formatWhenBucketLabel(currentReceipt.when_bucket)}
-                </div>
+            <div className="flex-shrink-0 px-6 pb-4">
+              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5 text-center">
+                When
+              </div>
+              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
+                {formatWhenBucketLabel(currentReceipt.when_bucket)}
               </div>
             </div>
           </div>
