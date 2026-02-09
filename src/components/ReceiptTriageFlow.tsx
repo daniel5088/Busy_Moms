@@ -167,41 +167,12 @@ export function ReceiptTriageFlow({ receipts, onClose, onReceiptDeleted }: Recei
                 {currentReceipt.content}
               </h3>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                    Where
-                  </div>
-                  <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                    {currentReceipt.where || 'unknown'}
-                  </div>
+              <div>
+                <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5 text-center">
+                  When
                 </div>
-
-                <div>
-                  <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                    Who
-                  </div>
-                  <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                    {currentReceipt.who || 'unknown'}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                    When
-                  </div>
-                  <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                    {formatWhenBucketLabel(currentReceipt.when_bucket)}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                    Action
-                  </div>
-                  <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                    {currentReceipt.obligation || 'unknown'}
-                  </div>
+                <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
+                  {formatWhenBucketLabel(currentReceipt.when_bucket)}
                 </div>
               </div>
             </div>

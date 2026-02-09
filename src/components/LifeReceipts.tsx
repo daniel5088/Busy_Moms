@@ -719,26 +719,9 @@ export function LifeReceipts({ onNavigateToView }: LifeReceiptsProps) {
                 <p className="text-gray-700 dark:text-gray-300">{extractedInfo.content || 'No content found'}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">Where</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.where || 'unknown'}</p>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">Who</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.who || 'unknown'}</p>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">When</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">{formatWhenBucketLabel(extractedInfo.when)}</p>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">Action</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">{extractedInfo.obligation || 'unknown'}</p>
-                </div>
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">When</h4>
+                <p className="text-gray-700 dark:text-gray-300">{formatWhenBucketLabel(extractedInfo.when)}</p>
               </div>
             </div>
 

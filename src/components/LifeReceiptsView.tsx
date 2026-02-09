@@ -13,10 +13,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState('');
-  const [editedWhere, setEditedWhere] = useState('');
-  const [editedWho, setEditedWho] = useState('');
   const [editedWhen, setEditedWhen] = useState('');
-  const [editedAction, setEditedAction] = useState('');
 
   useEffect(() => {
     loadReceipts();
@@ -78,10 +75,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
     const whenValue = validWhenValues.includes(normalizedWhen || '') ? normalizedWhen : 'someday';
 
     setEditedContent(receipt.content || '');
-    setEditedWhere(receipt.where || '');
-    setEditedWho(receipt.who || '');
     setEditedWhen(whenValue || 'someday');
-    setEditedAction(receipt.obligation || '');
     setIsEditMode(true);
   };
 
@@ -91,10 +85,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
     try {
       await lifeReceiptsService.updateReceipt(expandedId, {
         content: editedContent,
-        where: editedWhere,
-        who: editedWho,
         when_bucket: editedWhen,
-        obligation: editedAction,
       });
       await loadReceipts();
       setIsEditMode(false);
@@ -107,10 +98,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditedContent('');
-    setEditedWhere('');
-    setEditedWho('');
     setEditedWhen('');
-    setEditedAction('');
   };
 
   const handleDoneClick = async () => {
@@ -287,58 +275,20 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                               />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                  Where
-                                </label>
-                                <input
-                                  type="text"
-                                  value={editedWhere}
-                                  onChange={(e) => setEditedWhere(e.target.value)}
-                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                  Who
-                                </label>
-                                <input
-                                  type="text"
-                                  value={editedWho}
-                                  onChange={(e) => setEditedWho(e.target.value)}
-                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                  When
-                                </label>
-                                <select
-                                  value={editedWhen}
-                                  onChange={(e) => setEditedWhen(e.target.value)}
-                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                                >
-                                  <option value="now">Now</option>
-                                  <option value="soon">Soon</option>
-                                  <option value="someday">Someday</option>
-                                  <option value="very_important">Very Important</option>
-                                </select>
-                              </div>
-
-                              <div>
-                                <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                  Action
-                                </label>
-                                <input
-                                  type="text"
-                                  value={editedAction}
-                                  onChange={(e) => setEditedAction(e.target.value)}
-                                  className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                                />
-                              </div>
+                            <div>
+                              <label className="block text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
+                                When
+                              </label>
+                              <select
+                                value={editedWhen}
+                                onChange={(e) => setEditedWhen(e.target.value)}
+                                className="w-full rounded-lg bg-white/80 dark:bg-white/90 px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                              >
+                                <option value="now">Now</option>
+                                <option value="soon">Soon</option>
+                                <option value="someday">Someday</option>
+                                <option value="very_important">Very Important</option>
+                              </select>
                             </div>
                           </div>
                         );
@@ -350,41 +300,12 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                             {receipt.content}
                           </h3>
 
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                Where
-                              </div>
-                              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                                {receipt.where || 'unknown'}
-                              </div>
+                          <div>
+                            <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5 text-center">
+                              When
                             </div>
-
-                            <div>
-                              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                Who
-                              </div>
-                              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                                {receipt.who || 'unknown'}
-                              </div>
-                            </div>
-
-                            <div>
-                              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                When
-                              </div>
-                              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                                {formatWhenBucketLabel(receipt.when_bucket)}
-                              </div>
-                            </div>
-
-                            <div>
-                              <div className="text-xs font-semibold tracking-wide uppercase opacity-70 mb-1.5">
-                                Action
-                              </div>
-                              <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
-                                {receipt.obligation || 'unknown'}
-                              </div>
+                            <div className="rounded-lg bg-white/80 px-3 py-2 text-center text-sm break-words">
+                              {formatWhenBucketLabel(receipt.when_bucket)}
                             </div>
                           </div>
                         </div>
