@@ -302,7 +302,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                       return (
                         <>
                           <div className="flex-1 overflow-y-auto px-6 pb-3 flex items-center justify-center">
-                            <p className="text-m font-semibold text-gray-900 dark:text-gray-100 leading-relaxed text-center break-words">
+                            <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 leading-relaxed text-center break-words">
                               {receipt.content}
                             </p>
                           </div>
