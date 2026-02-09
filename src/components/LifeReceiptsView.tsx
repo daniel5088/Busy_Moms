@@ -207,7 +207,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
 
             {expandedId && (
               <div
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 animate-fadeIn"
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center animate-fadeIn"
                 onClick={handleCloseModal}
               >
                 {(() => {
@@ -247,7 +247,7 @@ export function LifeReceiptsView({ onBack }: LifeReceiptsViewProps) {
                 })()}
 
                 <div
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-4 animate-scaleIn"
+                  className="flex flex-col gap-4 animate-scaleIn"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-900 rounded-lg shadow-2xl w-[280px] max-w-[calc(100vw-140px)] h-[min(75vh,300px)] flex flex-col">
