@@ -1,193 +1,448 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
+  TouchableOpacity,
   StyleSheet,
-  Pressable,
-  TextInput,
+  useColorScheme,
   Alert,
-  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Trash2, ShoppingCart, Check } from 'lucide-react-native';
-import { supabase, ShoppingItem } from '../../lib/supabase';
-import { useAuth } from '../../hooks/useAuth';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../src/hooks/useAuth';
+import {
+  useShoppingItems,
+  useCreateShoppingItem,
+  useUpdateShoppingItem,
+  useDeleteShoppingItem,
+  useToggleItemCompleted,
+  useBulkUpdateItems,
+} from '../../src/hooks/useShoppingItems';
+import {
+  useRecipes,
+  useRecipeIngredients,
+  useImportRecipe,
+} from '../../src/hooks/useRecipes';
+import {
+  useSavedRecipes,
+  useSaveRecipe,
+  useUnsaveRecipe,
+} from '../../src/hooks/useSavedRecipes';
+import { useSearchRecipes } from '../../src/hooks/useTheMealDB';
+import {
+  usePreferredRetailers,
+  useNearbyRetailers,
+  useSaveRetailer,
+} from '../../src/hooks/useRetailer';
+import {
+  ShoppingList,
+  ShoppingForm,
+  ShoppingFormData,
+  InstacartButton,
+  RetailerSelector,
+} from '../../src/components/shopping';
+import {
+  RecipeBrowser,
+  RecipeDetail,
+} from '../../src/components/recipes';
+import { sendToInstacart } from '../../src/services/instacartShoppingService';
+import { getInstacartRecipeUrl } from '../../src/services/instacartService';
+import type { ShoppingItem, Recipe, RecipeIngredient, Retailer } from '../../src/types/database';
+
+type TabType = 'shopping' | 'recipes';
 
 export default function ShoppingScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const { user } = useAuth();
-  const [items, setItems] = useState<ShoppingItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newItem, setNewItem] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadShoppingList();
-    }
-  }, [user?.id]);
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabType>('shopping');
 
-  const loadShoppingList = async () => {
-    if (!user?.id) return;
+  // Shopping state
+  const [showShoppingForm, setShowShoppingForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | undefined>();
+  const [showRetailerSelector, setShowRetailerSelector] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(true);
 
-    setLoading(true);
+  // Recipe state
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [showRecipeDetail, setShowRecipeDetail] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [nearbyRetailersPostalCode, setNearbyRetailersPostalCode] = useState('');
+
+  // Shopping queries
+  const { data: shoppingItems = [], isLoading: loadingItems, refetch: refetchItems } = useShoppingItems();
+  const createItemMutation = useCreateShoppingItem();
+  const updateItemMutation = useUpdateShoppingItem();
+  const deleteItemMutation = useDeleteShoppingItem();
+  const toggleItemMutation = useToggleItemCompleted();
+  const bulkUpdateMutation = useBulkUpdateItems();
+
+  // Recipe queries
+  const { data: myRecipes = [], isLoading: loadingRecipes, refetch: refetchRecipes } = useRecipes();
+  const { data: savedRecipes = [] } = useSavedRecipes();
+  const { data: searchResults = [], isLoading: searchLoading } = useSearchRecipes(searchQuery);
+  const importRecipeMutation = useImportRecipe();
+
+  // Recipe ingredients (for selected recipe)
+  const { data: recipeIngredients = [] } = useRecipeIngredients(
+    selectedRecipe?.id || ''
+  );
+
+  // Retailer queries
+  const { data: preferredRetailers = [] } = usePreferredRetailers();
+  const { data: nearbyRetailers = [], isLoading: loadingRetailers } = useNearbyRetailers(
+    nearbyRetailersPostalCode,
+    'US'
+  );
+  const saveRetailerMutation = useSaveRetailer();
+  const saveRecipeMutation = useSaveRecipe();
+  const unsaveRecipeMutation = useUnsaveRecipe();
+
+  // Saved recipe IDs for quick lookup
+  const savedRecipeIds = new Set(savedRecipes.map((r: any) => r.id));
+
+  // Shopping handlers
+  const handleAddShoppingItem = () => {
+    setEditingItem(undefined);
+    setShowShoppingForm(true);
+  };
+
+  const handleEditShoppingItem = (item: ShoppingItem) => {
+    setEditingItem(item);
+    setShowShoppingForm(true);
+  };
+
+  const handleSubmitShoppingItem = async (data: ShoppingFormData) => {
+    if (!user) return;
+
     try {
-      const { data, error } = await supabase
-        .from('shopping_lists')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('completed', { ascending: true })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setItems(data || []);
+      if (editingItem) {
+        await updateItemMutation.mutateAsync({
+          itemId: editingItem.id,
+          updates: data,
+        });
+      } else {
+        await createItemMutation.mutateAsync({
+          ...data,
+          completed: false,
+        });
+      }
+      setShowShoppingForm(false);
+      setEditingItem(undefined);
     } catch (error: any) {
-      Alert.alert('Error', error.message);
-    } finally {
-      setLoading(false);
+      Alert.alert('Error', error.message || 'Failed to save item');
     }
   };
 
-  const addItem = async () => {
-    if (!user?.id || !newItem.trim()) return;
-
-    try {
-      const { error } = await supabase.from('shopping_lists').insert({
-        user_id: user.id,
-        item: newItem.trim(),
-        completed: false,
-      });
-
-      if (error) throw error;
-
-      setNewItem('');
-      setShowAddForm(false);
-      loadShoppingList();
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
-    }
-  };
-
-  const toggleComplete = async (item: ShoppingItem) => {
-    try {
-      const { error } = await supabase
-        .from('shopping_lists')
-        .update({ completed: !item.completed })
-        .eq('id', item.id);
-
-      if (error) throw error;
-      loadShoppingList();
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
-    }
-  };
-
-  const deleteItem = async (itemId: string) => {
-    try {
-      const { error } = await supabase
-        .from('shopping_lists')
-        .delete()
-        .eq('id', itemId);
-
-      if (error) throw error;
-      loadShoppingList();
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
-    }
-  };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3B82F6" />
-        </View>
-      </SafeAreaView>
+  const handleDeleteShoppingItem = (itemId: string) => {
+    Alert.alert(
+      'Delete Item',
+      'Are you sure you want to delete this item?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteItemMutation.mutateAsync(itemId);
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to delete item');
+            }
+          },
+        },
+      ]
     );
-  }
+  };
+
+  const handleToggleItemCompleted = async (itemId: string, completed: boolean) => {
+    try {
+      await toggleItemMutation.mutateAsync({ itemId, completed });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update item');
+    }
+  };
+
+  const handleSendToInstacart = async (retailerKey?: string) => {
+    const uncompleted = shoppingItems.filter((item) => !item.completed);
+
+    if (uncompleted.length === 0) {
+      Alert.alert('No Items', 'Add items to your shopping list first');
+      return;
+    }
+
+    try {
+      const response = await sendToInstacart(uncompleted, retailerKey);
+      if (response?.products_link_url) {
+        await Linking.openURL(response.products_link_url);
+      } else {
+        Alert.alert('Error', 'Failed to create Instacart cart');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send to Instacart');
+    }
+  };
+
+  const handleSelectRetailer = (retailerKey: string) => {
+    setShowRetailerSelector(false);
+    handleSendToInstacart(retailerKey);
+  };
+
+  const handleSearchRetailers = (postalCode: string) => {
+    setNearbyRetailersPostalCode(postalCode);
+  };
+
+  // Recipe handlers
+  const handlePressRecipe = (recipe: Recipe) => {
+    setSelectedRecipe(recipe);
+    setShowRecipeDetail(true);
+  };
+
+  const handleToggleSaveRecipe = async (recipeId: string, isSaved: boolean) => {
+    try {
+      if (isSaved) {
+        await unsaveRecipeMutation.mutateAsync(recipeId);
+      } else {
+        await saveRecipeMutation.mutateAsync(recipeId);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update recipe');
+    }
+  };
+
+  const handleSearchRecipes = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleAddIngredientsToShoppingList = async (
+    ingredients: RecipeIngredient[],
+    servings: number
+  ) => {
+    if (!user || !selectedRecipe) return;
+
+    try {
+      // Scale ingredients based on servings
+      const originalServings = selectedRecipe.servings || 4;
+      const factor = servings / originalServings;
+
+      const items = ingredients.map((ing) => ({
+        item: ing.name,
+        quantity: ing.quantity ? Math.round(ing.quantity * factor * 100) / 100 : null,
+        unit: ing.unit,
+        category: ing.category || 'other',
+        notes: null,
+      }));
+
+      // Add all items
+      for (const item of items) {
+        await createItemMutation.mutateAsync({
+          ...item,
+          completed: false,
+        });
+      }
+
+      Alert.alert('Success', `Added ${items.length} ingredients to shopping list`);
+      setShowRecipeDetail(false);
+      setActiveTab('shopping');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to add ingredients');
+    }
+  };
+
+  const handleSendRecipeToInstacart = async () => {
+    if (!selectedRecipe) return;
+
+    try {
+      const url = await getInstacartRecipeUrl(selectedRecipe, recipeIngredients);
+      if (url) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Failed to create Instacart recipe page');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send recipe to Instacart');
+    }
+  };
+
+  const uncompletedCount = shoppingItems.filter((item) => !item.completed).length;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <ShoppingCart width={24} height={24} stroke="#1F2937" />
-          <Text style={styles.headerTitle}>Shopping List</Text>
-        </View>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => setShowAddForm(!showAddForm)}
-        >
-          <Plus width={24} height={24} stroke="#FFFFFF" />
-        </Pressable>
+    <SafeAreaView
+      style={[styles.container, isDark && styles.containerDark]}
+      edges={['top']}
+    >
+      {/* Header */}
+      <View style={[styles.header, isDark && styles.headerDark]}>
+        <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]}>
+          Shopping & Recipes
+        </Text>
+
+        {activeTab === 'shopping' && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={handleAddShoppingItem}
+          >
+            <Ionicons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
+        )}
       </View>
 
-      {showAddForm && (
-        <View style={styles.addForm}>
-          <TextInput
-            style={styles.input}
-            placeholder="Add item..."
-            value={newItem}
-            onChangeText={setNewItem}
-            autoFocus
-            placeholderTextColor="#9CA3AF"
+      {/* Tabs */}
+      <View style={[styles.tabs, isDark && styles.tabsDark]}>
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'shopping' && styles.tabActive,
+            activeTab === 'shopping' && isDark && styles.tabActiveDark,
+          ]}
+          onPress={() => setActiveTab('shopping')}
+        >
+          <Ionicons
+            name="cart"
+            size={20}
+            color={
+              activeTab === 'shopping'
+                ? isDark
+                  ? '#60a5fa'
+                  : '#3b82f6'
+                : isDark
+                ? '#9ca3af'
+                : '#6b7280'
+            }
           />
-          <Pressable style={styles.submitButton} onPress={addItem}>
-            <Text style={styles.submitButtonText}>Add</Text>
-          </Pressable>
-        </View>
-      )}
-
-      <ScrollView style={styles.scrollView}>
-        {items.length === 0 ? (
-          <View style={styles.emptyState}>
-            <ShoppingCart width={48} height={48} stroke="#D1D5DB" />
-            <Text style={styles.emptyText}>Your shopping list is empty</Text>
-            <Text style={styles.emptySubtext}>Add items to get started</Text>
-          </View>
-        ) : (
-          items.map((item) => (
-            <View key={item.id} style={styles.itemCard}>
-              <Pressable
-                style={styles.itemContent}
-                onPress={() => toggleComplete(item)}
-              >
-                <View
-                  style={[
-                    styles.checkbox,
-                    item.completed && styles.checkboxChecked,
-                  ]}
-                >
-                  {item.completed && (
-                    <Check width={16} height={16} stroke="#FFFFFF" />
-                  )}
-                </View>
-                <View style={styles.itemDetails}>
-                  <Text
-                    style={[
-                      styles.itemName,
-                      item.completed && styles.itemNameCompleted,
-                    ]}
-                  >
-                    {item.item}
-                  </Text>
-                  {(item.quantity || item.unit) && (
-                    <Text style={styles.itemQuantity}>
-                      {item.quantity} {item.unit}
-                    </Text>
-                  )}
-                </View>
-              </Pressable>
-              <Pressable
-                style={styles.deleteButton}
-                onPress={() => deleteItem(item.id)}
-              >
-                <Trash2 width={20} height={20} stroke="#EF4444" />
-              </Pressable>
+          <Text
+            style={[
+              styles.tabText,
+              isDark && styles.tabTextDark,
+              activeTab === 'shopping' && styles.tabTextActive,
+              activeTab === 'shopping' && isDark && styles.tabTextActiveDark,
+            ]}
+          >
+            Shopping List
+          </Text>
+          {uncompletedCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{uncompletedCount}</Text>
             </View>
-          ))
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'recipes' && styles.tabActive,
+            activeTab === 'recipes' && isDark && styles.tabActiveDark,
+          ]}
+          onPress={() => setActiveTab('recipes')}
+        >
+          <Ionicons
+            name="restaurant"
+            size={20}
+            color={
+              activeTab === 'recipes'
+                ? isDark
+                  ? '#60a5fa'
+                  : '#3b82f6'
+                : isDark
+                ? '#9ca3af'
+                : '#6b7280'
+            }
+          />
+          <Text
+            style={[
+              styles.tabText,
+              isDark && styles.tabTextDark,
+              activeTab === 'recipes' && styles.tabTextActive,
+              activeTab === 'recipes' && isDark && styles.tabTextActiveDark,
+            ]}
+          >
+            Recipes
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Tab Content */}
+      <View style={styles.content}>
+        {activeTab === 'shopping' && (
+          <View style={styles.tabContentContainer}>
+            {/* Instacart Button */}
+            {uncompletedCount > 0 && (
+              <View style={styles.instacartSection}>
+                <InstacartButton
+                  onPress={() => setShowRetailerSelector(true)}
+                  itemCount={uncompletedCount}
+                  fullWidth
+                />
+              </View>
+            )}
+
+            {/* Shopping List */}
+            <ShoppingList
+              items={shoppingItems}
+              onToggleItem={handleToggleItemCompleted}
+              onEditItem={handleEditShoppingItem}
+              onDeleteItem={handleDeleteShoppingItem}
+              onRefresh={refetchItems}
+              refreshing={loadingItems}
+              showCompleted={showCompleted}
+            />
+          </View>
         )}
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+
+        {activeTab === 'recipes' && (
+          <RecipeBrowser
+            myRecipes={myRecipes}
+            savedRecipes={savedRecipes}
+            searchResults={searchResults as any}
+            onPressRecipe={handlePressRecipe}
+            onToggleSave={handleToggleSaveRecipe}
+            onSearch={handleSearchRecipes}
+            onRefresh={refetchRecipes}
+            savedRecipeIds={savedRecipeIds}
+            loading={searchLoading}
+            refreshing={loadingRecipes}
+          />
+        )}
+      </View>
+
+      {/* Modals */}
+      <ShoppingForm
+        visible={showShoppingForm}
+        onClose={() => {
+          setShowShoppingForm(false);
+          setEditingItem(undefined);
+        }}
+        onSubmit={handleSubmitShoppingItem}
+        initialData={editingItem}
+        loading={createItemMutation.isPending || updateItemMutation.isPending}
+      />
+
+      <RetailerSelector
+        visible={showRetailerSelector}
+        onClose={() => setShowRetailerSelector(false)}
+        onSelectRetailer={handleSelectRetailer}
+        preferredRetailers={preferredRetailers}
+        onSearchRetailers={handleSearchRetailers}
+        searchResults={nearbyRetailers}
+        loading={loadingRetailers}
+      />
+
+      <RecipeDetail
+        visible={showRecipeDetail}
+        recipe={selectedRecipe}
+        ingredients={recipeIngredients}
+        onClose={() => {
+          setShowRecipeDetail(false);
+          setSelectedRecipe(null);
+        }}
+        onToggleSave={handleToggleSaveRecipe}
+        onAddToShoppingList={handleAddIngredientsToShoppingList}
+        onSendToInstacart={handleSendRecipeToInstacart}
+        isSaved={selectedRecipe ? savedRecipeIds.has(selectedRecipe.id) : false}
+      />
     </SafeAreaView>
   );
 }
@@ -195,137 +450,101 @@ export default function ShoppingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#fff',
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  containerDark: {
+    backgroundColor: '#111827',
   },
   header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#e5e7eb',
   },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  headerDark: {
+    borderBottomColor: '#374151',
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: '700',
+    color: '#111827',
+  },
+  headerTitleDark: {
+    color: '#f9fafb',
   },
   addButton: {
-    backgroundColor: '#3B82F6',
-    borderRadius: 8,
-    padding: 8,
+    backgroundColor: '#3b82f6',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  addForm: {
+  tabs: {
     flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#e5e7eb',
+  },
+  tabsDark: {
+    borderBottomColor: '#374151',
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
     gap: 8,
   },
-  input: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    color: '#1F2937',
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#3b82f6',
   },
-  submitButton: {
-    backgroundColor: '#3B82F6',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
+  tabActiveDark: {
+    borderBottomColor: '#60a5fa',
   },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  itemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  itemContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-  },
-  itemDetails: {
-    flex: 1,
-  },
-  itemName: {
-    fontSize: 16,
-    color: '#1F2937',
+  tabText: {
+    fontSize: 15,
     fontWeight: '500',
+    color: '#6b7280',
   },
-  itemNameCompleted: {
-    textDecorationLine: 'line-through',
-    color: '#9CA3AF',
+  tabTextDark: {
+    color: '#9ca3af',
   },
-  itemQuantity: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 2,
+  tabTextActive: {
+    color: '#3b82f6',
+    fontWeight: '600',
   },
-  deleteButton: {
-    padding: 8,
+  tabTextActiveDark: {
+    color: '#60a5fa',
   },
-  emptyState: {
+  badge: {
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 64,
-    gap: 12,
   },
-  emptyText: {
-    fontSize: 18,
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: '600',
-    color: '#6B7280',
   },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#9CA3AF',
+  content: {
+    flex: 1,
   },
-  bottomPadding: {
-    height: 24,
+  tabContentContainer: {
+    flex: 1,
+  },
+  instacartSection: {
+    padding: 16,
+    backgroundColor: '#f9fafb',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
 });

@@ -137,6 +137,8 @@ export type PurchaseStatus = 'not_sent' | 'in_cart' | 'purchased' | 'failed';
 export interface ProviderMetadata {
   cart_url?: string;
   timestamp?: string;
+  retailer_key?: string;
+  retailer_name?: string;
   sync_info?: Record<string, any>;
   [key: string]: any;
 }
@@ -185,6 +187,7 @@ export interface Recipe {
   title: string;
   author?: string | null;
   description?: string | null;
+  cuisine?: string | null;
   image_url?: string | null;
   servings?: number | null;
   prep_time_minutes?: number | null;
