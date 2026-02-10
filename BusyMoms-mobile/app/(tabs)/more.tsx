@@ -1,12 +1,27 @@
-import { View, Text, ScrollView, StyleSheet, Pressable, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Settings, LogOut, User, ChevronRight } from 'lucide-react-native';
-import { useAuth } from '../../hooks/useAuth';
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
+import { router, Stack } from 'expo-router';
+import {
+  User,
+  Bell,
+  Sync,
+  MapPin,
+  Cloud,
+  Ruler,
+  Volume2,
+  Sparkles,
+  Moon,
+  LogOut,
+  ChevronRight,
+  Heart,
+} from 'lucide-react-native';
+import { Screen } from '../../src/components/layout/Screen';
+import { useTheme } from '../../src/hooks/useTheme';
+import { useAuth } from '../../src/hooks/useAuth';
 
 export default function MoreScreen() {
+  const { theme, isDark, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
-  const router = useRouter();
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const userEmail = user?.email || '';
@@ -21,147 +36,239 @@ export default function MoreScreen() {
           try {
             await signOut();
             router.replace('/(auth)/login');
-          } catch (error: any) {
-            Alert.alert('Error', error.message);
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to sign out';
+            Alert.alert('Error', message);
           }
         },
       },
     ]);
   };
 
+  const settingsSections = [
+    {
+      title: 'Appearance',
+      items: [
+        {
+          icon: Moon,
+          label: 'Dark Mode',
+          onPress: toggleTheme,
+          showSwitch: true,
+          switchValue: isDark,
+        },
+      ],
+    },
+    {
+      title: 'Features',
+      items: [
+        {
+          icon: Sparkles,
+          label: 'Life Receipts',
+          description: 'Capture and organize important moments',
+          onPress: () => router.push('/life-receipts' as any),
+        },
+      ],
+    },
+    {
+      title: 'Notifications & Wellness',
+      items: [
+        {
+          icon: Bell,
+          label: 'Notifications',
+          description: 'Manage notification preferences',
+          onPress: () => router.push('/settings/notifications' as any),
+        },
+        {
+          icon: Sparkles,
+          label: 'Daily Affirmations',
+          description: 'Personalized encouragement',
+          onPress: () => {
+            // Navigate to affirmation settings (linked from dashboard)
+            router.push('/(tabs)/dashboard');
+          },
+        },
+        {
+          icon: Heart,
+          label: 'Cycle Tracker',
+          description: 'Track your wellness cycle',
+          onPress: () => router.push('/cycle-tracker' as any),
+        },
+      ],
+    },
+    {
+      title: 'Sync & Integration',
+      items: [
+        {
+          icon: Sync,
+          label: 'Calendar & Tasks Sync',
+          description: 'Google Calendar and Tasks',
+          onPress: () => {
+            Alert.alert('Coming Soon', 'Sync settings will be available soon');
+          },
+        },
+      ],
+    },
+    {
+      title: 'Preferences',
+      items: [
+        {
+          icon: MapPin,
+          label: 'Saved Addresses',
+          description: 'Manage locations',
+          onPress: () => {
+            Alert.alert('Coming Soon', 'Address management will be available soon');
+          },
+        },
+        {
+          icon: Cloud,
+          label: 'Weather Settings',
+          description: 'Temperature unit and location',
+          onPress: () => {
+            Alert.alert('Coming Soon', 'Weather settings will be available soon');
+          },
+        },
+        {
+          icon: Ruler,
+          label: 'Measurement System',
+          description: 'Metric or Imperial',
+          onPress: () => {
+            Alert.alert('Coming Soon', 'Measurement settings will be available soon');
+          },
+        },
+        {
+          icon: Volume2,
+          label: 'Voice & AI Preferences',
+          description: 'AI personality and voice',
+          onPress: () => {
+            Alert.alert('Coming Soon', 'Voice preferences will be available soon');
+          },
+        },
+      ],
+    },
+  ];
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>More</Text>
-      </View>
-
-      <ScrollView style={styles.scrollView}>
-        {/* Profile Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatar}>
-            {/* @ts-ignore */}<User width={32} height={32} stroke="#3B82F6" />
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{userName}</Text>
-            <Text style={styles.profileEmail}>{userEmail}</Text>
-          </View>
-        </View>
-
-        {/* Menu Items */}
-        <View style={styles.menuSection}>
-          <Pressable style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              {/* @ts-ignore */}<Settings width={20} height={20} stroke="#6B7280" />
-              <Text style={styles.menuItemText}>Settings</Text>
+    <>
+      <Stack.Screen
+        options={{
+          title: 'Settings',
+          headerStyle: { backgroundColor: theme.colors.background.primary },
+          headerTintColor: theme.colors.text.primary,
+        }}
+      />
+      <Screen>
+        <ScrollView className="flex-1" style={{ backgroundColor: theme.colors.background.primary }}>
+          {/* Profile Header */}
+          <View
+            className="p-6 mb-4"
+            style={{
+              backgroundColor: theme.colors.primary.main,
+            }}
+          >
+            <View className="flex-row items-center">
+              <View
+                className="w-16 h-16 rounded-full items-center justify-center"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+              >
+                <User size={32} color="#FFFFFF" />
+              </View>
+              <View className="ml-4 flex-1">
+                <Text className="text-xl font-bold text-white">{userName}</Text>
+                <Text className="text-white opacity-90 mt-1">{userEmail}</Text>
+              </View>
             </View>
-            {/* @ts-ignore */}<ChevronRight width={20} height={20} stroke="#9CA3AF" />
-          </Pressable>
+          </View>
 
-          <Pressable style={styles.menuItem} onPress={handleSignOut}>
-            <View style={styles.menuItemLeft}>
-              {/* @ts-ignore */}<LogOut width={20} height={20} stroke="#EF4444" />
-              <Text style={[styles.menuItemText, styles.signOutText]}>Sign Out</Text>
-            </View>
-          </Pressable>
-        </View>
+          {/* Settings Sections */}
+          <View className="px-4">
+            {settingsSections.map((section, sectionIndex) => (
+              <View key={sectionIndex} className="mb-6">
+                <Text
+                  className="text-sm font-semibold mb-3 px-2"
+                  style={{ color: theme.colors.text.secondary }}
+                >
+                  {section.title.toUpperCase()}
+                </Text>
+                <View
+                  className="rounded-xl overflow-hidden"
+                  style={{ backgroundColor: theme.colors.background.secondary }}
+                >
+                  {section.items.map((item, itemIndex) => (
+                    <TouchableOpacity
+                      key={itemIndex}
+                      onPress={item.onPress}
+                      className="flex-row items-center p-4"
+                      style={{
+                        borderBottomWidth: itemIndex < section.items.length - 1 ? 1 : 0,
+                        borderBottomColor: '#E5E7EB',
+                      }}
+                    >
+                      <View
+                        className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                        style={{ backgroundColor: theme.colors.primary.light + '40' }}
+                      >
+                        <item.icon size={20} color={theme.colors.primary.main} />
+                      </View>
+                      <View className="flex-1">
+                        <Text
+                          className="font-medium text-base"
+                          style={{ color: theme.colors.text.primary }}
+                        >
+                          {item.label}
+                        </Text>
+                        {('description' in item) && item.description && (
+                          <Text
+                            className="text-sm mt-1"
+                            style={{ color: theme.colors.text.secondary }}
+                          >
+                            {item.description}
+                          </Text>
+                        )}
+                      </View>
+                      {('showSwitch' in item) && item.showSwitch ? (
+                        <Switch
+                          value={item.switchValue}
+                          onValueChange={item.onPress}
+                          trackColor={{
+                            false: '#E5E7EB',
+                            true: theme.colors.primary.light,
+                          }}
+                          thumbColor={theme.colors.background.primary}
+                        />
+                      ) : (
+                        <ChevronRight size={20} color={theme.colors.text.secondary} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
 
-        <View style={styles.versionSection}>
-          <Text style={styles.versionText}>Version 1.0.0</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            {/* Sign Out Button */}
+            <TouchableOpacity
+              onPress={handleSignOut}
+              className="flex-row items-center justify-center p-4 rounded-xl mb-8"
+              style={{ backgroundColor: '#FEE2E2' }}
+            >
+              <LogOut size={20} color="#EF4444" />
+              <Text
+                className="ml-2 font-semibold text-base"
+                style={{ color: '#EF4444' }}
+              >
+                Sign Out
+              </Text>
+            </TouchableOpacity>
+
+            {/* Version Info */}
+            <Text
+              className="text-center text-sm mb-8"
+              style={{ color: theme.colors.text.secondary }}
+            >
+              Version 1.0.0
+            </Text>
+          </View>
+        </ScrollView>
+      </Screen>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    marginTop: 16,
-    marginHorizontal: 20,
-    borderRadius: 12,
-    padding: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#EFF6FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  profileName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  profileEmail: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  menuSection: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 24,
-    marginHorizontal: 20,
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  menuItemText: {
-    fontSize: 16,
-    color: '#1F2937',
-    fontWeight: '500',
-  },
-  signOutText: {
-    color: '#EF4444',
-  },
-  versionSection: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  versionText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-  },
-});
