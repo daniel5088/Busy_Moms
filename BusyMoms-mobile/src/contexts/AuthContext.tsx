@@ -1,17 +1,18 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User, Session, AuthError, AuthResponse } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types/database';
+import { logger } from '../utils/logger';
 
 export interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
-  signUp: (email: string, password: string, metadata?: { full_name?: string }) => Promise<{ data: any; error: any }>;
-  signOut: () => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ data: any; error: any }>;
+  signIn: (email: string, password: string) => Promise<{ data: AuthResponse['data'] | null; error: AuthError | Error | null }>;
+  signUp: (email: string, password: string, metadata?: { full_name?: string }) => Promise<{ data: AuthResponse['data'] | null; error: AuthError | Error | null }>;
+  signOut: () => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: () => Promise<{ data: null; error: Error }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Profile fetch error:', error);
       return null;
     }
@@ -67,9 +68,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           user.user_metadata?.name ??
           user.email?.split('@')[0] ??
           'User',
-        user_type: (user.user_metadata?.user_type as any) ?? 'Mom',
+        user_type: (user.user_metadata?.user_type as Profile['user_type']) ?? 'Mom',
         onboarding_completed: user.user_metadata?.onboarding_completed ?? false,
-        ai_personality: (user.user_metadata?.ai_personality as any) ?? 'Friendly',
+        ai_personality: (user.user_metadata?.ai_personality as Profile['ai_personality']) ?? 'Friendly',
       };
 
       const { data, error } = await supabase
@@ -83,9 +84,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return null;
       }
 
-      console.log('✅ Profile created successfully');
+      logger.info('✅ Profile created successfully');
       return data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Profile create error:', error);
       return null;
     }
@@ -104,22 +105,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     processedUserIds.add(user.id);
 
     try {
-      console.log('👤 Fetching profile for user:', user.id);
+      logger.debug('👤 Fetching profile for user:', user.id);
 
       // Try to fetch existing profile
       let userProfile = await fetchProfile(user.id);
 
       // If no profile exists, create one
       if (!userProfile) {
-        console.log('⚠️ Profile not found, creating...');
+        logger.info('⚠️ Profile not found, creating...');
         userProfile = await createProfile(user);
       }
 
       if (userProfile) {
         setProfile(userProfile);
-        console.log('✅ Profile loaded:', userProfile.onboarding_completed ? 'Onboarding complete' : 'Onboarding needed');
+        logger.info('✅ Profile loaded:', userProfile.onboarding_completed ? 'Onboarding complete' : 'Onboarding needed');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Profile handling error:', error);
     } finally {
       processingProfile = false;
@@ -164,7 +165,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!mounted) return;
 
-      console.log('🔐 Auth state changed:', event);
+      logger.info('🔐 Auth state changed:', event);
 
       setSession(newSession);
       setUser(newSession?.user ?? null);
@@ -193,9 +194,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   }),
                 }
               );
-              console.log('✅ Google tokens stored');
+              logger.info('✅ Google tokens stored');
             }
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Failed to store Google tokens:', error);
           }
         }
@@ -219,7 +220,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const signUp = async (email: string, password: string, metadata?: { full_name?: string }) => {
     try {
-      console.log('🔐 Starting signup for:', email);
+      logger.info('🔐 Starting signup for:', email);
 
       if (!email || !password) {
         return { data: null, error: new Error('Email and password are required') };
@@ -251,7 +252,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { data: null, error: new Error('Failed to create user account') };
       }
 
-      console.log('✅ Auth user created:', data.user.id);
+      logger.info('✅ Auth user created:', data.user.id);
 
       // Give the database trigger a moment to execute
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -263,9 +264,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       return { data, error: null };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Unexpected sign-up error:', err);
-      return { data: null, error: err };
+      return { data: null, error: err instanceof Error ? err : new Error('Unknown sign-up error') };
     }
   };
 
@@ -274,7 +275,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('🔐 Starting sign in for:', email);
+      logger.info('🔐 Starting sign in for:', email);
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -290,13 +291,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { data: null, error: new Error('Failed to sign in') };
       }
 
-      console.log('✅ Sign in successful:', data.user.id);
+      logger.info('✅ Sign in successful:', data.user.id);
 
       // Profile will be loaded by onAuthStateChange
       return { data, error: null };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Unexpected sign-in error:', err);
-      return { data: null, error: err };
+      return { data: null, error: err instanceof Error ? err : new Error('Unknown sign-in error') };
     }
   };
 
@@ -304,12 +305,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Sign out
    */
   const signOut = async () => {
-    console.log('🔐 Signing out...');
+    logger.info('🔐 Signing out...');
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('❌ Sign-out error:', error.message);
     } else {
-      console.log('✅ Sign out successful');
+      logger.info('✅ Sign out successful');
       setUser(null);
       setSession(null);
       setProfile(null);
@@ -322,7 +323,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Sign in with Google OAuth (placeholder - needs expo-auth-session implementation)
    */
   const signInWithGoogle = async () => {
-    console.log('🔐 Google OAuth not yet implemented in mobile');
+    logger.info('🔐 Google OAuth not yet implemented in mobile');
     return {
       data: null,
       error: new Error('Google OAuth will be implemented in a later step'),

@@ -49,9 +49,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-notifications',
       {
-        icon: './assets/notification-icon.png',
         color: '#3B82F6',
-        sounds: ['./assets/notification-sound.wav'],
       },
     ],
     [
@@ -73,7 +71,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     'expo-av',
-    'expo-haptics',
   ],
   experiments: {
     typedRoutes: true,

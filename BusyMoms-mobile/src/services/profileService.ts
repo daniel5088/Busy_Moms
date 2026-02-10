@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types/database';
+import { logger } from '../utils/logger';
 
 /**
  * Get user profile by ID
@@ -19,7 +20,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 
     return data;
   } catch (error) {
-    console.error('❌ Profile fetch error:', error);
+    logger.error('❌ Profile fetch error:', error);
     return null;
   }
 }
@@ -44,10 +45,10 @@ export async function updateProfile(
       throw error;
     }
 
-    console.log('✅ Profile updated successfully');
+    logger.debug('✅ Profile updated successfully');
     return data;
   } catch (error) {
-    console.error('❌ Profile update error:', error);
+    logger.error('❌ Profile update error:', error);
     return null;
   }
 }
@@ -67,10 +68,10 @@ export async function completeOnboarding(userId: string): Promise<boolean> {
       throw error;
     }
 
-    console.log('✅ Onboarding marked as completed');
+    logger.debug('✅ Onboarding marked as completed');
     return true;
   } catch (error) {
-    console.error('❌ Complete onboarding error:', error);
+    logger.error('❌ Complete onboarding error:', error);
     return false;
   }
 }
@@ -91,10 +92,10 @@ export async function createProfile(profileData: Partial<Profile>): Promise<Prof
       throw error;
     }
 
-    console.log('✅ Profile created successfully');
+    logger.debug('✅ Profile created successfully');
     return data;
   } catch (error) {
-    console.error('❌ Profile create error:', error);
+    logger.error('❌ Profile create error:', error);
     return null;
   }
 }

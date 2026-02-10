@@ -70,8 +70,9 @@ export default function SignupScreen() {
       // If we have a session, user is logged in
       // Navigation will be handled by AuthGuard
       showToast('Account created successfully!', 'success');
-    } catch (error: any) {
-      showToast(error.message || 'An unexpected error occurred', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -84,7 +85,7 @@ export default function SignupScreen() {
       if (error) {
         showToast(error.message || 'Google sign in not available yet', 'warning');
       }
-    } catch (error: any) {
+    } catch {
       showToast('Google sign in failed', 'error');
     } finally {
       setGoogleLoading(false);

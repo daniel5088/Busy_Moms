@@ -6,7 +6,6 @@ import {
   useColorScheme,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import type { RecipeIngredient } from '../../types/database';
 
 interface IngredientListProps {

@@ -11,6 +11,7 @@ import type {
 } from '../types/database';
 import { MeasurementConverter } from '../utils/measurementConverter';
 import { InstacartUnitMapper } from '../utils/instacartUnitMapper';
+import { logger } from '../utils/logger';
 
 interface FormattedInstacartItem {
   name: string;
@@ -90,7 +91,7 @@ function formatItemsForInstacart(items: ShoppingItem[]): FormattedInstacartItem[
   }
 
   if (skipped.length > 0) {
-    console.warn(`Skipped ${skipped.length} items with invalid units:`, skipped);
+    logger.debug(`Skipped ${skipped.length} items with invalid units:`, skipped);
   }
 
   return formatted;
@@ -128,7 +129,7 @@ export async function sendToInstacart(
     };
 
     if (retailerKey) {
-      (request as any).retailer_key = retailerKey;
+      request.retailer_key = retailerKey;
     }
 
     const response = await fetch(
@@ -176,10 +177,10 @@ export async function sendToInstacart(
       })
       .in('id', itemIds);
 
-    console.log(`✅ ${items.length} items sent to Instacart successfully`);
+    logger.debug(`✅ ${items.length} items sent to Instacart successfully`);
     return data as InstacartShoppingListResponse;
   } catch (error) {
-    console.error('❌ Send to Instacart error:', error);
+    logger.error('❌ Send to Instacart error:', error);
     return null;
   }
 }
@@ -222,7 +223,7 @@ export async function getNearbyRetailers(
     const data = (await response.json()) as GetNearbyRetailersResponse;
     return data.retailers || [];
   } catch (error) {
-    console.error('❌ Get nearby retailers error:', error);
+    logger.error('❌ Get nearby retailers error:', error);
     return [];
   }
 }
@@ -245,7 +246,7 @@ export async function getPreferredRetailers(userId: string): Promise<UserPreferr
 
     return data || [];
   } catch (error) {
-    console.error('❌ Get preferred retailers error:', error);
+    logger.error('❌ Get preferred retailers error:', error);
     return [];
   }
 }
@@ -269,7 +270,7 @@ export async function getPrimaryRetailer(userId: string): Promise<UserPreferredR
 
     return data;
   } catch (error) {
-    console.error('❌ Get primary retailer error:', error);
+    logger.error('❌ Get primary retailer error:', error);
     return null;
   }
 }
@@ -332,10 +333,10 @@ export async function savePreferredRetailer(
       throw error;
     }
 
-    console.log('✅ Preferred retailer saved successfully');
+    logger.debug('✅ Preferred retailer saved successfully');
     return data;
   } catch (error) {
-    console.error('❌ Save preferred retailer error:', error);
+    logger.error('❌ Save preferred retailer error:', error);
     return null;
   }
 }
@@ -364,10 +365,10 @@ export async function setPrimaryRetailer(userId: string, retailerId: string): Pr
       throw error;
     }
 
-    console.log('✅ Primary retailer set successfully');
+    logger.debug('✅ Primary retailer set successfully');
     return true;
   } catch (error) {
-    console.error('❌ Set primary retailer error:', error);
+    logger.error('❌ Set primary retailer error:', error);
     return false;
   }
 }
@@ -388,10 +389,10 @@ export async function removePreferredRetailer(userId: string, retailerId: string
       throw error;
     }
 
-    console.log('✅ Preferred retailer removed successfully');
+    logger.debug('✅ Preferred retailer removed successfully');
     return true;
   } catch (error) {
-    console.error('❌ Remove preferred retailer error:', error);
+    logger.error('❌ Remove preferred retailer error:', error);
     return false;
   }
 }
@@ -414,7 +415,7 @@ export async function checkRetailerExists(userId: string, retailerKey: string): 
 
     return !!data;
   } catch (error) {
-    console.error('❌ Check retailer exists error:', error);
+    logger.error('❌ Check retailer exists error:', error);
     return false;
   }
 }
@@ -436,7 +437,7 @@ async function getRetailerByKey(retailerKey: string): Promise<UserPreferredRetai
 
     return data;
   } catch (error) {
-    console.error('❌ Get retailer by key error:', error);
+    logger.error('❌ Get retailer by key error:', error);
     return null;
   }
 }

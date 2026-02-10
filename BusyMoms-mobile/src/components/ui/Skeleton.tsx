@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Animated, type ViewStyle } from 'react-native';
+import { Animated, type ViewStyle, type DimensionValue } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
 export interface SkeletonProps {
@@ -45,16 +45,10 @@ export function Skeleton({
 
   const skeletonStyle: ViewStyle = {
     height,
+    width: width as DimensionValue,
     borderRadius,
     backgroundColor: theme.colors.gray[300],
   };
-
-  // Handle width separately to satisfy TypeScript
-  if (typeof width === 'number') {
-    skeletonStyle.width = width;
-  } else {
-    skeletonStyle.width = width as any;
-  }
 
   return (
     <Animated.View

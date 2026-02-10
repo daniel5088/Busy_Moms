@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { Screen } from '../src/components/layout/Screen';
 import { Header } from '../src/components/layout/Header';
 import { Section } from '../src/components/layout/Section';
@@ -275,5 +275,3 @@ export default function ComponentShowcaseScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({});

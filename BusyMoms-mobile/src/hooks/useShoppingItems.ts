@@ -129,8 +129,8 @@ export function useToggleItemCompleted() {
       const previousItems = queryClient.getQueryData(['shopping', 'items']);
 
       // Optimistically update to the new value
-      queryClient.setQueriesData({ queryKey: ['shopping', 'items'] }, (old: any) => {
-        if (!old) return old;
+      queryClient.setQueriesData({ queryKey: ['shopping', 'items'] }, (old: unknown) => {
+        if (!old || !Array.isArray(old)) return old;
         return old.map((item: ShoppingItem) =>
           item.id === itemId ? { ...item, completed } : item
         );

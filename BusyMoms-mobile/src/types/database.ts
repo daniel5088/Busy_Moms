@@ -139,8 +139,8 @@ export interface ProviderMetadata {
   timestamp?: string;
   retailer_key?: string;
   retailer_name?: string;
-  sync_info?: Record<string, any>;
-  [key: string]: any;
+  sync_info?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface ShoppingItem {
@@ -196,7 +196,7 @@ export interface Recipe {
   source_url?: string | null;
   instacart_recipe_url?: string | null;
   url_expires_at?: string | null;
-  instacart_metadata?: Record<string, any> | null;
+  instacart_metadata?: Record<string, unknown> | null;
   external_id?: string | null;
   external_source?: string | null;
   created_at?: string;
@@ -358,7 +358,7 @@ export interface Address {
   country: string;
   is_default?: boolean | null;
   validated?: boolean | null;
-  validation_metadata?: Record<string, any> | null;
+  validation_metadata?: Record<string, unknown> | null;
   created_at?: string;
   updated_at?: string;
 }

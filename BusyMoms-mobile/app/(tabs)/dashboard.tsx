@@ -1,19 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { WeatherWidget } from '../../src/components/dashboard/WeatherWidget';
 import { AffirmationBanner } from '../../src/components/dashboard/AffirmationBanner';
 import { TodaysSchedule } from '../../src/components/dashboard/TodaysSchedule';
 import { UpcomingEvents } from '../../src/components/dashboard/UpcomingEvents';
 import { QuickActionsGrid } from '../../src/components/dashboard/QuickActionsGrid';
+import { DailyAffirmation } from '../../src/components/affirmations/DailyAffirmation';
 import { useDashboardData } from '../../src/hooks/useDashboardData';
+import { useAffirmationNotifier } from '../../src/hooks/useAffirmationNotifier';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useTheme } from '../../src/hooks/useTheme';
+import { logger } from '../../src/utils/logger';
 
 export default function DashboardScreen() {
   const { theme } = useTheme();
   const { user } = useAuth();
+  const router = useRouter();
   const { todayEvents, thisWeekEvents, loading, refetch } = useDashboardData();
+  const { pendingAffirmation } = useAffirmationNotifier();
+  const [showAffirmationModal, setShowAffirmationModal] = useState(false);
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Mom';
 
@@ -24,13 +31,16 @@ export default function DashboardScreen() {
   });
 
   const handleAffirmationPress = () => {
-    // TODO: Navigate to full affirmation modal (Phase 8)
-    console.log('Affirmation pressed - full modal placeholder');
+    setShowAffirmationModal(true);
+  };
+
+  const handleOpenVoiceChat = () => {
+    setShowAffirmationModal(false);
+    router.push('/voice-chat' as never);
   };
 
   const handleCustomizeQuickActions = () => {
-    // TODO: Navigate to quick actions customizer
-    console.log('Customize quick actions pressed - placeholder');
+    logger.debug('Customize quick actions pressed - placeholder');
   };
 
   return (
@@ -73,7 +83,10 @@ export default function DashboardScreen() {
         <WeatherWidget />
 
         {/* Affirmation Banner */}
-        <AffirmationBanner onPress={handleAffirmationPress} />
+        <AffirmationBanner
+          affirmation={pendingAffirmation?.affirmation_text}
+          onPress={handleAffirmationPress}
+        />
 
         {/* Today's Schedule */}
         <TodaysSchedule events={todayEvents} loading={loading} />
@@ -86,6 +99,13 @@ export default function DashboardScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Affirmation Modal */}
+      <DailyAffirmation
+        visible={showAffirmationModal}
+        onClose={() => setShowAffirmationModal(false)}
+        onOpenVoiceChat={handleOpenVoiceChat}
+      />
     </SafeAreaView>
   );
 }

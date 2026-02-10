@@ -24,14 +24,23 @@ export async function hasGoogleCalendar(userId: string): Promise<boolean> {
   }
 }
 
+interface GoogleCalendarEvent {
+  id: string;
+  summary?: string;
+  description?: string;
+  start?: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
+  location?: string;
+}
+
 /**
  * List Google Calendar events
  * TODO: Implement call to google-calendar edge function
  */
 export async function listGoogleCalendarEvents(
-  startDate: string,
-  endDate: string
-): Promise<any[]> {
+  _startDate: string,
+  _endDate: string
+): Promise<GoogleCalendarEvent[]> {
   try {
     // TODO: Implement call to google-calendar edge function
     // const { data, error } = await supabase.functions.invoke('google-calendar', {
@@ -55,7 +64,7 @@ export async function listGoogleCalendarEvents(
  * Create event in Google Calendar
  * TODO: Implement call to google-calendar edge function
  */
-export async function createGoogleCalendarEvent(event: Partial<Event>): Promise<string | null> {
+export async function createGoogleCalendarEvent(_event: Partial<Event>): Promise<string | null> {
   try {
     // TODO: Implement call to google-calendar edge function
     return null;
@@ -70,8 +79,8 @@ export async function createGoogleCalendarEvent(event: Partial<Event>): Promise<
  * TODO: Implement call to google-calendar edge function
  */
 export async function updateGoogleCalendarEvent(
-  googleEventId: string,
-  event: Partial<Event>
+  _googleEventId: string,
+  _event: Partial<Event>
 ): Promise<boolean> {
   try {
     // TODO: Implement call to google-calendar edge function
@@ -86,7 +95,7 @@ export async function updateGoogleCalendarEvent(
  * Delete event from Google Calendar
  * TODO: Implement call to google-calendar edge function
  */
-export async function deleteGoogleCalendarEvent(googleEventId: string): Promise<boolean> {
+export async function deleteGoogleCalendarEvent(_googleEventId: string): Promise<boolean> {
   try {
     // TODO: Implement call to google-calendar edge function
     return false;

@@ -51,15 +51,16 @@ export default function ProfileOnboardingScreen() {
     try {
       await updateProfile(user.id, {
         full_name: name.trim(),
-        user_type: userType as any,
-        ai_personality: aiPersonality as any,
+        user_type: userType as 'Mom' | 'Dad' | 'Guardian' | 'Other',
+        ai_personality: aiPersonality as 'Friendly' | 'Professional' | 'Humorous',
       });
 
       await refreshProfile();
       showToast('Profile updated!', 'success');
       router.push('/(onboarding)/family');
-    } catch (error: any) {
-      showToast(error.message || 'Failed to update profile', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update profile';
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }

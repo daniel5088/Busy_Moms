@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { Screen } from '../../src/components/layout/Screen';
@@ -63,8 +63,9 @@ export default function PreferencesOnboardingScreen() {
       // In a real implementation, save measurement preference to database
       // For now, we'll just proceed
       router.push('/(onboarding)/complete');
-    } catch (error: any) {
-      showToast(error.message || 'An error occurred', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'An error occurred';
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }

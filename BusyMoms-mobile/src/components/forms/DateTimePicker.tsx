@@ -21,19 +21,14 @@ export interface DateTimePickerProps {
 export function DateTimePicker({
   mode,
   value,
-  onChange,
+  onChange: _onChange,
   label,
-  minimumDate,
-  maximumDate,
+  minimumDate: _minimumDate,
+  maximumDate: _maximumDate,
   style,
 }: DateTimePickerProps) {
   const { theme } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
-
-  const handleChange = (selectedDate: Date) => {
-    setShowPicker(false);
-    onChange(selectedDate);
-  };
 
   const getDisplayValue = (): string => {
     switch (mode) {

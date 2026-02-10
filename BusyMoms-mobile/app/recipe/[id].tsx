@@ -62,8 +62,9 @@ export default function RecipeDetailScreen() {
       } else {
         await saveRecipeMutation.mutateAsync(recipeId);
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update recipe');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update recipe';
+      Alert.alert('Error', message);
     }
   };
 
@@ -105,8 +106,9 @@ export default function RecipeDetailScreen() {
           },
         ]
       );
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to add ingredients');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to add ingredients';
+      Alert.alert('Error', message);
     }
   };
 
@@ -120,8 +122,9 @@ export default function RecipeDetailScreen() {
       } else {
         Alert.alert('Error', 'Failed to create Instacart recipe page');
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send recipe to Instacart');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to send recipe to Instacart';
+      Alert.alert('Error', message);
     }
   };
 

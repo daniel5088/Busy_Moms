@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import * as recipeService from '../services/recipeService';
-import type { Recipe, RecipeIngredient } from '../types/database';
-import type { RecipeFilter } from '../services/recipeService';
+import type { Recipe } from '../types/database';
+import type { RecipeFilter, SimplifiedRecipe } from '../services/recipeService';
 
 /**
  * Fetch recipes for a user with optional filtering
@@ -116,7 +116,7 @@ export function useImportRecipe() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (themealdbRecipe: any) => {
+    mutationFn: async (themealdbRecipe: SimplifiedRecipe) => {
       if (!user) throw new Error('User not authenticated');
       return recipeService.importFromTheMealDB(user.id, themealdbRecipe);
     },

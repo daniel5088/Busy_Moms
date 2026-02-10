@@ -17,12 +17,10 @@ import {
   useUpdateShoppingItem,
   useDeleteShoppingItem,
   useToggleItemCompleted,
-  useBulkUpdateItems,
 } from '../../src/hooks/useShoppingItems';
 import {
   useRecipes,
   useRecipeIngredients,
-  useImportRecipe,
 } from '../../src/hooks/useRecipes';
 import {
   useSavedRecipes,
@@ -33,7 +31,6 @@ import { useSearchRecipes } from '../../src/hooks/useTheMealDB';
 import {
   usePreferredRetailers,
   useNearbyRetailers,
-  useSaveRetailer,
 } from '../../src/hooks/useRetailer';
 import {
   ShoppingList,
@@ -48,7 +45,7 @@ import {
 } from '../../src/components/recipes';
 import { sendToInstacart } from '../../src/services/instacartShoppingService';
 import { getInstacartRecipeUrl } from '../../src/services/instacartService';
-import type { ShoppingItem, Recipe, RecipeIngredient, Retailer } from '../../src/types/database';
+import type { ShoppingItem, Recipe, RecipeIngredient } from '../../src/types/database';
 
 type TabType = 'shopping' | 'recipes';
 
@@ -64,7 +61,6 @@ export default function ShoppingScreen() {
   const [showShoppingForm, setShowShoppingForm] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | undefined>();
   const [showRetailerSelector, setShowRetailerSelector] = useState(false);
-  const [showCompleted, setShowCompleted] = useState(true);
 
   // Recipe state
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -78,13 +74,11 @@ export default function ShoppingScreen() {
   const updateItemMutation = useUpdateShoppingItem();
   const deleteItemMutation = useDeleteShoppingItem();
   const toggleItemMutation = useToggleItemCompleted();
-  const bulkUpdateMutation = useBulkUpdateItems();
 
   // Recipe queries
   const { data: myRecipes = [], isLoading: loadingRecipes, refetch: refetchRecipes } = useRecipes();
   const { data: savedRecipes = [] } = useSavedRecipes();
   const { data: searchResults = [], isLoading: searchLoading } = useSearchRecipes(searchQuery);
-  const importRecipeMutation = useImportRecipe();
 
   // Recipe ingredients (for selected recipe)
   const { data: recipeIngredients = [] } = useRecipeIngredients(
@@ -97,12 +91,11 @@ export default function ShoppingScreen() {
     nearbyRetailersPostalCode,
     'US'
   );
-  const saveRetailerMutation = useSaveRetailer();
   const saveRecipeMutation = useSaveRecipe();
   const unsaveRecipeMutation = useUnsaveRecipe();
 
   // Saved recipe IDs for quick lookup
-  const savedRecipeIds = new Set(savedRecipes.map((r: any) => r.id));
+  const savedRecipeIds = new Set(savedRecipes.map((r: Recipe) => r.id));
 
   // Shopping handlers
   const handleAddShoppingItem = () => {
@@ -132,8 +125,9 @@ export default function ShoppingScreen() {
       }
       setShowShoppingForm(false);
       setEditingItem(undefined);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save item');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to save item';
+      Alert.alert('Error', message);
     }
   };
 
@@ -149,8 +143,9 @@ export default function ShoppingScreen() {
           onPress: async () => {
             try {
               await deleteItemMutation.mutateAsync(itemId);
-            } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to delete item');
+            } catch (error: unknown) {
+              const message = error instanceof Error ? error.message : 'Failed to delete item';
+              Alert.alert('Error', message);
             }
           },
         },
@@ -161,8 +156,9 @@ export default function ShoppingScreen() {
   const handleToggleItemCompleted = async (itemId: string, completed: boolean) => {
     try {
       await toggleItemMutation.mutateAsync({ itemId, completed });
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update item');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update item';
+      Alert.alert('Error', message);
     }
   };
 
@@ -181,8 +177,9 @@ export default function ShoppingScreen() {
       } else {
         Alert.alert('Error', 'Failed to create Instacart cart');
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send to Instacart');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to send to Instacart';
+      Alert.alert('Error', message);
     }
   };
 
@@ -208,8 +205,9 @@ export default function ShoppingScreen() {
       } else {
         await saveRecipeMutation.mutateAsync(recipeId);
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update recipe');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update recipe';
+      Alert.alert('Error', message);
     }
   };
 
@@ -247,8 +245,9 @@ export default function ShoppingScreen() {
       Alert.alert('Success', `Added ${items.length} ingredients to shopping list`);
       setShowRecipeDetail(false);
       setActiveTab('shopping');
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to add ingredients');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to add ingredients';
+      Alert.alert('Error', message);
     }
   };
 
@@ -262,8 +261,9 @@ export default function ShoppingScreen() {
       } else {
         Alert.alert('Error', 'Failed to create Instacart recipe page');
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send recipe to Instacart');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to send recipe to Instacart';
+      Alert.alert('Error', message);
     }
   };
 
@@ -387,7 +387,7 @@ export default function ShoppingScreen() {
               onDeleteItem={handleDeleteShoppingItem}
               onRefresh={refetchItems}
               refreshing={loadingItems}
-              showCompleted={showCompleted}
+              showCompleted={true}
             />
           </View>
         )}
@@ -396,7 +396,7 @@ export default function ShoppingScreen() {
           <RecipeBrowser
             myRecipes={myRecipes}
             savedRecipes={savedRecipes}
-            searchResults={searchResults as any}
+            searchResults={searchResults as unknown as Recipe[]}
             onPressRecipe={handlePressRecipe}
             onToggleSave={handleToggleSaveRecipe}
             onSearch={handleSearchRecipes}

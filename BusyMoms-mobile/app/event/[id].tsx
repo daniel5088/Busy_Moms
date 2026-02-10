@@ -5,11 +5,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-// @ts-ignore - Edit icon not in type definitions
-import { Calendar, Clock, MapPin, Trash2, Edit } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, Trash2, Edit2 } from 'lucide-react-native';
 import { Screen } from '../../src/components/layout/Screen';
 import { Header } from '../../src/components/layout/Header';
-import { Button } from '../../src/components/ui/Button';
 import { Modal } from '../../src/components/ui/Modal';
 import { EventForm } from '../../src/components/calendar/EventForm';
 import { useTheme } from '../../src/hooks/useTheme';
@@ -114,7 +112,7 @@ export default function EventDetailScreen() {
         rightAction={
           <View style={styles.headerButtons}>
             <Pressable onPress={() => setIsEditModalOpen(true)} style={styles.headerButton}>
-              <Edit size={20} color={theme.colors.text.primary} />
+              <Edit2 size={20} color={theme.colors.text.primary} />
             </Pressable>
             <Pressable onPress={handleDelete} style={styles.headerButton} disabled={deleting}>
               <Trash2 size={20} color={theme.colors.status.error} />

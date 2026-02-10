@@ -39,8 +39,9 @@ export default function OnboardingCompleteScreen() {
       // Navigation will be handled by AuthGuard which checks onboarding_completed
       // Just need to trigger a navigation event
       router.replace('/(tabs)/dashboard');
-    } catch (error: any) {
-      showToast(error.message || 'Failed to complete onboarding', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to complete onboarding';
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }

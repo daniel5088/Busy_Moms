@@ -10,7 +10,7 @@
 export async function calculateTravelTime(
   origin: string,
   destination: string,
-  mode: 'driving' | 'walking' | 'transit' | 'bicycling' = 'driving'
+  _mode: 'driving' | 'walking' | 'transit' | 'bicycling' = 'driving'
 ): Promise<number | null> {
   if (!origin || !destination) return null;
 

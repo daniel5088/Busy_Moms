@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { weatherService, WeatherData } from '../services/weatherService';
+import { weatherService } from '../services/weatherService';
 
 interface UseWeatherOptions {
   location?: { latitude: number; longitude: number };

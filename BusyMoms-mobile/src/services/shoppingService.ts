@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { ShoppingItem } from '../types/database';
+import { logger } from '../utils/logger';
 
 export interface ShoppingFilter {
   category?: string;
@@ -47,7 +48,7 @@ export async function getShoppingItems(
 
     return data || [];
   } catch (error) {
-    console.error('❌ Shopping items fetch error:', error);
+    logger.error('❌ Shopping items fetch error:', error);
     return [];
   }
 }
@@ -78,10 +79,10 @@ export async function createShoppingItem(
       throw error;
     }
 
-    console.log('✅ Shopping item created successfully');
+    logger.debug('✅ Shopping item created successfully');
     return data;
   } catch (error) {
-    console.error('❌ Shopping item create error:', error);
+    logger.error('❌ Shopping item create error:', error);
     return null;
   }
 }
@@ -106,10 +107,10 @@ export async function updateShoppingItem(
       throw error;
     }
 
-    console.log('✅ Shopping item updated successfully');
+    logger.debug('✅ Shopping item updated successfully');
     return data;
   } catch (error) {
-    console.error('❌ Shopping item update error:', error);
+    logger.error('❌ Shopping item update error:', error);
     return null;
   }
 }
@@ -126,10 +127,10 @@ export async function deleteShoppingItem(itemId: string): Promise<boolean> {
       throw error;
     }
 
-    console.log('✅ Shopping item deleted successfully');
+    logger.debug('✅ Shopping item deleted successfully');
     return true;
   } catch (error) {
-    console.error('❌ Shopping item delete error:', error);
+    logger.error('❌ Shopping item delete error:', error);
     return false;
   }
 }
@@ -154,10 +155,10 @@ export async function toggleItemCompleted(
       throw error;
     }
 
-    console.log(`✅ Shopping item marked as ${completed ? 'completed' : 'pending'}`);
+    logger.debug(`✅ Shopping item marked as ${completed ? 'completed' : 'pending'}`);
     return data;
   } catch (error) {
-    console.error('❌ Toggle item completed error:', error);
+    logger.error('❌ Toggle item completed error:', error);
     return null;
   }
 }
@@ -181,10 +182,10 @@ export async function bulkUpdateItems(
       throw error;
     }
 
-    console.log(`✅ ${data.length} shopping items updated successfully`);
+    logger.debug(`✅ ${data.length} shopping items updated successfully`);
     return data || [];
   } catch (error) {
-    console.error('❌ Bulk update items error:', error);
+    logger.error('❌ Bulk update items error:', error);
     return [];
   }
 }
@@ -209,7 +210,7 @@ export async function getCategories(userId: string): Promise<string[]> {
     const categories = Array.from(new Set(data.map((item) => item.category).filter(Boolean)));
     return categories as string[];
   } catch (error) {
-    console.error('❌ Get categories error:', error);
+    logger.error('❌ Get categories error:', error);
     return [];
   }
 }
@@ -226,10 +227,10 @@ export async function bulkDeleteItems(itemIds: string[]): Promise<boolean> {
       throw error;
     }
 
-    console.log(`✅ ${itemIds.length} shopping items deleted successfully`);
+    logger.debug(`✅ ${itemIds.length} shopping items deleted successfully`);
     return true;
   } catch (error) {
-    console.error('❌ Bulk delete items error:', error);
+    logger.error('❌ Bulk delete items error:', error);
     return false;
   }
 }

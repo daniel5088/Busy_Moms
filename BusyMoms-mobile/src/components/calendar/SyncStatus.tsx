@@ -5,8 +5,8 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-// @ts-ignore - RefreshCw icon not in type definitions
-import { RefreshCw } from 'lucide-react-native';
+// @ts-ignore - RefreshCcw icon not in type definitions
+import { RefreshCcw } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useCalendarSync } from '../../hooks/useCalendarSync';
 
@@ -34,7 +34,7 @@ export function SyncStatus() {
           { opacity: pressed ? 0.6 : 1 },
         ]}
       >
-        <RefreshCw
+        <RefreshCcw
           size={16}
           color={theme.colors.primary.main}
           style={isSyncing ? styles.spinning : undefined}

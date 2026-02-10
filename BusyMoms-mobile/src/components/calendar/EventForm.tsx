@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { Event, FamilyMember } from '../../types/database';
+import { Event } from '../../types/database';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { FormField } from '../forms/FormField';
@@ -25,7 +25,6 @@ export function EventForm({ event, defaultDate, onCancel, onSaved }: EventFormPr
   const { theme } = useTheme();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -41,19 +40,6 @@ export function EventForm({ event, defaultDate, onCancel, onSaved }: EventFormPr
     assigned_to: '',
   });
 
-  // Load family members
-  useEffect(() => {
-    const loadFamilyMembers = async () => {
-      if (!user) return;
-      const { data } = await supabase
-        .from('family_members')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name');
-      if (data) setFamilyMembers(data);
-    };
-    loadFamilyMembers();
-  }, [user]);
 
   // Load event data if editing
   useEffect(() => {

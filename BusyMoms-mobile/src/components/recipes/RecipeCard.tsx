@@ -26,7 +26,7 @@ export function RecipeCard({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const handleSavePress = (e: any) => {
+  const handleSavePress = (e: { stopPropagation: () => void }) => {
     e.stopPropagation();
     onToggleSave?.(recipe.id, !isSaved);
   };

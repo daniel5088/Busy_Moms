@@ -44,8 +44,9 @@ export default function ForgotPasswordScreen() {
       setTimeout(() => {
         router.back();
       }, 3000);
-    } catch (error: any) {
-      showToast(error.message || 'An unexpected error occurred', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }

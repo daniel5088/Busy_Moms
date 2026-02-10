@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 // @ts-ignore
-import { CloudIcon as Cloud, SunIcon as Sun, ZapIcon as Zap } from 'lucide-react-native';
+import { Cloud, SunIcon as Sun, ZapIcon as Zap } from 'lucide-react-native';
 import { Card } from '../ui/Card';
 import { useTheme } from '../../hooks/useTheme';
 import { useWeather } from '../../hooks/useWeather';

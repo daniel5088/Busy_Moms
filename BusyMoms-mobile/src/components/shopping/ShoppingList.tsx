@@ -21,12 +21,6 @@ interface ShoppingListProps {
   showCompleted?: boolean;
 }
 
-interface SectionData {
-  title: string;
-  data: ShoppingItem[];
-  completedCount: number;
-}
-
 export function ShoppingList({
   items,
   onToggleItem,

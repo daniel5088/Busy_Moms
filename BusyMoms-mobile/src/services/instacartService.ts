@@ -5,6 +5,7 @@ import type {
   InstacartRecipeResponse,
   Recipe,
 } from '../types/database';
+import { logger } from '../utils/logger';
 
 const PARTNER_LINKBACK_URL = 'busymoms://shopping?tab=recipes';
 
@@ -41,10 +42,10 @@ export async function createRecipePage(
     }
 
     const data = await response.json();
-    console.log('✅ Instacart recipe page created successfully');
+    logger.debug('✅ Instacart recipe page created successfully');
     return data as InstacartRecipeResponse;
   } catch (error) {
-    console.error('❌ Create recipe page error:', error);
+    logger.error('❌ Create recipe page error:', error);
     return null;
   }
 }
@@ -82,13 +83,20 @@ export function calculateExpiresAt(days: number = 30): string {
  */
 export async function getInstacartRecipeUrl(
   recipe: Recipe,
-  ingredients: any[]
+  ingredients: Array<{
+    name: string;
+    display_text: string;
+    quantity?: number | null;
+    unit?: string | null;
+    brand_filters?: string[] | null;
+    health_filters?: string[] | null;
+  }>
 ): Promise<string | null> {
   try {
     // Check if we have a valid cached URL
     const cachedUrl = getCachedUrl(recipe.instacart_recipe_url || null, recipe.url_expires_at || null);
     if (cachedUrl) {
-      console.log('✅ Using cached Instacart recipe URL');
+      logger.debug('✅ Using cached Instacart recipe URL');
       return cachedUrl;
     }
 
@@ -133,7 +141,7 @@ export async function getInstacartRecipeUrl(
 
     return response.products_link_url;
   } catch (error) {
-    console.error('❌ Get Instacart recipe URL error:', error);
+    logger.error('❌ Get Instacart recipe URL error:', error);
     return null;
   }
 }

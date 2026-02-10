@@ -10,10 +10,16 @@ import { NotificationProvider } from '../src/contexts/NotificationContext';
 import { ToastContainer } from '../src/components/ui/Toast';
 import { NetworkBanner } from '../src/components/ui/NetworkBanner';
 import { queryClient } from '../src/lib/queryClient';
+import { syncEngine } from '../src/lib/syncEngine';
 import { useAuth } from '../src/hooks/useAuth';
 import { logger } from '../src/utils/logger';
 
 export default function RootLayout() {
+  // Initialize sync engine
+  useEffect(() => {
+    syncEngine.initialize();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>

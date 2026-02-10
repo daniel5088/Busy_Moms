@@ -6,8 +6,6 @@ import {
   Users,
   Settings,
   Calendar,
-  // @ts-ignore
-  type LucideIcon,
 } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useQuickActions } from '../../hooks/useQuickActions';
@@ -58,6 +56,7 @@ export function QuickActionsGrid({ onCustomizePress }: QuickActionsGridProps) {
     const route = routeMap[actionId];
 
     if (route) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       router.push(route as any);
     } else {
       console.warn(`No route defined for action: ${actionId}`);

@@ -3,7 +3,6 @@
  * TODO: Implement full location autocomplete using google-places-autocomplete edge function
  */
 
-import { supabase } from '../lib/supabase';
 
 export interface PlaceResult {
   description: string;

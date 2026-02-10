@@ -77,4 +77,7 @@ declare module 'lucide-react-native' {
   export const ExternalLink: LucideIcon;
   export const Loader2: LucideIcon;
   export const MicOff: LucideIcon;
+
+  // Phase 11 - Offline Support
+  export const WifiOff: LucideIcon;
 }

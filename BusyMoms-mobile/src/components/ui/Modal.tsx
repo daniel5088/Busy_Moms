@@ -5,7 +5,6 @@
 import React, { type ReactNode, useEffect } from 'react';
 import {
   Modal as RNModal,
-  View,
   Text,
   StyleSheet,
   Pressable,

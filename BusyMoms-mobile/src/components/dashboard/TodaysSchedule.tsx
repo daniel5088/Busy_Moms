@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Calendar, MapPin } from 'lucide-react-native';
 import { Card } from '../ui/Card';
 import { EmptyState } from '../ui/EmptyState';
@@ -45,6 +45,7 @@ export function TodaysSchedule({ events, loading }: TodaysScheduleProps) {
       {events.length === 0 ? (
         <Card>
           <EmptyState
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             icon={Calendar as any}
             title="No events today"
             description="Enjoy your free day!"

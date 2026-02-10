@@ -43,7 +43,7 @@ class AffiliateMatrixService {
 
   private extractAgeValue(label: string): number | null {
     const match = label.match(/^(\d+)/);
-    if (match) {
+    if (match && match[1]) {
       return parseInt(match[1], 10);
     }
     return null;

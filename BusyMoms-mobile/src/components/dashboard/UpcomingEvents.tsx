@@ -59,6 +59,7 @@ export function UpcomingEvents({ events, loading }: UpcomingEventsProps) {
       {events.length === 0 ? (
         <Card>
           <EmptyState
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             icon={Calendar as any}
             title="No upcoming events"
             description="Nothing planned for the rest of the week"

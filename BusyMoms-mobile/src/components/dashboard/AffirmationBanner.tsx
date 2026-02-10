@@ -10,7 +10,7 @@ interface AffirmationBannerProps {
   onPress?: () => void;
 }
 
-const DEFAULT_AFFIRMATION = "You're doing amazing! Keep being the wonderful person you are. 💕";
+const DEFAULT_AFFIRMATION = "You're doing amazing! Keep being the wonderful person you are.";
 
 export function AffirmationBanner({ affirmation, onPress }: AffirmationBannerProps) {
   const { theme } = useTheme();

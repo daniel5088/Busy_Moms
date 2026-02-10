@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { Link } from 'expo-router';
 import { Screen } from '../../src/components/layout/Screen';
 import { KeyboardAvoid } from '../../src/components/layout/KeyboardAvoid';
 import { Button } from '../../src/components/ui/Button';
@@ -20,7 +20,6 @@ export default function LoginScreen() {
   const { signIn, signInWithGoogle } = useAuth();
   const { showToast } = useToast();
   const { theme } = useTheme();
-  const router = useRouter();
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -45,8 +44,9 @@ export default function LoginScreen() {
 
       // Navigation will be handled by AuthGuard
       showToast('Welcome back!', 'success');
-    } catch (error: any) {
-      showToast(error.message || 'An unexpected error occurred', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function LoginScreen() {
       if (error) {
         showToast(error.message || 'Google sign in not available yet', 'warning');
       }
-    } catch (error: any) {
+    } catch {
       showToast('Google sign in failed', 'error');
     } finally {
       setGoogleLoading(false);

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { quickActionsService, UserQuickAction, QuickActionType } from '../services/quickActionsService';
+import { quickActionsService, UserQuickAction } from '../services/quickActionsService';
 
 export function useQuickActions() {
   const queryClient = useQueryClient();

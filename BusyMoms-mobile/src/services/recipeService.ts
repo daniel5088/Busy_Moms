@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { Recipe, RecipeIngredient, UserSavedRecipe } from '../types/database';
 import { IngredientParser } from '../utils/ingredientParser';
+import { logger } from '../utils/logger';
 
 export interface RecipeFilter {
   search?: string;
@@ -42,10 +43,10 @@ export async function createRecipe(
       throw error;
     }
 
-    console.log('✅ Recipe created successfully');
+    logger.debug('✅ Recipe created successfully');
     return data;
   } catch (error) {
-    console.error('❌ Recipe create error:', error);
+    logger.error('❌ Recipe create error:', error);
     return null;
   }
 }
@@ -68,7 +69,7 @@ export async function getRecipe(recipeId: string): Promise<Recipe | null> {
 
     return data;
   } catch (error) {
-    console.error('❌ Recipe fetch error:', error);
+    logger.error('❌ Recipe fetch error:', error);
     return null;
   }
 }
@@ -113,7 +114,7 @@ export async function getRecipes(userId: string, filter?: RecipeFilter): Promise
 
     return data || [];
   } catch (error) {
-    console.error('❌ Recipes fetch error:', error);
+    logger.error('❌ Recipes fetch error:', error);
     return [];
   }
 }
@@ -138,10 +139,10 @@ export async function updateRecipe(
       throw error;
     }
 
-    console.log('✅ Recipe updated successfully');
+    logger.debug('✅ Recipe updated successfully');
     return data;
   } catch (error) {
-    console.error('❌ Recipe update error:', error);
+    logger.error('❌ Recipe update error:', error);
     return null;
   }
 }
@@ -158,10 +159,10 @@ export async function deleteRecipe(recipeId: string): Promise<boolean> {
       throw error;
     }
 
-    console.log('✅ Recipe deleted successfully');
+    logger.debug('✅ Recipe deleted successfully');
     return true;
   } catch (error) {
-    console.error('❌ Recipe delete error:', error);
+    logger.error('❌ Recipe delete error:', error);
     return false;
   }
 }
@@ -180,10 +181,10 @@ export async function addIngredients(
       throw error;
     }
 
-    console.log(`✅ ${data.length} ingredients added successfully`);
+    logger.debug(`✅ ${data.length} ingredients added successfully`);
     return data || [];
   } catch (error) {
-    console.error('❌ Add ingredients error:', error);
+    logger.error('❌ Add ingredients error:', error);
     return [];
   }
 }
@@ -231,10 +232,10 @@ export async function updateIngredient(
       throw error;
     }
 
-    console.log('✅ Ingredient updated successfully');
+    logger.debug('✅ Ingredient updated successfully');
     return data;
   } catch (error) {
-    console.error('❌ Ingredient update error:', error);
+    logger.error('❌ Ingredient update error:', error);
     return null;
   }
 }
@@ -251,10 +252,10 @@ export async function deleteIngredient(ingredientId: string): Promise<boolean> {
       throw error;
     }
 
-    console.log('✅ Ingredient deleted successfully');
+    logger.debug('✅ Ingredient deleted successfully');
     return true;
   } catch (error) {
-    console.error('❌ Ingredient delete error:', error);
+    logger.error('❌ Ingredient delete error:', error);
     return false;
   }
 }
@@ -275,10 +276,10 @@ export async function saveRecipe(userId: string, recipeId: string): Promise<User
       throw error;
     }
 
-    console.log('✅ Recipe saved successfully');
+    logger.debug('✅ Recipe saved successfully');
     return data;
   } catch (error) {
-    console.error('❌ Save recipe error:', error);
+    logger.error('❌ Save recipe error:', error);
     return null;
   }
 }
@@ -299,10 +300,10 @@ export async function unsaveRecipe(userId: string, recipeId: string): Promise<bo
       throw error;
     }
 
-    console.log('✅ Recipe unsaved successfully');
+    logger.debug('✅ Recipe unsaved successfully');
     return true;
   } catch (error) {
-    console.error('❌ Unsave recipe error:', error);
+    logger.error('❌ Unsave recipe error:', error);
     return false;
   }
 }
@@ -326,7 +327,7 @@ export async function isRecipeSaved(userId: string, recipeId: string): Promise<b
 
     return !!data;
   } catch (error) {
-    console.error('❌ Is recipe saved check error:', error);
+    logger.error('❌ Is recipe saved check error:', error);
     return false;
   }
 }
@@ -353,9 +354,15 @@ export async function getSavedRecipes(userId: string): Promise<Recipe[]> {
     }
 
     // Extract recipes from the join result
-    return data?.map((item: any) => item.recipes).filter(Boolean) || [];
+    // Supabase returns a single recipe object (not array) when using foreign key relationship
+    // TypeScript inference handles the mapping without explicit typing
+    return data?.map((item) => {
+      // Cast to handle Supabase's type inference (via unknown to avoid type errors)
+      const typedItem = item as unknown as { recipe_id: string; recipes: Recipe | null };
+      return typedItem.recipes;
+    }).filter((recipe): recipe is Recipe => recipe !== null) || [];
   } catch (error) {
-    console.error('❌ Saved recipes fetch error:', error);
+    logger.error('❌ Saved recipes fetch error:', error);
     return [];
   }
 }
@@ -450,10 +457,10 @@ export async function importFromTheMealDB(
 
     await addIngredients(ingredients);
 
-    console.log('✅ Recipe imported from TheMealDB successfully');
+    logger.debug('✅ Recipe imported from TheMealDB successfully');
     return recipe;
   } catch (error) {
-    console.error('❌ Import from TheMealDB error:', error);
+    logger.error('❌ Import from TheMealDB error:', error);
     return null;
   }
 }

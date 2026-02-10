@@ -175,7 +175,7 @@ export async function getCategories(): Promise<string[]> {
       return [];
     }
 
-    return data.categories.map((cat: any) => cat.strCategory);
+    return data.categories.map((cat: { strCategory: string }) => cat.strCategory);
   } catch (error) {
     console.error('❌ TheMealDB categories error:', error);
     return [];

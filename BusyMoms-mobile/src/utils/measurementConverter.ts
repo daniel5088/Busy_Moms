@@ -507,7 +507,7 @@ export class MeasurementConverter {
         conversionApplied: true,
         confidence: 1.0,
       };
-    } catch (error) {
+    } catch {
       return {
         quantity,
         unit: normalizedFrom,

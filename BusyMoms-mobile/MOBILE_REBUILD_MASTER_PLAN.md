@@ -1,5 +1,6 @@
 # MOBILE REBUILD MASTER PLAN
-# Busy Moms Assistant -- Expo/React Native Mobile Application
+
+## Busy Moms Assistant -- Expo/React Native Mobile Application
 
 **Version:** 1.0
 **Date:** 2026-02-08
@@ -48,6 +49,7 @@ The mobile app shares the same Supabase backend (database, auth, edge functions)
 **Tech stack:** Vite + React 18 + TypeScript + Tailwind CSS + Supabase + OpenAI
 
 **Screen/Navigation architecture:**
+
 - 4 primary screens: Dashboard, Calendar, Family, More
 - 9 sub-screens: Shopping, Tasks, Contacts, Family Folders, Settings, Quick Links, Life Receipts, Life Receipts View, Gift Finder
 - Flat state-based navigation (no URL routing; useState drives screen switching)
@@ -55,7 +57,7 @@ The mobile app shares the same Supabase backend (database, auth, edge functions)
 **Feature areas (complete inventory):**
 
 | Feature Area | Components | Services/Hooks | Complexity |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Authentication | AuthForm, Onboarding | useAuth, auth-config | Medium |
 | Dashboard | Dashboard, DashboardSkeleton, QuickActionsCustomizer, WeatherWidget, WeatherSkeleton | useDashboardData, useWeather, useQuickActions, weatherService | High |
 | Calendar | Calendar, CalendarSkeleton, EventForm, EventWeatherIcon, CycleTracker, TravelTimeIndicator, DirectionsModal, DirectionsButton | useCalendarSync, useEventWeather, useDirections, calendarSync, syncOrchestrator, googleCalendar, birthdayEventsService, cycleTrackerService | Very High |
@@ -84,6 +86,7 @@ The mobile app shares the same Supabase backend (database, auth, edge functions)
 **Tech stack:** Expo SDK 54 + React Native 0.81 + TypeScript + Expo Router v6 + Supabase
 
 **What exists:**
+
 - Root layout with Stack navigator
 - Auth flow: login screen with email/password (no Google OAuth)
 - Tab navigation: 5 tabs (Home, Calendar, Shopping, Family, More)
@@ -95,6 +98,7 @@ The mobile app shares the same Supabase backend (database, auth, edge functions)
 - Lucide icon wrapper component
 
 **What is missing (everything else):**
+
 - Google OAuth authentication
 - Onboarding flow
 - Calendar with event management, Google Calendar sync, cycle tracker
@@ -132,7 +136,7 @@ Each phase creates standardized artifacts that allow subsequent agents to recons
 **Progress tracking file:** `REBUILD_PROGRESS.md`
 This file is the single source of truth. Every phase updates it.
 
-```
+```markdown
 # REBUILD PROGRESS TRACKER
 
 ## Overall Status: Phase [N] of 12
@@ -159,6 +163,7 @@ This file is the single source of truth. Every phase updates it.
 
 **Phase handoff file:** `PHASE_[N]_HANDOFF.md`
 Created at the end of each phase with:
+
 1. What was accomplished
 2. What was deferred or descoped
 3. Decisions that affect future phases
@@ -184,7 +189,7 @@ If a session fails mid-phase:
 Each agent session has a 200k token context limit. Budget allocation:
 
 | Activity | Token Budget |
-|---|---|
+| --- | --- |
 | System prompt + instructions | ~10k |
 | Reading this master plan | ~15k |
 | Reading phase-specific template | ~5k |
@@ -200,7 +205,7 @@ Each agent session has a 200k token context limit. Budget allocation:
 
 Every agent session MUST follow this protocol:
 
-```
+```text
 1. READ: MOBILE_REBUILD_MASTER_PLAN.md (this file)
 2. READ: REBUILD_PROGRESS.md
 3. READ: Most recent PHASE_[N]_HANDOFF.md
@@ -218,9 +223,11 @@ Every agent session MUST follow this protocol:
 ## 4. Phased Implementation Plan
 
 ### Phase 1: Foundation and Project Setup
+
 **Complexity:** Medium | **Token Budget:** ~150k
 
 **Objectives:**
+
 - Initialize clean Expo project with correct SDK and dependencies
 - Configure TypeScript strictly
 - Set up directory structure following ARCHITECTURE.md
@@ -234,6 +241,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** None (first phase)
 
 **Key files to create:**
+
 - `app.config.ts` (upgraded from .js)
 - `src/types/database.ts` (complete Supabase type definitions)
 - `src/types/navigation.ts` (navigation type definitions)
@@ -245,6 +253,7 @@ Every agent session MUST follow this protocol:
 - `REBUILD_PROGRESS.md`
 
 **Completion criteria:**
+
 - [ ] `npx tsc --noEmit` passes with zero errors
 - [ ] `npx expo start` launches without errors
 - [ ] All shared types from web app are defined
@@ -256,9 +265,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 2: Core UI Components and Design System
+
 **Complexity:** Medium | **Token Budget:** ~160k
 
 **Objectives:**
+
 - Build reusable primitive components (Button, Card, Input, Modal, etc.)
 - Build layout components (Screen, Header, Section)
 - Build feedback components (Toast, Loading, EmptyState, ErrorBoundary)
@@ -269,6 +280,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phase 1 complete
 
 **Key files to create:**
+
 - `src/components/ui/Button.tsx`
 - `src/components/ui/Card.tsx`
 - `src/components/ui/Input.tsx`
@@ -291,6 +303,7 @@ Every agent session MUST follow this protocol:
 - `src/hooks/useTheme.ts`
 
 **Completion criteria:**
+
 - [ ] All primitive components render correctly on iOS and Android
 - [ ] Dark mode toggles without flicker
 - [ ] Components follow the design system tokens from Phase 1
@@ -301,9 +314,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 3: Authentication, Onboarding, and Navigation
+
 **Complexity:** High | **Token Budget:** ~170k
 
 **Objectives:**
+
 - Implement complete authentication flow (email/password + Google OAuth)
 - Build onboarding wizard (profile setup, family member creation, color picker)
 - Finalize tab navigation with proper nesting
@@ -314,6 +329,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-2 complete
 
 **Key files to create/modify:**
+
 - `src/contexts/AuthContext.tsx` (global auth provider)
 - `src/hooks/useAuth.ts` (enhanced from scaffold)
 - `app/(auth)/login.tsx` (redesigned with Google OAuth)
@@ -329,6 +345,7 @@ Every agent session MUST follow this protocol:
 - `src/services/profileService.ts`
 
 **Completion criteria:**
+
 - [ ] Email/password sign-in and sign-up work
 - [ ] Google OAuth sign-in works (using expo-auth-session)
 - [ ] Onboarding flow completes and sets profile.onboarding_completed
@@ -341,9 +358,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 4: Dashboard and Quick Actions
+
 **Complexity:** Medium | **Token Budget:** ~150k
 
 **Objectives:**
+
 - Build complete Dashboard screen with all widgets
 - Implement Weather widget with location-based data
 - Implement Quick Actions grid with customization
@@ -355,6 +374,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-3 complete
 
 **Key files to create/modify:**
+
 - `app/(tabs)/dashboard.tsx` (complete rewrite)
 - `src/components/dashboard/WeatherWidget.tsx`
 - `src/components/dashboard/QuickActionsGrid.tsx`
@@ -368,6 +388,7 @@ Every agent session MUST follow this protocol:
 - `src/services/quickActionsService.ts`
 
 **Completion criteria:**
+
 - [ ] Dashboard loads and displays all sections
 - [ ] Weather widget shows location-based weather
 - [ ] Quick actions navigate to correct screens
@@ -380,9 +401,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 5: Calendar and Event Management
+
 **Complexity:** Very High | **Token Budget:** ~180k
 
 **Objectives:**
+
 - Build calendar view with month/week/day views
 - Implement event creation, editing, and deletion
 - Build event detail modal/screen
@@ -397,6 +420,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-4 complete
 
 **Key files to create:**
+
 - `app/(tabs)/calendar.tsx` (complete rewrite)
 - `app/event/[id].tsx` (event detail screen)
 - `app/event/create.tsx` (event creation screen)
@@ -418,6 +442,7 @@ Every agent session MUST follow this protocol:
 - `src/hooks/useEventWeather.ts`
 
 **Completion criteria:**
+
 - [ ] Calendar displays events by month
 - [ ] CRUD operations on events work
 - [ ] Google Calendar sync pulls and pushes events
@@ -431,9 +456,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 6: Shopping, Recipes, and Instacart Integration
+
 **Complexity:** Very High | **Token Budget:** ~180k
 
 **Objectives:**
+
 - Build shopping list with categories and CRUD
 - Implement recipe browser with search and filters
 - Build recipe detail view with servings adjuster
@@ -445,6 +472,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-4 complete
 
 **Key files to create:**
+
 - `app/(tabs)/shopping.tsx` (complete rewrite)
 - `app/recipe/[id].tsx`
 - `src/components/shopping/ShoppingList.tsx`
@@ -465,6 +493,7 @@ Every agent session MUST follow this protocol:
 - `src/hooks/useRetailerSelection.ts`
 
 **Completion criteria:**
+
 - [ ] Shopping list displays items by category
 - [ ] CRUD operations on shopping items work
 - [ ] Recipe browser loads and filters recipes
@@ -478,9 +507,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 7: Tasks, Contacts, and Family Hub
+
 **Complexity:** High | **Token Budget:** ~170k
 
 **Objectives:**
+
 - Build Tasks screen with CRUD, assignment, and priority
 - Implement Google Tasks sync
 - Build Contacts screen with CRUD and categories
@@ -493,6 +524,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-4 complete
 
 **Key files to create:**
+
 - `app/(tabs)/family.tsx` (complete rewrite)
 - `app/task/[id].tsx`
 - `app/task/create.tsx`
@@ -516,6 +548,7 @@ Every agent session MUST follow this protocol:
 - `src/hooks/useProfile.ts`
 
 **Completion criteria:**
+
 - [ ] Tasks display with filtering and sorting
 - [ ] Task CRUD operations work
 - [ ] Google Tasks sync works
@@ -530,9 +563,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 8: AI Voice Chat and Affirmations
+
 **Complexity:** Very High | **Token Budget:** ~170k
 
 **Objectives:**
+
 - Build AI Voice Chat using OpenAI Realtime API
 - Implement voice recording and playback
 - Build text-based chat fallback
@@ -545,6 +580,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-4 complete
 
 **Key files to create:**
+
 - `app/voice-chat.tsx`
 - `src/components/ai/VoiceChat.tsx`
 - `src/components/ai/ChatBubble.tsx`
@@ -559,6 +595,7 @@ Every agent session MUST follow this protocol:
 - `src/hooks/useAffirmationNotifier.ts`
 
 **Completion criteria:**
+
 - [ ] Text chat with OpenAI works
 - [ ] Voice chat records and sends audio (or uses speech-to-text)
 - [ ] AI personality preferences are respected
@@ -571,9 +608,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 9: Settings, Notifications, and Cycle Tracker
+
 **Complexity:** High | **Token Budget:** ~170k
 
 **Objectives:**
+
 - Build complete Settings screen
 - Implement push notification system (Expo Notifications)
 - Build notification settings UI
@@ -587,6 +626,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-5 complete (calendar needed for cycle tracker)
 
 **Key files to create:**
+
 - `app/(tabs)/more.tsx` (complete rewrite)
 - `app/settings/index.tsx`
 - `app/settings/notifications.tsx`
@@ -610,6 +650,7 @@ Every agent session MUST follow this protocol:
 - `src/hooks/useNotificationManager.ts`
 
 **Completion criteria:**
+
 - [ ] Settings screen displays all categories
 - [ ] Push notifications register and deliver
 - [ ] Notification settings persist
@@ -623,9 +664,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 10: Life Receipts, Gift Finder, and Remaining Features
+
 **Complexity:** High | **Token Budget:** ~170k
 
 **Objectives:**
+
 - Build Life Receipts capture flow (text, voice, camera)
 - Build Life Receipts triage and view
 - Build Gift Finder with affiliate matrix
@@ -637,6 +680,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-4 complete
 
 **Key files to create:**
+
 - `app/life-receipts/index.tsx`
 - `app/life-receipts/capture.tsx`
 - `app/life-receipts/triage.tsx`
@@ -659,6 +703,7 @@ Every agent session MUST follow this protocol:
 - `src/utils/tutorialSteps.ts`
 
 **Completion criteria:**
+
 - [ ] Life Receipts capture via text, voice, and camera
 - [ ] Life Receipts triage flow categorizes items
 - [ ] Gift Finder displays affiliate results
@@ -671,9 +716,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 11: Offline Support, Performance, and Polish
+
 **Complexity:** High | **Token Budget:** ~170k
 
 **Objectives:**
+
 - Implement offline-first data layer with queue and sync
 - Add optimistic updates for CRUD operations
 - Implement data caching with AsyncStorage
@@ -688,6 +735,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-10 complete
 
 **Key files to create:**
+
 - `src/lib/offlineQueue.ts`
 - `src/lib/cacheManager.ts`
 - `src/lib/syncEngine.ts`
@@ -696,6 +744,7 @@ Every agent session MUST follow this protocol:
 - `src/components/ui/NetworkBanner.tsx`
 
 **Completion criteria:**
+
 - [ ] App works offline for reading cached data
 - [ ] Write operations queue and sync when online
 - [ ] Network status banner appears when offline
@@ -710,9 +759,11 @@ Every agent session MUST follow this protocol:
 ---
 
 ### Phase 12: Testing, Build Configuration, and Release Prep
+
 **Complexity:** High | **Token Budget:** ~170k
 
 **Objectives:**
+
 - Write unit tests for services and utilities
 - Write integration tests for hooks
 - Write E2E tests for critical flows (auth, event creation, shopping)
@@ -726,6 +777,7 @@ Every agent session MUST follow this protocol:
 **Prerequisites:** Phases 1-11 complete
 
 **Key files to create:**
+
 - `src/__tests__/services/*.test.ts`
 - `src/__tests__/hooks/*.test.ts`
 - `src/__tests__/utils/*.test.ts`
@@ -738,6 +790,7 @@ Every agent session MUST follow this protocol:
 - `RELEASE_NOTES.md`
 
 **Completion criteria:**
+
 - [ ] Unit test coverage >70% for services and utils
 - [ ] Integration tests pass for all hooks
 - [ ] E2E tests pass for auth, event CRUD, shopping CRUD
@@ -756,7 +809,7 @@ Every agent session MUST follow this protocol:
 ### Priority Tiers
 
 | Tier | Features | Phase |
-|---|---|---|
+| --- | --- | --- |
 | **P0 - Must Have** | Auth, Dashboard, Calendar (basic), Shopping (basic), Navigation | 1-6 |
 | **P1 - Should Have** | Google Calendar sync, Tasks, Contacts, Family Hub, Settings, Notifications | 5, 7, 9 |
 | **P2 - Nice to Have** | AI Voice, Affirmations, Life Receipts, Gift Finder, Cycle Tracker | 8-10 |
@@ -764,7 +817,7 @@ Every agent session MUST follow this protocol:
 
 ### Feature Dependency Graph
 
-```
+```text
 Phase 1 (Foundation)
   |
 Phase 2 (UI Components)
@@ -797,7 +850,7 @@ Phases 5-10 can be executed in parallel (they share dependencies on Phases 1-4 b
 ### 6.1 Local Storage Strategy
 
 | Data Type | Storage | Sync Strategy |
-|---|---|---|
+| --- | --- | --- |
 | Auth session | SecureStore (expo-secure-store) | Managed by Supabase SDK |
 | User preferences | AsyncStorage | Read from DB, cache locally |
 | Dashboard data | In-memory (React Query cache) | Refetch on focus/pull-to-refresh |
@@ -838,6 +891,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### 7.1 Google Calendar
 
 **Mobile-specific considerations:**
+
 - Use `expo-auth-session` for Google OAuth (not browser redirect)
 - Store Google tokens via the existing `store-google-tokens` edge function
 - Calendar API calls go through the existing `google-calendar` edge function
@@ -847,6 +901,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### 7.2 Google Maps / Places
 
 **Mobile-specific considerations:**
+
 - Use `react-native-maps` for map display (if needed)
 - Location autocomplete calls the existing `google-places-autocomplete` edge function
 - Directions: use `Linking.openURL` to open native Google Maps / Apple Maps
@@ -856,6 +911,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### 7.3 Instacart
 
 **Mobile-specific considerations:**
+
 - All API calls go through existing edge functions (no direct API calls from mobile)
 - "Open in Instacart" uses `Linking.openURL` with the Instacart deep link
 - Retailer selection uses device location for nearest stores
@@ -863,6 +919,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### 7.4 Push Notifications
 
 **Mobile-specific (Expo Notifications):**
+
 - Register for push notifications via `expo-notifications`
 - Store push token in Supabase `notification_settings` table
 - Schedule local notifications for events, tasks, reminders
@@ -872,6 +929,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### 7.5 OpenAI / Voice
 
 **Mobile-specific considerations:**
+
 - Text chat: call the `openai-chat` edge function
 - Voice: use `expo-av` for recording, send audio to edge function
 - Real-time voice: evaluate `openai-realtime` via WebSocket (if supported in RN)
@@ -892,7 +950,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### High Risk
 
 | Risk | Impact | Mitigation |
-|---|---|---|
+| --- | --- | --- |
 | Google OAuth in React Native is complex | Auth flow breaks | Use `expo-auth-session` with well-tested config; test on both platforms early |
 | WebRTC for real-time voice may not work in RN | Voice chat feature broken | Implement speech-to-text fallback; use REST-based chat as backup |
 | Expo SDK version conflicts | Build failures | Pin all dependency versions; test builds in every phase |
@@ -902,7 +960,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### Medium Risk
 
 | Risk | Impact | Mitigation |
-|---|---|---|
+| --- | --- | --- |
 | iOS/Android behavior differences | Features work on one platform only | Test on both platforms in every phase; use Platform.select where needed |
 | React Native maps performance | Calendar/location features slow | Use native maps sparingly; prefer list views |
 | Expo Go limitations | Development workflow issues | Plan for dev builds early if native modules needed |
@@ -911,7 +969,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### Low Risk
 
 | Risk | Impact | Mitigation |
-|---|---|---|
+| --- | --- | --- |
 | Supabase SDK compatibility | Minor API differences | Use latest @supabase/supabase-js; test queries early |
 | Icon/asset rendering | Visual glitches | Use SVG icons via react-native-svg; test on both platforms |
 | Dark mode inconsistencies | Visual bugs | Use theme context consistently; test both themes |
@@ -923,10 +981,12 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### 9.1 Code Style
 
 **ESLint Configuration:**
+
 - Extend: `@react-native-community`, `plugin:@typescript-eslint/recommended`
 - Rules: no-any (warn), no-unused-vars (error), no-console (warn in prod)
 
 **Prettier Configuration:**
+
 ```json
 {
   "semi": true,
@@ -955,7 +1015,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### 9.3 Testing Coverage
 
 | Layer | Minimum Coverage | Tool |
-|---|---|---|
+| --- | --- | --- |
 | Services/Utils | 70% | Jest |
 | Hooks | 50% | React Native Testing Library |
 | Components | 30% (critical paths) | React Native Testing Library |
@@ -973,7 +1033,7 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ### 9.5 Performance Budgets
 
 | Metric | Target |
-|---|---|
+| --- | --- |
 | Cold start to interactive | < 3 seconds |
 | Screen transition | < 300ms |
 | List scroll (FPS) | >= 55 FPS |
@@ -1035,7 +1095,8 @@ Operations are stored in AsyncStorage under `@offline_queue` and processed FIFO 
 ## Appendix A: Key File Paths Reference
 
 ### Web App (source of truth for features)
-```
+
+```text
 Busy_Moms/src/
   components/         # 77 TSX component files
   hooks/              # 18 custom hooks
@@ -1045,7 +1106,8 @@ Busy_Moms/src/
 ```
 
 ### Mobile App (target)
-```
+
+```text
 BusyMoms-mobile/
   app/                # Expo Router screens
   src/
@@ -1060,7 +1122,8 @@ BusyMoms-mobile/
 ```
 
 ### Supabase (shared, read-only for mobile team)
-```
+
+```text
 Busy_Moms/supabase/
   functions/          # 22 edge functions
   migrations/         # Database migrations
@@ -1071,7 +1134,8 @@ Busy_Moms/supabase/
 ## Appendix B: Dependency List
 
 ### Required Expo/RN packages
-```
+
+```text
 expo ~54.x
 expo-router ~6.x
 expo-auth-session
@@ -1101,7 +1165,8 @@ zod (validation)
 ```
 
 ### Development dependencies
-```
+
+```text
 typescript ~5.9
 @types/react
 jest

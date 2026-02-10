@@ -120,7 +120,7 @@ export class InstacartUnitMapper {
         originalQuantity: quantity,
         originalUnit: normalizedUnit,
       };
-    } catch (error) {
+    } catch {
       return {
         quantity,
         unit: 'item',

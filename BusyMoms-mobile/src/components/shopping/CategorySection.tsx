@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -71,7 +71,7 @@ export function CategorySection({
       <View style={styles.leftContent}>
         <View style={[styles.iconContainer, isDark && styles.iconContainerDark]}>
           <Ionicons
-            name={iconName as any}
+            name={iconName as keyof typeof Ionicons.glyphMap}
             size={18}
             color={isDark ? '#60a5fa' : '#3b82f6'}
           />

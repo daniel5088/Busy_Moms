@@ -198,7 +198,7 @@ export function ShoppingForm({
                   }
                 >
                   <Ionicons
-                    name={cat.icon as any}
+                    name={cat.icon as keyof typeof Ionicons.glyphMap}
                     size={20}
                     color={
                       formData.category === cat.value
