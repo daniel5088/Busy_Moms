@@ -582,26 +582,22 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                         return (
                           <div
                             key={index}
-                            className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 min-h-[120px] hover:border-green-400 dark:hover:border-green-500 transition-all relative flex flex-col"
+                            className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 min-h-[120px] hover:border-green-400 dark:hover:border-green-500 transition-all flex flex-col items-center text-center"
                           >
-                            <div className="flex items-start gap-2 mb-2">
-                              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                                <CategoryIcon className="w-5 h-5 text-green-600 dark:text-green-400" aria-hidden="true" />
-                              </div>
+                            <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-3">
+                              <CategoryIcon className="w-5 h-5 text-green-600 dark:text-green-400" aria-hidden="true" />
                             </div>
-                            <h3 className="font-medium text-base text-gray-900 dark:text-gray-100 mb-auto">
+                            <h3 className="font-medium text-base text-gray-900 dark:text-gray-100 text-center">
                               {item.name}
                             </h3>
-                            <div className="flex justify-end mt-2">
-                              <button
-                                type="button"
-                                onClick={() => handleQuickAdd(item)}
-                                aria-label={`Add ${item.name} to cart`}
-                                className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors shadow-sm"
-                              >
-                                Add +
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleQuickAdd(item)}
+                              aria-label={`Add ${item.name} to cart`}
+                              className="mt-3 mx-auto px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors shadow-sm"
+                            >
+                              Add +
+                            </button>
                           </div>
                         );
                       })}
