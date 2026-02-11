@@ -448,6 +448,19 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
               <div className="grid grid-cols-3 gap-3">
                 <button
                   type="button"
+                  onClick={() => handleSendToProvider('instacart')}
+                  className="w-full h-10 flex items-center justify-center bg-instacart-kale rounded-lg hover:bg-[#002d21] transition-colors"
+                  aria-label="Shop with Instacart"
+                >
+                  <img
+                    src="/instacart_carrot.svg"
+                    alt="Instacart"
+                    className="h-5.5 w-auto object-contain"
+                    style={{ height: '22px' }}
+                  />
+                </button>
+                <button
+                  type="button"
                   onClick={() => setShowShoppingForm(true)}
                   className="w-full h-10 flex items-center justify-center gap-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
                 >
@@ -467,14 +480,6 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                     </span>
                   )}
                 </button>
-                <InstacartButton
-                  variant="dark"
-                  text="Shop with Instacart"
-                  onClick={() => handleSendToProvider('instacart')}
-                  disabled={false}
-                  fullWidth
-                  className="!h-10 !rounded-lg"
-                />
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -571,23 +576,20 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                       Popular Items
                     </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       {POPULAR_ITEMS.map((item, index) => {
                         const CategoryIcon = CATEGORY_ICONS[item.category as keyof typeof CATEGORY_ICONS];
                         return (
                           <div
                             key={index}
-                            className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 min-h-[115px] hover:border-green-400 dark:hover:border-green-500 transition-all relative flex flex-col"
+                            className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 min-h-[120px] hover:border-green-400 dark:hover:border-green-500 transition-all relative flex flex-col"
                           >
                             <div className="flex items-start gap-2 mb-2">
                               <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
                                 <CategoryIcon className="w-5 h-5 text-green-600 dark:text-green-400" aria-hidden="true" />
                               </div>
-                              <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md text-xs">
-                                {item.category}
-                              </span>
                             </div>
-                            <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-auto">
+                            <h3 className="font-medium text-base text-gray-900 dark:text-gray-100 mb-auto">
                               {item.name}
                             </h3>
                             <div className="flex justify-end mt-2">
