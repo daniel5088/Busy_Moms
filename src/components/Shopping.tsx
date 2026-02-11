@@ -445,11 +445,11 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
         {activeTab === 'list' && instacartOnboarded && (
           <div className="mt-4">
             {shoppingView === 'browse' ? (
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <button
                   type="button"
                   onClick={() => setShowShoppingForm(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                  className="w-full h-10 flex items-center justify-center gap-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" aria-hidden="true" />
                   <span>Add Item</span>
@@ -457,7 +457,7 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                 <button
                   type="button"
                   onClick={() => setShoppingView('cart')}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium relative"
+                  className="w-full h-10 flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium relative"
                 >
                   <ShoppingCart className="w-4 h-4" aria-hidden="true" />
                   <span>View Cart</span>
@@ -467,6 +467,14 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                     </span>
                   )}
                 </button>
+                <InstacartButton
+                  variant="dark"
+                  text="Shop with Instacart"
+                  onClick={() => handleSendToProvider('instacart')}
+                  disabled={false}
+                  fullWidth
+                  className="!h-10 !rounded-lg"
+                />
               </div>
             ) : (
               <div className="flex items-center gap-2">
