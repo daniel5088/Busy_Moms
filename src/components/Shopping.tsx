@@ -9,6 +9,7 @@ import {
   Store,
   Edit,
   Trash2,
+  ArrowLeft,
 } from 'lucide-react';
 import { ShoppingForm } from './forms/ShoppingForm';
 import {
@@ -377,42 +378,7 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
               Smart lists and suggestions
             </p>
           </div>
-          {activeTab === 'list' && instacartOnboarded ? (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowShoppingForm(true)}
-                aria-label="Add new item"
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
-              >
-                <Plus className="w-4 h-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Add Item</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShoppingView(shoppingView === 'browse' ? 'cart' : 'browse')}
-                aria-label={shoppingView === 'browse' ? 'View cart' : 'Back to shopping'}
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium relative"
-              >
-                {shoppingView === 'browse' ? (
-                  <>
-                    <ShoppingCart className="w-4 h-4" aria-hidden="true" />
-                    <span className="hidden sm:inline">Cart</span>
-                    {getFilteredItems().length > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {getFilteredItems().length}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Store className="w-4 h-4" aria-hidden="true" />
-                    <span className="hidden sm:inline">Shopping</span>
-                  </>
-                )}
-              </button>
-            </div>
-          ) : (
+          {!(activeTab === 'list' && instacartOnboarded) && (
             <button type="button" onClick={() => setShowShoppingForm(true)} aria-label="Add new item" className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
             </button>
@@ -446,6 +412,65 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
             </button>
           ))}
         </div>
+
+        {/* Action Row - Below Tabs */}
+        {activeTab === 'list' && instacartOnboarded && (
+          <div className="mt-4">
+            {shoppingView === 'browse' ? (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowShoppingForm(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" aria-hidden="true" />
+                  <span>Add Item</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShoppingView('cart')}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium relative"
+                >
+                  <ShoppingCart className="w-4 h-4" aria-hidden="true" />
+                  <span>View Cart</span>
+                  {getFilteredItems().length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {getFilteredItems().length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShoppingView('browse')}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                >
+                  <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Back</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowShoppingForm(true)}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" aria-hidden="true" />
+                  <span>Add Item</span>
+                </button>
+                <div className="flex-1">
+                  <InstacartButton
+                    variant="dark"
+                    text="Shop with Instacart"
+                    onClick={() => handleSendToProvider('instacart')}
+                    disabled={getItemsToSend().length === 0}
+                    showCount={selectedItems.size > 0 ? selectedItems.size : undefined}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="p-4 sm:p-6">
@@ -541,10 +566,10 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                 {/* Cart View */}
                 {shoppingView === 'cart' && (
                   <>
-                    {/* Action Buttons */}
+                    {/* Selection Controls */}
                     {!loading && getFilteredItems().length > 0 && (
-              <div className="flex flex-wrap gap-3">
-                {selectedItems.size > 0 && (
+              <div className="flex flex-wrap gap-3 mb-4">
+                {selectedItems.size > 0 ? (
                   <button
                     type="button"
                     onClick={clearSelection}
@@ -552,8 +577,7 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                   >
                     Clear Selection ({selectedItems.size})
                   </button>
-                )}
-                {selectedItems.size === 0 && getFilteredItems().length > 0 && (
+                ) : (
                   <button
                     type="button"
                     onClick={selectAllItems}
@@ -562,13 +586,6 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                     Select All
                   </button>
                 )}
-                <InstacartButton
-                  variant="dark"
-                  text="Shop with Instacart"
-                  onClick={() => handleSendToProvider('instacart')}
-                  disabled={getItemsToSend().length === 0}
-                  showCount={selectedItems.size > 0 ? selectedItems.size : undefined}
-                />
               </div>
             )}
 
