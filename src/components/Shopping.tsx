@@ -10,6 +10,12 @@ import {
   Edit,
   Trash2,
   ArrowLeft,
+  CheckCircle2,
+  Milk,
+  Apple,
+  Wheat,
+  Drumstick,
+  Package,
 } from 'lucide-react';
 import { ShoppingForm } from './forms/ShoppingForm';
 import {
@@ -48,6 +54,14 @@ const POPULAR_ITEMS = [
   { name: 'Cereal', quantity: 1, unit: 'box', category: 'pantry' },
 ];
 
+const CATEGORY_ICONS = {
+  dairy: Milk,
+  produce: Apple,
+  bakery: Wheat,
+  meat: Drumstick,
+  pantry: Package,
+};
+
 export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: ShoppingProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('list');
@@ -66,6 +80,8 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
   const [instacartOnboarded, setInstacartOnboarded] = useState(false);
   const [showInstacartWelcome, setShowInstacartWelcome] = useState(false);
   const [shoppingView, setShoppingView] = useState<'browse' | 'cart'>('browse');
+  const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+  const [toastTimeout, setToastTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const completeInstacartOnboarding = useCallback(() => {
     localStorage.setItem('bma_instacart_onboarded', 'true');
@@ -235,6 +251,18 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
       if (error) throw error;
 
       await fetchShoppingList();
+
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+      }
+
+      setToast({ open: true, message: `${popularItem.name} successfully added to cart` });
+
+      const timeout = setTimeout(() => {
+        setToast({ open: false, message: '' });
+      }, 1500);
+
+      setToastTimeout(timeout);
     } catch (error) {
       console.error('Error adding quick item:', error);
       alert('Failed to add item. Please try again.');
@@ -535,30 +563,38 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                       Popular Items
                     </h2>
-                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                      {POPULAR_ITEMS.map((item, index) => (
-                        <div
-                          key={index}
-                          className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:border-green-400 dark:hover:border-green-500 transition-all relative group"
-                        >
-                          <div className="text-center mb-8">
-                            <h3 className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 mb-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {POPULAR_ITEMS.map((item, index) => {
+                        const CategoryIcon = CATEGORY_ICONS[item.category as keyof typeof CATEGORY_ICONS];
+                        return (
+                          <div
+                            key={index}
+                            className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 min-h-[115px] hover:border-green-400 dark:hover:border-green-500 transition-all relative flex flex-col"
+                          >
+                            <div className="flex items-start gap-2 mb-2">
+                              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                                <CategoryIcon className="w-5 h-5 text-green-600 dark:text-green-400" aria-hidden="true" />
+                              </div>
+                              <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md text-xs">
+                                {item.category}
+                              </span>
+                            </div>
+                            <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-auto">
                               {item.name}
                             </h3>
-                            <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md text-xs">
-                              {item.category}
-                            </span>
+                            <div className="flex justify-end mt-2">
+                              <button
+                                type="button"
+                                onClick={() => handleQuickAdd(item)}
+                                aria-label={`Add ${item.name} to cart`}
+                                className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors shadow-sm"
+                              >
+                                Add +
+                              </button>
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleQuickAdd(item)}
-                            aria-label={`Add ${item.name} to cart`}
-                            className="absolute bottom-3 right-3 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
-                          >
-                            <Plus className="w-4 h-4" aria-hidden="true" />
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -827,6 +863,15 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
           onConfirm={handleConfirmSend}
           userId={user.id}
         />
+      )}
+
+      {toast.open && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="bg-white dark:bg-gray-800 border-2 border-green-500 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 max-w-sm">
+            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" aria-hidden="true" />
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{toast.message}</p>
+          </div>
+        </div>
       )}
     </main>
   );
