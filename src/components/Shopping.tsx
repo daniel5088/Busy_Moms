@@ -32,6 +32,21 @@ interface ShoppingProps {
   onRecipesTabOpened?: () => void;
 }
 
+const POPULAR_ITEMS = [
+  { name: 'Milk', quantity: 1, unit: 'gallon', category: 'dairy' },
+  { name: 'Eggs', quantity: 12, unit: null, category: 'dairy' },
+  { name: 'Bread', quantity: 1, unit: 'loaf', category: 'bakery' },
+  { name: 'Bananas', quantity: 1, unit: 'bunch', category: 'produce' },
+  { name: 'Chicken Breast', quantity: 1, unit: 'lb', category: 'meat' },
+  { name: 'Rice', quantity: 1, unit: 'bag', category: 'pantry' },
+  { name: 'Pasta', quantity: 1, unit: 'box', category: 'pantry' },
+  { name: 'Apples', quantity: 6, unit: null, category: 'produce' },
+  { name: 'Yogurt', quantity: 1, unit: 'container', category: 'dairy' },
+  { name: 'Cheese', quantity: 1, unit: 'block', category: 'dairy' },
+  { name: 'Spinach', quantity: 1, unit: 'bag', category: 'produce' },
+  { name: 'Cereal', quantity: 1, unit: 'box', category: 'pantry' },
+];
+
 export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: ShoppingProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('list');
@@ -49,6 +64,7 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
   const [convertedItems, setConvertedItems] = useState<Map<string, ConvertedMeasurement>>(new Map());
   const [instacartOnboarded, setInstacartOnboarded] = useState(false);
   const [showInstacartWelcome, setShowInstacartWelcome] = useState(false);
+  const [shoppingView, setShoppingView] = useState<'browse' | 'cart'>('browse');
 
   const completeInstacartOnboarding = useCallback(() => {
     localStorage.setItem('bma_instacart_onboarded', 'true');
@@ -194,6 +210,36 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
     setEditingItem(null);
   };
 
+  const handleQuickAdd = async (popularItem: typeof POPULAR_ITEMS[0]) => {
+    if (!user?.id) return;
+
+    try {
+      const itemData = {
+        item: popularItem.name,
+        category: popularItem.category,
+        quantity: popularItem.quantity,
+        unit: popularItem.unit,
+        original_unit: popularItem.unit,
+        urgent: false,
+        notes: '',
+        provider_name: null,
+        assigned_to_email: null,
+        user_id: user.id,
+        completed: false,
+        purchase_status: 'not_sent',
+      };
+
+      const { error } = await supabase.from('shopping_lists').insert([itemData]).select().single();
+
+      if (error) throw error;
+
+      await fetchShoppingList();
+    } catch (error) {
+      console.error('Error adding quick item:', error);
+      alert('Failed to add item. Please try again.');
+    }
+  };
+
   const handleEditItem = (item: ShoppingItem) => {
     setEditingItem(item);
     setShowShoppingForm(true);
@@ -331,9 +377,46 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
               Smart lists and suggestions
             </p>
           </div>
-          <button type="button" onClick={() => setShowShoppingForm(true)} aria-label="Add new item" className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
-          </button>
+          {activeTab === 'list' && instacartOnboarded ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowShoppingForm(true)}
+                aria-label="Add new item"
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+              >
+                <Plus className="w-4 h-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Add Item</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShoppingView(shoppingView === 'browse' ? 'cart' : 'browse')}
+                aria-label={shoppingView === 'browse' ? 'View cart' : 'Back to shopping'}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium relative"
+              >
+                {shoppingView === 'browse' ? (
+                  <>
+                    <ShoppingCart className="w-4 h-4" aria-hidden="true" />
+                    <span className="hidden sm:inline">Cart</span>
+                    {getFilteredItems().length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {getFilteredItems().length}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Store className="w-4 h-4" aria-hidden="true" />
+                    <span className="hidden sm:inline">Shopping</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setShowShoppingForm(true)} aria-label="Add new item" className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+            </button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -421,8 +504,45 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
               </div>
             ) : (
               <>
-                {/* Action Buttons */}
-                {!loading && getFilteredItems().length > 0 && (
+                {/* Browse View */}
+                {shoppingView === 'browse' && (
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                      Popular Items
+                    </h2>
+                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                      {POPULAR_ITEMS.map((item, index) => (
+                        <div
+                          key={index}
+                          className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:border-green-400 dark:hover:border-green-500 transition-all relative group"
+                        >
+                          <div className="text-center mb-8">
+                            <h3 className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 mb-2">
+                              {item.name}
+                            </h3>
+                            <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md text-xs">
+                              {item.category}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickAdd(item)}
+                            aria-label={`Add ${item.name} to cart`}
+                            className="absolute bottom-3 right-3 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
+                          >
+                            <Plus className="w-4 h-4" aria-hidden="true" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cart View */}
+                {shoppingView === 'cart' && (
+                  <>
+                    {/* Action Buttons */}
+                    {!loading && getFilteredItems().length > 0 && (
               <div className="flex flex-wrap gap-3">
                 {selectedItems.size > 0 && (
                   <button
@@ -597,6 +717,8 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                 </button>
               </div>
             )}
+                  </>
+                )}
               </>
             )}
           </div>
