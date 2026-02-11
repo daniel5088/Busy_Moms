@@ -44,7 +44,7 @@ const POPULAR_ITEMS = [
   { name: 'Eggs', quantity: 12, unit: null, category: 'dairy' },
   { name: 'Bread', quantity: 1, unit: 'loaf', category: 'bakery' },
   { name: 'Bananas', quantity: 1, unit: 'bunch', category: 'produce' },
-  { name: 'Chicken Breast', quantity: 1, unit: 'lb', category: 'meat' },
+  { name: 'Chicken', quantity: 1, unit: 'lb', category: 'meat' },
   { name: 'Rice', quantity: 1, unit: 'bag', category: 'pantry' },
   { name: 'Pasta', quantity: 1, unit: 'box', category: 'pantry' },
   { name: 'Apples', quantity: 6, unit: null, category: 'produce' },
