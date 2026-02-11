@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   ShoppingCart,
@@ -50,12 +50,45 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
   const [instacartOnboarded, setInstacartOnboarded] = useState(false);
   const [showInstacartWelcome, setShowInstacartWelcome] = useState(false);
 
+  const completeInstacartOnboarding = useCallback(() => {
+    localStorage.setItem('bma_instacart_onboarded', 'true');
+    localStorage.removeItem('bma_instacart_pending_login');
+    setInstacartOnboarded(true);
+    setShowInstacartWelcome(false);
+  }, []);
+
   useEffect(() => {
     const onboarded = localStorage.getItem('bma_instacart_onboarded');
     if (onboarded === 'true') {
       setInstacartOnboarded(true);
     }
   }, []);
+
+  useEffect(() => {
+    const handleReturnDetection = () => {
+      const pending = localStorage.getItem('bma_instacart_pending_login');
+
+      if (pending === 'true' && !instacartOnboarded) {
+        completeInstacartOnboarding();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleReturnDetection();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleReturnDetection);
+    window.addEventListener('pageshow', handleReturnDetection);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleReturnDetection);
+      window.removeEventListener('pageshow', handleReturnDetection);
+    };
+  }, [instacartOnboarded, completeInstacartOnboarding]);
 
   useEffect(() => {
     if (user?.id) {
@@ -273,14 +306,9 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
   };
 
   const handleOpenInstacart = () => {
+    localStorage.setItem('bma_instacart_pending_login', 'true');
     window.open('https://www.instacart.com', '_blank', 'noopener,noreferrer');
     setShowInstacartWelcome(true);
-  };
-
-  const completeInstacartOnboarding = () => {
-    localStorage.setItem('bma_instacart_onboarded', 'true');
-    setInstacartOnboarded(true);
-    setShowInstacartWelcome(false);
   };
 
   // TEMP: Auto-Reorder data hidden until feature is functional
@@ -354,34 +382,41 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                     <h2 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
                       Shop with Instacart
                     </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      To shop with Instacart, please log in once
-                    </p>
+                    {!showInstacartWelcome && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        To shop with Instacart, please log in once
+                      </p>
+                    )}
                   </div>
 
-                  <div className="space-y-3">
+                  {!showInstacartWelcome ? (
                     <InstacartButton
                       variant="dark"
                       text="Create an account or log in to Instacart"
                       onClick={handleOpenInstacart}
                       fullWidth
                     />
-
-                    {showInstacartWelcome && (
-                      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                          After logging in, click Continue below
-                        </p>
-                        <button
-                          type="button"
-                          onClick={completeInstacartOnboarding}
-                          className="w-full px-6 py-3 bg-green-500 text-white rounded-full font-medium hover:bg-green-600 transition-colors text-sm"
-                        >
-                          I've logged in — Continue
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        After logging in, come back and tap Continue.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={completeInstacartOnboarding}
+                        className="w-full px-6 py-3 bg-green-500 text-white rounded-full font-medium hover:bg-green-600 transition-colors text-sm"
+                      >
+                        Continue
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => window.open('https://www.instacart.com', '_blank', 'noopener,noreferrer')}
+                        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline"
+                      >
+                        Open Instacart again
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
