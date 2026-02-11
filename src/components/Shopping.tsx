@@ -47,6 +47,15 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
   const [preferredRetailer, setPreferredRetailer] = useState<UserPreferredRetailer | null>(null);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [convertedItems, setConvertedItems] = useState<Map<string, ConvertedMeasurement>>(new Map());
+  const [instacartOnboarded, setInstacartOnboarded] = useState(false);
+  const [showInstacartWelcome, setShowInstacartWelcome] = useState(false);
+
+  useEffect(() => {
+    const onboarded = localStorage.getItem('bma_instacart_onboarded');
+    if (onboarded === 'true') {
+      setInstacartOnboarded(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (user?.id) {
@@ -263,6 +272,17 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
     return getFilteredItems();
   };
 
+  const handleOpenInstacart = () => {
+    window.open('https://www.instacart.com', '_blank', 'noopener,noreferrer');
+    setShowInstacartWelcome(true);
+  };
+
+  const completeInstacartOnboarding = () => {
+    localStorage.setItem('bma_instacart_onboarded', 'true');
+    setInstacartOnboarded(true);
+    setShowInstacartWelcome(false);
+  };
+
   // TEMP: Auto-Reorder data hidden until feature is functional
   /* const autoReorders = [
     { item: 'Huggies Size 3', nextOrder: 'March 20', frequency: 'Every 2 weeks', price: '$42.99' },
@@ -321,8 +341,53 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
         {/* Shopping List Tab */}
         {activeTab === 'list' && (
           <div className="space-y-4" id="list-panel" role="tabpanel" aria-labelledby="list-tab">
-            {/* Action Buttons */}
-            {!loading && getFilteredItems().length > 0 && (
+            {/* Instacart Onboarding Gate */}
+            {!instacartOnboarded ? (
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="max-w-md w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 sm:p-8 text-center">
+                  <div className="mb-6">
+                    <img
+                      src="/instacart_carrot.svg"
+                      alt="Instacart"
+                      className="h-16 w-auto mx-auto mb-4"
+                    />
+                    <h2 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      Shop with Instacart
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      To shop with Instacart, please log in once
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <InstacartButton
+                      variant="dark"
+                      text="Create an account or log in to Instacart"
+                      onClick={handleOpenInstacart}
+                      fullWidth
+                    />
+
+                    {showInstacartWelcome && (
+                      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                          After logging in, click Continue below
+                        </p>
+                        <button
+                          type="button"
+                          onClick={completeInstacartOnboarding}
+                          className="w-full px-6 py-3 bg-green-500 text-white rounded-full font-medium hover:bg-green-600 transition-colors text-sm"
+                        >
+                          I've logged in — Continue
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Action Buttons */}
+                {!loading && getFilteredItems().length > 0 && (
               <div className="flex flex-wrap gap-3">
                 {selectedItems.size > 0 && (
                   <button
@@ -482,10 +547,10 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
             {!loading && shoppingList.filter((item) => !item.completed).length === 0 && (
               <div className="text-center py-12">
                 <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
-                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                   Your shopping list is empty
                 </h3>
-                <p className="text-sm sm:text-base text-gray-600 mb-4">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
                   Add items to get started with smart shopping
                 </p>
                 <button
@@ -496,6 +561,8 @@ export function Shopping({ openRecipesTab = false, onRecipesTabOpened }: Shoppin
                   Add First Item
                 </button>
               </div>
+            )}
+              </>
             )}
           </div>
         )}
