@@ -32,7 +32,10 @@ import { QuickLinks } from './components/QuickLinks'; // Alvaro-quicklinks: Impo
 import { useDarkMode } from './hooks/useDarkMode';
 import { LifeReceipts } from './components/LifeReceipts';
 import { LifeReceiptsView } from './components/LifeReceiptsView';
-import GiftFinder from './components/GiftFinder';
+import GiftFinder, { GiftFinderPrefillData } from './components/GiftFinder';
+import { BirthdayReminder, GiftFinderPrefill } from './components/BirthdayReminder';
+import { getBirthdayReminderMember } from './utils/birthdayReminder';
+import { FamilyMember } from './lib/supabase';
 
 export type Screen =
   | 'dashboard'
@@ -50,7 +53,8 @@ export type SubScreen =
   | 'quick-links'
   | 'life-receipts'
   | 'life-receipts-view'
-  | 'gift-finder';
+  | 'gift-finder'
+  | 'birthday-reminder';
 
 function App() {
   const session = useSessionContext();
@@ -77,6 +81,9 @@ function App() {
   const { pendingAffirmation, settings: affirmationSettings, dismissNotification, reloadSettings } = useAffirmationNotifier();
   const notificationManager = useNotificationManager();
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const [selectedReminderMember, setSelectedReminderMember] = useState<FamilyMember | null>(null);
+  const [birthdayReminderShown, setBirthdayReminderShown] = useState(false);
+  const [giftFinderPrefill, setGiftFinderPrefill] = useState<GiftFinderPrefillData | null>(null);
 
   // Check URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -250,6 +257,41 @@ function App() {
       mounted = false;
     };
   }, [user]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkBirthdayReminders = async () => {
+      if (!user?.id || showOnboarding || birthdayReminderShown) return;
+
+      try {
+        const { data: familyMembers, error } = await supabaseClient
+          .from('family_members')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (!mounted || error || !familyMembers) return;
+
+        const reminderMember = getBirthdayReminderMember(familyMembers);
+
+        if (reminderMember && !birthdayReminderShown) {
+          setSelectedReminderMember(reminderMember);
+          setCurrentSubScreen('birthday-reminder');
+          setBirthdayReminderShown(true);
+        }
+      } catch (error) {
+        console.error('Error checking birthday reminders:', error);
+      }
+    };
+
+    if (user?.id && !showOnboarding && !checkingOnboarding) {
+      checkBirthdayReminders();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [user, showOnboarding, checkingOnboarding, birthdayReminderShown]);
 
   //Alvaros - Dailyaffirmations: Listen for 'open-affirmations' event from Settings and MoreMenu
   useEffect(() => {
@@ -452,8 +494,27 @@ function App() {
               )}
               {currentSubScreen === 'gift-finder' && (
                 <FeatureErrorBoundary featureName="Gift Finder">
-                  <GiftFinder onBack={() => setCurrentSubScreen(null)} />
+                  <GiftFinder
+                    onBack={() => {
+                      setCurrentSubScreen(null);
+                      setGiftFinderPrefill(null);
+                    }}
+                    prefillData={giftFinderPrefill}
+                  />
                 </FeatureErrorBoundary>
+              )}
+              {currentSubScreen === 'birthday-reminder' && selectedReminderMember && (
+                <BirthdayReminder
+                  member={selectedReminderMember}
+                  onGoToGiftFinder={(prefill: GiftFinderPrefill) => {
+                    setGiftFinderPrefill(prefill);
+                    setCurrentSubScreen('gift-finder');
+                  }}
+                  onDismiss={() => {
+                    setSelectedReminderMember(null);
+                    setCurrentSubScreen(null);
+                  }}
+                />
               )}
             </>
           ) : (

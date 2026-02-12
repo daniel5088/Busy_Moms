@@ -17,6 +17,7 @@ interface GiftFinderFormProps {
   onSearch: (formData: GiftFinderFormData, affiliateCriteria?: AffiliateSearchCriteria) => void;
   onClose: () => void;
   loading?: boolean;
+  initialFormData?: Partial<GiftFinderFormData>;
 }
 
 export interface GiftFinderFormData {
@@ -41,6 +42,7 @@ export function GiftFinderForm({
   onSearch,
   onClose,
   loading = false,
+  initialFormData,
 }: GiftFinderFormProps) {
   const [formData, setFormData] = useState<GiftFinderFormData>({
     recipient_name: '',
@@ -54,12 +56,22 @@ export function GiftFinderForm({
     age_group_key: undefined,
     gender_key: undefined,
     budget_key: undefined,
+    ...initialFormData,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof GiftFinderFormData, string>>>({});
   const [selectedMemberRelationship, setSelectedMemberRelationship] = useState<string | undefined>(
     undefined
   );
+
+  useEffect(() => {
+    if (initialFormData?.family_member_id) {
+      const member = familyMembers.find((m) => m.id === initialFormData.family_member_id);
+      if (member?.relationship) {
+        setSelectedMemberRelationship(member.relationship);
+      }
+    }
+  }, [initialFormData?.family_member_id, familyMembers]);
 
   // Mapping functions to convert affiliate matrix selections to form values
   const mapAgeGroupToAge = (ageGroupLabel: string): number => {

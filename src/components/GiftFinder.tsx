@@ -6,13 +6,22 @@ import { useAffiliateMatrix } from '../hooks/useAffiliateMatrix';
 import { FamilyMember, Event, AffiliateSearchCriteria, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 
+export interface GiftFinderPrefillData {
+  name: string;
+  age?: number;
+  gender?: 'Boy' | 'Girl' | 'Other';
+  relationship?: string;
+  family_member_id: string;
+}
+
 interface GiftFinderProps {
   onBack: () => void;
+  prefillData?: GiftFinderPrefillData | null;
 }
 
 type Step = 'form' | 'results';
 
-export default function GiftFinder({ onBack }: GiftFinderProps) {
+export default function GiftFinder({ onBack, prefillData }: GiftFinderProps) {
   const { user } = useAuth();
 
   const {
@@ -91,6 +100,15 @@ export default function GiftFinder({ onBack }: GiftFinderProps) {
     onBack();
   };
 
+  const initialFormData = prefillData
+    ? {
+        recipient_name: prefillData.name,
+        recipient_age: prefillData.age ?? 8,
+        recipient_gender: prefillData.gender ?? 'Other',
+        family_member_id: prefillData.family_member_id,
+      }
+    : undefined;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
@@ -164,6 +182,7 @@ export default function GiftFinder({ onBack }: GiftFinderProps) {
               onSearch={handleSearch}
               onClose={handleClose}
               loading={affiliateLoading}
+              initialFormData={initialFormData}
             />
           </div>
         )}
