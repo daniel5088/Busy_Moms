@@ -39,7 +39,6 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 async function invokeEdgeFunction(body: object): Promise<Response> {
-  // In dev (WebContainer), proxy through Vite to avoid ERR_BLOCKED_BY_CLIENT
   const isDev = import.meta.env.DEV;
 
   if (isDev) {
