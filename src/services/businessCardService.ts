@@ -23,8 +23,7 @@ export function isImageFile(file: File): boolean {
 }
 
 export function validateImageSize(file: File, maxSizeMB: number): boolean {
-  const maxBytes = maxSizeMB * 1024 * 1024;
-  return file.size <= maxBytes;
+  return file.size <= maxSizeMB * 1024 * 1024;
 }
 
 async function fileToBase64(file: File): Promise<string> {
@@ -32,13 +31,34 @@ async function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Strip the data URL prefix to get just the base64 string
-      const base64 = result.split(',')[1];
-      resolve(base64);
+      resolve(result.split(',')[1]);
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+async function invokeEdgeFunction(body: object): Promise<Response> {
+  // In dev (WebContainer), proxy through Vite to avoid ERR_BLOCKED_BY_CLIENT
+  const isDev = import.meta.env.DEV;
+
+  if (isDev) {
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    return fetch('/functions/v1/business-card-ocr', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${anonKey}`,
+        'apikey': anonKey,
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  // In production, use the Supabase SDK normally
+  const { data, error } = await supabase.functions.invoke('business-card-ocr', { body });
+  if (error) throw error;
+  return new Response(JSON.stringify(data), { status: 200 });
 }
 
 export async function processBusinessCard(file: File): Promise<ProcessImageResponse> {
@@ -46,20 +66,19 @@ export async function processBusinessCard(file: File): Promise<ProcessImageRespo
     const base64Data = await fileToBase64(file);
     const imageType = file.type || 'image/jpeg';
 
-    const { data, error } = await supabase.functions.invoke('business-card-ocr', {
-      body: {
-        action: 'process_image',
-        image_data: base64Data,
-        image_type: imageType,
-      },
+    const response = await invokeEdgeFunction({
+      action: 'process_image',
+      image_data: base64Data,
+      image_type: imageType,
     });
 
-    if (error) {
-      console.error('Supabase function error:', error);
-      return { contact: null, error: error.message || 'Failed to process image' };
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return { contact: null, error: errData?.error || `Server error: ${response.status}` };
     }
 
-    return data as ProcessImageResponse;
+    const result: ProcessImageResponse = await response.json();
+    return result;
   } catch (err) {
     console.error('Error processing business card:', err);
     return {
@@ -71,11 +90,9 @@ export async function processBusinessCard(file: File): Promise<ProcessImageRespo
 
 export async function pingBusinessCardService(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.functions.invoke('business-card-ocr', {
-      body: { action: 'ping' },
-    });
-
-    if (error) return false;
+    const response = await invokeEdgeFunction({ action: 'ping' });
+    if (!response.ok) return false;
+    const data = await response.json();
     return data?.ok === true;
   } catch {
     return false;
