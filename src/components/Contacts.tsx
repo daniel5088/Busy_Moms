@@ -14,12 +14,15 @@ import {
   Cloud,
   CloudOff,
   Smartphone,
+  Camera,
 } from 'lucide-react';
 import { ContactForm } from './forms/ContactForm';
 import { Contact, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { googleContactsService, GoogleContact } from '../services/googleContacts';
 import { getCategoryFromGoogleContact, categorizeContact } from '../utils/contactCategorizer';
+import { BusinessCardScanner } from './BusinessCardScanner';
+import { ValidatedContactData } from '../utils/contactDataParser';
 
 // Utility functions for duplicate detection
 const normalizePhoneNumber = (phone: string | null): string => {
@@ -66,6 +69,7 @@ export function Contacts() {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showContactForm, setShowContactForm] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
@@ -185,6 +189,40 @@ export function Contacts() {
   const handleCloseForm = () => {
     setShowContactForm(false);
     setEditingContact(null);
+  };
+
+  const handleContactExtracted = async (contactData: ValidatedContactData) => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert({
+          user_id: user.id,
+          name: contactData.name,
+          role: contactData.role,
+          phone: contactData.phone,
+          email: contactData.email,
+          category: contactData.category,
+          notes: contactData.notes,
+          available: true,
+          rating: 0,
+          verified: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setContacts((prev) => [data, ...prev]);
+        setShowScanner(false);
+        alert(`Contact "${contactData.name}" added successfully!`);
+      }
+    } catch (error) {
+      console.error('Error saving contact:', error);
+      alert('Error saving contact. Please try again.');
+    }
   };
 
   const mapGoogleContactToLocal = (googleContact: GoogleContact): Partial<Contact> => {
@@ -507,6 +545,14 @@ export function Contacts() {
           </div>
           <div className="flex items-center space-x-2">
             <button
+              onClick={() => setShowScanner(true)}
+              title="Scan business card"
+              className="flex items-center space-x-1 px-3 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors"
+            >
+              <Camera className="w-4 h-4" />
+              <span className="hidden sm:inline">Scan Card</span>
+            </button>
+            <button
               onClick={syncWithDevice}
               disabled={deviceSyncing}
               title="Import contacts from your device"
@@ -722,6 +768,12 @@ export function Contacts() {
         onClose={handleCloseForm}
         onContactCreated={handleContactCreated}
         editContact={editingContact}
+      />
+
+      <BusinessCardScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onContactExtracted={handleContactExtracted}
       />
     </div>
   );

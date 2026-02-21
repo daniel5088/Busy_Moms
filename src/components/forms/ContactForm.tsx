@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, Star } from 'lucide-react';
+import { X, User, Phone, Mail, Star, Camera } from 'lucide-react';
 import { supabase, Contact } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { categorizeContact } from '../../utils/contactCategorizer';
+import { BusinessCardScanner } from '../BusinessCardScanner';
+import { ValidatedContactData } from '../../utils/contactDataParser';
 
 interface ContactFormProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ interface ContactFormProps {
 export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: ContactFormProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -65,6 +68,21 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
     }
   }, [formData.name, formData.role, formData.notes, editContact]);
 
+  const handleContactExtracted = (contact: ValidatedContactData) => {
+    setFormData({
+      name: contact.name,
+      role: contact.role,
+      phone: contact.phone || '',
+      email: contact.email || '',
+      category: contact.category,
+      rating: 0,
+      notes: contact.notes,
+      verified: false,
+      available: true,
+    });
+    setShowScanner(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -103,20 +121,32 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
-              {editContact ? 'Edit Contact' : 'Add Contact'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-300" />
-            </button>
-          </div>
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
+                {editContact ? 'Edit Contact' : 'Add Contact'}
+              </h2>
+              <div className="flex items-center space-x-2">
+                {!editContact && (
+                  <button
+                    onClick={() => setShowScanner(true)}
+                    className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                    title="Scan business card"
+                  >
+                    <Camera className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-300" />
+                </button>
+              </div>
+            </div>
 
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div>
@@ -274,5 +304,12 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
         </div>
       </div>
     </div>
+
+    <BusinessCardScanner
+      isOpen={showScanner}
+      onClose={() => setShowScanner(false)}
+      onContactExtracted={handleContactExtracted}
+    />
+    </>
   );
 }
