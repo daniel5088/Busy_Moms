@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, X, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { Camera, Upload, X, AlertCircle, CheckCircle, Loader, Edit } from 'lucide-react';
 import { processBusinessCard, isImageFile, validateImageSize } from '../services/businessCardService';
 import { parseAndValidateContact, ParsedContactData, ValidatedContactData } from '../utils/contactDataParser';
 
@@ -15,6 +15,8 @@ export function BusinessCardScanner({ isOpen, onClose, onContactExtracted }: Bus
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [extractedData, setExtractedData] = useState<ParsedContactData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableData, setEditableData] = useState<ParsedContactData | null>(null);
   const [showCameraView, setShowCameraView] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
@@ -28,6 +30,8 @@ export function BusinessCardScanner({ isOpen, onClose, onContactExtracted }: Bus
     setProcessing(false);
     setError(null);
     setExtractedData(null);
+    setIsEditing(false);
+    setEditableData(null);
   };
 
   const handleClose = () => {
@@ -203,11 +207,26 @@ export function BusinessCardScanner({ isOpen, onClose, onContactExtracted }: Bus
       }
 
       setExtractedData(result.contact);
+      setEditableData(result.contact);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process image');
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    setExtractedData(editableData);
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditableData(extractedData);
+    setIsEditing(false);
   };
 
   const handleUseContact = () => {
@@ -394,75 +413,175 @@ export function BusinessCardScanner({ isOpen, onClose, onContactExtracted }: Bus
                     Contact Information Extracted
                   </h3>
                   <p className="text-xs text-green-700 dark:text-green-200">
-                    Confidence: {extractedData.confidence}% — Review the information below before saving
+                    Review the information below before saving
                   </p>
                 </div>
+                {!isEditing && (
+                  <button
+                    onClick={handleEditClick}
+                    className="p-2 hover:bg-green-100 dark:hover:bg-green-800 rounded-lg transition-colors"
+                    title="Edit information"
+                  >
+                    <Edit className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  </button>
+                )}
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Name</label>
-                  <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">{extractedData.name || 'Not detected'}</p>
+              {isEditing ? (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase block mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={editableData?.name || ''}
+                      onChange={(e) => setEditableData(editableData ? { ...editableData, name: e.target.value } : null)}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase block mb-1">Job Title</label>
+                    <input
+                      type="text"
+                      value={editableData?.jobTitle || ''}
+                      onChange={(e) => setEditableData(editableData ? { ...editableData, jobTitle: e.target.value } : null)}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase block mb-1">Company</label>
+                    <input
+                      type="text"
+                      value={editableData?.company || ''}
+                      onChange={(e) => setEditableData(editableData ? { ...editableData, company: e.target.value } : null)}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase block mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={editableData?.phone || ''}
+                      onChange={(e) => setEditableData(editableData ? { ...editableData, phone: e.target.value } : null)}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase block mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={editableData?.email || ''}
+                      onChange={(e) => setEditableData(editableData ? { ...editableData, email: e.target.value } : null)}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase block mb-1">Address</label>
+                    <input
+                      type="text"
+                      value={editableData?.address || ''}
+                      onChange={(e) => setEditableData(editableData ? { ...editableData, address: e.target.value } : null)}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase block mb-1">Website</label>
+                    <input
+                      type="url"
+                      value={editableData?.website || ''}
+                      onChange={(e) => setEditableData(editableData ? { ...editableData, website: e.target.value } : null)}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="flex space-x-3 pt-2">
+                    <button
+                      onClick={handleCancelEdit}
+                      className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
-
-                {extractedData.jobTitle && (
+              ) : (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
                   <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Job Title</label>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.jobTitle}</p>
+                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Name</label>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">{extractedData.name || 'Not detected'}</p>
                   </div>
-                )}
 
-                {extractedData.company && (
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Company</label>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.company}</p>
-                  </div>
-                )}
+                  {extractedData.jobTitle && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Job Title</label>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.jobTitle}</p>
+                    </div>
+                  )}
 
-                {extractedData.phone && (
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Phone</label>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.phone}</p>
-                  </div>
-                )}
+                  {extractedData.company && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Company</label>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.company}</p>
+                    </div>
+                  )}
 
-                {extractedData.email && (
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Email</label>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.email}</p>
-                  </div>
-                )}
+                  {extractedData.phone && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Phone</label>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.phone}</p>
+                    </div>
+                  )}
 
-                {extractedData.address && (
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Address</label>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.address}</p>
-                  </div>
-                )}
+                  {extractedData.email && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Email</label>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.email}</p>
+                    </div>
+                  )}
 
-                {extractedData.website && (
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Website</label>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.website}</p>
-                  </div>
-                )}
-              </div>
+                  {extractedData.address && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Address</label>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.address}</p>
+                    </div>
+                  )}
 
-              <div className="flex space-x-3">
-                <button
-                  onClick={resetState}
-                  className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Scan Another
-                </button>
-                <button
-                  onClick={handleUseContact}
-                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Use This Contact</span>
-                </button>
-              </div>
+                  {extractedData.website && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Website</label>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">{extractedData.website}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!isEditing && (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={resetState}
+                    className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Scan Another
+                  </button>
+                  <button
+                    onClick={handleUseContact}
+                    className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Use This Contact</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
