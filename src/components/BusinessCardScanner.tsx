@@ -93,7 +93,6 @@ export function BusinessCardScanner({ isOpen, onClose, onContactExtracted }: Bus
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
       setCameraStream(stream);
       setShowCameraView(true);
 
@@ -130,7 +129,6 @@ export function BusinessCardScanner({ isOpen, onClose, onContactExtracted }: Bus
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
       setCameraStream(stream);
 
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -396,7 +394,7 @@ export function BusinessCardScanner({ isOpen, onClose, onContactExtracted }: Bus
                     Contact Information Extracted
                   </h3>
                   <p className="text-xs text-green-700 dark:text-green-200">
-                    Confidence: {extractedData.confidence}% - Review the information below before saving
+                    Confidence: {extractedData.confidence}% — Review the information below before saving
                   </p>
                 </div>
               </div>
