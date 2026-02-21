@@ -133,7 +133,7 @@ export function ContactForm({ isOpen, onClose, onContactCreated, editContact }: 
                 {!editContact && (
                   <button
                     onClick={() => setShowScanner(true)}
-                    className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                    className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 rounded-full flex items-center justify-center transition-colors"
                     title="Scan business card"
                   >
                     <Camera className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
